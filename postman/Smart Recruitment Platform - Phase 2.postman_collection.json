@@ -1,0 +1,911 @@
+{
+  "info": {
+    "_postman_id": "4c93d72f-f907-4f7f-9b63-a4d0afc0d0b8",
+    "name": "Smart Recruitment Platform - Phase 2",
+    "description": "Phase 2 authentication, job seeker profile, experience, education, skills, company, and employer profile endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost/api/v1"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "experience_id",
+      "value": ""
+    },
+    {
+      "key": "education_id",
+      "value": ""
+    },
+    {
+      "key": "skill_id",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register Job Seeker",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Applicant\",\n  \"email\": \"jane.applicant@example.com\",\n  \"password\": \"password\",\n  \"password_confirmation\": \"password\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register/job-seeker",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "register",
+                "job-seeker"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register Employer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Evan Employer\",\n  \"email\": \"evan.employer@example.com\",\n  \"company_name\": \"Talent Forge\",\n  \"password\": \"password\",\n  \"password_confirmation\": \"password\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register/employer",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "register",
+                "employer"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data && response.data.token) {",
+                  "    pm.collectionVariables.set('token', response.data.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"jobseeker@smartrecruitment.test\",\n  \"password\": \"password\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Me",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/logout",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Job Seeker Profile",
+      "item": [
+        {
+          "name": "Get Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "profile"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"headline\": \"Laravel API Developer\",\n  \"summary\": \"Building recruitment APIs with Laravel and MySQL.\",\n  \"phone\": \"+1 555 0101\",\n  \"location\": \"Remote\",\n  \"portfolio_url\": \"https://jane-applicant.example.com\",\n  \"linkedin_url\": \"https://www.linkedin.com/in/jane-applicant\",\n  \"github_url\": \"https://github.com/jane-applicant\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "profile"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Experiences",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/profile/experiences",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "profile",
+                "experiences"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Experience",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data && response.data.id) {",
+                  "    pm.collectionVariables.set('experience_id', response.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Backend Developer\",\n  \"company_name\": \"Northwind Software\",\n  \"location\": \"Remote\",\n  \"start_date\": \"2023-01-01\",\n  \"is_current\": true,\n  \"description\": \"Built Laravel APIs and MySQL services.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/profile/experiences",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "profile",
+                "experiences"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Experience",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/profile/experiences/{{experience_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "profile",
+                "experiences",
+                "{{experience_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Experience",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Senior Backend Developer\",\n  \"description\": \"Built and maintained Laravel API services.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/profile/experiences/{{experience_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "profile",
+                "experiences",
+                "{{experience_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Experience",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/profile/experiences/{{experience_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "profile",
+                "experiences",
+                "{{experience_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List Education",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/profile/education",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "profile",
+                "education"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Education",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data && response.data.id) {",
+                  "    pm.collectionVariables.set('education_id', response.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"institution\": \"State University\",\n  \"degree\": \"Bachelor of Science\",\n  \"field_of_study\": \"Computer Science\",\n  \"start_date\": \"2018-09-01\",\n  \"end_date\": \"2022-06-01\",\n  \"description\": \"Software engineering and databases.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/profile/education",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "profile",
+                "education"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Education",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/profile/education/{{education_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "profile",
+                "education",
+                "{{education_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Education",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"degree\": \"B.Sc.\",\n  \"description\": \"Computer science with web engineering coursework.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/profile/education/{{education_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "profile",
+                "education",
+                "{{education_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Education",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/profile/education/{{education_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "profile",
+                "education",
+                "{{education_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Attach Skill",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"skill_id\": {{skill_id}}\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/profile/skills",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "profile",
+                "skills"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Detach Skill",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/profile/skills/{{skill_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "profile",
+                "skills",
+                "{{skill_id}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Employer",
+      "item": [
+        {
+          "name": "Get Company",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/company",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "company"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Company",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Acme Hiring Co.\",\n  \"industry\": \"Recruitment Technology\",\n  \"website\": \"https://acme-hiring.example.com\",\n  \"location\": \"New York, NY\",\n  \"description\": \"Recruitment platform employer account.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/company",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "company"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Employer Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/employer/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "employer",
+                "profile"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Employer Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"job_title\": \"Talent Acquisition Manager\",\n  \"phone\": \"+1 555 0199\",\n  \"bio\": \"Hiring manager for backend engineering roles.\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/employer/profile",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "employer",
+                "profile"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

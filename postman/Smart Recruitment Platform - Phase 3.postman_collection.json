@@ -1,0 +1,269 @@
+{
+  "info": {
+    "_postman_id": "8fd28d16-2fa8-43a1-9e93-b57d13d2df68",
+    "name": "Smart Recruitment Platform - Phase 3",
+    "description": "Phase 3 CV upload, async parsing, parsed result retrieval, and explicit profile confirmation endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost/api/v1"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "cv_id",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login Job Seeker",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data && response.data.token) {",
+                  "    pm.collectionVariables.set('token', response.data.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"jobseeker@smartrecruitment.test\",\n  \"password\": \"password\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "CV",
+      "item": [
+        {
+          "name": "Upload CV",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const response = pm.response.json();",
+                  "if (response.success && response.data && response.data.id) {",
+                  "    pm.collectionVariables.set('cv_id', response.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{base_url}}/cv/upload",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "cv",
+                "upload"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "List CVs",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/cv",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "cv"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get CV Details",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/cv/{{cv_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "cv",
+                "{{cv_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Parsed Result",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/cv/{{cv_id}}/parsed",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "cv",
+                "{{cv_id}}",
+                "parsed"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm Parsed Result",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/cv/{{cv_id}}/confirm",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "cv",
+                "{{cv_id}}",
+                "confirm"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
