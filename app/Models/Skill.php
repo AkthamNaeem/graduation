@@ -21,4 +21,11 @@ class Skill extends Model
             ->using(JobSeekerSkill::class)
             ->withTimestamps();
     }
+
+    public function jobPostings(): BelongsToMany
+    {
+        return $this->belongsToMany(JobPosting::class, 'job_posting_skills')
+            ->using(JobPostingSkill::class)
+            ->withTimestamps();
+    }
 }

@@ -22,4 +22,9 @@ class Company extends Model
     {
         return $this->hasMany(EmployerProfile::class);
     }
+
+    public function jobPostings(): HasMany
+    {
+        return $this->hasMany(JobPosting::class);
+    }
 }

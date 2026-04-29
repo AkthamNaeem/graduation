@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Auth\RegistrationController;
 use App\Http\Controllers\Api\V1\CV\CVController;
+use App\Http\Controllers\Api\V1\JobPosting\JobPostingController;
 use App\Http\Controllers\Api\V1\Profile\CompanyController;
 use App\Http\Controllers\Api\V1\Profile\EducationController;
 use App\Http\Controllers\Api\V1\Profile\EmployerProfileController;
@@ -46,4 +47,16 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::put('company', [CompanyController::class, 'update'])->name('company.update');
     Route::get('employer/profile', [EmployerProfileController::class, 'show'])->name('employer.profile.show');
     Route::put('employer/profile', [EmployerProfileController::class, 'update'])->name('employer.profile.update');
+
+    Route::post('jobs', [JobPostingController::class, 'store'])->name('jobs.store');
+    Route::get('jobs/my', [JobPostingController::class, 'my'])->name('jobs.my');
+    Route::put('jobs/{jobPosting}', [JobPostingController::class, 'update'])->name('jobs.update');
+    Route::delete('jobs/{jobPosting}', [JobPostingController::class, 'destroy'])->name('jobs.destroy');
+    Route::post('jobs/{jobPosting}/skills', [JobPostingController::class, 'attachSkills'])->name('jobs.skills.store');
+    Route::delete('jobs/{jobPosting}/skills/{skill}', [JobPostingController::class, 'detachSkill'])->name('jobs.skills.destroy');
+    Route::post('jobs/{jobPosting}/publish', [JobPostingController::class, 'publish'])->name('jobs.publish');
+    Route::post('jobs/{jobPosting}/close', [JobPostingController::class, 'close'])->name('jobs.close');
 });
+
+Route::get('jobs', [JobPostingController::class, 'index'])->name('jobs.index');
+Route::get('jobs/{jobPosting}', [JobPostingController::class, 'show'])->name('jobs.show');

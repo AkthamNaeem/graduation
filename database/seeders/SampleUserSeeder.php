@@ -8,6 +8,7 @@ use App\Models\Education;
 use App\Models\EmployerProfile;
 use App\Models\Experience;
 use App\Models\JobSeekerProfile;
+use App\Models\JobPosting;
 use App\Models\Skill;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -134,6 +135,71 @@ class SampleUserSeeder extends Seeder
 
         $profile->skills()->syncWithoutDetaching(
             $skills->whereIn('name', ['PHP', 'Laravel', 'MySQL', 'REST APIs', 'Git'])->pluck('id')->all(),
+        );
+
+        $backendSkillIds = $skills
+            ->whereIn('name', ['PHP', 'Laravel', 'MySQL', 'REST APIs'])
+            ->pluck('id')
+            ->all();
+        $frontendSkillIds = $skills
+            ->whereIn('name', ['JavaScript', 'React', 'Communication'])
+            ->pluck('id')
+            ->all();
+
+        $openJob = JobPosting::updateOrCreate(
+            [
+                'company_id' => $company->id,
+                'title' => 'Senior Laravel Backend Engineer',
+            ],
+            [
+                'description' => 'Lead API development for the smart recruitment platform using Laravel, MySQL, and service-based architecture.',
+                'employment_type' => 'full-time',
+                'experience_level' => 'senior',
+                'location' => 'Remote',
+                'salary_min' => 90000,
+                'salary_max' => 120000,
+                'status' => 'open',
+                'published_at' => now()->subDays(2),
+            ],
+        );
+        $openJob->skills()->sync($backendSkillIds);
+
+        $draftJob = JobPosting::updateOrCreate(
+            [
+                'company_id' => $company->id,
+                'title' => 'Frontend Product Engineer',
+            ],
+            [
+                'description' => 'Build polished candidate and employer interfaces with strong collaboration across product and design.',
+                'employment_type' => 'full-time',
+                'experience_level' => 'mid-level',
+                'location' => 'New York, NY',
+                'salary_min' => 75000,
+                'salary_max' => 98000,
+                'status' => 'draft',
+                'published_at' => null,
+            ],
+        );
+        $draftJob->skills()->sync($frontendSkillIds);
+
+        $closedJob = JobPosting::updateOrCreate(
+            [
+                'company_id' => $company->id,
+                'title' => 'Technical Recruiter',
+            ],
+            [
+                'description' => 'Source and coordinate backend engineering candidates for the recruitment platform.',
+                'employment_type' => 'contract',
+                'experience_level' => 'mid-level',
+                'location' => 'Remote',
+                'salary_min' => 60000,
+                'salary_max' => 80000,
+                'status' => 'closed',
+                'published_at' => now()->subWeeks(2),
+            ],
+        );
+        $closedJob->skills()->sync(
+            $skills->whereIn('name', ['Communication', 'Problem Solving'])->pluck('id')->all(),
         );
 
         $admin->tokens()->delete();
