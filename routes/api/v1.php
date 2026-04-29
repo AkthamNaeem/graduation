@@ -11,6 +11,8 @@ use App\Http\Controllers\Api\V1\Profile\EmployerProfileController;
 use App\Http\Controllers\Api\V1\Profile\ExperienceController;
 use App\Http\Controllers\Api\V1\Profile\ProfileController;
 use App\Http\Controllers\Api\V1\Profile\ProfileSkillController;
+use App\Http\Controllers\Api\V1\Test\TestAssignmentController;
+use App\Http\Controllers\Api\V1\Test\TestAttemptController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')
@@ -64,6 +66,12 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('applications/{jobApplication}/withdraw', [JobApplicationController::class, 'withdraw'])->name('applications.withdraw');
     Route::get('jobs/{jobPosting}/applications', [JobApplicationController::class, 'indexByJob'])->name('jobs.applications.index');
     Route::post('applications/{jobApplication}/status', [JobApplicationController::class, 'changeStatus'])->name('applications.status');
+    Route::post('applications/{jobApplication}/assign-test', [TestAssignmentController::class, 'assign'])->name('applications.tests.assign');
+    Route::get('applications/{jobApplication}/tests', [TestAssignmentController::class, 'indexByApplication'])->name('applications.tests.index');
+    Route::get('my/tests', [TestAssignmentController::class, 'my'])->name('tests.my');
+    Route::post('tests/{applicationTestAssignment}/start', [TestAttemptController::class, 'start'])->name('tests.start');
+    Route::post('tests/{applicationTestAssignment}/submit', [TestAttemptController::class, 'submit'])->name('tests.submit');
+    Route::post('tests/{testAttempt}/evaluate', [TestAttemptController::class, 'evaluate'])->name('tests.evaluate');
 });
 
 Route::get('jobs', [JobPostingController::class, 'index'])->name('jobs.index');

@@ -36,4 +36,9 @@ class JobApplication extends Model
     {
         return $this->hasMany(ApplicationStatusHistory::class)->orderBy('id');
     }
+
+    public function applicationTestAssignments(): HasMany
+    {
+        return $this->hasMany(ApplicationTestAssignment::class)->latest();
+    }
 }
