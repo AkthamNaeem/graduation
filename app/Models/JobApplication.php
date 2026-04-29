@@ -41,4 +41,9 @@ class JobApplication extends Model
     {
         return $this->hasMany(ApplicationTestAssignment::class)->latest();
     }
+
+    public function interviews(): HasMany
+    {
+        return $this->hasMany(Interview::class)->latest('scheduled_at')->latest('id');
+    }
 }

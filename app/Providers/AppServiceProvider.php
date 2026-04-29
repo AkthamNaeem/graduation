@@ -3,10 +3,12 @@
 namespace App\Providers;
 
 use App\Models\ApplicationTestAssignment;
+use App\Models\Interview;
 use App\Models\JobPosting;
 use App\Models\JobApplication;
 use App\Models\TestAttempt;
 use App\Policies\ApplicationTestAssignmentPolicy;
+use App\Policies\InterviewPolicy;
 use App\Policies\JobApplicationPolicy;
 use App\Policies\JobPostingPolicy;
 use App\Policies\TestAttemptPolicy;
@@ -32,6 +34,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(JobPosting::class, JobPostingPolicy::class);
         Gate::policy(JobApplication::class, JobApplicationPolicy::class);
         Gate::policy(ApplicationTestAssignment::class, ApplicationTestAssignmentPolicy::class);
+        Gate::policy(Interview::class, InterviewPolicy::class);
         Gate::policy(TestAttempt::class, TestAttemptPolicy::class);
 
         JsonResource::withoutWrapping();
