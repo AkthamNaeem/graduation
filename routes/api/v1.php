@@ -60,6 +60,8 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::delete('jobs/{jobPosting}/skills/{skill}', [JobPostingController::class, 'detachSkill'])->name('jobs.skills.destroy');
     Route::post('jobs/{jobPosting}/publish', [JobPostingController::class, 'publish'])->name('jobs.publish');
     Route::post('jobs/{jobPosting}/close', [JobPostingController::class, 'close'])->name('jobs.close');
+    Route::get('jobs/recommended', [JobPostingController::class, 'recommended'])->name('jobs.recommended');
+    Route::get('jobs/{jobPosting}/candidates/ranked', [JobPostingController::class, 'rankedCandidates'])->name('jobs.candidates.ranked');
 
     Route::post('applications/{jobPosting}', [JobApplicationController::class, 'store'])->name('applications.store');
     Route::get('applications/my', [JobApplicationController::class, 'my'])->name('applications.my');
