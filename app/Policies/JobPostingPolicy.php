@@ -58,6 +58,11 @@ class JobPostingPolicy
         return $this->update($user, $jobPosting);
     }
 
+    public function viewJobApplications(User $user, JobPosting $jobPosting): bool
+    {
+        return $this->update($user, $jobPosting);
+    }
+
     private function belongsToCompany(User $user, JobPosting $jobPosting): bool
     {
         return $user->employerProfile()

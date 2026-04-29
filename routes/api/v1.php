@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Auth\RegistrationController;
+use App\Http\Controllers\Api\V1\Application\JobApplicationController;
 use App\Http\Controllers\Api\V1\CV\CVController;
 use App\Http\Controllers\Api\V1\JobPosting\JobPostingController;
 use App\Http\Controllers\Api\V1\Profile\CompanyController;
@@ -56,6 +57,13 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::delete('jobs/{jobPosting}/skills/{skill}', [JobPostingController::class, 'detachSkill'])->name('jobs.skills.destroy');
     Route::post('jobs/{jobPosting}/publish', [JobPostingController::class, 'publish'])->name('jobs.publish');
     Route::post('jobs/{jobPosting}/close', [JobPostingController::class, 'close'])->name('jobs.close');
+
+    Route::post('applications/{jobPosting}', [JobApplicationController::class, 'store'])->name('applications.store');
+    Route::get('applications/my', [JobApplicationController::class, 'my'])->name('applications.my');
+    Route::get('applications/{jobApplication}', [JobApplicationController::class, 'show'])->name('applications.show');
+    Route::post('applications/{jobApplication}/withdraw', [JobApplicationController::class, 'withdraw'])->name('applications.withdraw');
+    Route::get('jobs/{jobPosting}/applications', [JobApplicationController::class, 'indexByJob'])->name('jobs.applications.index');
+    Route::post('applications/{jobApplication}/status', [JobApplicationController::class, 'changeStatus'])->name('applications.status');
 });
 
 Route::get('jobs', [JobPostingController::class, 'index'])->name('jobs.index');

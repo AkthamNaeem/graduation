@@ -44,4 +44,9 @@ class JobSeekerProfile extends Model
             ->using(JobSeekerSkill::class)
             ->withTimestamps();
     }
+
+    public function jobApplications(): HasMany
+    {
+        return $this->hasMany(JobApplication::class);
+    }
 }
