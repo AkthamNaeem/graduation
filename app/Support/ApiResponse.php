@@ -2,7 +2,9 @@
 
 namespace App\Support;
 
+use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Resources\Json\ResourceCollection;
 
 class ApiResponse
 {
@@ -14,7 +16,7 @@ class ApiResponse
         return response()->json([
             'success' => true,
             'message' => $message,
-            'data' => $data,
+            'data' => self::resolveData($data),
         ], $status);
     }
 
@@ -31,5 +33,17 @@ class ApiResponse
             'message' => $message,
             'errors' => $errors,
         ], $status);
+    }
+
+    private static function resolveData(mixed $data): mixed
+    {
+        if (
+            $data instanceof ResourceCollection
+            && $data->resource instanceof Paginator
+        ) {
+            return $data->toResponse(request())->getData(true);
+        }
+
+        return $data;
     }
 }

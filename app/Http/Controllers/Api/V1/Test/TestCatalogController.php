@@ -1,0 +1,71 @@
+<?php
+
+namespace App\Http\Controllers\Api\V1\Test;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\Test\DeleteTestCatalogRequest;
+use App\Http\Requests\Api\V1\Test\IndexTestCatalogRequest;
+use App\Http\Requests\Api\V1\Test\ShowTestCatalogRequest;
+use App\Http\Requests\Api\V1\Test\StoreTestCatalogRequest;
+use App\Http\Requests\Api\V1\Test\UpdateTestCatalogRequest;
+use App\Http\Resources\Api\V1\TestResource;
+use App\Models\Test;
+use App\Services\TestService;
+use App\Support\ApiResponse;
+use Illuminate\Http\JsonResponse;
+
+class TestCatalogController extends Controller
+{
+    public function __construct(
+        private readonly TestService $testService,
+    ) {
+    }
+
+    public function index(IndexTestCatalogRequest $request): JsonResponse
+    {
+        return ApiResponse::success(
+            data: TestResource::collection(
+                $this->testService->getCatalogTests(
+                    $request->user('sanctum'),
+                    $request->integer('per_page', 15),
+                ),
+            ),
+            message: 'Tests retrieved successfully.',
+        );
+    }
+
+    public function store(StoreTestCatalogRequest $request): JsonResponse
+    {
+        return ApiResponse::success(
+            data: new TestResource($this->testService->createCatalogTest($request->validated())),
+            message: 'Test created successfully.',
+            status: 201,
+        );
+    }
+
+    public function show(ShowTestCatalogRequest $request, Test $test): JsonResponse
+    {
+        return ApiResponse::success(
+            data: new TestResource($this->testService->getCatalogTest($test)),
+            message: 'Test retrieved successfully.',
+        );
+    }
+
+    public function update(UpdateTestCatalogRequest $request, Test $test): JsonResponse
+    {
+        return ApiResponse::success(
+            data: new TestResource($this->testService->updateCatalogTest($test, $request->validated())),
+            message: 'Test updated successfully.',
+        );
+    }
+
+    public function destroy(DeleteTestCatalogRequest $request, Test $test): JsonResponse
+    {
+        $this->testService->deleteCatalogTest($test);
+
+        return ApiResponse::success(
+            data: null,
+            message: 'Test deleted successfully.',
+        );
+    }
+}

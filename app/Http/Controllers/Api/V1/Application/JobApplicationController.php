@@ -38,7 +38,10 @@ class JobApplicationController extends Controller
     {
         return ApiResponse::success(
             data: JobApplicationResource::collection(
-                $this->applicationWorkflowService->getMyApplications($request->user('sanctum')),
+                $this->applicationWorkflowService->getMyApplications(
+                    $request->user('sanctum'),
+                    $request->integer('per_page', 15),
+                ),
             ),
             message: 'Job applications retrieved successfully.',
         );
@@ -72,7 +75,10 @@ class JobApplicationController extends Controller
     {
         return ApiResponse::success(
             data: JobApplicationResource::collection(
-                $this->applicationWorkflowService->getJobApplications($jobPosting),
+                $this->applicationWorkflowService->getJobApplications(
+                    $jobPosting,
+                    $request->integer('per_page', 15),
+                ),
             ),
             message: 'Job applications retrieved successfully.',
         );

@@ -2,12 +2,14 @@
 
 namespace App\Services;
 
+use App\Enums\UserRole;
 use App\Models\ApplicationTestAssignment;
 use App\Models\JobApplication;
 use App\Models\Test;
 use App\Models\TestAttempt;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -20,6 +22,45 @@ class TestService
     public function __construct(
         private readonly ApplicationWorkflowService $applicationWorkflowService,
     ) {
+    }
+
+    /**
+     * @return LengthAwarePaginator<int, Test>
+     */
+    public function getCatalogTests(User $user, int $perPage = 15): LengthAwarePaginator
+    {
+        return Test::query()
+            ->when($user->role === UserRole::JOB_SEEKER, fn ($query) => $query->where('is_active', true))
+            ->latest()
+            ->paginate($perPage);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    public function createCatalogTest(array $data): Test
+    {
+        return Test::query()->create($data);
+    }
+
+    public function getCatalogTest(Test $test): Test
+    {
+        return $test;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    public function updateCatalogTest(Test $test, array $data): Test
+    {
+        $test->update($data);
+
+        return $test->refresh();
+    }
+
+    public function deleteCatalogTest(Test $test): void
+    {
+        $test->delete();
     }
 
     public function assignTest(User $actor, JobApplication $application, int $testId, ?string $note): ApplicationTestAssignment
@@ -83,9 +124,9 @@ class TestService
     }
 
     /**
-     * @return Collection<int, ApplicationTestAssignment>
+     * @return LengthAwarePaginator<int, ApplicationTestAssignment>
      */
-    public function getMyAssignments(User $user): Collection
+    public function getMyAssignments(User $user, int $perPage = 15): LengthAwarePaginator
     {
         return ApplicationTestAssignment::query()
             ->with($this->assignmentRelations(includeApplicationContext: true))
@@ -93,7 +134,7 @@ class TestService
                 $query->where('user_id', $user->id);
             })
             ->latest()
-            ->get();
+            ->paginate($perPage);
     }
 
     public function startAttempt(User $actor, ApplicationTestAssignment $assignment): TestAttempt

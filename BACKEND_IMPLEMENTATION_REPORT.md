@@ -1,0 +1,965 @@
+# Smart Recruitment Platform — Backend Implementation Report
+
+## 1. Executive Summary
+
+The backend implements a Laravel 12 REST API for a smart recruitment platform. The current scope covers account registration and authentication, job seeker and employer profiles, CV upload and basic parsing, employer job posting management, job applications with status history, test assignments and attempts, interview scheduling and evaluation, and deterministic matching/ranking based on TF-IDF and cosine similarity.
+
+The implementation follows a service-oriented Laravel structure using Form Requests for validation and authorization, API Resources for response shaping, Policies for ownership and role checks, seeders for initial data, and feature/unit tests for the implemented modules. API routes are versioned under `/api/v1`. The backend is functionally broad for an MVP, but it does not yet include an advanced admin module, notification delivery, deep AI/LLM matching, production-grade CV parsing, or a UI-facing dashboard.
+
+## 2. Technology Stack
+
+| Area | Implementation |
+| --- | --- |
+| Framework | Laravel `^12.0` |
+| PHP | `^8.2` |
+| Database | MySQL, configured through Laravel database configuration |
+| Authentication | Laravel Sanctum `^4.3`, bearer tokens via `personal_access_tokens` |
+| API style | REST API with JSON responses and `/api/v1` versioning |
+| Architecture | Controllers, Services, Form Requests, API Resources, Policies, Seeders, Jobs, Eloquent Models |
+| File parsing libraries | `smalot/pdfparser` for PDF, `phpoffice/phpword` for DOCX |
+| Testing | PHPUnit feature and unit tests through `php artisan test` |
+
+## 3. Implemented Phases Overview
+
+| Phase | Phase Name | Main Implemented Features | Status |
+| --- | --- | --- | --- |
+| 1 | Project Setup | Laravel 12 app, Sanctum installation, API route versioning, auth endpoints, user roles, standard API envelope, initial Postman collection | Implemented |
+| 2 | Core Profiles | Job seeker profile, employer profile, company profile, experiences, education, skills, role-scoped profile endpoints | Implemented |
+| 3 | CV Upload & Parsing | CV upload for PDF/DOCX, queued parsing job, raw text extraction, parsed JSON storage, confirm flow to append profile data | Partially Implemented (MVP/basic parsing) |
+| 4 | Job Posting | Employer job CRUD, public open-job listing, filters, skills attachment, publish and close workflows | Implemented |
+| 5 | Job Applications Workflow | Job applications, duplicate prevention, application statuses, transition validation, terminal states, status history | Implemented |
+| 6 | Testing Module | Test catalog model, employer test assignment, candidate start/submit, employer evaluation, status updates | Implemented |
+| 7 | Interview Module | Interview scheduling, listing, update/delete before completion, completion, evaluation items, status updates | Implemented |
+| 8 | AI Matching | Deterministic TF-IDF matching, cosine similarity, recommendations for job seekers, ranked candidates for employers, score breakdowns | Partially Implemented (IR-based matching, not deep AI) |
+
+## 4. Database Structure
+
+### `users`
+
+Purpose: Stores application accounts for admins, job seekers, and employers.
+
+Key columns: `id`, `name`, `email`, `role`, `email_verified_at`, `password`, `remember_token`, timestamps.
+
+Main relationships: has one `job_seeker_profiles`, has one `employer_profiles`, has many `cv_files`, owns Sanctum tokens through `personal_access_tokens`.
+
+### `job_seeker_profiles`
+
+Purpose: Stores candidate profile details.
+
+Key columns: `id`, `user_id`, `headline`, `summary`, `phone`, `location`, `portfolio_url`, `linkedin_url`, `github_url`, timestamps.
+
+Main relationships: belongs to `users`; has many `experiences`, `education`, and `job_applications`; belongs to many `skills` through `job_seeker_skills`.
+
+### `companies`
+
+Purpose: Stores employer company information.
+
+Key columns: `id`, `name`, `industry`, `website`, `location`, `description`, timestamps.
+
+Main relationships: has many `employer_profiles`; has many `job_postings`.
+
+### `employer_profiles`
+
+Purpose: Stores employer user profile details and links each employer to a company.
+
+Key columns: `id`, `user_id`, `company_id`, `job_title`, `phone`, `bio`, timestamps.
+
+Main relationships: belongs to `users`; belongs to `companies`.
+
+### `experiences`
+
+Purpose: Stores candidate work history.
+
+Key columns: `id`, `job_seeker_profile_id`, `title`, `company_name`, `location`, `start_date`, `end_date`, `is_current`, `description`, timestamps.
+
+Main relationships: belongs to `job_seeker_profiles`.
+
+### `education`
+
+Purpose: Stores candidate education records.
+
+Key columns: `id`, `job_seeker_profile_id`, `institution`, `degree`, `field_of_study`, `start_date`, `end_date`, `description`, timestamps.
+
+Main relationships: belongs to `job_seeker_profiles`.
+
+### `skills`
+
+Purpose: Stores reusable platform skills.
+
+Key columns: `id`, `name`, `slug`, timestamps.
+
+Main relationships: belongs to many `job_seeker_profiles` through `job_seeker_skills`; belongs to many `job_postings` through `job_posting_skills`.
+
+### `job_seeker_skills`
+
+Purpose: Pivot table between job seeker profiles and skills.
+
+Key columns: `id`, `job_seeker_profile_id`, `skill_id`, timestamps; unique pair on `job_seeker_profile_id` and `skill_id`.
+
+Main relationships: pivot for `job_seeker_profiles` and `skills`.
+
+### `cv_files`
+
+Purpose: Tracks uploaded CV files and parsing state.
+
+Key columns: `id`, `user_id`, `original_name`, `stored_path`, `disk`, `mime_type`, `extension`, `size_bytes`, `status`, `error_message`, `confirmed_at`, timestamps.
+
+Main relationships: belongs to `users`; has one `cv_parsing_results`.
+
+### `cv_parsing_results`
+
+Purpose: Stores extracted text and parsed structured data for a CV.
+
+Key columns: `id`, `cv_file_id`, `raw_text`, `parsed_json`, timestamps.
+
+Main relationships: belongs to `cv_files`; one parsing result per CV file.
+
+### `job_postings`
+
+Purpose: Stores employer-created job posts.
+
+Key columns: `id`, `company_id`, `title`, `description`, `employment_type`, `experience_level`, `location`, `salary_min`, `salary_max`, `status`, `published_at`, timestamps.
+
+Main relationships: belongs to `companies`; belongs to many `skills` through `job_posting_skills`; has many `job_applications`.
+
+### `job_posting_skills`
+
+Purpose: Pivot table between job postings and skills.
+
+Key columns: `id`, `job_posting_id`, `skill_id`, timestamps; unique pair on `job_posting_id` and `skill_id`.
+
+Main relationships: pivot for `job_postings` and `skills`.
+
+### `application_statuses`
+
+Purpose: Catalog of valid application status values.
+
+Key columns: `id`, `name`, `slug`, timestamps.
+
+Main relationships: has many `job_applications`; referenced by application status history as both source and target statuses.
+
+### `job_applications`
+
+Purpose: Stores a candidate's application to a job.
+
+Key columns: `id`, `job_posting_id`, `job_seeker_profile_id`, `application_status_id`, timestamps; unique pair on `job_posting_id` and `job_seeker_profile_id`.
+
+Main relationships: belongs to `job_postings`, `job_seeker_profiles`, and `application_statuses`; has many `application_status_histories`, `application_test_assignments`, and `interviews`.
+
+### `application_status_histories`
+
+Purpose: Audit trail for application status changes.
+
+Key columns: `id`, `job_application_id`, `from_application_status_id`, `to_application_status_id`, `changed_by_user_id`, `note`, timestamps.
+
+Main relationships: belongs to `job_applications`; belongs to source/target `application_statuses`; belongs to the changing `users` record.
+
+### `tests`
+
+Purpose: Stores test catalog entries assignable to applications.
+
+Key columns: `id`, `title`, `description`, `instructions`, `duration_minutes`, `max_score`, `passing_score`, `is_active`, timestamps.
+
+Main relationships: has many `application_test_assignments`.
+
+### `application_test_assignments`
+
+Purpose: Links an application to a test assigned by an employer.
+
+Key columns: `id`, `job_application_id`, `test_id`, `assigned_by_user_id`, `note`, `assigned_at`, timestamps; unique pair on `job_application_id` and `test_id`.
+
+Main relationships: belongs to `job_applications`, `tests`, and assigning `users`; has one `test_attempt`; also exposes a has-many relation to `test_attempts`, although the table enforces one attempt per assignment.
+
+### `test_attempts`
+
+Purpose: Stores candidate test attempts and employer evaluation results.
+
+Key columns: `id`, `application_test_assignment_id`, `answers`, `started_at`, `submitted_at`, `score`, `feedback`, `evaluated_by_user_id`, `evaluated_at`, timestamps.
+
+Main relationships: belongs to `application_test_assignments`; belongs to evaluating `users`; unique `application_test_assignment_id` enforces one attempt per assignment.
+
+### `interviews`
+
+Purpose: Stores scheduled interviews for applications.
+
+Key columns: `id`, `job_application_id`, `scheduled_by_user_id`, `interview_type`, `scheduled_at`, `duration_minutes`, `interview_mode`, `location`, `meeting_link`, `note`, `completion_note`, `completed_at`, `completed_by_user_id`, timestamps.
+
+Main relationships: belongs to `job_applications`; belongs to scheduling and completing `users`; has one `interview_evaluations`.
+
+### `interview_evaluations`
+
+Purpose: Stores one employer evaluation for a completed interview.
+
+Key columns: `id`, `interview_id`, `evaluated_by_user_id`, `recommendation`, `overall_comment`, `evaluated_at`, timestamps.
+
+Main relationships: belongs to `interviews`; belongs to evaluating `users`; has many `interview_evaluation_items`.
+
+### `interview_evaluation_items`
+
+Purpose: Stores scored criteria for an interview evaluation.
+
+Key columns: `id`, `interview_evaluation_id`, `criterion`, `score`, `comment`, `sort_order`, timestamps.
+
+Main relationships: belongs to `interview_evaluations`.
+
+## 5. Models and Relationships
+
+### `User`
+
+- hasOne `JobSeekerProfile`
+- hasOne `EmployerProfile`
+- hasMany `CVFile`
+- uses Sanctum tokens through `HasApiTokens`
+- uses Laravel `Notifiable`; no custom notification module or notifications table is implemented
+- casts `role` to `UserRole`
+
+### `JobSeekerProfile`
+
+- belongsTo `User`
+- hasMany `Experience`
+- hasMany `Education`
+- belongsToMany `Skill` through `job_seeker_skills`
+- hasMany `JobApplication`
+
+### `Company`
+
+- hasMany `EmployerProfile`
+- hasMany `JobPosting`
+
+### `EmployerProfile`
+
+- belongsTo `User`
+- belongsTo `Company`
+
+### `Experience`
+
+- belongsTo `JobSeekerProfile`
+
+### `Education`
+
+- belongsTo `JobSeekerProfile`
+- uses explicit table name `education`
+
+### `Skill`
+
+- belongsToMany `JobSeekerProfile` through `job_seeker_skills`
+- belongsToMany `JobPosting` through `job_posting_skills`
+
+### `JobSeekerSkill`
+
+- pivot model for `job_seeker_skills`
+
+### `CVFile`
+
+- belongsTo `User`
+- hasOne `CVParsingResult`
+
+### `CVParsingResult`
+
+- belongsTo `CVFile`
+- casts `parsed_json` to array
+
+### `JobPosting`
+
+- belongsTo `Company`
+- belongsToMany `Skill` through `job_posting_skills`
+- hasMany `JobApplication`
+
+### `JobPostingSkill`
+
+- pivot model for `job_posting_skills`
+
+### `ApplicationStatus`
+
+- hasMany `JobApplication`
+- hasMany `ApplicationStatusHistory` as `statusChangesFrom`
+- hasMany `ApplicationStatusHistory` as `statusChangesTo`
+
+### `JobApplication`
+
+- belongsTo `JobPosting`
+- belongsTo `JobSeekerProfile`
+- belongsTo `ApplicationStatus`
+- hasMany `ApplicationStatusHistory` as `statusHistory`
+- hasMany `ApplicationTestAssignment`
+- hasMany `Interview`
+
+### `ApplicationStatusHistory`
+
+- belongsTo `JobApplication`
+- belongsTo `ApplicationStatus` as `fromStatus`
+- belongsTo `ApplicationStatus` as `toStatus`
+- belongsTo `User` as `changedBy`
+
+### `Test`
+
+- hasMany `ApplicationTestAssignment`
+
+### `ApplicationTestAssignment`
+
+- belongsTo `JobApplication`
+- belongsTo `Test`
+- belongsTo `User` as `assignedBy`
+- hasOne `TestAttempt`
+- hasMany `TestAttempt`, but database uniqueness currently allows only one attempt
+
+### `TestAttempt`
+
+- belongsTo `ApplicationTestAssignment`
+- belongsTo `User` as `evaluatedBy`
+
+### `Interview`
+
+- belongsTo `JobApplication`
+- belongsTo `User` as `scheduledBy`
+- belongsTo `User` as `completedBy`
+- hasOne `InterviewEvaluation`
+
+### `InterviewEvaluation`
+
+- belongsTo `Interview`
+- belongsTo `User` as `evaluatedBy`
+- hasMany `InterviewEvaluationItem`
+
+### `InterviewEvaluationItem`
+
+- belongsTo `InterviewEvaluation`
+
+## 6. Implemented API Endpoints
+
+All responses use the `ApiResponse` envelope:
+
+- Success: `{ "success": true, "message": "...", "data": ... }`
+- Error: `{ "success": false, "message": "...", "errors": ... }`
+
+### Authentication
+
+| Method | URL | Auth | Role | Purpose | Main request fields | Main response summary |
+| --- | --- | --- | --- | --- | --- | --- |
+| POST | `/api/v1/auth/register/job-seeker` | Public | Public | Register a job seeker and create an empty job seeker profile | `name`, `email`, `password`, `password_confirmation` | `UserResource` with nested job seeker profile |
+| POST | `/api/v1/auth/register/employer` | Public | Public | Register an employer, company, and employer profile | `name`, `email`, `company_name`, `password`, `password_confirmation` | `UserResource` with nested employer profile and company |
+| POST | `/api/v1/auth/login` | Public | Public | Authenticate and issue Sanctum token | `email`, `password` | `token`, `token_type`, `user` |
+| GET | `/api/v1/auth/me` | Required | Any authenticated | Return current authenticated user | None | `UserResource` with loaded profile relations |
+| POST | `/api/v1/auth/logout` | Required | Any authenticated | Revoke current access token | None | Success message |
+
+### Profiles
+
+| Method | URL | Auth | Role | Purpose | Main request fields | Main response summary |
+| --- | --- | --- | --- | --- | --- | --- |
+| GET | `/api/v1/profile` | Required | Job seeker | View job seeker profile | None | `JobSeekerProfileResource` with user, experiences, education, skills |
+| PUT | `/api/v1/profile` | Required | Job seeker | Update job seeker profile | `headline`, `summary`, `phone`, `location`, `portfolio_url`, `linkedin_url`, `github_url` | Updated `JobSeekerProfileResource` |
+| GET | `/api/v1/profile/experiences` | Required | Job seeker | List own experiences | None | Collection of `ExperienceResource` |
+| POST | `/api/v1/profile/experiences` | Required | Job seeker | Create experience | `title`, `company_name`, `location`, `start_date`, `end_date`, `is_current`, `description` | Created `ExperienceResource` |
+| GET | `/api/v1/profile/experiences/{experience}` | Required | Job seeker owner | View own experience | None | `ExperienceResource` |
+| PUT/PATCH | `/api/v1/profile/experiences/{experience}` | Required | Job seeker owner | Update own experience | Same fields as create, optional | Updated `ExperienceResource` |
+| DELETE | `/api/v1/profile/experiences/{experience}` | Required | Job seeker owner | Delete own experience | None | Success message |
+| GET | `/api/v1/profile/education` | Required | Job seeker | List own education | None | Collection of `EducationResource` |
+| POST | `/api/v1/profile/education` | Required | Job seeker | Create education record | `institution`, `degree`, `field_of_study`, `start_date`, `end_date`, `description` | Created `EducationResource` |
+| GET | `/api/v1/profile/education/{education}` | Required | Job seeker owner | View own education record | None | `EducationResource` |
+| PUT/PATCH | `/api/v1/profile/education/{education}` | Required | Job seeker owner | Update own education record | Same fields as create, optional | Updated `EducationResource` |
+| DELETE | `/api/v1/profile/education/{education}` | Required | Job seeker owner | Delete own education record | None | Success message |
+| POST | `/api/v1/profile/skills` | Required | Job seeker | Attach skill to profile | `skill_id` | Updated `JobSeekerProfileResource` |
+| DELETE | `/api/v1/profile/skills/{skill}` | Required | Job seeker | Detach skill from profile | None | Updated `JobSeekerProfileResource` |
+| GET | `/api/v1/company` | Required | Employer | View employer company | None | `CompanyResource` |
+| PUT | `/api/v1/company` | Required | Employer | Update employer company | `name`, `industry`, `website`, `location`, `description` | Updated `CompanyResource` |
+| GET | `/api/v1/employer/profile` | Required | Employer | View employer profile | None | `EmployerProfileResource` |
+| PUT | `/api/v1/employer/profile` | Required | Employer | Update employer profile | `job_title`, `phone`, `bio` | Updated `EmployerProfileResource` |
+
+### Skills Catalog
+
+| Method | URL | Auth | Role | Purpose | Main request fields | Main response summary |
+| --- | --- | --- | --- | --- | --- | --- |
+| GET | `/api/v1/skills` | Public | Public | List/search platform skills | Optional `search`, optional `limit` from 1 to 100 | Collection of `SkillResource` ordered by name |
+
+### CV Management
+
+| Method | URL | Auth | Role | Purpose | Main request fields | Main response summary |
+| --- | --- | --- | --- | --- | --- | --- |
+| GET | `/api/v1/cv` | Required | Job seeker | List own uploaded CVs | Optional `per_page` from 1 to 100 | Paginated `CVFileResource` collection |
+| POST | `/api/v1/cv/upload` | Required | Job seeker | Upload CV and dispatch parsing job | Multipart `file`; PDF/DOCX, max 5120 KB | Created `CVFileResource`, initial status `uploaded` |
+| GET | `/api/v1/cv/{cvFile}` | Required | Job seeker owner | View own CV file metadata | None | `CVFileResource` with parsing result when loaded |
+| GET | `/api/v1/cv/{cvFile}/parsed` | Required | Job seeker owner | View parsed CV result | None | `CVParsingResultResource` with `raw_text` and `parsed_json` |
+| POST | `/api/v1/cv/{cvFile}/confirm` | Required | Job seeker owner | Confirm parsed data and append it to profile | None | Updated `JobSeekerProfileResource` |
+
+### Job Posting
+
+| Method | URL | Auth | Role | Purpose | Main request fields | Main response summary |
+| --- | --- | --- | --- | --- | --- | --- |
+| GET | `/api/v1/jobs` | Public | Public | List open jobs | Filters: `search`, `location`, `skill`, `experience_level`, optional `per_page` | Paginated collection of open `JobPostingResource` |
+| GET | `/api/v1/jobs/{jobPosting}` | Public for open jobs; protected for non-open jobs | Public or owning employer | View job details | None | `JobPostingResource` |
+| POST | `/api/v1/jobs` | Required | Employer | Create draft job | `title`, `description`, `employment_type`, `experience_level`, `location`, `salary_min`, `salary_max` | Created draft `JobPostingResource` |
+| GET | `/api/v1/jobs/my` | Required | Employer | List own company's jobs | Filters: `search`, `location`, `skill`, `experience_level`, optional `per_page` | Paginated `JobPostingResource` collection |
+| PUT | `/api/v1/jobs/{jobPosting}` | Required | Owning employer | Update own job | Same fields as create, optional | Updated `JobPostingResource` |
+| DELETE | `/api/v1/jobs/{jobPosting}` | Required | Owning employer | Delete own job | None | Success message |
+| POST | `/api/v1/jobs/{jobPosting}/skills` | Required | Owning employer | Attach job skills | `skill_ids[]` | Updated `JobPostingResource` |
+| DELETE | `/api/v1/jobs/{jobPosting}/skills/{skill}` | Required | Owning employer | Detach job skill | None | Updated `JobPostingResource` |
+| POST | `/api/v1/jobs/{jobPosting}/publish` | Required | Owning employer | Publish job as open | None; job must have at least one skill | Updated `JobPostingResource` with status `open` and `published_at` |
+| POST | `/api/v1/jobs/{jobPosting}/close` | Required | Owning employer | Close job | None | Updated `JobPostingResource` with status `closed` |
+
+### Applications
+
+| Method | URL | Auth | Role | Purpose | Main request fields | Main response summary |
+| --- | --- | --- | --- | --- | --- | --- |
+| POST | `/api/v1/jobs/{jobPosting}/applications` | Required | Job seeker | Apply to an open job using clearer nested route | None | Created `JobApplicationResource` with status `submitted` |
+| POST | `/api/v1/applications/{jobPosting}` | Required | Job seeker | Apply to an open job | None | Created `JobApplicationResource` with status `submitted` |
+| GET | `/api/v1/applications/my` | Required | Job seeker | List own applications | Optional `per_page` from 1 to 100 | Paginated `JobApplicationResource` collection |
+| GET | `/api/v1/applications/{jobApplication}` | Required | Applicant or owning employer | View application | None | `JobApplicationResource` with status and history |
+| POST | `/api/v1/applications/{jobApplication}/withdraw` | Required | Applicant | Withdraw own application | Optional `note` | Updated `JobApplicationResource` with status `withdrawn` |
+| GET | `/api/v1/jobs/{jobPosting}/applications` | Required | Owning employer | List applications for own job | Optional `per_page` from 1 to 100 | Paginated `JobApplicationResource` collection |
+| POST | `/api/v1/applications/{jobApplication}/status` | Required | Owning employer | Change application status | `status`, optional `note` | Updated `JobApplicationResource` and appended history |
+
+### Tests
+
+| Method | URL | Auth | Role | Purpose | Main request fields | Main response summary |
+| --- | --- | --- | --- | --- | --- | --- |
+| GET | `/api/v1/tests` | Required | Employer, admin, job seeker | List test catalog entries; job seekers only see active tests | Optional `per_page` from 1 to 100 | Paginated `TestResource` collection |
+| POST | `/api/v1/tests` | Required | Employer or admin | Create test catalog entry | `title`, `duration_minutes`, `max_score`, optional `description`, `instructions`, `passing_score`, `is_active` | Created `TestResource` |
+| GET | `/api/v1/tests/{test}` | Required | Employer, admin, job seeker | View test catalog entry; job seekers can view active tests only | None | `TestResource` |
+| PUT/PATCH | `/api/v1/tests/{test}` | Required | Employer or admin | Update test catalog entry | Same fields as create, optional | Updated `TestResource` |
+| DELETE | `/api/v1/tests/{test}` | Required | Employer or admin | Delete test catalog entry | None | Success message |
+| POST | `/api/v1/applications/{jobApplication}/assign-test` | Required | Owning employer | Assign active test to application | `test_id`, optional `note` | `ApplicationTestAssignmentResource`; application moves to `test_pending` |
+| GET | `/api/v1/applications/{jobApplication}/tests` | Required | Owning employer | List test assignments for application | None | Collection of `ApplicationTestAssignmentResource` |
+| GET | `/api/v1/my/tests` | Required | Job seeker | List own assigned tests | Optional `per_page` from 1 to 100 | Paginated `ApplicationTestAssignmentResource` collection with state |
+| POST | `/api/v1/tests/{applicationTestAssignment}/start` | Required | Assigned job seeker | Start test attempt | None | Created `TestAttemptResource` |
+| POST | `/api/v1/tests/{applicationTestAssignment}/submit` | Required | Assigned job seeker | Submit test answers | `answers` array | Updated `TestAttemptResource` with `submitted_at` |
+| POST | `/api/v1/tests/{testAttempt}/evaluate` | Required | Owning employer | Evaluate submitted test attempt | `score`, optional `feedback` | Updated `TestAttemptResource`; application moves to `test_completed` |
+
+### Interviews
+
+| Method | URL | Auth | Role | Purpose | Main request fields | Main response summary |
+| --- | --- | --- | --- | --- | --- | --- |
+| POST | `/api/v1/applications/{jobApplication}/interviews` | Required | Owning employer | Schedule interview | `interview_type`, `scheduled_at`, `duration_minutes`, `interview_mode`, `location`, `meeting_link`, `note` | Created `InterviewResource`; application moves to `interview_scheduled` |
+| GET | `/api/v1/applications/{jobApplication}/interviews` | Required | Owning employer | List interviews for an application | None | Collection of `InterviewResource` |
+| PUT | `/api/v1/interviews/{interview}` | Required | Owning employer | Update scheduled, unfinished interview | Same fields as create | Updated `InterviewResource` |
+| DELETE | `/api/v1/interviews/{interview}` | Required | Owning employer | Delete unfinished, unevaluated interview | None | Success message; status recalculated |
+| POST | `/api/v1/interviews/{interview}/complete` | Required | Owning employer | Mark interview completed | Optional `completion_note` | `InterviewResource`; application moves to `interview_completed` |
+| POST | `/api/v1/interviews/{interview}/evaluate` | Required | Owning employer | Evaluate completed interview | `recommendation`, `overall_comment`, `items[].criterion`, `items[].score`, `items[].comment` | `InterviewResource` with evaluation; application moves to `final_review` |
+| GET | `/api/v1/my/interviews` | Required | Job seeker | List own interviews | Optional `per_page` from 1 to 100 | Paginated `InterviewResource` collection |
+| GET | `/api/v1/interviews/{interview}` | Required | Applicant or owning employer | View interview | None | `InterviewResource` |
+
+### Matching
+
+| Method | URL | Auth | Role | Purpose | Main request fields | Main response summary |
+| --- | --- | --- | --- | --- | --- | --- |
+| GET | `/api/v1/jobs/recommended` | Required | Job seeker | Recommend open jobs not already applied to | Optional `limit` from 1 to 50 | Collection of job resources with `score`, `breakdown`, `matched_skills` |
+| GET | `/api/v1/jobs/{jobPosting}/candidates/ranked` | Required | Owning employer | Rank candidates who applied to a job | Optional `limit` from 1 to 50 | Collection with `job_application_id`, `application_status`, `score`, `breakdown`, `matched_skills`, `job_seeker_profile` |
+
+## 7. Services Layer
+
+### `App\Services\Auth\AuthService`
+
+Purpose: Handles login, authenticated user loading, and logout.
+
+Main methods: `login`, `loadAuthenticatedUser`, `logout`.
+
+Important logic: validates credentials using `Hash::check`, creates Sanctum token named `api-token`, eager-loads relevant profile relations, deletes the current access token on logout.
+
+### `App\Services\Auth\RegistrationService`
+
+Purpose: Handles role-specific registration.
+
+Main methods: `registerJobSeeker`, `registerEmployer`.
+
+Important logic: creates user and empty job seeker profile in a transaction; creates user, company, and employer profile in a transaction; assigns `UserRole` values.
+
+### `App\Services\ProfileService`
+
+Purpose: Encapsulates job seeker and employer profile operations.
+
+Main methods: `getJobSeekerProfile`, `updateJobSeekerProfile`, `getExperiences`, `createExperience`, `updateExperience`, `deleteExperience`, `getEducation`, `createEducation`, `updateEducation`, `deleteEducation`, `attachSkill`, `detachSkill`, `getCompany`, `updateCompany`, `getEmployerProfile`, `updateEmployerProfile`.
+
+Important logic: enforces ownership for experiences and education, manages idempotent skill attachment with `syncWithoutDetaching`, and scopes employer company/profile access to the authenticated employer profile.
+
+### `App\Services\CVService`
+
+Purpose: Handles CV upload, retrieval, parsed-result retrieval, and confirmation.
+
+Main methods: `upload`, `list`, `get`, `getParsedResult`, `confirm`.
+
+Important logic: stores uploaded files under `cv-files/{user_id}` on the local disk, dispatches `ParseCVFileJob`, paginates CV file lists, enforces CV ownership, prevents repeat confirmation, appends parsed experiences/education, and attaches already-known skills by slug without creating new skills.
+
+### `App\Services\CVParsingService`
+
+Purpose: Extracts text from uploaded CVs and parses basic structured data.
+
+Main methods: `extractText`, `parseText`.
+
+Important logic: supports PDF and DOCX extraction, normalizes text, extracts email and phone with regular expressions, detects skills by matching existing `skills` records, and parses simple experience/education section lines.
+
+### `App\Services\JobPostingService`
+
+Purpose: Handles public job listing and employer job management.
+
+Main methods: `getPublicJobs`, `getEmployerJobs`, `getVisibleJobPosting`, `createJob`, `updateJob`, `deleteJob`, `publishJob`, `closeJob`, `attachSkills`, `detachSkills`.
+
+Important logic: filters jobs by search, location, skill, and experience level; paginates public and employer job lists; creates jobs as `draft`; requires at least one skill before publishing; sets `published_at` when published; closes jobs by setting status to `closed`.
+
+### `App\Services\ApplicationWorkflowService`
+
+Purpose: Handles job application creation and status workflow.
+
+Main methods: `applyToJob`, `changeStatus`, `withdrawApplication`, `validateTransition`, `recordHistory`, `checkDuplicateApplication`, `getMyApplications`, `getJobApplications`, `getApplication`.
+
+Important logic: restricts applications to job seekers, only allows applying to open jobs, prevents duplicate applications, paginates main application lists, validates transitions against a static map, blocks changes from terminal states, blocks employers from forcing `withdrawn`, and writes an `ApplicationStatusHistory` row for initial submission and every status change.
+
+### `App\Services\TestService`
+
+Purpose: Handles test catalog management, test assignment, test attempts, submissions, and evaluations.
+
+Main methods: `getCatalogTests`, `createCatalogTest`, `getCatalogTest`, `updateCatalogTest`, `deleteCatalogTest`, `assignTest`, `getApplicationAssignments`, `getMyAssignments`, `startAttempt`, `submitAttempt`, `evaluateAttempt`.
+
+Important logic: employers and admins manage global test catalog rows; job seekers can list/view only active catalog tests; only active tests can be assigned, duplicate assignments are blocked, assignment moves application to `test_pending`, each assignment can have only one attempt, attempts must be started before submitted, submitted attempts can be evaluated once, score cannot exceed test maximum, and evaluation moves application to `test_completed`.
+
+### `App\Services\InterviewService`
+
+Purpose: Handles interview scheduling, listing, update/delete, completion, evaluation, and application status synchronization.
+
+Main methods: `createInterview`, `getApplicationInterviews`, `getMyInterviews`, `getInterview`, `updateInterview`, `deleteInterview`, `completeInterview`, `evaluateInterview`.
+
+Important logic: prevents interviews for terminal applications, allows only one unfinished interview per application, paginates job seeker interview lists, moves applications to `interview_scheduled`, blocks modification/deletion of completed or evaluated interviews, completion moves applications to `interview_completed`, evaluation creates scored items and moves applications to `final_review`, and deletion recalculates interview-related status.
+
+### `App\Services\MatchingService`
+
+Purpose: Provides deterministic profile/job matching and ranking.
+
+Main methods: `buildTextFromProfile`, `buildTextFromJob`, `computeTFIDF`, `cosineSimilarity`, `recommendJobsForUser`, `rankCandidatesForJob`.
+
+Important logic: builds sectioned text for `skills`, `experience`, `core`, and `education`; computes TF-IDF vectors; calculates cosine similarity; applies section weights; returns rounded scores, breakdowns, matched skills, deterministic tie ordering, job recommendations, and candidate rankings.
+
+## 8. Business Rules Implemented
+
+- Duplicate job application prevention is implemented by both a database unique constraint and `ApplicationWorkflowService::checkDuplicateApplication`.
+- Applications are only allowed for jobs with status `open`.
+- Application status transitions are validated against an explicit transition map.
+- Terminal statuses are `accepted`, `rejected`, and `withdrawn`; once reached, status changes are blocked.
+- Employers can change application statuses only for applications belonging to jobs owned by their company.
+- Employers cannot move an application to `withdrawn`; withdrawal is reserved for the job seeker applicant.
+- Job seekers can withdraw only their own applications.
+- Job publish rules require at least one attached skill before publishing.
+- Jobs are created as `draft`; publishing sets `status = open` and `published_at = now()`.
+- CV parsing does not overwrite profile headline, summary, phone, or links automatically.
+- CV confirmation appends parsed experience and education records and attaches matching existing skills.
+- CV confirmation is one-time per uploaded file.
+- Test assignment requires an active test and prevents duplicate assignment of the same test to the same application.
+- Test attempts are limited to one per assignment.
+- Tests must be started before submission and submitted before evaluation.
+- Test attempts cannot be re-submitted or re-evaluated.
+- Test score cannot exceed `tests.max_score`.
+- Interview creation is blocked for terminal applications.
+- Only one unfinished interview is allowed per application.
+- Completed or evaluated interviews cannot be updated or deleted.
+- Interview evaluation requires completion first and can be performed once.
+- Matching is explainable and deterministic: it returns total score, section breakdown, matched skills, and stable tie ordering.
+
+## 9. Application Workflow
+
+### Status List
+
+Seeded statuses:
+
+| Slug | Name |
+| --- | --- |
+| `submitted` | Submitted |
+| `under_review` | Under Review |
+| `shortlisted` | Shortlisted |
+| `test_pending` | Test Pending |
+| `test_completed` | Test Completed |
+| `interview_pending` | Interview Pending |
+| `interview_scheduled` | Interview Scheduled |
+| `interview_completed` | Interview Completed |
+| `final_review` | Final Review |
+| `accepted` | Accepted |
+| `rejected` | Rejected |
+| `withdrawn` | Withdrawn |
+| `on_hold` | On Hold |
+| `need_more_information` | Need More Information |
+
+### Transition Map
+
+| Current status | Allowed target statuses |
+| --- | --- |
+| `submitted` | `under_review`, `rejected`, `on_hold`, `need_more_information`, `withdrawn` |
+| `under_review` | `shortlisted`, `test_pending`, `interview_pending`, `interview_scheduled`, `final_review`, `rejected`, `on_hold`, `need_more_information`, `withdrawn` |
+| `shortlisted` | `test_pending`, `interview_pending`, `interview_scheduled`, `final_review`, `rejected`, `on_hold`, `need_more_information`, `withdrawn` |
+| `test_pending` | `test_completed`, `rejected`, `on_hold`, `need_more_information`, `withdrawn` |
+| `test_completed` | `interview_pending`, `interview_scheduled`, `final_review`, `rejected`, `on_hold`, `need_more_information`, `withdrawn` |
+| `interview_pending` | `interview_scheduled`, `rejected`, `on_hold`, `need_more_information`, `withdrawn` |
+| `interview_scheduled` | `interview_pending`, `interview_completed`, `rejected`, `on_hold`, `need_more_information`, `withdrawn` |
+| `interview_completed` | `interview_scheduled`, `final_review`, `accepted`, `rejected`, `on_hold`, `need_more_information`, `withdrawn` |
+| `final_review` | `accepted`, `rejected`, `on_hold`, `need_more_information`, `withdrawn` |
+| `need_more_information` | `under_review`, `shortlisted`, `test_pending`, `interview_pending`, `interview_scheduled`, `final_review`, `rejected`, `on_hold`, `withdrawn` |
+| `on_hold` | `under_review`, `shortlisted`, `test_pending`, `interview_pending`, `interview_scheduled`, `final_review`, `rejected`, `withdrawn` |
+| `accepted` | No transitions |
+| `rejected` | No transitions |
+| `withdrawn` | No transitions |
+
+### Status History Recording
+
+`ApplicationWorkflowService::recordHistory` creates an `application_status_histories` row with:
+
+- `job_application_id`
+- `from_application_status_id`, nullable for initial submission
+- `to_application_status_id`
+- `changed_by_user_id`
+- optional `note`
+
+History is recorded when an application is submitted, when an employer changes status, when a job seeker withdraws, and when test/interview services trigger workflow status changes.
+
+### Test and Interview Status Updates
+
+- Assigning a test moves the application to `test_pending`.
+- Evaluating a submitted test attempt moves the application to `test_completed`.
+- Scheduling an interview moves the application to `interview_scheduled`.
+- Completing an interview moves the application to `interview_completed`.
+- Evaluating an interview moves the application to `final_review`.
+- Deleting an unfinished interview recalculates the application status to `interview_scheduled`, `interview_completed`, or `interview_pending` depending on remaining interviews.
+
+## 10. CV Upload and Parsing Flow
+
+Supported file types:
+
+- PDF: `application/pdf`
+- DOCX: `application/vnd.openxmlformats-officedocument.wordprocessingml.document`
+- The validation also permits `application/zip` for DOCX compatibility.
+- Maximum upload size: 5120 KB.
+
+Upload process:
+
+1. Job seeker submits multipart `file` to `POST /api/v1/cv/upload`.
+2. `CVService::upload` stores the file on the local disk under `cv-files/{user_id}`.
+3. A `cv_files` row is created with status `uploaded`.
+4. `ParseCVFileJob` is dispatched.
+5. The job marks the file `processing`, extracts text, parses structured data, stores a `cv_parsing_results` row, then marks the file `parsed`.
+6. If parsing fails, the file is marked `failed` and `error_message` is saved.
+
+Text extraction:
+
+- PDF text is extracted through `Smalot\PdfParser\Parser`.
+- DOCX text is extracted through `PhpOffice\PhpWord\IOFactory` by traversing sections, text runs, containers, and table cells.
+
+Parsed JSON structure:
+
+```json
+{
+  "email": "candidate@example.com",
+  "phone": "+1 555 0100",
+  "skills": ["PHP", "Laravel"],
+  "experience": [
+    {
+      "title": "Backend Developer",
+      "company_name": "Example Co",
+      "description": "Backend Developer at Example Co"
+    }
+  ],
+  "education": [
+    {
+      "institution": "State University",
+      "degree": "Bachelor of Science",
+      "field_of_study": "Computer Science",
+      "description": "Bachelor of Science in Computer Science, State University"
+    }
+  ]
+}
+```
+
+Confirm flow:
+
+- `POST /api/v1/cv/{cvFile}/confirm` requires the CV to belong to the authenticated job seeker.
+- A parsing result must exist.
+- The CV must not already be confirmed.
+- Parsed experiences and education are appended to the profile.
+- Parsed skills are slug-matched against existing `skills`; matching skills are attached with `syncWithoutDetaching`.
+- The CV's `confirmed_at` timestamp is set.
+
+The confirm flow does not automatically overwrite profile fields such as headline, summary, phone, portfolio URL, LinkedIn URL, or GitHub URL.
+
+## 11. AI Matching Implementation
+
+The matching implementation is deterministic information retrieval, not deep AI or LLM-based matching.
+
+Profile text is built in sections by `MatchingService::buildTextFromProfile`:
+
+- `core`: profile headline, summary, location
+- `skills`: skill names attached to the profile
+- `experience`: experience title, company name, location, description
+- `education`: institution, degree, field of study, description
+
+Job text is built in sections by `MatchingService::buildTextFromJob`:
+
+- `core`: title, description, employment type, experience level, location
+- `skills`: required skill names attached to the job
+- `experience`: experience level, title, description
+- `education`: currently empty
+
+TF-IDF implementation:
+
+- Text is lowercased.
+- Non-letter/non-number characters are normalized to spaces.
+- Tokens are split on whitespace.
+- Term frequency is calculated per document.
+- Inverse document frequency uses `log((documentCount + 1) / (documentFrequency + 1)) + 1`.
+
+Cosine similarity:
+
+- Vectors are compared using dot product divided by vector magnitudes.
+- Empty vectors return `0.0`.
+
+Section weights:
+
+| Section | Weight |
+| --- | --- |
+| `skills` | `0.50` |
+| `experience` | `0.25` |
+| `core` | `0.15` |
+| `education` | `0.10` |
+
+Job recommendation endpoint:
+
+- `GET /api/v1/jobs/recommended`
+- Job seeker only.
+- Requires a job seeker profile.
+- Considers open jobs that the job seeker has not already applied to.
+- Returns `score`, `breakdown`, and `matched_skills`.
+- Sorts by score descending, then published date descending, then job ID ascending.
+
+Candidate ranking endpoint:
+
+- `GET /api/v1/jobs/{jobPosting}/candidates/ranked`
+- Owning employer only.
+- Considers candidates who have applied to the selected job.
+- Returns `job_application_id`, application status, profile, `score`, `breakdown`, and `matched_skills`.
+- Sorts by score descending, then application ID ascending.
+
+Score format:
+
+- Scores are floating point values rounded to six decimal places.
+- Breakdown includes `skills`, `experience`, `core`, and `education`.
+
+Explainability fields:
+
+- `breakdown`: section-level similarity scores.
+- `matched_skills`: exact case-insensitive skill-name overlap.
+
+## 12. Authorization and Policies
+
+Role-based access:
+
+- `job_seeker`: profile management, CV management, applications, own tests, own interviews, recommendations.
+- `employer`: company/employer profile management, job posting management, application review, status changes, tests, interviews, ranked candidates.
+- `admin`: enum and seeded admin user exist; admins can manage test catalog entries, but no broader admin API module is implemented.
+
+Policies registered in `AppServiceProvider`:
+
+- `JobPostingPolicy`
+- `JobApplicationPolicy`
+- `ApplicationTestAssignmentPolicy`
+- `InterviewPolicy`
+- `TestAttemptPolicy`
+
+Ownership checks:
+
+- Employers can manage only jobs belonging to their company.
+- Employers can view applications, assign tests, evaluate attempts, and manage interviews only for applications tied to their company jobs.
+- Job seekers can view/withdraw only their own applications.
+- Job seekers can start/submit only their own assigned tests.
+- Job seekers can list/view only their own interviews.
+- CV files are scoped manually in `CVService` by `user_id`.
+- Experience and education ownership is enforced manually in `ProfileService`.
+
+Public vs protected endpoints:
+
+- Public: registration, login, skill listing/search, open job listing, open job detail.
+- Protected: all profile, CV, employer job mutation, application, test catalog management, test assignment/attempt, interview, matching, logout, and current-user endpoints.
+- Non-open job detail is visible only to the owning employer.
+
+## 13. Validation
+
+Main Form Request classes:
+
+- `JobSeekerRegisterRequest`: validates `name`, unique `email`, confirmed password.
+- `EmployerRegisterRequest`: validates `name`, unique `email`, `company_name`, confirmed password.
+- `LoginRequest`: validates `email` and `password`.
+- `UpdateJobSeekerProfileRequest`: validates optional profile text fields and URL fields.
+- `StoreExperienceRequest` / `UpdateExperienceRequest`: validates title, company, dates, current flag, description.
+- `StoreEducationRequest` / `UpdateEducationRequest`: validates institution, degree, field, dates, description.
+- `AttachSkillRequest`: validates existing `skill_id`.
+- `UpdateCompanyRequest`: validates company details and website URL.
+- `UpdateEmployerProfileRequest`: validates employer profile fields.
+- `UploadCVRequest`: validates required PDF/DOCX file, MIME type, max size.
+- `IndexSkillRequest`: validates skill `search` and `limit`.
+- `CVIndexRequest`: validates CV list pagination.
+- `IndexJobPostingRequest`: validates public job filters and pagination.
+- `StoreJobPostingRequest` / `UpdateJobPostingRequest`: validates job fields and salary min/max consistency.
+- `AttachJobPostingSkillsRequest`: validates `skill_ids` array and existing skill IDs.
+- `RecommendedJobsRequest` / `RankedCandidatesRequest`: validates `limit` from 1 to 50.
+- `MyJobApplicationIndexRequest` / `IndexJobApplicationsForJobRequest`: validate application list pagination.
+- `ChangeApplicationStatusRequest`: validates target status slug exists and optional note.
+- `WithdrawJobApplicationRequest`: validates optional note.
+- `IndexTestCatalogRequest` / `ShowTestCatalogRequest` / `StoreTestCatalogRequest` / `UpdateTestCatalogRequest` / `DeleteTestCatalogRequest`: validate test catalog access and fields, including positive duration/max score and `passing_score <= max_score`.
+- `ListMyTestsRequest`: validates assigned test list pagination.
+- `AssignTestRequest`: validates active `test_id` and optional note.
+- `SubmitTestAttemptRequest`: validates `answers` array.
+- `EvaluateTestAttemptRequest`: validates numeric score within the test's max score and optional feedback.
+- `ListMyInterviewsRequest`: validates job seeker interview list pagination.
+- `CreateInterviewRequest`: validates future `scheduled_at`, interview mode, meeting link, duration, notes.
+- `UpdateInterviewRequest`: validates interview update fields.
+- `CompleteInterviewRequest`: validates optional completion note.
+- `EvaluateInterviewRequest`: validates recommendation in `advance`, `hold`, `reject`; requires at least one scored item with score between 1 and 5.
+
+Authorization is also embedded in Form Requests through role helpers and policy checks.
+
+## 14. Seeders and Test Data
+
+Seeders:
+
+- `DatabaseSeeder` calls `ApplicationStatusSeeder` and `SampleUserSeeder`.
+- `ApplicationStatusSeeder` seeds all 14 application statuses used by the workflow.
+- `SampleUserSeeder` seeds sample accounts, profiles, skills, and jobs.
+
+Seeded users:
+
+| Email | Role | Password |
+| --- | --- | --- |
+| `admin@smartrecruitment.test` | `admin` | `password` |
+| `jobseeker@smartrecruitment.test` | `job_seeker` | `password` |
+| `employer@smartrecruitment.test` | `employer` | `password` |
+
+Seeded company:
+
+- `Acme Hiring Co.`
+
+Seeded job seeker profile data:
+
+- Headline: Laravel Backend Developer
+- Summary focused on REST APIs, Laravel, MySQL, and service-oriented architecture
+- Example experience and education records
+- Skills attached: PHP, Laravel, MySQL, REST APIs, Git
+
+Seeded skills:
+
+- PHP
+- Laravel
+- MySQL
+- REST APIs
+- JavaScript
+- Vue.js
+- React
+- Git
+- Docker
+- AWS
+- Communication
+- Problem Solving
+- Testing
+- Agile
+- API Design
+
+Seeded jobs:
+
+- `Senior Laravel Backend Engineer`, open, with backend skills
+- `Frontend Product Engineer`, draft, with frontend/collaboration skills
+- `Technical Recruiter`, closed, with communication/problem-solving skills
+
+Sample applications/tests/interviews:
+
+- Seeders do not create sample applications, test assignments, test attempts, interviews, or interview evaluations.
+- Feature tests create those records during test execution.
+- The `tests` table exists, but `SampleUserSeeder` does not seed test catalog rows.
+
+## 15. Postman Collection
+
+Postman collections are located in the `postman/` directory:
+
+- `Smart Recruitment Platform - Phase 1.postman_collection.json`
+- `Smart Recruitment Platform - Phase 2.postman_collection.json`
+- `Smart Recruitment Platform - Phase 3.postman_collection.json`
+- `Smart Recruitment Platform - Phase 4.postman_collection.json`
+- `Smart Recruitment Platform - Phase 5.postman_collection.json`
+- `Smart Recruitment Platform - Phase 6.postman_collection.json`
+- `Smart Recruitment Platform - Phase 7.postman_collection.json`
+- `Smart Recruitment Platform - Phase 8.postman_collection.json`
+- `Smart Recruitment Platform - High Priority Batch 1.postman_collection.json`
+
+Modules covered:
+
+- Phase 1: authentication
+- Phase 2: profiles, experiences, education, skills, company, employer profile
+- Phase 3: CV upload and parsing
+- Phase 4: job posting
+- Phase 5: application workflow
+- Phase 6: testing module
+- Phase 7: interview module
+- Phase 8: matching and ranking
+- High Priority Batch 1: public skill listing/search, test catalog CRUD, paginated list examples, and nested job application creation route
+
+Common collection variables:
+
+- `base_url`, typically pointing to the local API version root such as `http://127.0.0.1:8000/api/v1`
+- `token` in earlier collections
+- `job_seeker_token` and `employer_token` in later workflow collections
+- Resource IDs such as `job_id`, `application_id`, `skill_id`, `test_id`, `assignment_id`, `attempt_id`, `interview_id`, and `cv_id` depending on the phase
+
+Suggested testing order:
+
+1. Run migrations and seeders.
+2. Use Phase 1 to register/login users and confirm Sanctum authentication.
+3. Use Phase 2 to populate profile, company, skills, experience, and education data.
+4. Use Phase 3 to upload and confirm a CV.
+5. Use Phase 4 to create a job, attach skills, publish it, and verify public listing.
+6. Use Phase 5 to apply to a job and exercise status transitions.
+7. Use Phase 6 to assign, start, submit, and evaluate a test.
+8. Use Phase 7 to schedule, complete, and evaluate interviews.
+9. Use Phase 8 to verify recommended jobs and ranked candidates.
+10. Use High Priority Batch 1 to exercise skill discovery, test catalog CRUD, paginated list calls, and the clearer nested application route.
+
+## 16. Known Limitations
+
+- Partially Implemented: CV parsing is MVP/basic. It uses regex and simple section-line parsing, so complex CV formats may parse poorly.
+- Partially Implemented: CV parsing only supports PDF and DOCX.
+- Partially Implemented: Parsed profile confirmation appends experience and education, which can create duplicates if the CV contains data already present in the profile.
+- Partially Implemented: Parsed skills are only attached if they already exist in the `skills` table; unknown skills are ignored.
+- Partially Implemented: Matching is deterministic IR-based matching, not deep AI, semantic embeddings, or LLM reasoning.
+- Not Implemented: Matching has no configurable weights through admin settings; section weights are hardcoded.
+- Partially Implemented: Admin role exists and an admin user is seeded; admins can manage the global test catalog, but no broader admin API module or admin dashboard endpoints are implemented.
+- Not Implemented: No custom notification system is implemented. The `User` model uses Laravel `Notifiable`, but there is no notifications migration or workflow notification dispatch.
+- Not Implemented: No advanced employer analytics or dashboard endpoints are implemented.
+- Not Implemented: Seeders do not create sample test catalog entries, applications, test assignments, interviews, or evaluations.
+- Partially Implemented: `POST /api/v1/jobs/{jobPosting}/applications` is the clearer application creation route; the older `POST /api/v1/applications/{jobPosting}` route remains temporarily for backward compatibility.
+- CV parsing is queued; local development needs a queue worker or synchronous queue configuration for immediate parsing.
+- Partially Implemented: File storage is local by default; no cloud storage integration is implemented.
+- Not Implemented: There is no email verification enforcement despite `email_verified_at` existing on `users`.
+- Not Implemented: No password reset API endpoints are implemented.
+- Partially Implemented: Main high-volume list endpoints for jobs, applications, assigned tests, interviews, and CV files are paginated; smaller profile subresource lists such as experiences, education, application test assignments, and application interviews still return full collections.
+- Not Implemented: There is no rate limiting customization documented for login, upload, or matching endpoints.
+- Not Implemented: No OpenAPI/Swagger documentation is present.
+- Automated tests are implemented and broad for current modules, but there are no browser/end-to-end tests because this repository is backend-only.
+
+## 17. Improvement Plan Preparation
+
+### High Priority
+
+- Add notification workflows for application status changes, test assignments, interview scheduling, and final decisions.
+- Improve CV confirmation to detect duplicates before appending experiences and education.
+- Add admin APIs for managing users, companies, skills, tests, and platform-level oversight.
+- Add OpenAPI documentation for all `/api/v1` endpoints.
+
+### Medium Priority
+
+- Improve CV parsing with more robust section detection, date extraction, and profile field suggestions.
+- Add unknown-skill suggestion or creation workflow during CV confirmation.
+- Add configurable matching weights and optional threshold filters.
+- Add embedding-based semantic matching as an optional enhancement while keeping deterministic explanations.
+- Add pagination, sorting, and status filters to application, test, and interview endpoints.
+- Add email verification and password reset API flows.
+- Add cloud/object storage configuration for CV files.
+- Add audit metadata for job changes and test/interview updates.
+- Add database seed data for tests, applications, assignments, and interviews to support demos.
+
+### Low Priority
+
+- Add soft deletes for jobs, profiles, CV files, and workflow records where business retention is needed.
+- Add export endpoints for candidate pipelines and ranked candidate lists.
+- Add richer interview score aggregation and recommendation rules.
+- Add support for more CV file types if required, such as TXT or RTF.
+- Add localized validation messages and API documentation examples.
+- Add configurable application status workflows per company or job.
+- Add analytics endpoints for employer hiring funnels and candidate conversion.

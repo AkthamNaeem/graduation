@@ -21,6 +21,7 @@ class IndexJobPostingRequest extends FormRequest
             'location' => ['sometimes', 'nullable', 'string', 'max:255'],
             'skill' => ['sometimes', 'nullable', 'string', 'max:255'],
             'experience_level' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
         ];
     }
 }

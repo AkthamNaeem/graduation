@@ -109,7 +109,10 @@ class InterviewController extends Controller
     {
         return ApiResponse::success(
             data: InterviewResource::collection(
-                $this->interviewService->getMyInterviews($this->authenticatedUser($request)),
+                $this->interviewService->getMyInterviews(
+                    $this->authenticatedUser($request),
+                    $request->integer('per_page', 15),
+                ),
             ),
             message: 'My interviews retrieved successfully.',
         );

@@ -64,6 +64,152 @@ class TestModuleTest extends TestCase
         ]);
     }
 
+    public function test_employer_can_manage_test_catalog(): void
+    {
+        $employer = $this->employer();
+
+        $createResponse = $this->withToken($this->tokenFor($employer))
+            ->postJson('/api/v1/tests', [
+                'title' => 'Backend Assessment',
+                'description' => 'Reusable backend screening test.',
+                'instructions' => 'Answer all questions.',
+                'duration_minutes' => 75,
+                'max_score' => 100,
+                'passing_score' => 70,
+                'is_active' => true,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.title', 'Backend Assessment')
+            ->assertJsonPath('data.duration_minutes', 75)
+            ->assertJsonPath('data.max_score', '100.00');
+
+        $testId = $createResponse->json('data.id');
+
+        $this->withToken($this->tokenFor($employer))
+            ->getJson('/api/v1/tests')
+            ->assertOk()
+            ->assertJsonCount(1, 'data.data')
+            ->assertJsonPath('data.data.0.id', $testId)
+            ->assertJsonPath('data.meta.current_page', 1);
+
+        $this->withToken($this->tokenFor($employer))
+            ->getJson("/api/v1/tests/{$testId}")
+            ->assertOk()
+            ->assertJsonPath('data.title', 'Backend Assessment');
+
+        $this->withToken($this->tokenFor($employer))
+            ->patchJson("/api/v1/tests/{$testId}", [
+                'title' => 'Senior Backend Assessment',
+                'passing_score' => 80,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.title', 'Senior Backend Assessment')
+            ->assertJsonPath('data.passing_score', '80.00');
+
+        $this->assertDatabaseHas('tests', [
+            'id' => $testId,
+            'title' => 'Senior Backend Assessment',
+        ]);
+
+        $this->withToken($this->tokenFor($employer))
+            ->deleteJson("/api/v1/tests/{$testId}")
+            ->assertOk()
+            ->assertJsonPath('data', null);
+
+        $this->assertDatabaseMissing('tests', [
+            'id' => $testId,
+        ]);
+    }
+
+    public function test_admin_can_create_test_catalog_entries(): void
+    {
+        $admin = $this->admin();
+
+        $this->withToken($this->tokenFor($admin))
+            ->postJson('/api/v1/tests', [
+                'title' => 'Admin Created Assessment',
+                'duration_minutes' => 45,
+                'max_score' => 50,
+                'passing_score' => 35,
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.title', 'Admin Created Assessment');
+
+        $this->assertDatabaseHas('tests', [
+            'title' => 'Admin Created Assessment',
+        ]);
+    }
+
+    public function test_job_seeker_can_only_read_active_test_catalog_entries(): void
+    {
+        $jobSeeker = $this->jobSeeker();
+        $activeTest = $this->testCatalogEntry('Active Assessment');
+        $inactiveTest = $this->testCatalogEntry('Inactive Assessment');
+        $inactiveTest->forceFill(['is_active' => false])->save();
+
+        $this->withToken($this->tokenFor($jobSeeker))
+            ->getJson('/api/v1/tests')
+            ->assertOk()
+            ->assertJsonCount(1, 'data.data')
+            ->assertJsonPath('data.data.0.id', $activeTest->id)
+            ->assertJsonMissing(['title' => 'Inactive Assessment']);
+
+        $this->withToken($this->tokenFor($jobSeeker))
+            ->getJson("/api/v1/tests/{$activeTest->id}")
+            ->assertOk()
+            ->assertJsonPath('data.title', 'Active Assessment');
+
+        $this->withToken($this->tokenFor($jobSeeker))
+            ->getJson("/api/v1/tests/{$inactiveTest->id}")
+            ->assertStatus(403)
+            ->assertJsonPath('success', false);
+
+        $this->withToken($this->tokenFor($jobSeeker))
+            ->postJson('/api/v1/tests', [
+                'title' => 'Should Fail',
+                'duration_minutes' => 30,
+                'max_score' => 100,
+            ])
+            ->assertStatus(403)
+            ->assertJsonPath('success', false);
+
+        $this->withToken($this->tokenFor($jobSeeker))
+            ->patchJson("/api/v1/tests/{$activeTest->id}", [
+                'title' => 'Should Fail',
+            ])
+            ->assertStatus(403)
+            ->assertJsonPath('success', false);
+
+        $this->withToken($this->tokenFor($jobSeeker))
+            ->deleteJson("/api/v1/tests/{$activeTest->id}")
+            ->assertStatus(403)
+            ->assertJsonPath('success', false);
+    }
+
+    public function test_test_catalog_validation_rejects_invalid_scores(): void
+    {
+        $employer = $this->employer();
+        $test = $this->testCatalogEntry('Scored Assessment');
+
+        $this->withToken($this->tokenFor($employer))
+            ->postJson('/api/v1/tests', [
+                'title' => 'Invalid Assessment',
+                'duration_minutes' => 60,
+                'max_score' => 100,
+                'passing_score' => 110,
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['passing_score']);
+
+        $this->withToken($this->tokenFor($employer))
+            ->patchJson("/api/v1/tests/{$test->id}", [
+                'max_score' => 60,
+            ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['passing_score']);
+    }
+
     public function test_unauthorized_employer_cannot_assign_list_or_evaluate_tests(): void
     {
         $company = Company::create(['name' => 'Acme Hiring Co.']);
@@ -117,10 +263,11 @@ class TestModuleTest extends TestCase
         $this->withToken($this->tokenFor($firstSeeker))
             ->getJson('/api/v1/my/tests')
             ->assertOk()
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.id', $firstAssignment->id)
-            ->assertJsonPath('data.0.test.title', 'Backend Assessment')
-            ->assertJsonPath('data.0.job_application.id', $firstApplication->id);
+            ->assertJsonCount(1, 'data.data')
+            ->assertJsonPath('data.data.0.id', $firstAssignment->id)
+            ->assertJsonPath('data.data.0.test.title', 'Backend Assessment')
+            ->assertJsonPath('data.data.0.job_application.id', $firstApplication->id)
+            ->assertJsonPath('data.meta.current_page', 1);
     }
 
     public function test_candidate_can_start_exactly_one_attempt(): void
@@ -369,6 +516,14 @@ class TestModuleTest extends TestCase
         ]);
 
         return $user->load('jobSeekerProfile');
+    }
+
+    private function admin(string $email = 'admin@example.com'): User
+    {
+        return User::factory()->create([
+            'email' => $email,
+            'role' => UserRole::ADMIN,
+        ]);
     }
 
     /**

@@ -12,8 +12,10 @@ use App\Http\Controllers\Api\V1\Profile\EmployerProfileController;
 use App\Http\Controllers\Api\V1\Profile\ExperienceController;
 use App\Http\Controllers\Api\V1\Profile\ProfileController;
 use App\Http\Controllers\Api\V1\Profile\ProfileSkillController;
+use App\Http\Controllers\Api\V1\Skill\SkillController;
 use App\Http\Controllers\Api\V1\Test\TestAssignmentController;
 use App\Http\Controllers\Api\V1\Test\TestAttemptController;
+use App\Http\Controllers\Api\V1\Test\TestCatalogController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')
@@ -63,6 +65,7 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('jobs/recommended', [JobPostingController::class, 'recommended'])->name('jobs.recommended');
     Route::get('jobs/{jobPosting}/candidates/ranked', [JobPostingController::class, 'rankedCandidates'])->name('jobs.candidates.ranked');
 
+    Route::post('jobs/{jobPosting}/applications', [JobApplicationController::class, 'store'])->name('jobs.applications.store');
     Route::post('applications/{jobPosting}', [JobApplicationController::class, 'store'])->name('applications.store');
     Route::get('applications/my', [JobApplicationController::class, 'my'])->name('applications.my');
     Route::get('applications/{jobApplication}', [JobApplicationController::class, 'show'])->name('applications.show');
@@ -79,11 +82,18 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('interviews/{interview}/evaluate', [InterviewController::class, 'evaluate'])->name('interviews.evaluate');
     Route::get('my/interviews', [InterviewController::class, 'my'])->name('interviews.my');
     Route::get('interviews/{interview}', [InterviewController::class, 'show'])->name('interviews.show');
+    Route::get('tests', [TestCatalogController::class, 'index'])->name('tests.index');
+    Route::post('tests', [TestCatalogController::class, 'store'])->name('tests.store');
+    Route::get('tests/{test}', [TestCatalogController::class, 'show'])->name('tests.show');
+    Route::put('tests/{test}', [TestCatalogController::class, 'update'])->name('tests.update');
+    Route::patch('tests/{test}', [TestCatalogController::class, 'update'])->name('tests.patch');
+    Route::delete('tests/{test}', [TestCatalogController::class, 'destroy'])->name('tests.destroy');
     Route::get('my/tests', [TestAssignmentController::class, 'my'])->name('tests.my');
     Route::post('tests/{applicationTestAssignment}/start', [TestAttemptController::class, 'start'])->name('tests.start');
     Route::post('tests/{applicationTestAssignment}/submit', [TestAttemptController::class, 'submit'])->name('tests.submit');
     Route::post('tests/{testAttempt}/evaluate', [TestAttemptController::class, 'evaluate'])->name('tests.evaluate');
 });
 
+Route::get('skills', [SkillController::class, 'index'])->name('skills.index');
 Route::get('jobs', [JobPostingController::class, 'index'])->name('jobs.index');
 Route::get('jobs/{jobPosting}', [JobPostingController::class, 'show'])->name('jobs.show');

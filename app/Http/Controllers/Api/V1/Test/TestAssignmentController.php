@@ -52,7 +52,10 @@ class TestAssignmentController extends Controller
     {
         return ApiResponse::success(
             data: ApplicationTestAssignmentResource::collection(
-                $this->testService->getMyAssignments($this->authenticatedUser($request)),
+                $this->testService->getMyAssignments(
+                    $this->authenticatedUser($request),
+                    $request->integer('per_page', 15),
+                ),
             ),
             message: 'Assigned tests retrieved successfully.',
         );

@@ -84,6 +84,30 @@ class JobApplicationTest extends TestCase
         ]);
     }
 
+    public function test_job_seeker_can_apply_using_clear_job_applications_route(): void
+    {
+        $company = Company::create(['name' => 'Acme Hiring Co.']);
+        $jobSeeker = $this->jobSeeker();
+        $jobPosting = $this->jobPostingFor($company, [
+            'status' => 'open',
+            'published_at' => now()->subHour(),
+        ]);
+
+        $this->withToken($this->tokenFor($jobSeeker))
+            ->postJson("/api/v1/jobs/{$jobPosting->id}/applications")
+            ->assertCreated()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.job_posting_id', $jobPosting->id)
+            ->assertJsonPath('data.status.slug', 'submitted');
+
+        $this->withToken($this->tokenFor($jobSeeker))
+            ->postJson("/api/v1/applications/{$jobPosting->id}")
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['job_posting_id']);
+
+        $this->assertDatabaseCount('job_applications', 1);
+    }
+
     public function test_duplicate_applications_are_blocked(): void
     {
         $company = Company::create(['name' => 'Acme Hiring Co.']);
@@ -161,8 +185,9 @@ class JobApplicationTest extends TestCase
         $this->withToken($this->tokenFor($jobSeeker))
             ->getJson('/api/v1/applications/my')
             ->assertOk()
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.id', $ownedApplication->id);
+            ->assertJsonCount(1, 'data.data')
+            ->assertJsonPath('data.data.0.id', $ownedApplication->id)
+            ->assertJsonPath('data.meta.current_page', 1);
     }
 
     public function test_employer_can_list_applications_for_owned_job_only(): void
@@ -183,7 +208,8 @@ class JobApplicationTest extends TestCase
         $this->withToken($this->tokenFor($ownerEmployer))
             ->getJson("/api/v1/jobs/{$jobPosting->id}/applications")
             ->assertOk()
-            ->assertJsonCount(2, 'data');
+            ->assertJsonCount(2, 'data.data')
+            ->assertJsonPath('data.meta.current_page', 1);
 
         $this->withToken($this->tokenFor($otherEmployer))
             ->getJson("/api/v1/jobs/{$jobPosting->id}/applications")

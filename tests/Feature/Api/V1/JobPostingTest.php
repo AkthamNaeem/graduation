@@ -42,7 +42,8 @@ class JobPostingTest extends TestCase
         $this->withToken($this->tokenFor($user))
             ->getJson('/api/v1/jobs/my')
             ->assertOk()
-            ->assertJsonPath('data.0.id', $jobId);
+            ->assertJsonPath('data.data.0.id', $jobId)
+            ->assertJsonPath('data.meta.current_page', 1);
 
         $this->withToken($this->tokenFor($user))
             ->getJson("/api/v1/jobs/{$jobId}")
@@ -231,33 +232,34 @@ class JobPostingTest extends TestCase
 
         $this->getJson('/api/v1/jobs?search=Laravel')
             ->assertOk()
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.title', 'Laravel Platform Engineer');
+            ->assertJsonCount(1, 'data.data')
+            ->assertJsonPath('data.data.0.title', 'Laravel Platform Engineer')
+            ->assertJsonPath('data.meta.current_page', 1);
 
         $this->getJson('/api/v1/jobs?location=Berlin')
             ->assertOk()
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.title', 'React Frontend Engineer');
+            ->assertJsonCount(1, 'data.data')
+            ->assertJsonPath('data.data.0.title', 'React Frontend Engineer');
 
         $this->getJson('/api/v1/jobs?experience_level=senior')
             ->assertOk()
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.title', 'Laravel Platform Engineer');
+            ->assertJsonCount(1, 'data.data')
+            ->assertJsonPath('data.data.0.title', 'Laravel Platform Engineer');
 
         $this->getJson('/api/v1/jobs?skill=laravel')
             ->assertOk()
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.title', 'Laravel Platform Engineer');
+            ->assertJsonCount(1, 'data.data')
+            ->assertJsonPath('data.data.0.title', 'Laravel Platform Engineer');
 
         $this->getJson('/api/v1/jobs?skill='.$react->id)
             ->assertOk()
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.title', 'React Frontend Engineer');
+            ->assertJsonCount(1, 'data.data')
+            ->assertJsonPath('data.data.0.title', 'React Frontend Engineer');
 
         $this->withToken($this->tokenFor($employer))
             ->getJson('/api/v1/jobs/my?search=Laravel')
             ->assertOk()
-            ->assertJsonCount(2, 'data');
+            ->assertJsonCount(2, 'data.data');
     }
 
     public function test_sample_user_seeder_creates_job_postings_with_skills(): void

@@ -7,6 +7,7 @@ use App\Models\InterviewEvaluation;
 use App\Models\JobApplication;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -103,9 +104,9 @@ class InterviewService
     }
 
     /**
-     * @return Collection<int, Interview>
+     * @return LengthAwarePaginator<int, Interview>
      */
-    public function getMyInterviews(User $user): Collection
+    public function getMyInterviews(User $user, int $perPage = 15): LengthAwarePaginator
     {
         $profileId = $user->jobSeekerProfile?->id;
 
@@ -116,7 +117,7 @@ class InterviewService
             })
             ->latest('scheduled_at')
             ->latest('id')
-            ->get();
+            ->paginate($perPage);
     }
 
     public function getInterview(Interview $interview): Interview

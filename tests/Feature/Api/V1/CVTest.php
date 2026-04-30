@@ -79,6 +79,21 @@ class CVTest extends TestCase
             ->assertJsonPath('success', false);
     }
 
+    public function test_job_seeker_cv_list_is_paginated(): void
+    {
+        $user = $this->jobSeeker();
+        $this->cvFileFor($user, ['original_name' => 'first.pdf']);
+        $this->cvFileFor($user, ['original_name' => 'second.pdf']);
+
+        $this->withToken($this->tokenFor($user))
+            ->getJson('/api/v1/cv?per_page=1')
+            ->assertOk()
+            ->assertJsonCount(1, 'data.data')
+            ->assertJsonPath('data.meta.current_page', 1)
+            ->assertJsonPath('data.meta.per_page', 1)
+            ->assertJsonPath('data.meta.total', 2);
+    }
+
     public function test_user_cannot_access_another_users_cv(): void
     {
         $user = $this->jobSeeker('owner@example.com');

@@ -20,6 +20,8 @@ class ListMyTestsRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [];
+        return [
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+        ];
     }
 }

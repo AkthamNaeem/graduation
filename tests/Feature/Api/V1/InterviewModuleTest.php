@@ -270,9 +270,10 @@ class InterviewModuleTest extends TestCase
         $this->withToken($this->tokenFor($jobSeeker))
             ->getJson('/api/v1/my/interviews')
             ->assertOk()
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.id', $interviewId)
-            ->assertJsonPath('data.0.job_application.id', $application->id);
+            ->assertJsonCount(1, 'data.data')
+            ->assertJsonPath('data.data.0.id', $interviewId)
+            ->assertJsonPath('data.data.0.job_application.id', $application->id)
+            ->assertJsonPath('data.meta.current_page', 1);
 
         $this->withToken($this->tokenFor($jobSeeker))
             ->getJson("/api/v1/interviews/{$interviewId}")

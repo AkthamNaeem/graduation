@@ -8,8 +8,8 @@ use App\Models\CVParsingResult;
 use App\Models\JobSeekerProfile;
 use App\Models\Skill;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -38,14 +38,14 @@ class CVService
     }
 
     /**
-     * @return Collection<int, CVFile>
+     * @return LengthAwarePaginator<int, CVFile>
      */
-    public function list(User $user): Collection
+    public function list(User $user, int $perPage = 15): LengthAwarePaginator
     {
         return $user->cvFiles()
             ->with('parsingResult')
             ->latest()
-            ->get();
+            ->paginate($perPage);
     }
 
     public function get(User $user, CVFile $cvFile): CVFile

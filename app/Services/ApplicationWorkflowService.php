@@ -9,7 +9,7 @@ use App\Models\JobApplication;
 use App\Models\JobPosting;
 use App\Models\JobSeekerProfile;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -186,9 +186,9 @@ class ApplicationWorkflowService
     }
 
     /**
-     * @return Collection<int, JobApplication>
+     * @return LengthAwarePaginator<int, JobApplication>
      */
-    public function getMyApplications(User $user): Collection
+    public function getMyApplications(User $user, int $perPage = 15): LengthAwarePaginator
     {
         $profileId = $user->jobSeekerProfile?->id;
 
@@ -196,18 +196,18 @@ class ApplicationWorkflowService
             ->with($this->applicationRelations())
             ->where('job_seeker_profile_id', $profileId)
             ->latest()
-            ->get();
+            ->paginate($perPage);
     }
 
     /**
-     * @return Collection<int, JobApplication>
+     * @return LengthAwarePaginator<int, JobApplication>
      */
-    public function getJobApplications(JobPosting $jobPosting): Collection
+    public function getJobApplications(JobPosting $jobPosting, int $perPage = 15): LengthAwarePaginator
     {
         return $jobPosting->jobApplications()
             ->with($this->applicationRelations())
             ->latest()
-            ->get();
+            ->paginate($perPage);
     }
 
     public function getApplication(JobApplication $jobApplication): JobApplication

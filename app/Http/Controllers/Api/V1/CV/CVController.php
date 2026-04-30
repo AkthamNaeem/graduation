@@ -26,7 +26,7 @@ class CVController extends Controller
     public function index(CVIndexRequest $request): JsonResponse
     {
         return ApiResponse::success(
-            data: CVFileResource::collection($this->cvService->list($request->user())),
+            data: CVFileResource::collection($this->cvService->list($request->user(), $request->integer('per_page', 15))),
             message: 'CV files retrieved successfully.',
         );
     }

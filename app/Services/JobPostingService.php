@@ -7,17 +7,17 @@ use App\Models\JobPosting;
 use App\Models\Skill;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\ValidationException;
 
 class JobPostingService
 {
     /**
      * @param  array<string, mixed>  $filters
-     * @return Collection<int, JobPosting>
+     * @return LengthAwarePaginator<int, JobPosting>
      */
-    public function getPublicJobs(array $filters): Collection
+    public function getPublicJobs(array $filters): LengthAwarePaginator
     {
         return $this->applyFilters(
             JobPosting::query()
@@ -25,14 +25,14 @@ class JobPostingService
                 ->where('status', 'open')
                 ->orderByDesc('published_at'),
             $filters,
-        )->get();
+        )->paginate($this->perPage($filters));
     }
 
     /**
      * @param  array<string, mixed>  $filters
-     * @return Collection<int, JobPosting>
+     * @return LengthAwarePaginator<int, JobPosting>
      */
-    public function getEmployerJobs(User $user, array $filters): Collection
+    public function getEmployerJobs(User $user, array $filters): LengthAwarePaginator
     {
         return $this->applyFilters(
             $this->employerProfile($user)
@@ -41,7 +41,7 @@ class JobPostingService
                 ->with(['company', 'skills'])
                 ->latest(),
             $filters,
-        )->get();
+        )->paginate($this->perPage($filters));
     }
 
     public function getVisibleJobPosting(JobPosting $jobPosting): JobPosting
@@ -166,5 +166,13 @@ class JobPostingService
     private function employerProfile(User $user): EmployerProfile
     {
         return $user->employerProfile()->with('company')->firstOrFail();
+    }
+
+    /**
+     * @param  array<string, mixed>  $filters
+     */
+    private function perPage(array $filters): int
+    {
+        return (int) ($filters['per_page'] ?? 15);
     }
 }
