@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Enums\UserRole;
+use App\Events\TestAssigned;
+use App\Events\TestEvaluated;
 use App\Models\ApplicationTestAssignment;
 use App\Models\JobApplication;
 use App\Models\Test;
@@ -106,6 +108,8 @@ class TestService
                     'Test assigned to candidate.',
                 );
             }
+
+            DB::afterCommit(fn (): array => event(new TestAssigned($assignment->id)));
 
             return $this->loadAssignment($assignment);
         });
@@ -242,6 +246,8 @@ class TestService
                     'Test attempt evaluated.',
                 );
             }
+
+            DB::afterCommit(fn (): array => event(new TestEvaluated($testAttempt->id)));
 
             return $this->loadAttempt($testAttempt);
         });

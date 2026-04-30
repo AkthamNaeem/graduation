@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\UserRole;
+use App\Events\ApplicationStatusChanged;
 use App\Models\ApplicationStatus;
 use App\Models\ApplicationStatusHistory;
 use App\Models\JobApplication;
@@ -112,6 +113,14 @@ class ApplicationWorkflowService
 
             $this->recordHistory($application, $fromStatus, $toStatus, $user, $note);
 
+            DB::afterCommit(fn (): array => event(new ApplicationStatusChanged(
+                $application->id,
+                $fromStatus->slug,
+                $toStatus->slug,
+                $user->id,
+                $note,
+            )));
+
             return $this->loadApplication($application);
         });
     }
@@ -133,6 +142,14 @@ class ApplicationWorkflowService
             ])->save();
 
             $this->recordHistory($application, $fromStatus, $withdrawnStatus, $user, $note);
+
+            DB::afterCommit(fn (): array => event(new ApplicationStatusChanged(
+                $application->id,
+                $fromStatus->slug,
+                $withdrawnStatus->slug,
+                $user->id,
+                $note,
+            )));
 
             return $this->loadApplication($application);
         });

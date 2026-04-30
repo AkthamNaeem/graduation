@@ -16,6 +16,7 @@ class Company extends Model
         'website',
         'location',
         'description',
+        'approval_status',
     ];
 
     public function employerProfiles(): HasMany

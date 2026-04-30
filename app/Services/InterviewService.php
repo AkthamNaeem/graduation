@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Events\InterviewEvaluated;
+use App\Events\InterviewScheduled;
 use App\Models\Interview;
 use App\Models\InterviewEvaluation;
 use App\Models\JobApplication;
@@ -85,6 +87,8 @@ class InterviewService
                     'Interview scheduled for candidate.',
                 );
             }
+
+            DB::afterCommit(fn (): array => event(new InterviewScheduled($interview->id)));
 
             return $this->loadInterview($interview, includeApplicationContext: true);
         });
@@ -264,6 +268,8 @@ class InterviewService
                     'Interview evaluation completed.',
                 );
             }
+
+            DB::afterCommit(fn (): array => event(new InterviewEvaluated($lockedInterview->id)));
 
             return $this->loadInterview($lockedInterview->fresh(), includeApplicationContext: true);
         });

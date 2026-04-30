@@ -2,10 +2,15 @@
 
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Auth\RegistrationController;
+use App\Http\Controllers\Api\V1\Admin\AdminCompanyController;
+use App\Http\Controllers\Api\V1\Admin\AdminSkillController;
+use App\Http\Controllers\Api\V1\Admin\AdminTestController;
+use App\Http\Controllers\Api\V1\Admin\AdminUserController;
 use App\Http\Controllers\Api\V1\Application\JobApplicationController;
 use App\Http\Controllers\Api\V1\CV\CVController;
 use App\Http\Controllers\Api\V1\Interview\InterviewController;
 use App\Http\Controllers\Api\V1\JobPosting\JobPostingController;
+use App\Http\Controllers\Api\V1\Notification\NotificationController;
 use App\Http\Controllers\Api\V1\Profile\CompanyController;
 use App\Http\Controllers\Api\V1\Profile\EducationController;
 use App\Http\Controllers\Api\V1\Profile\EmployerProfileController;
@@ -34,6 +39,34 @@ Route::prefix('auth')
     });
 
 Route::middleware('auth:sanctum')->group(function (): void {
+    Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+    Route::post('notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+
+    Route::prefix('admin')
+        ->name('admin.')
+        ->middleware('admin')
+        ->group(function (): void {
+            Route::get('users', [AdminUserController::class, 'index'])->name('users.index');
+            Route::get('users/{user}', [AdminUserController::class, 'show'])->name('users.show');
+            Route::patch('users/{user}/role', [AdminUserController::class, 'updateRole'])->name('users.role');
+            Route::patch('users/{user}/status', [AdminUserController::class, 'updateStatus'])->name('users.status');
+
+            Route::get('companies', [AdminCompanyController::class, 'index'])->name('companies.index');
+            Route::patch('companies/{company}/approve', [AdminCompanyController::class, 'approve'])->name('companies.approve');
+            Route::patch('companies/{company}/reject', [AdminCompanyController::class, 'reject'])->name('companies.reject');
+
+            Route::get('skills', [AdminSkillController::class, 'index'])->name('skills.index');
+            Route::post('skills', [AdminSkillController::class, 'store'])->name('skills.store');
+            Route::put('skills/{skill}', [AdminSkillController::class, 'update'])->name('skills.update');
+            Route::delete('skills/{skill}', [AdminSkillController::class, 'destroy'])->name('skills.destroy');
+
+            Route::get('tests', [AdminTestController::class, 'index'])->name('tests.index');
+            Route::post('tests', [AdminTestController::class, 'store'])->name('tests.store');
+            Route::put('tests/{test}', [AdminTestController::class, 'update'])->name('tests.update');
+            Route::delete('tests/{test}', [AdminTestController::class, 'destroy'])->name('tests.destroy');
+        });
+
     Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::apiResource('profile/experiences', ExperienceController::class)

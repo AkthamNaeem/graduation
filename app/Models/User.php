@@ -26,6 +26,7 @@ class User extends Authenticatable
         'name',
         'email',
         'role',
+        'status',
         'password',
     ];
 
@@ -66,5 +67,10 @@ class User extends Authenticatable
     public function cvFiles(): HasMany
     {
         return $this->hasMany(CVFile::class);
+    }
+
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class);
     }
 }

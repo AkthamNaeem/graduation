@@ -20,6 +20,7 @@ class CompanyResource extends JsonResource
             'website' => $this->website,
             'location' => $this->location,
             'description' => $this->description,
+            'approval_status' => $this->approval_status,
             'employer_profiles' => EmployerProfileResource::collection($this->whenLoaded('employerProfiles')),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
