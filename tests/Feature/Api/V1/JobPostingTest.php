@@ -331,6 +331,123 @@ class JobPostingTest extends TestCase
             ->assertJsonCount(2, 'data.data');
     }
 
+    public function test_public_job_listing_filters_by_salary_and_employment_type(): void
+    {
+        $company = Company::create(['name' => 'Salary Filter Co.', 'approval_status' => 'approved']);
+
+        $juniorJob = $this->jobPostingFor($company, [
+            'title' => 'Junior Backend Engineer',
+            'employment_type' => 'full-time',
+            'salary_min' => 500,
+            'salary_max' => 900,
+            'status' => 'open',
+            'published_at' => now()->subDays(3),
+        ]);
+        $this->jobPostingFor($company, [
+            'title' => 'Senior Backend Engineer',
+            'employment_type' => 'contract',
+            'salary_min' => 1500,
+            'salary_max' => 2500,
+            'status' => 'open',
+            'published_at' => now()->subDays(2),
+        ]);
+        $openEndedJob = $this->jobPostingFor($company, [
+            'title' => 'Flexible Salary Engineer',
+            'employment_type' => 'full-time',
+            'salary_min' => null,
+            'salary_max' => null,
+            'status' => 'open',
+            'published_at' => now()->subDay(),
+        ]);
+
+        $this->getJson('/api/v1/jobs?employment_type=contract')
+            ->assertOk()
+            ->assertJsonCount(1, 'data.data')
+            ->assertJsonPath('data.data.0.title', 'Senior Backend Engineer');
+
+        $this->getJson('/api/v1/jobs?salary_min=1000')
+            ->assertOk()
+            ->assertJsonCount(2, 'data.data')
+            ->assertJsonMissing(['title' => $juniorJob->title]);
+
+        $this->getJson('/api/v1/jobs?salary_max=1000')
+            ->assertOk()
+            ->assertJsonCount(2, 'data.data')
+            ->assertJsonMissing(['title' => 'Senior Backend Engineer']);
+
+        $this->getJson('/api/v1/jobs?salary_min=800&salary_max=1600')
+            ->assertOk()
+            ->assertJsonCount(3, 'data.data')
+            ->assertJsonFragment(['id' => $juniorJob->id])
+            ->assertJsonFragment(['id' => $openEndedJob->id]);
+    }
+
+    public function test_public_job_listing_sorts_by_salary_min_ascending(): void
+    {
+        $company = Company::create(['name' => 'Sort Co.', 'approval_status' => 'approved']);
+
+        $this->jobPostingFor($company, [
+            'title' => 'Higher Salary Job',
+            'salary_min' => 2000,
+            'salary_max' => 3000,
+            'status' => 'open',
+            'published_at' => now()->subDay(),
+        ]);
+        $this->jobPostingFor($company, [
+            'title' => 'Lower Salary Job',
+            'salary_min' => 1000,
+            'salary_max' => 1500,
+            'status' => 'open',
+            'published_at' => now()->subDays(2),
+        ]);
+
+        $this->getJson('/api/v1/jobs?sort_by=salary_min&sort_direction=asc')
+            ->assertOk()
+            ->assertJsonPath('data.data.0.title', 'Lower Salary Job')
+            ->assertJsonPath('data.data.1.title', 'Higher Salary Job');
+    }
+
+    public function test_public_job_listing_rejects_invalid_salary_range_and_sort_field(): void
+    {
+        $this->getJson('/api/v1/jobs?salary_min=2000&salary_max=1000')
+            ->assertStatus(422)
+            ->assertJsonPath('success', false)
+            ->assertJsonValidationErrors(['salary_max']);
+
+        $this->getJson('/api/v1/jobs?sort_by=status')
+            ->assertStatus(422)
+            ->assertJsonPath('success', false)
+            ->assertJsonValidationErrors(['sort_by']);
+    }
+
+    public function test_public_job_listing_only_returns_open_jobs(): void
+    {
+        $company = Company::create(['name' => 'Visibility Co.', 'approval_status' => 'approved']);
+
+        $openJob = $this->jobPostingFor($company, [
+            'title' => 'Visible Open Job',
+            'status' => 'open',
+            'published_at' => now()->subDay(),
+        ]);
+        $this->jobPostingFor($company, [
+            'title' => 'Hidden Draft Job',
+            'status' => 'draft',
+            'published_at' => null,
+        ]);
+        $this->jobPostingFor($company, [
+            'title' => 'Hidden Closed Job',
+            'status' => 'closed',
+            'published_at' => now()->subDays(2),
+        ]);
+
+        $this->getJson('/api/v1/jobs')
+            ->assertOk()
+            ->assertJsonCount(1, 'data.data')
+            ->assertJsonPath('data.data.0.id', $openJob->id)
+            ->assertJsonMissing(['title' => 'Hidden Draft Job'])
+            ->assertJsonMissing(['title' => 'Hidden Closed Job']);
+    }
+
     public function test_sample_user_seeder_creates_job_postings_with_skills(): void
     {
         $this->seed(SampleUserSeeder::class);

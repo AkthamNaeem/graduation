@@ -411,7 +411,7 @@ Auth hardening notes:
 
 | Method | URL | Auth | Role | Purpose | Main request fields | Main response summary |
 | --- | --- | --- | --- | --- | --- | --- |
-| GET | `/api/v1/jobs` | Public | Public | List open jobs | Filters: `search`, `location`, `skill`, `experience_level`, optional `per_page` | Paginated collection of open `JobPostingResource` |
+| GET | `/api/v1/jobs` | Public | Public | List open jobs | Filters: `search`, `location`, `skill`, `experience_level`, `employment_type`, `salary_min`, `salary_max`, `sort_by`, `sort_direction`, optional `per_page` | Paginated collection of open `JobPostingResource` |
 | GET | `/api/v1/jobs/{jobPosting}` | Public for open jobs; protected for non-open jobs | Public or owning employer | View job details | None | `JobPostingResource` |
 | POST | `/api/v1/jobs` | Required | Employer | Create draft job | `title`, `description`, `employment_type`, `experience_level`, `location`, `salary_min`, `salary_max` | Created draft `JobPostingResource` |
 | GET | `/api/v1/jobs/my` | Required | Employer | List own company's jobs | Filters: `search`, `location`, `skill`, `experience_level`, optional `per_page` | Paginated `JobPostingResource` collection |
@@ -421,6 +421,27 @@ Auth hardening notes:
 | DELETE | `/api/v1/jobs/{jobPosting}/skills/{skill}` | Required | Owning employer | Detach job skill | None | Updated `JobPostingResource` |
 | POST | `/api/v1/jobs/{jobPosting}/publish` | Required | Owning employer | Publish job as open | None; job must have at least one skill | Updated `JobPostingResource` with status `open` and `published_at` |
 | POST | `/api/v1/jobs/{jobPosting}/close` | Required | Owning employer | Close job | None | Updated `JobPostingResource` with status `closed` |
+
+Frontend contract for public job listing:
+
+`GET /api/v1/jobs?search=backend&location=Damascus&skill=laravel&experience_level=junior&employment_type=full-time&salary_min=500&salary_max=1500&sort_by=published_at&sort_direction=desc&per_page=15`
+
+Supported public query parameters:
+
+| Query parameter | Validation | Behavior |
+| --- | --- | --- |
+| `search` | Optional string, max 255 | Searches job title and description. |
+| `location` | Optional string, max 255 | Partial match against job location. |
+| `skill` | Optional string, max 255 | Matches skill id when numeric, otherwise skill slug. |
+| `experience_level` | Optional string, max 255 | Exact match against job experience level. |
+| `employment_type` | Optional string, max 255 | Exact match against the existing job `employment_type` value. Current creation validation stores this as a string, for example `full-time` or `contract`. |
+| `salary_min` | Optional numeric, minimum 0 | Returns jobs with no `salary_max` or with `salary_max >= salary_min`. |
+| `salary_max` | Optional numeric, minimum 0; must be greater than or equal to `salary_min` when both are sent | Returns jobs with no `salary_min` or with `salary_min <= salary_max`. |
+| `sort_by` | Optional; one of `published_at`, `created_at`, `salary_min`, `salary_max`, `title` | Sort field. Defaults to `published_at`. |
+| `sort_direction` | Optional; `asc` or `desc` | Sort direction. Defaults to `desc`. |
+| `per_page` | Optional integer, 1 to 100 | Pagination size. Defaults to 15. |
+
+Public listing always returns only jobs with `status = open`; draft and closed jobs are not exposed. `work_mode` is not supported because the current `job_postings` schema and model do not contain a `work_mode` field.
 
 ### Applications
 

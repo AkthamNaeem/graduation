@@ -13,6 +13,17 @@ use Illuminate\Validation\ValidationException;
 
 class JobPostingService
 {
+    /**
+     * @var array<int, string>
+     */
+    private const PUBLIC_SORT_FIELDS = [
+        'published_at',
+        'created_at',
+        'salary_min',
+        'salary_max',
+        'title',
+    ];
+
     public function __construct(
         private readonly AuditLogService $auditLogService,
     ) {}
@@ -23,13 +34,16 @@ class JobPostingService
      */
     public function getPublicJobs(array $filters): LengthAwarePaginator
     {
-        return $this->applyFilters(
+        $query = $this->applyFilters(
             JobPosting::query()
                 ->with(['company', 'skills'])
-                ->where('status', 'open')
-                ->orderByDesc('published_at'),
+                ->where('status', 'open'),
             $filters,
-        )->paginate($this->perPage($filters));
+        );
+
+        $this->applyPublicSorting($query, $filters);
+
+        return $query->paginate($this->perPage($filters));
     }
 
     /**
@@ -178,6 +192,9 @@ class JobPostingService
         $location = $filters['location'] ?? null;
         $skill = $filters['skill'] ?? null;
         $experienceLevel = $filters['experience_level'] ?? null;
+        $employmentType = $filters['employment_type'] ?? null;
+        $salaryMin = $filters['salary_min'] ?? null;
+        $salaryMax = $filters['salary_max'] ?? null;
 
         if (filled($search)) {
             $query->where(function (Builder $builder) use ($search): void {
@@ -194,6 +211,24 @@ class JobPostingService
             $query->where('experience_level', $experienceLevel);
         }
 
+        if (filled($employmentType)) {
+            $query->where('employment_type', $employmentType);
+        }
+
+        if (filled($salaryMin)) {
+            $query->where(function (Builder $builder) use ($salaryMin): void {
+                $builder->whereNull('salary_max')
+                    ->orWhere('salary_max', '>=', $salaryMin);
+            });
+        }
+
+        if (filled($salaryMax)) {
+            $query->where(function (Builder $builder) use ($salaryMax): void {
+                $builder->whereNull('salary_min')
+                    ->orWhere('salary_min', '<=', $salaryMax);
+            });
+        }
+
         if (filled($skill)) {
             $query->whereHas('skills', function (Builder $builder) use ($skill): void {
                 if (is_numeric($skill)) {
@@ -207,6 +242,25 @@ class JobPostingService
         }
 
         return $query;
+    }
+
+    /**
+     * @param  array<string, mixed>  $filters
+     */
+    private function applyPublicSorting(Builder|Relation $query, array $filters): void
+    {
+        $sortBy = $filters['sort_by'] ?? 'published_at';
+        $sortDirection = $filters['sort_direction'] ?? 'desc';
+
+        if (! in_array($sortBy, self::PUBLIC_SORT_FIELDS, true)) {
+            $sortBy = 'published_at';
+        }
+
+        if (! in_array($sortDirection, ['asc', 'desc'], true)) {
+            $sortDirection = 'desc';
+        }
+
+        $query->orderBy($sortBy, $sortDirection);
     }
 
     private function employerProfile(User $user): EmployerProfile
