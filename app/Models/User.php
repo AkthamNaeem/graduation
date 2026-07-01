@@ -69,6 +69,11 @@ class User extends Authenticatable
         return $this->hasMany(CVFile::class);
     }
 
+    public function profileChangeSuggestions(): HasMany
+    {
+        return $this->hasMany(ProfileChangeSuggestion::class);
+    }
+
     public function notifications(): HasMany
     {
         return $this->hasMany(Notification::class);

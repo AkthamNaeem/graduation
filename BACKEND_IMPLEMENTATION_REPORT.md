@@ -886,7 +886,10 @@ Postman collections are located in the `postman/` directory:
 - `Smart Recruitment Platform - Phase 6.postman_collection.json`
 - `Smart Recruitment Platform - Phase 7.postman_collection.json`
 - `Smart Recruitment Platform - Phase 8.postman_collection.json`
+- `Smart Recruitment Platform - Phase 9.postman_collection.json`
 - `Smart Recruitment Platform - High Priority Batch 1.postman_collection.json`
+- `Smart Recruitment Platform - Complete Backend.postman_collection.json`
+- `Smart Recruitment Platform - Local.postman_environment.json`
 
 Modules covered:
 
@@ -900,6 +903,8 @@ Modules covered:
 - Phase 8: matching and ranking
 - Phase 9: notifications and admin APIs
 - High Priority Batch 1: public skill listing/search, test catalog CRUD, paginated list examples, and nested job application creation route
+- Complete Backend: one importable Postman v2.1 collection covering all implemented `/api/v1` REST endpoints, organized by Auth, Profile, Skills, CV Management, Job Posting, Applications Workflow, Tests, Interviews, Matching, Admin, and Notifications.
+- Local environment: seeded demo credentials, hosted `base_url`, role-specific Sanctum token variables, and reusable resource ID variables for collection workflows.
 
 Common collection variables:
 
@@ -908,6 +913,7 @@ Common collection variables:
 - `job_seeker_token` and `employer_token` in later workflow collections
 - `admin_token` in the Phase 9 collection
 - Resource IDs such as `job_id`, `application_id`, `skill_id`, `test_id`, `assignment_id`, `attempt_id`, `interview_id`, and `cv_id` depending on the phase
+- The complete collection environment also includes `job_seeker_email`, `job_seeker_password`, `employer_email`, `employer_password`, `admin_email`, `admin_password`, `notification_id`, `user_id`, `company_id`, `experience_id`, and `education_id`
 
 Suggested testing order:
 
@@ -922,6 +928,7 @@ Suggested testing order:
 9. Use Phase 8 to verify recommended jobs and ranked candidates.
 10. Use Phase 9 to verify notifications, unread counts, mark-as-read, and admin management endpoints.
 11. Use High Priority Batch 1 to exercise skill discovery, test catalog CRUD, paginated list calls, and the clearer nested application route.
+12. Import `Smart Recruitment Platform - Complete Backend.postman_collection.json` with `Smart Recruitment Platform - Local.postman_environment.json` when a single consolidated backend collection is preferred.
 
 ## 16. Phase 9 Notifications and Admin APIs
 

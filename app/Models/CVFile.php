@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class CVFile extends Model
@@ -44,5 +45,10 @@ class CVFile extends Model
     public function parsingResult(): HasOne
     {
         return $this->hasOne(CVParsingResult::class, 'cv_file_id');
+    }
+
+    public function profileChangeSuggestions(): HasMany
+    {
+        return $this->hasMany(ProfileChangeSuggestion::class, 'cv_file_id');
     }
 }

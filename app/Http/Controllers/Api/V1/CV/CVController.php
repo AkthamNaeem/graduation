@@ -11,6 +11,7 @@ use App\Http\Requests\Api\V1\CV\UploadCVRequest;
 use App\Http\Resources\Api\V1\CVFileResource;
 use App\Http\Resources\Api\V1\CVParsingResultResource;
 use App\Http\Resources\Api\V1\JobSeekerProfileResource;
+use App\Http\Resources\Api\V1\ProfileChangeSuggestionResource;
 use App\Models\CVFile;
 use App\Services\CVService;
 use App\Support\ApiResponse;
@@ -58,9 +59,14 @@ class CVController extends Controller
 
     public function confirm(ConfirmCVRequest $request, CVFile $cvFile): JsonResponse
     {
+        $review = $this->cvService->confirm($request->user(), $cvFile);
+
         return ApiResponse::success(
-            data: new JobSeekerProfileResource($this->cvService->confirm($request->user(), $cvFile)),
-            message: 'CV parsing result confirmed successfully.',
+            data: [
+                'profile' => new JobSeekerProfileResource($review['profile']),
+                'suggestions' => ProfileChangeSuggestionResource::collection($review['suggestions']),
+            ],
+            message: 'CV review suggestions are ready. Accept suggestions to apply parsed data.',
         );
     }
 }

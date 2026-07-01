@@ -1,0 +1,158 @@
+{
+  "info": {
+    "name": "Smart Recruitment Platform - Mobile App",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": { "type": "bearer", "bearer": [{ "key": "token", "value": "{{job_seeker_token}}", "type": "string" }] },
+  "item": [
+    {
+      "name": "Auth - Job Seeker",
+      "item": [
+        {
+          "name": "Register Job Seeker",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "description": "Mobile App: creates a job seeker account.",
+            "url": "{{base_url}}/auth/register/job-seeker",
+            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Jane Applicant\",\n  \"email\": \"jane@example.com\",\n  \"password\": \"password\",\n  \"password_confirmation\": \"password\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('success status', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));"] } }]
+        },
+        {
+          "name": "Login Job Seeker",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "description": "Mobile App: logs in a job seeker and returns a Sanctum token.",
+            "url": "{{base_url}}/auth/login",
+            "body": { "mode": "raw", "raw": "{\n  \"email\": \"jane@example.com\",\n  \"password\": \"password\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('login succeeds', () => pm.expect(pm.response.code).to.eql(200));"] } }]
+        }
+      ]
+    },
+    {
+      "name": "Profile",
+      "item": [
+        {
+          "name": "Get My Profile",
+          "request": { "method": "GET", "description": "Mobile App: displays the job seeker profile.", "url": "{{base_url}}/profile" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('profile loaded', () => pm.expect(pm.response.code).to.eql(200));"] } }]
+        },
+        {
+          "name": "Update My Profile",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "description": "Mobile App: updates manual profile fields; manual data remains authoritative over CV parsing.",
+            "url": "{{base_url}}/profile",
+            "body": { "mode": "raw", "raw": "{\n  \"headline\": \"Laravel Backend Developer\",\n  \"summary\": \"Builds recruitment APIs.\",\n  \"phone\": \"+1 555 0101\",\n  \"location\": \"Remote\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('profile updated', () => pm.expect(pm.response.code).to.eql(200));"] } }]
+        }
+      ]
+    },
+    {
+      "name": "CV Upload & Parsing",
+      "item": [
+        {
+          "name": "Upload CV",
+          "request": {
+            "method": "POST",
+            "description": "Mobile App: uploads a CV file and queues parsing.",
+            "url": "{{base_url}}/cv/upload",
+            "body": { "mode": "formdata", "formdata": [{ "key": "file", "type": "file", "src": "" }] }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('cv uploaded', () => pm.expect(pm.response.code).to.eql(201));"] } }]
+        },
+        {
+          "name": "Get Parsed CV",
+          "request": { "method": "GET", "description": "Mobile App: shows the parsed CV result for review.", "url": "{{base_url}}/cv/{{cv_file_id}}/parsed" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('parsed result loaded', () => pm.expect(pm.response.code).to.eql(200));"] } }]
+        }
+      ]
+    },
+    {
+      "name": "Profile Suggestions",
+      "item": [
+        {
+          "name": "List CV Suggestions",
+          "request": { "method": "GET", "description": "Mobile App: lists reviewable profile suggestions generated from a parsed CV.", "url": "{{base_url}}/cv/{{cv_file_id}}/suggestions" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('suggestions loaded', () => pm.expect(pm.response.code).to.eql(200));"] } }]
+        },
+        {
+          "name": "Generate CV Suggestions",
+          "request": { "method": "POST", "description": "Mobile App: compares parsed CV data with the current profile and creates ADD/UPDATE/MERGE/IGNORE suggestions.", "url": "{{base_url}}/cv/{{cv_file_id}}/suggestions/generate" },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('suggestions generated', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));"] } }]
+        },
+        {
+          "name": "Accept Suggestion",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "description": "Mobile App: accepts one suggestion and applies only that accepted suggestion.",
+            "url": "{{base_url}}/profile/suggestions/{{suggestion_id}}/accept",
+            "body": { "mode": "raw", "raw": "{\n  \"edited_value\": {\n    \"title\": \"Backend Developer\",\n    \"company_name\": \"Northwind Software\"\n  }\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('suggestion accepted', () => pm.expect(pm.response.code).to.eql(200));"] } }]
+        },
+        {
+          "name": "Reject Suggestion",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "description": "Mobile App: rejects a suggestion while keeping it stored for audit/history.",
+            "url": "{{base_url}}/profile/suggestions/{{suggestion_id}}/reject",
+            "body": { "mode": "raw", "raw": "{\n  \"reason\": \"This parsed item is not part of my current profile.\"\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('suggestion rejected', () => pm.expect(pm.response.code).to.eql(200));"] } }]
+        },
+        {
+          "name": "Apply Accepted Suggestions Bulk",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "description": "Mobile App: applies accepted suggestions by id; pending or rejected suggestions are not applied.",
+            "url": "{{base_url}}/profile/suggestions/apply-bulk",
+            "body": { "mode": "raw", "raw": "{\n  \"suggestion_ids\": [{{suggestion_id}}]\n}", "options": { "raw": { "language": "json" } } }
+          },
+          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('bulk apply completed', () => pm.expect(pm.response.code).to.eql(200));"] } }]
+        }
+      ]
+    },
+    {
+      "name": "Jobs",
+      "item": [
+        { "name": "List Public Jobs", "request": { "method": "GET", "description": "Mobile App: browses published jobs.", "url": "{{base_url}}/jobs" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('jobs loaded', () => pm.expect(pm.response.code).to.eql(200));"] } }] },
+        { "name": "Recommended Jobs", "request": { "method": "GET", "description": "Mobile App: lists recommended jobs for the authenticated job seeker.", "url": "{{base_url}}/jobs/recommended" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('recommendations loaded', () => pm.expect(pm.response.code).to.eql(200));"] } }] }
+      ]
+    },
+    {
+      "name": "Applications",
+      "item": [
+        { "name": "Apply To Job", "request": { "method": "POST", "description": "Mobile App: submits a job application.", "url": "{{base_url}}/jobs/{{job_id}}/applications" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('application created', () => pm.expect(pm.response.code).to.be.oneOf([200, 201]));"] } }] },
+        { "name": "My Applications", "request": { "method": "GET", "description": "Mobile App: lists the job seeker applications.", "url": "{{base_url}}/applications/my" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('applications loaded', () => pm.expect(pm.response.code).to.eql(200));"] } }] }
+      ]
+    },
+    {
+      "name": "Tests",
+      "item": [
+        { "name": "My Tests", "request": { "method": "GET", "description": "Mobile App: lists assigned tests.", "url": "{{base_url}}/my/tests" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('tests loaded', () => pm.expect(pm.response.code).to.eql(200));"] } }] },
+        { "name": "Start Test", "request": { "method": "POST", "description": "Mobile App: starts an assigned test attempt.", "url": "{{base_url}}/tests/{{test_assignment_id}}/start" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('test started', () => pm.expect(pm.response.code).to.eql(200));"] } }] }
+      ]
+    },
+    {
+      "name": "Interviews",
+      "item": [
+        { "name": "My Interviews", "request": { "method": "GET", "description": "Mobile App: lists scheduled interviews for the job seeker.", "url": "{{base_url}}/my/interviews" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('interviews loaded', () => pm.expect(pm.response.code).to.eql(200));"] } }] }
+      ]
+    },
+    {
+      "name": "Notifications",
+      "item": [
+        { "name": "Notifications", "request": { "method": "GET", "description": "Mobile App: lists authenticated user notifications.", "url": "{{base_url}}/notifications" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('notifications loaded', () => pm.expect(pm.response.code).to.eql(200));"] } }] }
+      ]
+    }
+  ]
+}

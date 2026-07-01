@@ -154,7 +154,7 @@ class CVTest extends TestCase
             ->assertJsonPath('success', false);
     }
 
-    public function test_confirm_appends_profile_data_and_prevents_repeat_confirmation(): void
+    public function test_confirm_generates_review_suggestions_without_applying_profile_data(): void
     {
         $user = $this->jobSeeker();
         $user->jobSeekerProfile->update(['phone' => '+1 555 EXISTING']);
@@ -190,29 +190,36 @@ class CVTest extends TestCase
             ->postJson("/api/v1/cv/{$cvFile->id}/confirm")
             ->assertOk()
             ->assertJsonPath('success', true)
-            ->assertJsonPath('data.phone', '+1 555 EXISTING')
-            ->assertJsonPath('data.experiences.0.title', 'Backend Developer')
-            ->assertJsonPath('data.education.0.institution', 'State University')
-            ->assertJsonPath('data.skills.0.name', $skill->name);
+            ->assertJsonPath('data.profile.phone', '+1 555 EXISTING')
+            ->assertJsonFragment([
+                'entity_type' => 'experience',
+                'suggestion_type' => 'add',
+                'status' => 'pending',
+            ])
+            ->assertJsonFragment([
+                'entity_type' => 'skill',
+                'suggestion_type' => 'add',
+                'new_value' => [
+                    'id' => $skill->id,
+                    'name' => $skill->name,
+                    'slug' => $skill->slug,
+                ],
+            ]);
 
         $this->assertDatabaseHas('cv_files', [
             'id' => $cvFile->id,
         ]);
-        $this->assertNotNull($cvFile->refresh()->confirmed_at);
+        $this->assertNull($cvFile->refresh()->confirmed_at);
+        $this->assertDatabaseCount('experiences', 0);
+        $this->assertDatabaseCount('education', 0);
+        $this->assertDatabaseCount('job_seeker_skills', 0);
 
         $this->withToken($this->tokenFor($user))
             ->postJson("/api/v1/cv/{$cvFile->id}/confirm")
-            ->assertStatus(422)
-            ->assertJsonPath('success', false)
-            ->assertJsonStructure([
-                'success',
-                'message',
-                'errors' => ['cv'],
-            ]);
+            ->assertOk()
+            ->assertJsonPath('success', true);
 
-        $this->assertDatabaseCount('experiences', 1);
-        $this->assertDatabaseCount('education', 1);
-        $this->assertDatabaseCount('job_seeker_skills', 1);
+        $this->assertDatabaseCount('profile_change_suggestions', 4);
     }
 
     private function jobSeeker(string $email = 'jobseeker@example.com'): User

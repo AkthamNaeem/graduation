@@ -6,16 +6,21 @@ use App\Jobs\ParseCVFileJob;
 use App\Models\CVFile;
 use App\Models\CVParsingResult;
 use App\Models\JobSeekerProfile;
-use App\Models\Skill;
+use App\Models\ProfileChangeSuggestion;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class CVService
 {
+    public function __construct(
+        private readonly ProfileSyncService $profileSyncService,
+    ) {
+    }
+
     public function upload(User $user, UploadedFile $file): CVFile
     {
         $disk = 'local';
@@ -63,7 +68,10 @@ class CVService
         return $result;
     }
 
-    public function confirm(User $user, CVFile $cvFile): JobSeekerProfile
+    /**
+     * @return array{profile: JobSeekerProfile, suggestions: Collection<int, ProfileChangeSuggestion>}
+     */
+    public function confirm(User $user, CVFile $cvFile): array
     {
         $cvFile = $this->ownedCVFile($user, $cvFile)->load('parsingResult');
 
@@ -77,17 +85,14 @@ class CVService
             abort(404);
         }
 
-        return DB::transaction(function () use ($user, $cvFile): JobSeekerProfile {
+        return DB::transaction(function () use ($user, $cvFile): array {
             $profile = $user->jobSeekerProfile()->firstOrFail();
-            $parsed = $cvFile->parsingResult->parsed_json ?? [];
+            $suggestions = $this->profileSyncService->generateSuggestionsFromParsedCV($user, $cvFile);
 
-            $this->appendExperiences($profile, $parsed['experience'] ?? []);
-            $this->appendEducation($profile, $parsed['education'] ?? []);
-            $this->attachSkills($profile, $parsed['skills'] ?? []);
-
-            $cvFile->forceFill(['confirmed_at' => now()])->save();
-
-            return $profile->load(['user', 'experiences', 'education', 'skills']);
+            return [
+                'profile' => $profile->load(['user', 'experiences', 'education', 'skills']),
+                'suggestions' => $suggestions,
+            ];
         });
     }
 
@@ -98,88 +103,4 @@ class CVService
         return $cvFile;
     }
 
-    /**
-     * @param  array<int, mixed>  $items
-     */
-    private function appendExperiences(JobSeekerProfile $profile, array $items): void
-    {
-        foreach ($items as $item) {
-            if (! is_array($item)) {
-                continue;
-            }
-
-            $title = $this->cleanString($item['title'] ?? null);
-            $companyName = $this->cleanString($item['company_name'] ?? null);
-
-            if ($title === null || $companyName === null) {
-                continue;
-            }
-
-            $profile->experiences()->create([
-                'title' => $title,
-                'company_name' => $companyName,
-                'description' => $this->cleanString($item['description'] ?? null),
-            ]);
-        }
-    }
-
-    /**
-     * @param  array<int, mixed>  $items
-     */
-    private function appendEducation(JobSeekerProfile $profile, array $items): void
-    {
-        foreach ($items as $item) {
-            if (! is_array($item)) {
-                continue;
-            }
-
-            $institution = $this->cleanString($item['institution'] ?? null);
-
-            if ($institution === null) {
-                continue;
-            }
-
-            $profile->education()->create([
-                'institution' => $institution,
-                'degree' => $this->cleanString($item['degree'] ?? null),
-                'field_of_study' => $this->cleanString($item['field_of_study'] ?? null),
-                'description' => $this->cleanString($item['description'] ?? null),
-            ]);
-        }
-    }
-
-    /**
-     * @param  array<int, mixed>  $skillNames
-     */
-    private function attachSkills(JobSeekerProfile $profile, array $skillNames): void
-    {
-        $slugs = collect($skillNames)
-            ->filter(fn (mixed $skill): bool => is_string($skill))
-            ->map(fn (string $skill): string => Str::slug($skill))
-            ->filter()
-            ->unique()
-            ->values();
-
-        if ($slugs->isEmpty()) {
-            return;
-        }
-
-        $skillIds = Skill::query()
-            ->whereIn('slug', $slugs->all())
-            ->pluck('id')
-            ->all();
-
-        $profile->skills()->syncWithoutDetaching($skillIds);
-    }
-
-    private function cleanString(mixed $value): ?string
-    {
-        if (! is_string($value)) {
-            return null;
-        }
-
-        $value = trim($value);
-
-        return $value === '' ? null : $value;
-    }
 }

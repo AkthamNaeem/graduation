@@ -49,4 +49,9 @@ class JobSeekerProfile extends Model
     {
         return $this->hasMany(JobApplication::class);
     }
+
+    public function profileChangeSuggestions(): HasMany
+    {
+        return $this->hasMany(ProfileChangeSuggestion::class);
+    }
 }
