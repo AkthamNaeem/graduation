@@ -17,6 +17,10 @@ use Illuminate\Validation\ValidationException;
 
 class ProfileSyncService
 {
+    public function __construct(
+        private readonly AuditLogService $auditLogService,
+    ) {}
+
     /**
      * @return Collection<int, ProfileChangeSuggestion>
      */
@@ -37,7 +41,7 @@ class ProfileSyncService
             return $existing;
         }
 
-        return DB::transaction(function () use ($user, $cvFile): Collection {
+        $suggestions = DB::transaction(function () use ($user, $cvFile): Collection {
             $profile = $this->jobSeekerProfile($user)->load(['experiences', 'education', 'skills']);
             $parsed = $cvFile->parsingResult?->parsed_json ?? [];
 
@@ -51,6 +55,17 @@ class ProfileSyncService
                 ->latest()
                 ->get();
         });
+
+        $this->auditLogService->record(
+            'cv.suggestions.generated',
+            $user,
+            CVFile::class,
+            $cvFile->id,
+            null,
+            ['suggestion_count' => $suggestions->count()],
+        );
+
+        return $suggestions;
     }
 
     /**
@@ -76,15 +91,30 @@ class ProfileSyncService
             ]);
         }
 
-        return DB::transaction(function () use ($suggestion, $editedValue): ProfileChangeSuggestion {
+        $appliedSuggestion = DB::transaction(function () use ($user, $suggestion, $editedValue): ProfileChangeSuggestion {
+            $before = $suggestion->only(['status', 'user_edited_value', 'decided_at', 'applied_at']);
+
             $suggestion->forceFill([
                 'status' => ProfileChangeSuggestion::STATUS_ACCEPTED,
                 'user_edited_value' => $editedValue,
                 'decided_at' => now(),
             ])->save();
 
-            return $this->applySuggestion($suggestion);
+            $applied = $this->applySuggestion($suggestion);
+
+            $this->auditLogService->record(
+                'cv.suggestion.accepted',
+                $user,
+                ProfileChangeSuggestion::class,
+                $suggestion->id,
+                $before,
+                $applied->only(['status', 'user_edited_value', 'decided_at', 'applied_at']),
+            );
+
+            return $applied;
         });
+
+        return $appliedSuggestion;
     }
 
     public function reject(User $user, ProfileChangeSuggestion $suggestion, ?string $reason = null): ProfileChangeSuggestion
@@ -97,6 +127,8 @@ class ProfileSyncService
             ]);
         }
 
+        $before = $suggestion->only(['status', 'reason', 'decided_at']);
+
         $suggestion->forceFill([
             'status' => ProfileChangeSuggestion::STATUS_REJECTED,
             'reason' => $reason ?? $suggestion->reason,
@@ -105,7 +137,18 @@ class ProfileSyncService
 
         $this->markCVConfirmedIfReviewed($suggestion);
 
-        return $suggestion->refresh();
+        $suggestion = $suggestion->refresh();
+
+        $this->auditLogService->record(
+            'cv.suggestion.rejected',
+            $user,
+            ProfileChangeSuggestion::class,
+            $suggestion->id,
+            $before,
+            $suggestion->only(['status', 'reason', 'decided_at']),
+        );
+
+        return $suggestion;
     }
 
     /**
@@ -126,7 +169,7 @@ class ProfileSyncService
             $this->ownedSuggestion($user, $suggestion);
         }
 
-        return DB::transaction(function () use ($suggestions): Collection {
+        $appliedSuggestions = DB::transaction(function () use ($suggestions): Collection {
             foreach ($suggestions as $suggestion) {
                 if ($suggestion->status !== ProfileChangeSuggestion::STATUS_ACCEPTED) {
                     throw ValidationException::withMessages([
@@ -139,6 +182,17 @@ class ProfileSyncService
 
             return $suggestions->fresh();
         });
+
+        $this->auditLogService->record(
+            'cv.suggestions.applied',
+            $user,
+            ProfileChangeSuggestion::class,
+            null,
+            null,
+            ['suggestion_ids' => $appliedSuggestions->pluck('id')->all()],
+        );
+
+        return $appliedSuggestions;
     }
 
     private function applySuggestion(ProfileChangeSuggestion $suggestion): ProfileChangeSuggestion

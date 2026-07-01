@@ -51,7 +51,7 @@ class JobApplicationTest extends TestCase
 
     public function test_job_seeker_can_apply_to_open_job_and_history_is_recorded(): void
     {
-        $company = Company::create(['name' => 'Acme Hiring Co.']);
+        $company = Company::create(['name' => 'Acme Hiring Co.', 'approval_status' => 'approved']);
         $jobSeeker = $this->jobSeeker();
         $jobPosting = $this->jobPostingFor($company, [
             'status' => 'open',
@@ -86,7 +86,7 @@ class JobApplicationTest extends TestCase
 
     public function test_job_seeker_can_apply_using_clear_job_applications_route(): void
     {
-        $company = Company::create(['name' => 'Acme Hiring Co.']);
+        $company = Company::create(['name' => 'Acme Hiring Co.', 'approval_status' => 'approved']);
         $jobSeeker = $this->jobSeeker();
         $jobPosting = $this->jobPostingFor($company, [
             'status' => 'open',
@@ -110,7 +110,7 @@ class JobApplicationTest extends TestCase
 
     public function test_duplicate_applications_are_blocked(): void
     {
-        $company = Company::create(['name' => 'Acme Hiring Co.']);
+        $company = Company::create(['name' => 'Acme Hiring Co.', 'approval_status' => 'approved']);
         $jobSeeker = $this->jobSeeker();
         $jobPosting = $this->jobPostingFor($company, [
             'status' => 'open',
@@ -132,7 +132,7 @@ class JobApplicationTest extends TestCase
 
     public function test_application_visibility_is_limited_to_applicant_and_owning_employer(): void
     {
-        $company = Company::create(['name' => 'Acme Hiring Co.']);
+        $company = Company::create(['name' => 'Acme Hiring Co.', 'approval_status' => 'approved']);
         $ownerEmployer = $this->employer('owner@example.com', $company);
         $otherEmployer = $this->employer('other@example.com');
         $jobSeeker = $this->jobSeeker('seeker@example.com');
@@ -166,7 +166,7 @@ class JobApplicationTest extends TestCase
 
     public function test_job_seeker_can_list_own_applications_only(): void
     {
-        $company = Company::create(['name' => 'Acme Hiring Co.']);
+        $company = Company::create(['name' => 'Acme Hiring Co.', 'approval_status' => 'approved']);
         $jobSeeker = $this->jobSeeker('owner-seeker@example.com');
         $otherSeeker = $this->jobSeeker('other-seeker@example.com');
         $jobPosting = $this->jobPostingFor($company, [
@@ -192,7 +192,7 @@ class JobApplicationTest extends TestCase
 
     public function test_employer_can_list_applications_for_owned_job_only(): void
     {
-        $company = Company::create(['name' => 'Acme Hiring Co.']);
+        $company = Company::create(['name' => 'Acme Hiring Co.', 'approval_status' => 'approved']);
         $ownerEmployer = $this->employer('owner@example.com', $company);
         $otherEmployer = $this->employer('other@example.com');
         $firstSeeker = $this->jobSeeker('first@example.com');
@@ -219,7 +219,7 @@ class JobApplicationTest extends TestCase
 
     public function test_employer_can_change_status_using_valid_transitions_and_history_is_appended(): void
     {
-        $company = Company::create(['name' => 'Acme Hiring Co.']);
+        $company = Company::create(['name' => 'Acme Hiring Co.', 'approval_status' => 'approved']);
         $employer = $this->employer('owner@example.com', $company);
         $jobSeeker = $this->jobSeeker('candidate@example.com');
         $jobPosting = $this->jobPostingFor($company, [
@@ -253,9 +253,50 @@ class JobApplicationTest extends TestCase
         ]);
     }
 
+    public function test_final_application_accept_and_reject_create_audit_logs(): void
+    {
+        $company = Company::create(['name' => 'Acme Hiring Co.', 'approval_status' => 'approved']);
+        $employer = $this->employer('owner@example.com', $company);
+        $jobPosting = $this->jobPostingFor($company, [
+            'status' => 'open',
+            'published_at' => now()->subHour(),
+        ]);
+        $acceptedApplication = $this->applicationFor($jobPosting, $this->jobSeeker('accepted@example.com')->jobSeekerProfile, 'final_review');
+        $rejectedApplication = $this->applicationFor($jobPosting, $this->jobSeeker('rejected@example.com')->jobSeekerProfile, 'final_review');
+
+        $this->withToken($this->tokenFor($employer))
+            ->postJson("/api/v1/applications/{$acceptedApplication->id}/status", [
+                'status' => 'accepted',
+                'note' => 'Offer approved.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status.slug', 'accepted');
+
+        $this->withToken($this->tokenFor($employer))
+            ->postJson("/api/v1/applications/{$rejectedApplication->id}/status", [
+                'status' => 'rejected',
+                'note' => 'Not selected.',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.status.slug', 'rejected');
+
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'application.accepted',
+            'entity_type' => JobApplication::class,
+            'entity_id' => $acceptedApplication->id,
+            'actor_user_id' => $employer->id,
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'application.rejected',
+            'entity_type' => JobApplication::class,
+            'entity_id' => $rejectedApplication->id,
+            'actor_user_id' => $employer->id,
+        ]);
+    }
+
     public function test_invalid_transitions_and_terminal_states_are_blocked(): void
     {
-        $company = Company::create(['name' => 'Acme Hiring Co.']);
+        $company = Company::create(['name' => 'Acme Hiring Co.', 'approval_status' => 'approved']);
         $employer = $this->employer('owner@example.com', $company);
         $jobSeeker = $this->jobSeeker('candidate@example.com');
         $jobPosting = $this->jobPostingFor($company, [
@@ -288,7 +329,7 @@ class JobApplicationTest extends TestCase
 
     public function test_job_seeker_can_withdraw_active_application_and_employer_cannot_withdraw_or_force_withdraw_status(): void
     {
-        $company = Company::create(['name' => 'Acme Hiring Co.']);
+        $company = Company::create(['name' => 'Acme Hiring Co.', 'approval_status' => 'approved']);
         $employer = $this->employer('owner@example.com', $company);
         $jobSeeker = $this->jobSeeker('candidate@example.com');
         $jobPosting = $this->jobPostingFor($company, [
@@ -329,7 +370,7 @@ class JobApplicationTest extends TestCase
 
     public function test_applications_to_non_open_jobs_are_rejected_and_seekers_cannot_change_status(): void
     {
-        $company = Company::create(['name' => 'Acme Hiring Co.']);
+        $company = Company::create(['name' => 'Acme Hiring Co.', 'approval_status' => 'approved']);
         $employer = $this->employer('owner@example.com', $company);
         $jobSeeker = $this->jobSeeker('candidate@example.com');
         $draftJob = $this->jobPostingFor($company, ['status' => 'draft', 'published_at' => null]);
@@ -365,7 +406,7 @@ class JobApplicationTest extends TestCase
 
     private function employer(string $email = 'employer@example.com', ?Company $company = null): User
     {
-        $company ??= Company::create(['name' => 'Acme Hiring Co. '.$email]);
+        $company ??= Company::create(['name' => 'Acme Hiring Co. '.$email, 'approval_status' => 'approved']);
 
         $user = User::factory()->create([
             'email' => $email,

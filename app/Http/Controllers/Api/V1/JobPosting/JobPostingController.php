@@ -30,8 +30,7 @@ class JobPostingController extends Controller
     public function __construct(
         private readonly JobPostingService $jobPostingService,
         private readonly MatchingService $matchingService,
-    ) {
-    }
+    ) {}
 
     public function index(IndexJobPostingRequest $request): JsonResponse
     {
@@ -82,7 +81,7 @@ class JobPostingController extends Controller
     public function update(UpdateJobPostingRequest $request, JobPosting $jobPosting): JsonResponse
     {
         return ApiResponse::success(
-            data: new JobPostingResource($this->jobPostingService->updateJob($jobPosting, $request->validated())),
+            data: new JobPostingResource($this->jobPostingService->updateJob($request->user('sanctum'), $jobPosting, $request->validated())),
             message: 'Job posting updated successfully.',
         );
     }
@@ -118,7 +117,7 @@ class JobPostingController extends Controller
     public function publish(PublishJobPostingRequest $request, JobPosting $jobPosting): JsonResponse
     {
         return ApiResponse::success(
-            data: new JobPostingResource($this->jobPostingService->publishJob($jobPosting)),
+            data: new JobPostingResource($this->jobPostingService->publishJob($request->user('sanctum'), $jobPosting)),
             message: 'Job posting published successfully.',
         );
     }
@@ -126,7 +125,7 @@ class JobPostingController extends Controller
     public function close(CloseJobPostingRequest $request, JobPosting $jobPosting): JsonResponse
     {
         return ApiResponse::success(
-            data: new JobPostingResource($this->jobPostingService->closeJob($jobPosting)),
+            data: new JobPostingResource($this->jobPostingService->closeJob($request->user('sanctum'), $jobPosting)),
             message: 'Job posting closed successfully.',
         );
     }

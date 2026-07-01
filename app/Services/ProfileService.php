@@ -13,6 +13,10 @@ use Illuminate\Database\Eloquent\Collection;
 
 class ProfileService
 {
+    public function __construct(
+        private readonly AuditLogService $auditLogService,
+    ) {}
+
     public function getJobSeekerProfile(User $user): JobSeekerProfile
     {
         return $this->jobSeekerProfile($user)
@@ -123,7 +127,18 @@ class ProfileService
     public function updateCompany(User $user, array $data): Company
     {
         $company = $this->employerProfile($user)->company;
+        $before = $company->only(array_keys($data));
+
         $company->update($data);
+
+        $this->auditLogService->record(
+            'company.updated',
+            $user,
+            Company::class,
+            $company->id,
+            $before,
+            $company->only(array_keys($data)),
+        );
 
         return $company->load(['employerProfiles.user']);
     }

@@ -31,7 +31,7 @@ class MatchingTest extends TestCase
 
     public function test_job_seeker_can_get_recommended_jobs_with_explainable_scores(): void
     {
-        $company = Company::create(['name' => 'Acme Hiring Co.']);
+        $company = Company::create(['name' => 'Acme Hiring Co.', 'approval_status' => 'approved']);
         $jobSeeker = $this->jobSeeker('seeker@example.com');
         $laravel = Skill::create(['name' => 'Laravel', 'slug' => 'laravel']);
         $mysql = Skill::create(['name' => 'MySQL', 'slug' => 'mysql']);
@@ -158,7 +158,7 @@ class MatchingTest extends TestCase
 
     public function test_owner_employer_can_get_ranked_candidates_with_deterministic_tie_ordering(): void
     {
-        $company = Company::create(['name' => 'Ranking Co.']);
+        $company = Company::create(['name' => 'Ranking Co.', 'approval_status' => 'approved']);
         $ownerEmployer = $this->employer('owner@example.com', $company);
         $jobPosting = $this->jobPostingFor($company, [
             'title' => 'Senior Laravel Engineer',
@@ -233,7 +233,7 @@ class MatchingTest extends TestCase
 
     public function test_ranked_candidates_endpoint_enforces_authorization_and_limit_validation(): void
     {
-        $company = Company::create(['name' => 'Guard Co.']);
+        $company = Company::create(['name' => 'Guard Co.', 'approval_status' => 'approved']);
         $ownerEmployer = $this->employer('owner-guard@example.com', $company);
         $otherEmployer = $this->employer('other-guard@example.com');
         $jobSeeker = $this->jobSeeker('guard-seeker@example.com');
@@ -262,7 +262,7 @@ class MatchingTest extends TestCase
 
     private function employer(string $email = 'employer@example.com', ?Company $company = null): User
     {
-        $company ??= Company::create(['name' => 'Acme Hiring Co. '.$email]);
+        $company ??= Company::create(['name' => 'Acme Hiring Co. '.$email, 'approval_status' => 'approved']);
 
         $user = User::factory()->create([
             'email' => $email,

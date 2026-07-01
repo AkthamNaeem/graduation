@@ -129,6 +129,12 @@ class JobPostingTest extends TestCase
             ->assertJsonPath('data.status', 'open');
 
         $this->assertNotNull($jobPosting->refresh()->published_at);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'job.published',
+            'entity_type' => JobPosting::class,
+            'entity_id' => $jobPosting->id,
+            'actor_user_id' => $user->id,
+        ]);
 
         $this->withToken($this->tokenFor($user))
             ->postJson("/api/v1/jobs/{$jobPosting->id}/close")
@@ -141,9 +147,72 @@ class JobPostingTest extends TestCase
             ->assertJsonPath('data.status', 'open');
     }
 
+    public function test_pending_company_employer_cannot_publish_job(): void
+    {
+        $company = Company::create(['name' => 'Pending Co.', 'approval_status' => 'pending']);
+        $user = $this->employer('pending@example.com', $company);
+        $jobPosting = $this->jobPostingFor($company);
+        $skill = Skill::create(['name' => 'Laravel', 'slug' => 'laravel']);
+        $jobPosting->skills()->attach($skill);
+
+        $this->withToken($this->tokenFor($user))
+            ->postJson("/api/v1/jobs/{$jobPosting->id}/publish")
+            ->assertForbidden()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('errors.company_approval_status.0', 'pending');
+
+        $this->assertSame('draft', $jobPosting->refresh()->status);
+    }
+
+    public function test_rejected_company_employer_cannot_access_sensitive_employer_workflows(): void
+    {
+        $company = Company::create(['name' => 'Rejected Co.', 'approval_status' => 'rejected']);
+        $user = $this->employer('rejected@example.com', $company);
+
+        $this->withToken($this->tokenFor($user))
+            ->postJson('/api/v1/jobs', [
+                'title' => 'Blocked Role',
+                'description' => 'Should not be created.',
+                'employment_type' => 'full-time',
+                'experience_level' => 'mid-level',
+            ])
+            ->assertForbidden()
+            ->assertJsonPath('errors.company_approval_status.0', 'rejected');
+    }
+
+    public function test_suspended_company_employer_cannot_access_sensitive_employer_workflows(): void
+    {
+        $company = Company::create(['name' => 'Suspended Co.', 'approval_status' => 'suspended']);
+        $user = $this->employer('suspended-company@example.com', $company);
+
+        $this->withToken($this->tokenFor($user))
+            ->postJson('/api/v1/jobs', [
+                'title' => 'Blocked Role',
+                'description' => 'Should not be created.',
+                'employment_type' => 'full-time',
+                'experience_level' => 'mid-level',
+            ])
+            ->assertForbidden()
+            ->assertJsonPath('errors.company_approval_status.0', 'suspended');
+    }
+
+    public function test_approved_company_employer_can_publish_job(): void
+    {
+        $company = Company::create(['name' => 'Approved Co.', 'approval_status' => 'approved']);
+        $user = $this->employer('approved@example.com', $company);
+        $jobPosting = $this->jobPostingFor($company);
+        $skill = Skill::create(['name' => 'APIs', 'slug' => 'apis']);
+        $jobPosting->skills()->attach($skill);
+
+        $this->withToken($this->tokenFor($user))
+            ->postJson("/api/v1/jobs/{$jobPosting->id}/publish")
+            ->assertOk()
+            ->assertJsonPath('data.status', 'open');
+    }
+
     public function test_public_visibility_and_mutation_authorization_are_enforced(): void
     {
-        $company = Company::create(['name' => 'Acme Hiring Co.']);
+        $company = Company::create(['name' => 'Acme Hiring Co.', 'approval_status' => 'approved']);
         $owner = $this->employer('owner@example.com', $company);
         $otherEmployer = $this->employer('other@example.com');
         $jobSeeker = $this->jobSeeker();
@@ -195,7 +264,7 @@ class JobPostingTest extends TestCase
 
     public function test_public_and_employer_job_filters_work_as_expected(): void
     {
-        $company = Company::create(['name' => 'Filter Co.']);
+        $company = Company::create(['name' => 'Filter Co.', 'approval_status' => 'approved']);
         $employer = $this->employer('filters@example.com', $company);
         $laravel = Skill::create(['name' => 'Laravel', 'slug' => 'laravel']);
         $react = Skill::create(['name' => 'React', 'slug' => 'react']);
@@ -276,7 +345,7 @@ class JobPostingTest extends TestCase
 
     private function employer(string $email = 'employer@example.com', ?Company $company = null): User
     {
-        $company ??= Company::create(['name' => 'Acme Hiring Co. '.$email]);
+        $company ??= Company::create(['name' => 'Acme Hiring Co. '.$email, 'approval_status' => 'approved']);
 
         $user = User::factory()->create([
             'email' => $email,

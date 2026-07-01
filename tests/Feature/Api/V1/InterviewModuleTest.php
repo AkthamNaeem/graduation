@@ -57,6 +57,13 @@ class InterviewModuleTest extends TestCase
             'application_status_id' => ApplicationStatus::query()->where('slug', 'interview_scheduled')->value('id'),
         ]);
 
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'interview.scheduled',
+            'entity_type' => Interview::class,
+            'entity_id' => $interviewId,
+            'actor_user_id' => $employer->id,
+        ]);
+
         $this->assertFalse(Schema::hasColumn('job_applications', 'interview_type'));
         $this->assertFalse(Schema::hasColumn('job_applications', 'scheduled_at'));
     }
@@ -119,6 +126,13 @@ class InterviewModuleTest extends TestCase
 
         $this->assertDatabaseMissing('interviews', [
             'id' => $interviewId,
+        ]);
+
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'interview.cancelled',
+            'entity_type' => Interview::class,
+            'entity_id' => $interviewId,
+            'actor_user_id' => $employer->id,
         ]);
 
         $this->assertDatabaseHas('job_applications', [
@@ -189,6 +203,13 @@ class InterviewModuleTest extends TestCase
             'criterion' => 'Communication',
             'score' => 4,
             'sort_order' => 1,
+        ]);
+
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'interview.evaluated',
+            'entity_type' => Interview::class,
+            'entity_id' => $interviewId,
+            'actor_user_id' => $employer->id,
         ]);
 
         $this->withToken($this->tokenFor($employer))
@@ -308,9 +329,8 @@ class InterviewModuleTest extends TestCase
         string $statusSlug = 'under_review',
         string $candidateEmail = 'candidate@example.com',
         string $employerEmail = 'owner@example.com',
-    ): array
-    {
-        $company = Company::create(['name' => 'Acme Hiring Co.']);
+    ): array {
+        $company = Company::create(['name' => 'Acme Hiring Co.', 'approval_status' => 'approved']);
         $employer = $this->employer($employerEmail, $company);
         $jobSeeker = $this->jobSeeker($candidateEmail);
         $jobPosting = $this->jobPostingFor($company, ['status' => 'open', 'published_at' => now()->subHour()]);
@@ -362,7 +382,7 @@ class InterviewModuleTest extends TestCase
 
     private function employer(string $email = 'employer@example.com', ?Company $company = null): User
     {
-        $company ??= Company::create(['name' => 'Acme Hiring Co. '.$email]);
+        $company ??= Company::create(['name' => 'Acme Hiring Co. '.$email, 'approval_status' => 'approved']);
 
         $user = User::factory()->create([
             'email' => $email,

@@ -8,11 +8,16 @@ use App\Http\Requests\Api\V1\Admin\UpdateUserRoleRequest;
 use App\Http\Requests\Api\V1\Admin\UpdateUserStatusRequest;
 use App\Http\Resources\Api\V1\UserResource;
 use App\Models\User;
+use App\Services\AuditLogService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 
 class AdminUserController extends Controller
 {
+    public function __construct(
+        private readonly AuditLogService $auditLogService,
+    ) {}
+
     public function index(IndexAdminRequest $request): JsonResponse
     {
         $users = User::query()
@@ -46,7 +51,20 @@ class AdminUserController extends Controller
 
     public function updateStatus(UpdateUserStatusRequest $request, User $user): JsonResponse
     {
+        $before = $user->only(['status']);
+
         $user->forceFill(['status' => $request->validated('status')])->save();
+
+        $status = (string) $request->validated('status');
+
+        $this->auditLogService->record(
+            $status === 'active' ? 'user.activated' : 'user.suspended',
+            $request->user('sanctum'),
+            User::class,
+            $user->id,
+            $before,
+            $user->only(['status']),
+        );
 
         return ApiResponse::success(
             data: new UserResource($user->refresh()->load(['jobSeekerProfile.skills', 'employerProfile.company'])),

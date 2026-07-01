@@ -97,12 +97,12 @@ class NotificationTest extends TestCase
 
     public function test_workflow_events_create_candidate_notifications(): void
     {
-        $company = Company::create(['name' => 'Acme Hiring Co.']);
+        $company = Company::create(['name' => 'Acme Hiring Co.', 'approval_status' => 'approved']);
         $employer = $this->employer('owner@example.com', $company);
         $candidate = $this->jobSeeker('candidate@example.com');
         $jobPosting = $this->jobPostingFor($company, ['status' => 'open', 'published_at' => now()->subHour()]);
         $application = $this->applicationFor($jobPosting, $candidate->jobSeekerProfile, 'under_review');
-        $test = $this->testCatalogEntry();
+        $test = $this->test_catalog_entry();
 
         $this->withToken($this->tokenFor($employer))
             ->postJson("/api/v1/applications/{$application->id}/status", [
@@ -189,7 +189,7 @@ class NotificationTest extends TestCase
 
     public function test_failed_workflow_validation_does_not_create_notification(): void
     {
-        $company = Company::create(['name' => 'Acme Hiring Co.']);
+        $company = Company::create(['name' => 'Acme Hiring Co.', 'approval_status' => 'approved']);
         $employer = $this->employer('owner@example.com', $company);
         $candidate = $this->jobSeeker('candidate@example.com');
         $jobPosting = $this->jobPostingFor($company, ['status' => 'open', 'published_at' => now()->subHour()]);
@@ -272,7 +272,7 @@ class NotificationTest extends TestCase
         return $application->load('applicationStatus', 'jobPosting', 'jobSeekerProfile');
     }
 
-    private function testCatalogEntry(): RecruitmentTest
+    private function test_catalog_entry(): RecruitmentTest
     {
         return RecruitmentTest::create([
             'title' => 'Backend Assessment',

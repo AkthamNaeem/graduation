@@ -49,6 +49,10 @@ class ApplicationWorkflowService
         'withdrawn' => [],
     ];
 
+    public function __construct(
+        private readonly AuditLogService $auditLogService,
+    ) {}
+
     public function applyToJob(User $user, JobPosting $jobPosting): JobApplication
     {
         if ($user->role !== UserRole::JOB_SEEKER) {
@@ -112,6 +116,18 @@ class ApplicationWorkflowService
             ])->save();
 
             $this->recordHistory($application, $fromStatus, $toStatus, $user, $note);
+
+            if (in_array($toStatus->slug, ['accepted', 'rejected'], true)) {
+                $this->auditLogService->record(
+                    $toStatus->slug === 'accepted' ? 'application.accepted' : 'application.rejected',
+                    $user,
+                    JobApplication::class,
+                    $application->id,
+                    ['status' => $fromStatus->slug],
+                    ['status' => $toStatus->slug],
+                    ['note' => $note],
+                );
+            }
 
             DB::afterCommit(fn (): array => event(new ApplicationStatusChanged(
                 $application->id,

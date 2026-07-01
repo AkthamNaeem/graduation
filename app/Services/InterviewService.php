@@ -34,8 +34,8 @@ class InterviewService
 
     public function __construct(
         private readonly ApplicationWorkflowService $applicationWorkflowService,
-    ) {
-    }
+        private readonly AuditLogService $auditLogService,
+    ) {}
 
     /**
      * @param  array<string, mixed>  $data
@@ -78,6 +78,15 @@ class InterviewService
                 'meeting_link' => $data['meeting_link'] ?? null,
                 'note' => $data['note'] ?? null,
             ]);
+
+            $this->auditLogService->record(
+                'interview.scheduled',
+                $actor,
+                Interview::class,
+                $interview->id,
+                null,
+                $interview->only(['job_application_id', 'scheduled_by_user_id', 'scheduled_at', 'interview_mode']),
+            );
 
             if ($jobApplication->applicationStatus?->slug !== self::STATUS_INTERVIEW_SCHEDULED) {
                 $this->applicationWorkflowService->changeStatus(
@@ -173,6 +182,15 @@ class InterviewService
 
             $lockedInterview->delete();
 
+            $this->auditLogService->record(
+                'interview.cancelled',
+                $actor,
+                Interview::class,
+                $lockedInterview->id,
+                $lockedInterview->only(['job_application_id', 'scheduled_by_user_id', 'scheduled_at', 'interview_mode']),
+                null,
+            );
+
             $this->syncApplicationInterviewStatusAfterDeletion($actor, $application);
         });
     }
@@ -257,6 +275,15 @@ class InterviewService
                     'sort_order' => $index + 1,
                 ]);
             }
+
+            $this->auditLogService->record(
+                'interview.evaluated',
+                $actor,
+                Interview::class,
+                $lockedInterview->id,
+                null,
+                $evaluation->only(['interview_id', 'evaluated_by_user_id', 'recommendation', 'evaluated_at']),
+            );
 
             $jobApplication = $lockedInterview->jobApplication;
 

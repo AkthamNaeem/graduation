@@ -904,17 +904,19 @@ Postman collections are located in the `postman/` directory:
 Modules covered:
 
 - Mobile App collection: job seeker auth, public jobs, public skills/reference data, job seeker profile, CV upload/parsing, profile suggestions, applications, tests, interviews, notifications.
-- Web App collection: public website calls, web-role auth, employer company/profile/job/application/test/interview workflows, notifications, admin users/companies/skills/tests, audit/report placeholders.
-- Environment: `base_url`, role token variables, auth email variables, reset token variable, and reusable resource ID variables.
+- Web App collection: public website calls, web-role auth, employer company/profile/job/application/test/interview workflows, notifications, admin users/companies/skills/tests, and admin audit log filters.
+- Environment: `base_url`, role token variables, company approval scenario token variables, auth email variables, reset token variable, and reusable resource ID variables.
 
 Common collection variables:
 
 - `base_url`, typically pointing to the local API version root such as `http://localhost:8000/api/v1`
 - `job_seeker_token`, `employer_token`, and `admin_token`
+- `pending_employer_token` and `suspended_employer_token` for company approval enforcement examples
 - `reset_token`
 - `job_seeker_email`, `employer_email`, and `admin_email`
 - Resource IDs such as `job_id`, `application_id`, `skill_id`, `test_id`, `assignment_id`, `attempt_id`, `interview_id`, and `cv_id` depending on the phase
 - The complete collection environment also includes `job_seeker_email`, `job_seeker_password`, `employer_email`, `employer_password`, `admin_email`, `admin_password`, `notification_id`, `user_id`, `company_id`, `experience_id`, and `education_id`
+- Phase 9.5 adds `audit_log_id`, `approved_company_id`, and `rejected_company_id`
 
 Suggested testing order:
 
@@ -957,7 +959,64 @@ Admin endpoints:
 | PUT | `/api/v1/admin/tests/{test}` | Update test catalog entry |
 | DELETE | `/api/v1/admin/tests/{test}` | Delete test catalog entry |
 
-## 17. Known Limitations
+## 17. Phase 9.5 Audit Logs and Company Approval Enforcement
+
+Phase 9.5 adds a general `AuditLog` trail for sensitive platform actions and stricter employer workflow access based on company approval status.
+
+Audit logging:
+
+- `ApplicationStatusHistory` remains the source of truth for job application status transitions.
+- `AuditLog` is a separate general platform audit trail for sensitive actions such as company approval, user suspension, job publishing, final decisions, test/interview actions, and CV/profile suggestion decisions.
+- Audit records store actor user, action, entity type/id, before/after JSON values, metadata, IP address, user agent, and creation timestamp.
+- Audit logging is best-effort. If non-critical audit writing fails, the main business flow is not intentionally broken.
+
+New audit endpoint:
+
+| Method | Path | Auth | Purpose |
+| --- | --- | --- | --- |
+| GET | `/api/v1/admin/audit-logs` | Admin only | Paginated audit logs with filters for `action`, `actor_user_id`, `entity_type`, `entity_id`, `date_from`, and `date_to` |
+
+Company approval enforcement:
+
+- Employer workflow routes now use `company.approved` middleware.
+- Approved companies can create/manage/publish/close jobs, manage application pipelines, assign/evaluate tests, schedule/cancel/evaluate interviews, and make final decisions.
+- Pending companies may view/update their own company profile and employer profile, but are blocked from employer workflow routes.
+- Rejected and suspended companies are blocked from employer workflow routes.
+- Admin endpoints are not blocked by company approval status.
+- Job seeker APIs and public job browsing are not affected by company approval status.
+
+Admin company controls:
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/api/v1/admin/companies?approval_status=pending` | Filter companies by approval status |
+| PATCH | `/api/v1/admin/companies/{company}/approve` | Mark company approved and write `company.approved` audit log |
+| PATCH | `/api/v1/admin/companies/{company}/reject` | Mark company rejected and write `company.rejected` audit log |
+| PATCH | `/api/v1/admin/companies/{company}/suspend` | Mark company suspended and write `company.suspended` audit log |
+
+Audit actions currently emitted:
+
+- `company.approved`, `company.rejected`, `company.suspended`, `company.updated`
+- `user.activated`, `user.suspended`
+- `job.created`, `job.updated`, `job.published`, `job.closed`
+- `application.accepted`, `application.rejected`
+- `test.assigned`, `test.evaluated`
+- `interview.scheduled`, `interview.cancelled`, `interview.evaluated`
+- `cv.suggestions.generated`, `cv.suggestions.applied`, `cv.suggestion.accepted`, `cv.suggestion.rejected`
+
+Postman:
+
+- `Smart Recruitment Platform - Web App.postman_collection.json` includes Admin - Companies approval/suspension/status filter requests, Admin - Audit / Reports audit log filters, and employer examples for pending-company publish blocking and approved-company publishing.
+- `Smart Recruitment Platform - Environment.postman_environment.json` includes Phase 9.5 variables for audit and company approval scenarios.
+- The Mobile App collection was not modified for this backend-only employer/admin phase.
+
+Limitations:
+
+- Audit metadata is intentionally practical for the graduation project and does not attempt a full compliance-grade immutable ledger.
+- Update/delete actions that are less sensitive, such as job skill attach/detach and routine profile edits, are not exhaustively audited.
+- Company suspension is represented by `companies.approval_status = suspended`; there is no separate suspension reason table.
+
+## 18. Known Limitations
 
 - Partially Implemented: CV parsing is MVP/basic. It uses regex and simple section-line parsing, so complex CV formats may parse poorly.
 - Partially Implemented: CV parsing only supports PDF and DOCX.
@@ -978,7 +1037,7 @@ Admin endpoints:
 - Not Implemented: No OpenAPI/Swagger documentation is present.
 - Automated tests are implemented and broad for current modules, but there are no browser/end-to-end tests because this repository is backend-only.
 
-## 18. Improvement Plan Preparation
+## 19. Improvement Plan Preparation
 
 ### High Priority
 

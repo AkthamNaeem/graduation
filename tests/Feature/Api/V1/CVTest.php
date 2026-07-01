@@ -239,7 +239,7 @@ class CVTest extends TestCase
 
     private function employer(): User
     {
-        $company = Company::create(['name' => 'Acme Hiring Co.']);
+        $company = Company::create(['name' => 'Acme Hiring Co.', 'approval_status' => 'approved']);
         $user = User::factory()->create([
             'role' => UserRole::EMPLOYER,
         ]);

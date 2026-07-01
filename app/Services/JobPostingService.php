@@ -13,6 +13,10 @@ use Illuminate\Validation\ValidationException;
 
 class JobPostingService
 {
+    public function __construct(
+        private readonly AuditLogService $auditLogService,
+    ) {}
+
     /**
      * @param  array<string, mixed>  $filters
      * @return LengthAwarePaginator<int, JobPosting>
@@ -63,15 +67,35 @@ class JobPostingService
                 'published_at' => null,
             ]);
 
+        $this->auditLogService->record(
+            'job.created',
+            $user,
+            JobPosting::class,
+            $jobPosting->id,
+            null,
+            $jobPosting->only(['title', 'status', 'company_id']),
+        );
+
         return $jobPosting->load(['company', 'skills']);
     }
 
     /**
      * @param  array<string, mixed>  $data
      */
-    public function updateJob(JobPosting $jobPosting, array $data): JobPosting
+    public function updateJob(User $actor, JobPosting $jobPosting, array $data): JobPosting
     {
+        $before = $jobPosting->only(array_keys($data));
+
         $jobPosting->update($data);
+
+        $this->auditLogService->record(
+            'job.updated',
+            $actor,
+            JobPosting::class,
+            $jobPosting->id,
+            $before,
+            $jobPosting->only(array_keys($data)),
+        );
 
         return $jobPosting->load(['company', 'skills']);
     }
@@ -81,7 +105,7 @@ class JobPostingService
         $jobPosting->delete();
     }
 
-    public function publishJob(JobPosting $jobPosting): JobPosting
+    public function publishJob(User $actor, JobPosting $jobPosting): JobPosting
     {
         if (! $jobPosting->skills()->exists()) {
             throw ValidationException::withMessages([
@@ -89,19 +113,41 @@ class JobPostingService
             ]);
         }
 
+        $before = $jobPosting->only(['status', 'published_at']);
+
         $jobPosting->forceFill([
             'status' => 'open',
             'published_at' => now(),
         ])->save();
 
+        $this->auditLogService->record(
+            'job.published',
+            $actor,
+            JobPosting::class,
+            $jobPosting->id,
+            $before,
+            $jobPosting->only(['status', 'published_at']),
+        );
+
         return $jobPosting->load(['company', 'skills']);
     }
 
-    public function closeJob(JobPosting $jobPosting): JobPosting
+    public function closeJob(User $actor, JobPosting $jobPosting): JobPosting
     {
+        $before = $jobPosting->only(['status']);
+
         $jobPosting->forceFill([
             'status' => 'closed',
         ])->save();
+
+        $this->auditLogService->record(
+            'job.closed',
+            $actor,
+            JobPosting::class,
+            $jobPosting->id,
+            $before,
+            $jobPosting->only(['status']),
+        );
 
         return $jobPosting->load(['company', 'skills']);
     }

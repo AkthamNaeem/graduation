@@ -81,6 +81,12 @@ class ProfileSuggestionTest extends TestCase
             'title' => 'Backend Developer',
             'company_name' => 'Northwind Software',
         ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'cv.suggestion.accepted',
+            'entity_type' => ProfileChangeSuggestion::class,
+            'entity_id' => $experienceSuggestion->id,
+            'actor_user_id' => $user->id,
+        ]);
         $this->assertDatabaseCount('education', 0);
         $this->assertDatabaseCount('job_seeker_skills', 0);
     }

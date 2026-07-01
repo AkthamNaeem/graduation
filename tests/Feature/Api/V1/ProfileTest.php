@@ -272,6 +272,12 @@ class ProfileTest extends TestCase
         $this->assertDatabaseHas('companies', [
             'name' => 'Acme Talent',
         ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'company.updated',
+            'entity_type' => Company::class,
+            'entity_id' => $user->employerProfile->company_id,
+            'actor_user_id' => $user->id,
+        ]);
         $this->assertDatabaseHas('employer_profiles', [
             'user_id' => $user->id,
             'job_title' => 'Talent Acquisition Lead',
@@ -328,6 +334,7 @@ class ProfileTest extends TestCase
     {
         $company = Company::create([
             'name' => 'Acme Hiring Co.',
+            'approval_status' => 'approved',
         ]);
         $user = User::factory()->create([
             'email' => $email,

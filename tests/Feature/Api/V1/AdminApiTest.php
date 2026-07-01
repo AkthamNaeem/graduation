@@ -3,10 +3,10 @@
 namespace Tests\Feature\Api\V1;
 
 use App\Enums\UserRole;
+use App\Models\AuditLog;
 use App\Models\Company;
 use App\Models\EmployerProfile;
 use App\Models\Skill;
-use App\Models\Test as RecruitmentTest;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
@@ -93,6 +93,86 @@ class AdminApiTest extends TestCase
             ->patchJson("/api/v1/admin/companies/{$company->id}/reject")
             ->assertOk()
             ->assertJsonPath('data.approval_status', 'rejected');
+    }
+
+    public function test_admin_can_suspend_company_and_company_status_changes_are_audited(): void
+    {
+        $admin = $this->admin();
+        $company = Company::create(['name' => 'Audit Co.']);
+
+        $this->withToken($this->tokenFor($admin))
+            ->patchJson("/api/v1/admin/companies/{$company->id}/approve")
+            ->assertOk()
+            ->assertJsonPath('data.approval_status', 'approved');
+
+        $this->withToken($this->tokenFor($admin))
+            ->patchJson("/api/v1/admin/companies/{$company->id}/reject")
+            ->assertOk()
+            ->assertJsonPath('data.approval_status', 'rejected');
+
+        $this->withToken($this->tokenFor($admin))
+            ->patchJson("/api/v1/admin/companies/{$company->id}/suspend")
+            ->assertOk()
+            ->assertJsonPath('data.approval_status', 'suspended');
+
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'company.approved',
+            'entity_type' => Company::class,
+            'entity_id' => $company->id,
+            'actor_user_id' => $admin->id,
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'company.rejected',
+            'entity_type' => Company::class,
+            'entity_id' => $company->id,
+            'actor_user_id' => $admin->id,
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'company.suspended',
+            'entity_type' => Company::class,
+            'entity_id' => $company->id,
+            'actor_user_id' => $admin->id,
+        ]);
+    }
+
+    public function test_admin_can_list_and_filter_audit_logs(): void
+    {
+        $admin = $this->admin();
+        $actor = User::factory()->create(['role' => UserRole::EMPLOYER]);
+
+        AuditLog::create([
+            'actor_user_id' => $actor->id,
+            'action' => 'job.published',
+            'entity_type' => 'job',
+            'entity_id' => 10,
+        ]);
+        AuditLog::create([
+            'actor_user_id' => $admin->id,
+            'action' => 'company.approved',
+            'entity_type' => Company::class,
+            'entity_id' => 20,
+        ]);
+
+        $this->withToken($this->tokenFor($admin))
+            ->getJson('/api/v1/admin/audit-logs')
+            ->assertOk()
+            ->assertJsonPath('data.meta.current_page', 1);
+
+        $this->withToken($this->tokenFor($admin))
+            ->getJson('/api/v1/admin/audit-logs?action=job.published')
+            ->assertOk()
+            ->assertJsonCount(1, 'data.data')
+            ->assertJsonPath('data.data.0.action', 'job.published');
+    }
+
+    public function test_non_admin_cannot_list_audit_logs(): void
+    {
+        $employer = User::factory()->create(['role' => UserRole::EMPLOYER]);
+
+        $this->withToken($this->tokenFor($employer))
+            ->getJson('/api/v1/admin/audit-logs')
+            ->assertForbidden()
+            ->assertJsonPath('success', false);
     }
 
     public function test_admin_can_crud_skills(): void

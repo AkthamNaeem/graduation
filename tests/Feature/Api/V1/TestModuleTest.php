@@ -32,12 +32,12 @@ class TestModuleTest extends TestCase
 
     public function test_employer_can_assign_a_test_and_application_moves_to_test_pending(): void
     {
-        $company = Company::create(['name' => 'Acme Hiring Co.']);
+        $company = Company::create(['name' => 'Acme Hiring Co.', 'approval_status' => 'approved']);
         $employer = $this->employer('owner@example.com', $company);
         $jobSeeker = $this->jobSeeker('candidate@example.com');
         $jobPosting = $this->jobPostingFor($company, ['status' => 'open', 'published_at' => now()->subHour()]);
         $application = $this->applicationFor($jobPosting, $jobSeeker->jobSeekerProfile, 'under_review');
-        $test = $this->testCatalogEntry();
+        $test = $this->test_catalog_entry();
 
         $response = $this->withToken($this->tokenFor($employer))
             ->postJson("/api/v1/applications/{$application->id}/assign-test", [
@@ -56,6 +56,13 @@ class TestModuleTest extends TestCase
             'job_application_id' => $application->id,
             'test_id' => $test->id,
             'assigned_by_user_id' => $employer->id,
+        ]);
+
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'test.assigned',
+            'entity_type' => ApplicationTestAssignment::class,
+            'entity_id' => $assignmentId,
+            'actor_user_id' => $employer->id,
         ]);
 
         $this->assertDatabaseHas('job_applications', [
@@ -144,8 +151,8 @@ class TestModuleTest extends TestCase
     public function test_job_seeker_can_only_read_active_test_catalog_entries(): void
     {
         $jobSeeker = $this->jobSeeker();
-        $activeTest = $this->testCatalogEntry('Active Assessment');
-        $inactiveTest = $this->testCatalogEntry('Inactive Assessment');
+        $activeTest = $this->test_catalog_entry('Active Assessment');
+        $inactiveTest = $this->test_catalog_entry('Inactive Assessment');
         $inactiveTest->forceFill(['is_active' => false])->save();
 
         $this->withToken($this->tokenFor($jobSeeker))
@@ -190,7 +197,7 @@ class TestModuleTest extends TestCase
     public function test_test_catalog_validation_rejects_invalid_scores(): void
     {
         $employer = $this->employer();
-        $test = $this->testCatalogEntry('Scored Assessment');
+        $test = $this->test_catalog_entry('Scored Assessment');
 
         $this->withToken($this->tokenFor($employer))
             ->postJson('/api/v1/tests', [
@@ -212,13 +219,13 @@ class TestModuleTest extends TestCase
 
     public function test_unauthorized_employer_cannot_assign_list_or_evaluate_tests(): void
     {
-        $company = Company::create(['name' => 'Acme Hiring Co.']);
+        $company = Company::create(['name' => 'Acme Hiring Co.', 'approval_status' => 'approved']);
         $ownerEmployer = $this->employer('owner@example.com', $company);
         $otherEmployer = $this->employer('other@example.com');
         $jobSeeker = $this->jobSeeker('candidate@example.com');
         $jobPosting = $this->jobPostingFor($company, ['status' => 'open', 'published_at' => now()->subHour()]);
         $application = $this->applicationFor($jobPosting, $jobSeeker->jobSeekerProfile, 'under_review');
-        $test = $this->testCatalogEntry();
+        $test = $this->test_catalog_entry();
 
         $this->withToken($this->tokenFor($otherEmployer))
             ->postJson("/api/v1/applications/{$application->id}/assign-test", [
@@ -247,15 +254,15 @@ class TestModuleTest extends TestCase
 
     public function test_candidate_sees_only_own_assigned_tests(): void
     {
-        $company = Company::create(['name' => 'Acme Hiring Co.']);
+        $company = Company::create(['name' => 'Acme Hiring Co.', 'approval_status' => 'approved']);
         $employer = $this->employer('owner@example.com', $company);
         $firstSeeker = $this->jobSeeker('first@example.com');
         $secondSeeker = $this->jobSeeker('second@example.com');
         $jobPosting = $this->jobPostingFor($company, ['status' => 'open', 'published_at' => now()->subHour()]);
         $firstApplication = $this->applicationFor($jobPosting, $firstSeeker->jobSeekerProfile, 'under_review');
         $secondApplication = $this->applicationFor($jobPosting, $secondSeeker->jobSeekerProfile, 'under_review');
-        $firstTest = $this->testCatalogEntry('Backend Assessment');
-        $secondTest = $this->testCatalogEntry('Frontend Assessment');
+        $firstTest = $this->test_catalog_entry('Backend Assessment');
+        $secondTest = $this->test_catalog_entry('Frontend Assessment');
 
         $firstAssignment = $this->assignTest($employer, $firstApplication, $firstTest);
         $this->assignTest($employer, $secondApplication, $secondTest);
@@ -356,6 +363,13 @@ class TestModuleTest extends TestCase
             'evaluated_by_user_id' => $employer->id,
         ]);
 
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'test.evaluated',
+            'entity_type' => TestAttempt::class,
+            'entity_id' => $attempt->id,
+            'actor_user_id' => $employer->id,
+        ]);
+
         $this->assertDatabaseHas('job_applications', [
             'id' => $application->id,
             'application_status_id' => ApplicationStatus::query()->where('slug', 'test_completed')->value('id'),
@@ -406,12 +420,12 @@ class TestModuleTest extends TestCase
 
     private function assignedTestScenario(): ApplicationTestAssignment
     {
-        $company = Company::create(['name' => 'Acme Hiring Co.']);
+        $company = Company::create(['name' => 'Acme Hiring Co.', 'approval_status' => 'approved']);
         $employer = $this->employer('owner@example.com', $company);
         $jobSeeker = $this->jobSeeker('candidate@example.com');
         $jobPosting = $this->jobPostingFor($company, ['status' => 'open', 'published_at' => now()->subHour()]);
         $application = $this->applicationFor($jobPosting, $jobSeeker->jobSeekerProfile, 'under_review');
-        $test = $this->testCatalogEntry();
+        $test = $this->test_catalog_entry();
 
         return $this->assignTest($employer, $application, $test);
     }
@@ -473,7 +487,7 @@ class TestModuleTest extends TestCase
         ]);
     }
 
-    private function testCatalogEntry(string $title = 'Laravel Assessment'): RecruitmentTest
+    private function test_catalog_entry(string $title = 'Laravel Assessment'): RecruitmentTest
     {
         return RecruitmentTest::create([
             'title' => $title,
@@ -488,7 +502,7 @@ class TestModuleTest extends TestCase
 
     private function employer(string $email = 'employer@example.com', ?Company $company = null): User
     {
-        $company ??= Company::create(['name' => 'Acme Hiring Co. '.$email]);
+        $company ??= Company::create(['name' => 'Acme Hiring Co. '.$email, 'approval_status' => 'approved']);
 
         $user = User::factory()->create([
             'email' => $email,

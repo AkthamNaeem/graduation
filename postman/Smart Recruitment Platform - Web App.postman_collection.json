@@ -793,7 +793,7 @@
               ]
             },
             "method": "POST",
-            "description": "Web App / Employer Dashboard: publish an owned job.",
+            "description": "Web App / Employer Dashboard: publish an owned job. Requires the employer company to be approved and creates a job.published audit log.",
             "url": "{{base_url}}/jobs/{{job_id}}/publish"
           },
           "event": [
@@ -803,6 +803,35 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('publish response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404, 422]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Publish Job - Pending Company Example",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{pending_employer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "description": "Web App / Employer Dashboard: pending companies can update their company profile but cannot publish jobs. Expected response is 403 when {{pending_employer_token}} belongs to a pending-company employer.",
+            "url": "{{base_url}}/jobs/{{job_id}}/publish"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('pending company blocked or auth missing', () => pm.expect(pm.response.code).to.be.oneOf([401, 403, 404]));"
                 ]
               }
             }
@@ -1378,11 +1407,11 @@
                 "value": "application/json"
               }
             ],
-            "description": "Web App / Employer Dashboard: use status change endpoint for final accept/reject decisions.",
+            "description": "Web App / Employer Dashboard: use status change endpoint for final accept/reject decisions. Accepted/rejected final decisions create application.accepted or application.rejected audit records.",
             "url": "{{base_url}}/applications/{{application_id}}/status",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"status\": \"accepted\",\n  \"notes\": \"Final hiring decision.\"\n}",
+              "raw": "{\n  \"status\": \"accepted\",\n  \"note\": \"Final hiring decision.\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1651,6 +1680,35 @@
           ]
         },
         {
+          "name": "List Companies by Status",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "description": "Web App / Admin Dashboard: list companies filtered by approval status. Example statuses: pending, approved, rejected, suspended.",
+            "url": "{{base_url}}/admin/companies?approval_status=pending"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('companies by status response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 422]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Approve Company",
           "request": {
             "auth": {
@@ -1718,6 +1776,35 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('reject response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404, 422]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Suspend Company",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "description": "Web App / Admin Dashboard: suspend a company and block employer workflows.",
+            "url": "{{base_url}}/admin/companies/{{company_id}}/suspend"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('suspend response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404, 422]));"
                 ]
               }
             }
@@ -2031,7 +2118,7 @@
       "name": "16 Admin - Audit / Reports",
       "item": [
         {
-          "name": "Audit Source - Users",
+          "name": "List Audit Logs",
           "request": {
             "auth": {
               "type": "bearer",
@@ -2044,8 +2131,8 @@
               ]
             },
             "method": "GET",
-            "description": "Web App / Admin Dashboard: existing user listing used as an audit source. TODO: replace with dedicated audit/report endpoints when backend exposes them.",
-            "url": "{{base_url}}/admin/users"
+            "description": "Web App / Admin Dashboard: list general platform audit logs. ApplicationStatusHistory remains the source of truth for application status transitions.",
+            "url": "{{base_url}}/admin/audit-logs"
           },
           "event": [
             {
@@ -2053,7 +2140,94 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('audit source response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403]));"
+                  "pm.test('audit logs response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Filter Audit Logs by Action",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "description": "Web App / Admin Dashboard: filter audit logs for a sensitive action such as job.published or company.approved.",
+            "url": "{{base_url}}/admin/audit-logs?action=job.published"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('action filter response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 422]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Filter Audit Logs by Entity Type",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "description": "Web App / Admin Dashboard: filter audit logs by backend entity class name.",
+            "url": "{{base_url}}/admin/audit-logs?entity_type=App%5CModels%5CJobPosting"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('entity filter response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 422]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Filter Audit Logs by Actor",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{admin_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "description": "Web App / Admin Dashboard: filter audit logs by the user who performed the action.",
+            "url": "{{base_url}}/admin/audit-logs?actor_user_id={{user_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('actor filter response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 422]));"
                 ]
               }
             }

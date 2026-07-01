@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\Admin\AdminCompanyController;
 use App\Http\Controllers\Api\V1\Admin\AdminSkillController;
 use App\Http\Controllers\Api\V1\Admin\AdminTestController;
 use App\Http\Controllers\Api\V1\Admin\AdminUserController;
+use App\Http\Controllers\Api\V1\Admin\AuditLogController;
 use App\Http\Controllers\Api\V1\Application\JobApplicationController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Auth\RegistrationController;
@@ -56,10 +57,12 @@ Route::middleware('auth:sanctum')->group(function (): void {
             Route::get('users/{user}', [AdminUserController::class, 'show'])->name('users.show');
             Route::patch('users/{user}/role', [AdminUserController::class, 'updateRole'])->name('users.role');
             Route::patch('users/{user}/status', [AdminUserController::class, 'updateStatus'])->name('users.status');
+            Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
 
             Route::get('companies', [AdminCompanyController::class, 'index'])->name('companies.index');
             Route::patch('companies/{company}/approve', [AdminCompanyController::class, 'approve'])->name('companies.approve');
             Route::patch('companies/{company}/reject', [AdminCompanyController::class, 'reject'])->name('companies.reject');
+            Route::patch('companies/{company}/suspend', [AdminCompanyController::class, 'suspend'])->name('companies.suspend');
 
             Route::get('skills', [AdminSkillController::class, 'index'])->name('skills.index');
             Route::post('skills', [AdminSkillController::class, 'store'])->name('skills.store');
@@ -97,44 +100,47 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('employer/profile', [EmployerProfileController::class, 'show'])->name('employer.profile.show');
     Route::put('employer/profile', [EmployerProfileController::class, 'update'])->name('employer.profile.update');
 
-    Route::post('jobs', [JobPostingController::class, 'store'])->name('jobs.store');
-    Route::get('jobs/my', [JobPostingController::class, 'my'])->name('jobs.my');
-    Route::put('jobs/{jobPosting}', [JobPostingController::class, 'update'])->name('jobs.update');
-    Route::delete('jobs/{jobPosting}', [JobPostingController::class, 'destroy'])->name('jobs.destroy');
-    Route::post('jobs/{jobPosting}/skills', [JobPostingController::class, 'attachSkills'])->name('jobs.skills.store');
-    Route::delete('jobs/{jobPosting}/skills/{skill}', [JobPostingController::class, 'detachSkill'])->name('jobs.skills.destroy');
-    Route::post('jobs/{jobPosting}/publish', [JobPostingController::class, 'publish'])->name('jobs.publish');
-    Route::post('jobs/{jobPosting}/close', [JobPostingController::class, 'close'])->name('jobs.close');
+    Route::middleware('company.approved')->group(function (): void {
+        Route::post('jobs', [JobPostingController::class, 'store'])->name('jobs.store');
+        Route::get('jobs/my', [JobPostingController::class, 'my'])->name('jobs.my');
+        Route::put('jobs/{jobPosting}', [JobPostingController::class, 'update'])->name('jobs.update');
+        Route::delete('jobs/{jobPosting}', [JobPostingController::class, 'destroy'])->name('jobs.destroy');
+        Route::post('jobs/{jobPosting}/skills', [JobPostingController::class, 'attachSkills'])->name('jobs.skills.store');
+        Route::delete('jobs/{jobPosting}/skills/{skill}', [JobPostingController::class, 'detachSkill'])->name('jobs.skills.destroy');
+        Route::post('jobs/{jobPosting}/publish', [JobPostingController::class, 'publish'])->name('jobs.publish');
+        Route::post('jobs/{jobPosting}/close', [JobPostingController::class, 'close'])->name('jobs.close');
+        Route::get('jobs/{jobPosting}/candidates/ranked', [JobPostingController::class, 'rankedCandidates'])->name('jobs.candidates.ranked');
+
+        Route::get('jobs/{jobPosting}/applications', [JobApplicationController::class, 'indexByJob'])->name('jobs.applications.index');
+        Route::post('applications/{jobApplication}/status', [JobApplicationController::class, 'changeStatus'])->name('applications.status');
+        Route::post('applications/{jobApplication}/assign-test', [TestAssignmentController::class, 'assign'])->name('applications.tests.assign');
+        Route::get('applications/{jobApplication}/tests', [TestAssignmentController::class, 'indexByApplication'])->name('applications.tests.index');
+        Route::post('applications/{jobApplication}/interviews', [InterviewController::class, 'store'])->name('applications.interviews.store');
+        Route::get('applications/{jobApplication}/interviews', [InterviewController::class, 'indexByApplication'])->name('applications.interviews.index');
+        Route::put('interviews/{interview}', [InterviewController::class, 'update'])->name('interviews.update');
+        Route::delete('interviews/{interview}', [InterviewController::class, 'destroy'])->name('interviews.destroy');
+        Route::post('interviews/{interview}/complete', [InterviewController::class, 'complete'])->name('interviews.complete');
+        Route::post('interviews/{interview}/evaluate', [InterviewController::class, 'evaluate'])->name('interviews.evaluate');
+        Route::post('tests', [TestCatalogController::class, 'store'])->name('tests.store');
+        Route::put('tests/{test}', [TestCatalogController::class, 'update'])->name('tests.update');
+        Route::patch('tests/{test}', [TestCatalogController::class, 'update'])->name('tests.patch');
+        Route::delete('tests/{test}', [TestCatalogController::class, 'destroy'])->name('tests.destroy');
+        Route::post('tests/{testAttempt}/evaluate', [TestAttemptController::class, 'evaluate'])->name('tests.evaluate');
+    });
     Route::get('jobs/recommended', [JobPostingController::class, 'recommended'])->name('jobs.recommended');
-    Route::get('jobs/{jobPosting}/candidates/ranked', [JobPostingController::class, 'rankedCandidates'])->name('jobs.candidates.ranked');
 
     Route::post('jobs/{jobPosting}/applications', [JobApplicationController::class, 'store'])->name('jobs.applications.store');
     Route::post('applications/{jobPosting}', [JobApplicationController::class, 'store'])->name('applications.store');
     Route::get('applications/my', [JobApplicationController::class, 'my'])->name('applications.my');
     Route::get('applications/{jobApplication}', [JobApplicationController::class, 'show'])->name('applications.show');
     Route::post('applications/{jobApplication}/withdraw', [JobApplicationController::class, 'withdraw'])->name('applications.withdraw');
-    Route::get('jobs/{jobPosting}/applications', [JobApplicationController::class, 'indexByJob'])->name('jobs.applications.index');
-    Route::post('applications/{jobApplication}/status', [JobApplicationController::class, 'changeStatus'])->name('applications.status');
-    Route::post('applications/{jobApplication}/assign-test', [TestAssignmentController::class, 'assign'])->name('applications.tests.assign');
-    Route::get('applications/{jobApplication}/tests', [TestAssignmentController::class, 'indexByApplication'])->name('applications.tests.index');
-    Route::post('applications/{jobApplication}/interviews', [InterviewController::class, 'store'])->name('applications.interviews.store');
-    Route::get('applications/{jobApplication}/interviews', [InterviewController::class, 'indexByApplication'])->name('applications.interviews.index');
-    Route::put('interviews/{interview}', [InterviewController::class, 'update'])->name('interviews.update');
-    Route::delete('interviews/{interview}', [InterviewController::class, 'destroy'])->name('interviews.destroy');
-    Route::post('interviews/{interview}/complete', [InterviewController::class, 'complete'])->name('interviews.complete');
-    Route::post('interviews/{interview}/evaluate', [InterviewController::class, 'evaluate'])->name('interviews.evaluate');
     Route::get('my/interviews', [InterviewController::class, 'my'])->name('interviews.my');
     Route::get('interviews/{interview}', [InterviewController::class, 'show'])->name('interviews.show');
     Route::get('tests', [TestCatalogController::class, 'index'])->name('tests.index');
-    Route::post('tests', [TestCatalogController::class, 'store'])->name('tests.store');
     Route::get('tests/{test}', [TestCatalogController::class, 'show'])->name('tests.show');
-    Route::put('tests/{test}', [TestCatalogController::class, 'update'])->name('tests.update');
-    Route::patch('tests/{test}', [TestCatalogController::class, 'update'])->name('tests.patch');
-    Route::delete('tests/{test}', [TestCatalogController::class, 'destroy'])->name('tests.destroy');
     Route::get('my/tests', [TestAssignmentController::class, 'my'])->name('tests.my');
     Route::post('tests/{applicationTestAssignment}/start', [TestAttemptController::class, 'start'])->name('tests.start');
     Route::post('tests/{applicationTestAssignment}/submit', [TestAttemptController::class, 'submit'])->name('tests.submit');
-    Route::post('tests/{testAttempt}/evaluate', [TestAttemptController::class, 'evaluate'])->name('tests.evaluate');
 });
 
 Route::get('skills', [SkillController::class, 'index'])->name('skills.index');

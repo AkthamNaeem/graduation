@@ -23,8 +23,8 @@ class TestService
 
     public function __construct(
         private readonly ApplicationWorkflowService $applicationWorkflowService,
-    ) {
-    }
+        private readonly AuditLogService $auditLogService,
+    ) {}
 
     /**
      * @return LengthAwarePaginator<int, Test>
@@ -99,6 +99,16 @@ class TestService
                 'note' => $note,
                 'assigned_at' => now(),
             ]);
+
+            $this->auditLogService->record(
+                'test.assigned',
+                $actor,
+                ApplicationTestAssignment::class,
+                $assignment->id,
+                null,
+                $assignment->only(['job_application_id', 'test_id', 'assigned_by_user_id', 'assigned_at']),
+                ['note' => $note],
+            );
 
             if ($jobApplication->applicationStatus?->slug !== self::STATUS_TEST_PENDING) {
                 $this->applicationWorkflowService->changeStatus(
@@ -235,6 +245,15 @@ class TestService
                 'evaluated_by_user_id' => $actor->id,
                 'evaluated_at' => now(),
             ])->save();
+
+            $this->auditLogService->record(
+                'test.evaluated',
+                $actor,
+                TestAttempt::class,
+                $testAttempt->id,
+                ['score' => null, 'feedback' => null, 'evaluated_by_user_id' => null, 'evaluated_at' => null],
+                $testAttempt->only(['score', 'feedback', 'evaluated_by_user_id', 'evaluated_at']),
+            );
 
             $jobApplication = $testAttempt->applicationTestAssignment->jobApplication;
 

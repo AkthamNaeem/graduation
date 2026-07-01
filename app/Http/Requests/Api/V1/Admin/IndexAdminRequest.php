@@ -16,6 +16,7 @@ class IndexAdminRequest extends FormRequest
     {
         return [
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+            'approval_status' => ['sometimes', 'string', 'in:pending,approved,rejected,suspended'],
         ];
     }
 }
