@@ -2,7 +2,7 @@
 
 ## 1. Executive Summary
 
-The backend implements a Laravel 12 REST API for a smart recruitment platform. The current scope covers account registration and authentication, job seeker and employer profiles, CV upload and basic parsing, employer job posting management, job applications with status history, test assignments and attempts, interview scheduling and evaluation, deterministic matching/ranking based on TF-IDF and cosine similarity, candidate-facing notifications, and platform-level admin APIs.
+The backend implements a Laravel 12 REST API for a smart recruitment platform. The current scope covers account registration and authentication, job seeker and employer profiles, CV upload and basic parsing, employer job posting management, job applications with status history, test assignments and attempts, interview scheduling and evaluation, deterministic matching/ranking based on TF-IDF and cosine similarity, user-facing in-app notifications, and platform-level admin APIs.
 
 The implementation follows a service-oriented Laravel structure using Form Requests for validation and authorization, API Resources for response shaping, Policies and gates for ownership and role checks, seeders for initial data, and feature/unit tests for the implemented modules. API routes are versioned under `/api/v1`. The backend is functionally broad for an MVP, but it does not yet include deep AI/LLM matching, production-grade CV parsing, email notification delivery, or a UI-facing dashboard.
 
@@ -218,8 +218,9 @@ Main relationships: belongs to `interview_evaluations`.
 - hasOne `JobSeekerProfile`
 - hasOne `EmployerProfile`
 - hasMany `CVFile`
+- hasMany `Notification`
 - uses Sanctum tokens through `HasApiTokens`
-- uses Laravel `Notifiable`; no custom notification module or notifications table is implemented
+- uses Laravel `Notifiable`; in-app MVP notifications are stored in the custom `notifications` table
 - casts `role` to `UserRole`
 
 ### `JobSeekerProfile`
@@ -927,15 +928,49 @@ Suggested testing order:
 
 ## 16. Phase 9 Notifications and Admin APIs
 
-Notification workflows are implemented as loosely coupled events and listeners. Application status changes, test assignment, test evaluation, interview scheduling, and interview evaluation dispatch events after successful database commits. Listeners create candidate-facing in-app notifications only; no email, push, or external delivery is included in this phase.
+Notification workflows are implemented as loosely coupled events and listeners. Application submission, application status changes, test assignment, test submission, test evaluation, interview scheduling, interview rescheduling, interview cancellation, and interview evaluation dispatch events after successful database commits. Notifications are in-app only for the MVP; no email, push, digest, or external delivery is included.
+
+Job seeker notification triggers covered:
+
+- `application.submitted`
+- `application.status_changed`
+- `application.need_more_information`
+- `test.assigned`
+- `test.evaluated`
+- `interview.scheduled`
+- `interview.rescheduled`
+- `interview.cancelled`
+- `interview.evaluated`
+- `final.accepted`
+- `final.rejected`
+
+Employer notification triggers covered:
+
+- `application.received`
+- `test.submitted`
+
+Privacy and authorization:
+
+- Notifications are user-facing messages; `AuditLog` remains internal/admin-facing.
+- Users can list, read, mark, and delete only their own notifications.
+- Job seeker payloads intentionally omit employer internal notes, private rejection reasons, test scores, interview recommendations, evaluator IDs, and interview evaluation details.
+- Employer notifications are generated only for users attached to the job posting company through employer profiles.
 
 Notification endpoints:
 
 | Method | Path | Auth | Purpose |
 | --- | --- | --- | --- |
-| GET | `/api/v1/notifications` | Required | Paginated current-user notifications, latest first |
+| GET | `/api/v1/notifications` | Required | Paginated current-user notifications, latest first; supports `is_read`, `type`, `date_from`, `date_to`, and `per_page` filters |
 | GET | `/api/v1/notifications/unread-count` | Required | Current user's unread notification count |
-| POST | `/api/v1/notifications/{id}/read` | Required | Mark an owned notification as read |
+| PATCH | `/api/v1/notifications/{id}/read` | Required | Mark an owned notification as read |
+| PATCH | `/api/v1/notifications/read-all` | Required | Mark all current-user notifications as read |
+| DELETE | `/api/v1/notifications/{id}` | Required | Delete an owned notification |
+
+Postman updates:
+
+- Mobile App collection includes `10 Notifications` with list, unread list, unread count, mark read, mark all read, and delete requests using `{{job_seeker_token}}`.
+- Web App collection includes `Employer - Notifications` with list, unread count, mark read, and mark all read requests using `{{employer_token}}`.
+- The shared environment includes `notification_id`, `job_seeker_token`, `employer_token`, and `admin_token`.
 
 Admin APIs are protected by Sanctum plus the `admin` middleware and expose platform-level controls without a UI. This phase adds `users.status` with `active` and `suspended`, and `companies.approval_status` with `pending`, `approved`, and `rejected`; non-active user status now blocks login and prevents Sanctum token issuance.
 
@@ -1008,7 +1043,7 @@ Postman:
 
 - `Smart Recruitment Platform - Web App.postman_collection.json` includes Admin - Companies approval/suspension/status filter requests, Admin - Audit / Reports audit log filters, and employer examples for pending-company publish blocking and approved-company publishing.
 - `Smart Recruitment Platform - Environment.postman_environment.json` includes Phase 9.5 variables for audit and company approval scenarios.
-- The Mobile App collection was not modified for this backend-only employer/admin phase.
+- The Mobile App collection was not modified for this backend-only employer/admin phase; Phase 9.6 later adds the Mobile App notification folder.
 
 Limitations:
 
@@ -1025,7 +1060,7 @@ Limitations:
 - Partially Implemented: Matching is deterministic IR-based matching, not deep AI, semantic embeddings, or LLM reasoning.
 - Not Implemented: Matching has no configurable weights through admin settings; section weights are hardcoded.
 - Partially Implemented: Admin APIs exist for users, companies, skills, and tests, but no admin dashboard UI or admin analytics are implemented.
-- Partially Implemented: In-app notifications exist for candidate-facing workflow events, but no email, push, digest, or external delivery is implemented.
+- Partially Implemented: In-app notifications cover core candidate and employer workflow events, but no email, push, digest, or external delivery is implemented.
 - Not Implemented: No advanced employer analytics or dashboard endpoints are implemented.
 - Not Implemented: Seeders do not create sample test catalog entries, applications, test assignments, interviews, or evaluations.
 - Partially Implemented: `POST /api/v1/jobs/{jobPosting}/applications` is the clearer application creation route; the older `POST /api/v1/applications/{jobPosting}` route remains temporarily for backward compatibility.

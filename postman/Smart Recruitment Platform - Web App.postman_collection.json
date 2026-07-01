@@ -1450,8 +1450,8 @@
               ]
             },
             "method": "GET",
-            "description": "Web App / Employer Dashboard: list employer notifications.",
-            "url": "{{base_url}}/notifications"
+            "description": "Web App / Employer Dashboard: list employer notifications related to the authenticated employer company. Uses {{employer_token}}.",
+            "url": "{{base_url}}/notifications?per_page=15"
           },
           "event": [
             {
@@ -1459,14 +1459,14 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('notifications response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401]));"
+                  "pm.test('List Notifications response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401]));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Unread Count",
+          "name": "Get Unread Count",
           "request": {
             "auth": {
               "type": "bearer",
@@ -1479,7 +1479,7 @@
               ]
             },
             "method": "GET",
-            "description": "Web App / Employer Dashboard: get unread notifications count.",
+            "description": "Web App / Employer Dashboard: get unread employer notification count. Uses {{employer_token}}.",
             "url": "{{base_url}}/notifications/unread-count"
           },
           "event": [
@@ -1488,7 +1488,65 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('count response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401]));"
+                  "pm.test('Get Unread Count response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mark Notification Read",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{employer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "description": "Web App / Employer Dashboard: mark one owned employer notification as read. Uses {{employer_token}}.",
+            "url": "{{base_url}}/notifications/{{notification_id}}/read"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Mark Notification Read response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 404]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mark All Notifications Read",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{employer_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "description": "Web App / Employer Dashboard: mark all current employer notifications as read. Uses {{employer_token}}.",
+            "url": "{{base_url}}/notifications/read-all"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Mark All Notifications Read response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401]));"
                 ]
               }
             }

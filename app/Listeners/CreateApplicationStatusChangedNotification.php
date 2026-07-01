@@ -10,8 +10,7 @@ class CreateApplicationStatusChangedNotification
 {
     public function __construct(
         private readonly NotificationService $notificationService,
-    ) {
-    }
+    ) {}
 
     public function handle(ApplicationStatusChanged $event): void
     {
@@ -25,20 +24,38 @@ class CreateApplicationStatusChangedNotification
             return;
         }
 
-        $jobTitle = $application->jobPosting?->title ?? 'your application';
+        $job = $application->jobPosting;
+        $jobTitle = $job?->title ?? 'your application';
+        $type = match ($event->toStatus) {
+            'need_more_information' => 'application.need_more_information',
+            'accepted' => 'final.accepted',
+            'rejected' => 'final.rejected',
+            default => 'application.status_changed',
+        };
+        $title = match ($event->toStatus) {
+            'need_more_information' => 'More information requested',
+            'accepted' => 'Application accepted',
+            'rejected' => 'Application rejected',
+            default => 'Application status updated',
+        };
+        $message = match ($event->toStatus) {
+            'need_more_information' => "The employer requested more information for your {$jobTitle} application.",
+            'accepted' => "Your application for {$jobTitle} has been accepted.",
+            'rejected' => "Your application for {$jobTitle} was not selected.",
+            default => "Your application for {$jobTitle} moved to {$event->toStatus}.",
+        };
 
         $this->notificationService->createNotification(
             $candidate->id,
-            'application_status_changed',
-            'Application status updated',
-            "Your application for {$jobTitle} moved to {$event->toStatus}.",
+            $type,
+            $title,
+            $message,
             [
-                'job_application_id' => $application->id,
-                'job_posting_id' => $application->job_posting_id,
-                'from_status' => $event->fromStatus,
-                'to_status' => $event->toStatus,
-                'changed_by_user_id' => $event->changedByUserId,
-                'note' => $event->note,
+                'application_id' => $application->id,
+                'job_id' => $application->job_posting_id,
+                'job_title' => $jobTitle,
+                'company_id' => $job?->company_id,
+                'status' => $event->toStatus,
             ],
         );
     }

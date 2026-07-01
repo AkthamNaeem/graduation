@@ -47,7 +47,10 @@ Route::prefix('auth')
 Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
-    Route::post('notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::patch('notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+    Route::patch('notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read.legacy');
+    Route::delete('notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 
     Route::prefix('admin')
         ->name('admin.')

@@ -1176,9 +1176,19 @@
         {
           "name": "List Notifications",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{job_seeker_token}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
-            "description": "Mobile App / Job Seeker: list notifications.",
-            "url": "{{base_url}}/notifications"
+            "description": "Used by Job Seeker mobile app notification center. Uses {{job_seeker_token}}. Lists paginated notifications for the authenticated job seeker.",
+            "url": "{{base_url}}/notifications?per_page=15"
           },
           "event": [
             {
@@ -1186,17 +1196,56 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('notifications response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401]));"
+                  "pm.test('List Notifications response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401]));"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Unread Count",
+          "name": "List Unread Notifications",
           "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{job_seeker_token}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
-            "description": "Mobile App / Job Seeker: get unread notification count.",
+            "description": "Used by Job Seeker mobile app notification center. Uses {{job_seeker_token}}. Lists unread notifications only.",
+            "url": "{{base_url}}/notifications?is_read=false&per_page=15"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('List Unread Notifications response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Unread Count",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{job_seeker_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "description": "Used by Job Seeker mobile app notification center. Uses {{job_seeker_token}}. Returns the unread notification count.",
             "url": "{{base_url}}/notifications/unread-count"
           },
           "event": [
@@ -1205,7 +1254,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('count response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401]));"
+                  "pm.test('Get Unread Count response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401]));"
                 ]
               }
             }
@@ -1214,8 +1263,18 @@
         {
           "name": "Mark Notification Read",
           "request": {
-            "method": "POST",
-            "description": "Mobile App / Job Seeker: mark one notification as read.",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{job_seeker_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "description": "Used by Job Seeker mobile app notification center. Uses {{job_seeker_token}}. Marks one owned notification as read.",
             "url": "{{base_url}}/notifications/{{notification_id}}/read"
           },
           "event": [
@@ -1224,7 +1283,65 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('read response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 404]));"
+                  "pm.test('Mark Notification Read response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 404]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mark All Notifications Read",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{job_seeker_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "description": "Used by Job Seeker mobile app notification center. Uses {{job_seeker_token}}. Marks all current job seeker notifications as read.",
+            "url": "{{base_url}}/notifications/read-all"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Mark All Notifications Read response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Notification",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{job_seeker_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "description": "Used by Job Seeker mobile app notification center. Uses {{job_seeker_token}}. Deletes one owned notification.",
+            "url": "{{base_url}}/notifications/{{notification_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Delete Notification response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 404]));"
                 ]
               }
             }

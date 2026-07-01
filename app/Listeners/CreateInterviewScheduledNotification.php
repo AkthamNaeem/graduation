@@ -10,8 +10,7 @@ class CreateInterviewScheduledNotification
 {
     public function __construct(
         private readonly NotificationService $notificationService,
-    ) {
-    }
+    ) {}
 
     public function handle(InterviewScheduled $event): void
     {
@@ -29,15 +28,17 @@ class CreateInterviewScheduledNotification
 
         $this->notificationService->createNotification(
             $candidate->id,
-            'interview_scheduled',
+            'interview.scheduled',
             'Interview scheduled',
             "Your interview for {$interview->jobApplication->jobPosting->title} is scheduled for {$scheduledAt}.",
             [
                 'interview_id' => $interview->id,
-                'job_application_id' => $interview->job_application_id,
-                'job_posting_id' => $interview->jobApplication->job_posting_id,
-                'scheduled_by_user_id' => $interview->scheduled_by_user_id,
+                'application_id' => $interview->job_application_id,
+                'job_id' => $interview->jobApplication->job_posting_id,
+                'job_title' => $interview->jobApplication->jobPosting?->title,
+                'company_id' => $interview->jobApplication->jobPosting?->company_id,
                 'scheduled_at' => $interview->scheduled_at?->toISOString(),
+                'status' => 'interview_scheduled',
             ],
         );
     }

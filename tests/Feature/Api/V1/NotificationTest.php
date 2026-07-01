@@ -53,6 +53,14 @@ class NotificationTest extends TestCase
             'created_at' => now(),
         ]);
 
+        $readNotification = Notification::create([
+            'user_id' => $user->id,
+            'type' => 'read',
+            'title' => 'Read',
+            'message' => 'Read notification',
+            'read_at' => now(),
+        ]);
+
         Notification::create([
             'user_id' => $otherUser->id,
             'type' => 'private',
@@ -66,10 +74,17 @@ class NotificationTest extends TestCase
         $this->withToken($this->tokenFor($user))
             ->getJson('/api/v1/notifications?per_page=10')
             ->assertOk()
-            ->assertJsonCount(2, 'data.data')
-            ->assertJsonPath('data.data.0.id', $newNotification->id)
-            ->assertJsonPath('data.data.1.id', $oldNotification->id)
-            ->assertJsonPath('data.data.0.data.job_application_id', 123);
+            ->assertJsonCount(3, 'data.data')
+            ->assertJsonPath('data.data.0.id', $readNotification->id)
+            ->assertJsonPath('data.data.1.id', $newNotification->id)
+            ->assertJsonPath('data.data.2.id', $oldNotification->id)
+            ->assertJsonPath('data.data.1.data.job_application_id', 123);
+
+        $this->withToken($this->tokenFor($user))
+            ->getJson('/api/v1/notifications?is_read=false&type=new&date_from='.now()->subDay()->toDateString().'&date_to='.now()->toDateString())
+            ->assertOk()
+            ->assertJsonCount(1, 'data.data')
+            ->assertJsonPath('data.data.0.id', $newNotification->id);
 
         $this->withToken($this->tokenFor($user))
             ->getJson('/api/v1/notifications/unread-count')
@@ -78,12 +93,12 @@ class NotificationTest extends TestCase
 
         $this->flushHeaders()
             ->withToken($this->tokenFor($otherUser))
-            ->postJson("/api/v1/notifications/{$newNotification->id}/read")
+            ->patchJson("/api/v1/notifications/{$newNotification->id}/read")
             ->assertNotFound();
 
         $this->flushHeaders()
             ->withToken($this->tokenFor($user))
-            ->postJson("/api/v1/notifications/{$newNotification->id}/read")
+            ->patchJson("/api/v1/notifications/{$newNotification->id}/read")
             ->assertOk()
             ->assertJsonPath('data.id', $newNotification->id);
 
@@ -93,6 +108,68 @@ class NotificationTest extends TestCase
             ->getJson('/api/v1/notifications/unread-count')
             ->assertOk()
             ->assertJsonPath('data.unread_count', 1);
+    }
+
+    public function test_user_can_mark_all_and_delete_only_own_notifications(): void
+    {
+        $user = $this->jobSeeker('candidate@example.com');
+        $otherUser = $this->jobSeeker('other@example.com');
+
+        $notification = Notification::create([
+            'user_id' => $user->id,
+            'type' => 'application.status_changed',
+            'title' => 'Status changed',
+            'message' => 'Status changed',
+        ]);
+
+        $otherNotification = Notification::create([
+            'user_id' => $otherUser->id,
+            'type' => 'application.status_changed',
+            'title' => 'Other',
+            'message' => 'Other',
+        ]);
+
+        $this->withToken($this->tokenFor($otherUser))
+            ->deleteJson("/api/v1/notifications/{$notification->id}")
+            ->assertNotFound();
+
+        $this->flushHeaders()
+            ->withToken($this->tokenFor($user))
+            ->patchJson('/api/v1/notifications/read-all')
+            ->assertOk()
+            ->assertJsonPath('data.updated_count', 1);
+
+        $this->assertNotNull($notification->refresh()->read_at);
+        $this->assertNull($otherNotification->refresh()->read_at);
+
+        $this->withToken($this->tokenFor($user))
+            ->deleteJson("/api/v1/notifications/{$notification->id}")
+            ->assertOk();
+
+        $this->assertDatabaseMissing('notifications', ['id' => $notification->id]);
+        $this->assertDatabaseHas('notifications', ['id' => $otherNotification->id]);
+    }
+
+    public function test_applying_for_job_notifies_candidate_and_company_employers(): void
+    {
+        $company = Company::create(['name' => 'Acme Hiring Co.', 'approval_status' => 'approved']);
+        $employer = $this->employer('owner@example.com', $company);
+        $candidate = $this->jobSeeker('candidate@example.com');
+        $jobPosting = $this->jobPostingFor($company, ['status' => 'open', 'published_at' => now()->subHour()]);
+
+        $this->withToken($this->tokenFor($candidate))
+            ->postJson("/api/v1/jobs/{$jobPosting->id}/applications")
+            ->assertCreated();
+
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $candidate->id,
+            'type' => 'application.submitted',
+        ]);
+
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $employer->id,
+            'type' => 'application.received',
+        ]);
     }
 
     public function test_workflow_events_create_candidate_notifications(): void
@@ -113,8 +190,17 @@ class NotificationTest extends TestCase
 
         $this->assertDatabaseHas('notifications', [
             'user_id' => $candidate->id,
-            'type' => 'application_status_changed',
+            'type' => 'application.status_changed',
         ]);
+
+        $statusNotification = Notification::query()
+            ->where('user_id', $candidate->id)
+            ->where('type', 'application.status_changed')
+            ->latest('id')
+            ->firstOrFail();
+
+        $this->assertArrayNotHasKey('note', $statusNotification->data);
+        $this->assertArrayNotHasKey('changed_by_user_id', $statusNotification->data);
 
         $assignmentResponse = $this->withToken($this->tokenFor($employer))
             ->postJson("/api/v1/applications/{$application->id}/assign-test", [
@@ -126,14 +212,24 @@ class NotificationTest extends TestCase
 
         $this->assertDatabaseHas('notifications', [
             'user_id' => $candidate->id,
-            'type' => 'test_assigned',
+            'type' => 'test.assigned',
         ]);
 
-        $attempt = TestAttempt::create([
-            'application_test_assignment_id' => $assignment->id,
-            'answers' => ['q1' => 'a1'],
-            'started_at' => now()->subHour(),
-            'submitted_at' => now()->subMinutes(30),
+        $this->withToken($this->tokenFor($candidate))
+            ->postJson("/api/v1/tests/{$assignment->id}/start")
+            ->assertCreated();
+
+        $submitResponse = $this->withToken($this->tokenFor($candidate))
+            ->postJson("/api/v1/tests/{$assignment->id}/submit", [
+                'answers' => ['q1' => 'a1'],
+            ])
+            ->assertOk();
+
+        $attempt = TestAttempt::findOrFail($submitResponse->json('data.id'));
+
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $employer->id,
+            'type' => 'test.submitted',
         ]);
 
         $this->withToken($this->tokenFor($employer))
@@ -145,8 +241,16 @@ class NotificationTest extends TestCase
 
         $this->assertDatabaseHas('notifications', [
             'user_id' => $candidate->id,
-            'type' => 'test_evaluated',
+            'type' => 'test.evaluated',
         ]);
+
+        $testNotification = Notification::query()
+            ->where('user_id', $candidate->id)
+            ->where('type', 'test.evaluated')
+            ->latest('id')
+            ->firstOrFail();
+
+        $this->assertArrayNotHasKey('score', $testNotification->data);
 
         $interviewResponse = $this->withToken($this->tokenFor($employer))
             ->postJson("/api/v1/applications/{$application->id}/interviews", [
@@ -162,7 +266,22 @@ class NotificationTest extends TestCase
 
         $this->assertDatabaseHas('notifications', [
             'user_id' => $candidate->id,
-            'type' => 'interview_scheduled',
+            'type' => 'interview.scheduled',
+        ]);
+
+        $this->withToken($this->tokenFor($employer))
+            ->putJson("/api/v1/interviews/{$interview->id}", [
+                'interview_type' => 'technical',
+                'scheduled_at' => now()->addDays(2)->toISOString(),
+                'duration_minutes' => 45,
+                'interview_mode' => 'video',
+                'meeting_link' => 'https://example.test/meeting-2',
+            ])
+            ->assertOk();
+
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $candidate->id,
+            'type' => 'interview.rescheduled',
         ]);
 
         $this->withToken($this->tokenFor($employer))
@@ -183,7 +302,117 @@ class NotificationTest extends TestCase
 
         $this->assertDatabaseHas('notifications', [
             'user_id' => $candidate->id,
-            'type' => 'interview_evaluated',
+            'type' => 'interview.evaluated',
+        ]);
+
+        $interviewNotification = Notification::query()
+            ->where('user_id', $candidate->id)
+            ->where('type', 'interview.evaluated')
+            ->latest('id')
+            ->firstOrFail();
+
+        $this->assertArrayNotHasKey('recommendation', $interviewNotification->data);
+        $this->assertArrayNotHasKey('evaluated_by_user_id', $interviewNotification->data);
+    }
+
+    public function test_need_more_information_and_final_decisions_create_safe_candidate_notifications(): void
+    {
+        $company = Company::create(['name' => 'Acme Hiring Co.', 'approval_status' => 'approved']);
+        $employer = $this->employer('owner@example.com', $company);
+        $candidate = $this->jobSeeker('candidate@example.com');
+        $jobPosting = $this->jobPostingFor($company, ['status' => 'open', 'published_at' => now()->subHour()]);
+        $application = $this->applicationFor($jobPosting, $candidate->jobSeekerProfile, 'under_review');
+
+        $this->withToken($this->tokenFor($employer))
+            ->postJson("/api/v1/applications/{$application->id}/status", [
+                'status' => 'need_more_information',
+                'note' => 'Internal clarification request.',
+            ])
+            ->assertOk();
+
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $candidate->id,
+            'type' => 'application.need_more_information',
+        ]);
+
+        $needMoreInfo = Notification::query()
+            ->where('user_id', $candidate->id)
+            ->where('type', 'application.need_more_information')
+            ->latest('id')
+            ->firstOrFail();
+
+        $this->assertArrayNotHasKey('note', $needMoreInfo->data);
+
+        $this->withToken($this->tokenFor($employer))
+            ->postJson("/api/v1/applications/{$application->id}/status", [
+                'status' => 'rejected',
+                'note' => 'Private rejection reason.',
+            ])
+            ->assertOk();
+
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $candidate->id,
+            'type' => 'final.rejected',
+        ]);
+
+        $finalNotification = Notification::query()
+            ->where('user_id', $candidate->id)
+            ->where('type', 'final.rejected')
+            ->latest('id')
+            ->firstOrFail();
+
+        $this->assertArrayNotHasKey('note', $finalNotification->data);
+        $this->assertStringNotContainsString('Private rejection reason', $finalNotification->message);
+    }
+
+    public function test_cancelling_interview_creates_candidate_notification(): void
+    {
+        $company = Company::create(['name' => 'Acme Hiring Co.', 'approval_status' => 'approved']);
+        $employer = $this->employer('owner@example.com', $company);
+        $candidate = $this->jobSeeker('candidate@example.com');
+        $jobPosting = $this->jobPostingFor($company, ['status' => 'open', 'published_at' => now()->subHour()]);
+        $application = $this->applicationFor($jobPosting, $candidate->jobSeekerProfile, 'interview_pending');
+
+        $interviewResponse = $this->withToken($this->tokenFor($employer))
+            ->postJson("/api/v1/applications/{$application->id}/interviews", [
+                'interview_type' => 'technical',
+                'scheduled_at' => now()->addDay()->toISOString(),
+                'duration_minutes' => 60,
+                'interview_mode' => 'video',
+                'meeting_link' => 'https://example.test/meeting',
+            ])
+            ->assertCreated();
+
+        $interview = Interview::findOrFail($interviewResponse->json('data.id'));
+
+        $this->withToken($this->tokenFor($employer))
+            ->deleteJson("/api/v1/interviews/{$interview->id}")
+            ->assertOk();
+
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $candidate->id,
+            'type' => 'interview.cancelled',
+        ]);
+    }
+
+    public function test_final_accept_creates_candidate_notification(): void
+    {
+        $company = Company::create(['name' => 'Acme Hiring Co.', 'approval_status' => 'approved']);
+        $employer = $this->employer('owner@example.com', $company);
+        $candidate = $this->jobSeeker('candidate@example.com');
+        $jobPosting = $this->jobPostingFor($company, ['status' => 'open', 'published_at' => now()->subHour()]);
+        $application = $this->applicationFor($jobPosting, $candidate->jobSeekerProfile, 'final_review');
+
+        $this->withToken($this->tokenFor($employer))
+            ->postJson("/api/v1/applications/{$application->id}/status", [
+                'status' => 'accepted',
+                'note' => 'Private acceptance note.',
+            ])
+            ->assertOk();
+
+        $this->assertDatabaseHas('notifications', [
+            'user_id' => $candidate->id,
+            'type' => 'final.accepted',
         ]);
     }
 

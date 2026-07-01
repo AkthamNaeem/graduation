@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\UserRole;
 use App\Events\TestAssigned;
 use App\Events\TestEvaluated;
+use App\Events\TestSubmitted;
 use App\Models\ApplicationTestAssignment;
 use App\Models\JobApplication;
 use App\Models\Test;
@@ -203,6 +204,8 @@ class TestService
                 'answers' => $answers,
                 'submitted_at' => now(),
             ])->save();
+
+            DB::afterCommit(fn (): array => event(new TestSubmitted($attempt->id)));
 
             return $this->loadAttempt($attempt);
         });

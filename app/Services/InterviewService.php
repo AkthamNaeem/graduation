@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Events\InterviewCancelled;
 use App\Events\InterviewEvaluated;
 use App\Events\InterviewScheduled;
+use App\Events\InterviewUpdated;
 use App\Models\Interview;
 use App\Models\InterviewEvaluation;
 use App\Models\JobApplication;
@@ -161,6 +163,8 @@ class InterviewService
                 'note' => $data['note'] ?? null,
             ])->save();
 
+            DB::afterCommit(fn (): array => event(new InterviewUpdated($lockedInterview->id)));
+
             return $this->loadInterview($lockedInterview, includeApplicationContext: true);
         });
     }
@@ -190,6 +194,12 @@ class InterviewService
                 $lockedInterview->only(['job_application_id', 'scheduled_by_user_id', 'scheduled_at', 'interview_mode']),
                 null,
             );
+
+            DB::afterCommit(fn (): array => event(new InterviewCancelled(
+                $application->id,
+                $lockedInterview->id,
+                $lockedInterview->scheduled_at?->toISOString(),
+            )));
 
             $this->syncApplicationInterviewStatusAfterDeletion($actor, $application);
         });

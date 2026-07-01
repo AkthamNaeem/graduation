@@ -10,8 +10,7 @@ class CreateInterviewEvaluatedNotification
 {
     public function __construct(
         private readonly NotificationService $notificationService,
-    ) {
-    }
+    ) {}
 
     public function handle(InterviewEvaluated $event): void
     {
@@ -27,15 +26,16 @@ class CreateInterviewEvaluatedNotification
 
         $this->notificationService->createNotification(
             $candidate->id,
-            'interview_evaluated',
+            'interview.evaluated',
             'Interview evaluated',
             "Your interview for {$interview->jobApplication->jobPosting->title} has been evaluated.",
             [
                 'interview_id' => $interview->id,
-                'job_application_id' => $interview->job_application_id,
-                'job_posting_id' => $interview->jobApplication->job_posting_id,
-                'recommendation' => $interview->evaluation->recommendation,
-                'evaluated_by_user_id' => $interview->evaluation->evaluated_by_user_id,
+                'application_id' => $interview->job_application_id,
+                'job_id' => $interview->jobApplication->job_posting_id,
+                'job_title' => $interview->jobApplication->jobPosting?->title,
+                'company_id' => $interview->jobApplication->jobPosting?->company_id,
+                'status' => 'final_review',
             ],
         );
     }

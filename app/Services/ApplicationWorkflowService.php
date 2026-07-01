@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\UserRole;
 use App\Events\ApplicationStatusChanged;
+use App\Events\ApplicationSubmitted;
 use App\Models\ApplicationStatus;
 use App\Models\ApplicationStatusHistory;
 use App\Models\JobApplication;
@@ -87,6 +88,8 @@ class ApplicationWorkflowService
             ]);
 
             $this->recordHistory($application, null, $submittedStatus, $user);
+
+            DB::afterCommit(fn (): array => event(new ApplicationSubmitted($application->id)));
 
             return $this->loadApplication($application);
         });

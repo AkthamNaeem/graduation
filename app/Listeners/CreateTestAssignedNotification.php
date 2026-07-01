@@ -10,8 +10,7 @@ class CreateTestAssignedNotification
 {
     public function __construct(
         private readonly NotificationService $notificationService,
-    ) {
-    }
+    ) {}
 
     public function handle(TestAssigned $event): void
     {
@@ -27,15 +26,17 @@ class CreateTestAssignedNotification
 
         $this->notificationService->createNotification(
             $candidate->id,
-            'test_assigned',
+            'test.assigned',
             'New test assigned',
             "You have been assigned {$assignment->test->title}.",
             [
-                'assignment_id' => $assignment->id,
-                'job_application_id' => $assignment->job_application_id,
-                'job_posting_id' => $assignment->jobApplication->job_posting_id,
+                'application_id' => $assignment->job_application_id,
+                'job_id' => $assignment->jobApplication->job_posting_id,
+                'job_title' => $assignment->jobApplication->jobPosting?->title,
+                'company_id' => $assignment->jobApplication->jobPosting?->company_id,
+                'test_assignment_id' => $assignment->id,
                 'test_id' => $assignment->test_id,
-                'assigned_by_user_id' => $assignment->assigned_by_user_id,
+                'status' => 'test_pending',
             ],
         );
     }
