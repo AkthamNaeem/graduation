@@ -23,7 +23,7 @@ The implementation follows a service-oriented Laravel structure using Form Reque
 
 | Phase | Phase Name | Main Implemented Features | Status |
 | --- | --- | --- | --- |
-| 1 | Project Setup | Laravel 12 app, Sanctum installation, API route versioning, auth endpoints, user roles, standard API envelope, initial Postman collection | Implemented |
+| 1 | Project Setup | Laravel 12 app, Sanctum installation, API route versioning, hardened auth endpoints, user roles/status enforcement, standard API envelope, current Postman collections | Implemented / Hardened |
 | 2 | Core Profiles | Job seeker profile, employer profile, company profile, experiences, education, skills, role-scoped profile endpoints | Implemented |
 | 3 | CV Upload & Parsing | CV upload for PDF/DOCX, queued parsing job, raw text extraction, parsed JSON storage, confirm flow to append profile data | Partially Implemented (MVP/basic parsing) |
 | 4 | Job Posting | Employer job CRUD, public open-job listing, filters, skills attachment, publish and close workflows | Implemented |
@@ -345,11 +345,27 @@ All responses use the `ApiResponse` envelope:
 
 | Method | URL | Auth | Role | Purpose | Main request fields | Main response summary |
 | --- | --- | --- | --- | --- | --- | --- |
-| POST | `/api/v1/auth/register/job-seeker` | Public | Public | Register a job seeker and create an empty job seeker profile | `name`, `email`, `password`, `password_confirmation` | `UserResource` with nested job seeker profile |
-| POST | `/api/v1/auth/register/employer` | Public | Public | Register an employer, company, and employer profile | `name`, `email`, `company_name`, `password`, `password_confirmation` | `UserResource` with nested employer profile and company |
-| POST | `/api/v1/auth/login` | Public | Public | Authenticate and issue Sanctum token | `email`, `password` | `token`, `token_type`, `user` |
+| POST | `/api/v1/auth/register/job-seeker` | Public | Public | Register a job seeker and create an empty job seeker profile | `name`, `email`, `phone`, `terms_accepted`, `password`, `password_confirmation` | `UserResource` with nested job seeker profile |
+| POST | `/api/v1/auth/register/employer` | Public | Public | Register an employer, company, and employer profile | `name`, `email`, `company_name`, `company_website`, `phone`, `terms_accepted`, `password`, `password_confirmation` | `UserResource` with nested employer profile and company |
+| POST | `/api/v1/auth/login` | Public | Public | Authenticate active users and issue Sanctum token | `email`, `password` | `token`, `token_type`, `user` |
+| POST | `/api/v1/auth/forgot-password` | Public | Public | Send password reset notification with generic anti-enumeration response | `email` | Success message |
+| POST | `/api/v1/auth/reset-password` | Public | Public | Reset password using Laravel password broker token and revoke existing tokens | `email`, `token`, `password`, `password_confirmation` | Success or token error |
 | GET | `/api/v1/auth/me` | Required | Any authenticated | Return current authenticated user | None | `UserResource` with loaded profile relations |
+| POST | `/api/v1/auth/change-password` | Required | Any authenticated | Change password after verifying current password | `current_password`, `password`, `password_confirmation` | Success or current password error |
 | POST | `/api/v1/auth/logout` | Required | Any authenticated | Revoke current access token | None | Success message |
+| POST | `/api/v1/auth/logout-all` | Required | Any authenticated | Revoke all current user's Sanctum tokens | None | Success message |
+
+Auth hardening notes:
+
+- Registration now requires `terms_accepted` for job seekers and employers.
+- Registration uses `Password::defaults()` and confirmed passwords.
+- Job seeker registration can persist `phone` to `job_seeker_profiles.phone`.
+- Employer registration can persist `phone` to `employer_profiles.phone` and `company_website` to `companies.website`.
+- `company_size` is not accepted or persisted because no existing company/profile column supports it.
+- Users have `active` and `suspended` status values. Only `active` users can login; non-active users receive HTTP 403 and no Sanctum token is created.
+- Forgot password always returns the same success message for existing and non-existing email addresses.
+- Password reset revokes existing Sanctum tokens for that user.
+- Change password verifies the current password and revokes other tokens while keeping the current token.
 
 ### Profiles
 
@@ -785,9 +801,12 @@ Public vs protected endpoints:
 
 Main Form Request classes:
 
-- `JobSeekerRegisterRequest`: validates `name`, unique `email`, confirmed password.
-- `EmployerRegisterRequest`: validates `name`, unique `email`, `company_name`, confirmed password.
+- `JobSeekerRegisterRequest`: validates `name`, unique `email`, required accepted `terms_accepted`, optional `phone`, confirmed password using `Password::defaults()`.
+- `EmployerRegisterRequest`: validates `name`, unique `email`, required `company_name`, required accepted `terms_accepted`, optional `company_website`, optional `phone`, confirmed password using `Password::defaults()`.
 - `LoginRequest`: validates `email` and `password`.
+- `ForgotPasswordRequest`: validates reset email.
+- `ResetPasswordRequest`: validates email, token, and confirmed password using `Password::defaults()`.
+- `ChangePasswordRequest`: validates current password and confirmed new password using `Password::defaults()`.
 - `UpdateJobSeekerProfileRequest`: validates optional profile text fields and URL fields.
 - `StoreExperienceRequest` / `UpdateExperienceRequest`: validates title, company, dates, current flag, description.
 - `StoreEducationRequest` / `UpdateEducationRequest`: validates institution, degree, field, dates, description.
@@ -878,57 +897,31 @@ Sample applications/tests/interviews:
 
 Postman collections are located in the `postman/` directory:
 
-- `Smart Recruitment Platform - Phase 1.postman_collection.json`
-- `Smart Recruitment Platform - Phase 2.postman_collection.json`
-- `Smart Recruitment Platform - Phase 3.postman_collection.json`
-- `Smart Recruitment Platform - Phase 4.postman_collection.json`
-- `Smart Recruitment Platform - Phase 5.postman_collection.json`
-- `Smart Recruitment Platform - Phase 6.postman_collection.json`
-- `Smart Recruitment Platform - Phase 7.postman_collection.json`
-- `Smart Recruitment Platform - Phase 8.postman_collection.json`
-- `Smart Recruitment Platform - Phase 9.postman_collection.json`
-- `Smart Recruitment Platform - High Priority Batch 1.postman_collection.json`
-- `Smart Recruitment Platform - Complete Backend.postman_collection.json`
-- `Smart Recruitment Platform - Local.postman_environment.json`
+- `Smart Recruitment Platform - Mobile App.postman_collection.json`
+- `Smart Recruitment Platform - Web App.postman_collection.json`
+- `Smart Recruitment Platform - Environment.postman_environment.json`
 
 Modules covered:
 
-- Phase 1: authentication
-- Phase 2: profiles, experiences, education, skills, company, employer profile
-- Phase 3: CV upload and parsing
-- Phase 4: job posting
-- Phase 5: application workflow
-- Phase 6: testing module
-- Phase 7: interview module
-- Phase 8: matching and ranking
-- Phase 9: notifications and admin APIs
-- High Priority Batch 1: public skill listing/search, test catalog CRUD, paginated list examples, and nested job application creation route
-- Complete Backend: one importable Postman v2.1 collection covering all implemented `/api/v1` REST endpoints, organized by Auth, Profile, Skills, CV Management, Job Posting, Applications Workflow, Tests, Interviews, Matching, Admin, and Notifications.
-- Local environment: seeded demo credentials, hosted `base_url`, role-specific Sanctum token variables, and reusable resource ID variables for collection workflows.
+- Mobile App collection: job seeker auth, public jobs, public skills/reference data, job seeker profile, CV upload/parsing, profile suggestions, applications, tests, interviews, notifications.
+- Web App collection: public website calls, web-role auth, employer company/profile/job/application/test/interview workflows, notifications, admin users/companies/skills/tests, audit/report placeholders.
+- Environment: `base_url`, role token variables, auth email variables, reset token variable, and reusable resource ID variables.
 
 Common collection variables:
 
-- `base_url`, typically pointing to the local API version root such as `http://127.0.0.1:8000/api/v1`
-- `token` in earlier collections
-- `job_seeker_token` and `employer_token` in later workflow collections
-- `admin_token` in the Phase 9 collection
+- `base_url`, typically pointing to the local API version root such as `http://localhost:8000/api/v1`
+- `job_seeker_token`, `employer_token`, and `admin_token`
+- `reset_token`
+- `job_seeker_email`, `employer_email`, and `admin_email`
 - Resource IDs such as `job_id`, `application_id`, `skill_id`, `test_id`, `assignment_id`, `attempt_id`, `interview_id`, and `cv_id` depending on the phase
 - The complete collection environment also includes `job_seeker_email`, `job_seeker_password`, `employer_email`, `employer_password`, `admin_email`, `admin_password`, `notification_id`, `user_id`, `company_id`, `experience_id`, and `education_id`
 
 Suggested testing order:
 
 1. Run migrations and seeders.
-2. Use Phase 1 to register/login users and confirm Sanctum authentication.
-3. Use Phase 2 to populate profile, company, skills, experience, and education data.
-4. Use Phase 3 to upload and confirm a CV.
-5. Use Phase 4 to create a job, attach skills, publish it, and verify public listing.
-6. Use Phase 5 to apply to a job and exercise status transitions.
-7. Use Phase 6 to assign, start, submit, and evaluate a test.
-8. Use Phase 7 to schedule, complete, and evaluate interviews.
-9. Use Phase 8 to verify recommended jobs and ranked candidates.
-10. Use Phase 9 to verify notifications, unread counts, mark-as-read, and admin management endpoints.
-11. Use High Priority Batch 1 to exercise skill discovery, test catalog CRUD, paginated list calls, and the clearer nested application route.
-12. Import `Smart Recruitment Platform - Complete Backend.postman_collection.json` with `Smart Recruitment Platform - Local.postman_environment.json` when a single consolidated backend collection is preferred.
+2. Use `01 Auth - Job Seeker` in the Mobile App collection for job seeker registration, login, me, forgot/reset password, change password, logout, and logout-all.
+3. Use `02 Auth - Web Roles` in the Web App collection for employer registration, employer/admin login, me, forgot/reset password, change password, logout, and logout-all.
+4. Continue through the remaining Mobile App or Web App folders based on the target role and workflow.
 
 ## 16. Phase 9 Notifications and Admin APIs
 
@@ -942,7 +935,7 @@ Notification endpoints:
 | GET | `/api/v1/notifications/unread-count` | Required | Current user's unread notification count |
 | POST | `/api/v1/notifications/{id}/read` | Required | Mark an owned notification as read |
 
-Admin APIs are protected by Sanctum plus the `admin` middleware and expose platform-level controls without a UI. This phase adds `users.status` with `active` and `suspended`, and `companies.approval_status` with `pending`, `approved`, and `rejected`; these fields are management metadata only and do not block login or job workflows yet.
+Admin APIs are protected by Sanctum plus the `admin` middleware and expose platform-level controls without a UI. This phase adds `users.status` with `active` and `suspended`, and `companies.approval_status` with `pending`, `approved`, and `rejected`; non-active user status now blocks login and prevents Sanctum token issuance.
 
 Admin endpoints:
 
@@ -980,7 +973,6 @@ Admin endpoints:
 - CV parsing is queued; local development needs a queue worker or synchronous queue configuration for immediate parsing.
 - Partially Implemented: File storage is local by default; no cloud storage integration is implemented.
 - Not Implemented: There is no email verification enforcement despite `email_verified_at` existing on `users`.
-- Not Implemented: No password reset API endpoints are implemented.
 - Partially Implemented: Main high-volume list endpoints for jobs, applications, assigned tests, interviews, and CV files are paginated; smaller profile subresource lists such as experiences, education, application test assignments, and application interviews still return full collections.
 - Not Implemented: There is no rate limiting customization documented for login, upload, or matching endpoints.
 - Not Implemented: No OpenAPI/Swagger documentation is present.
@@ -1000,7 +992,7 @@ Admin endpoints:
 - Add configurable matching weights and optional threshold filters.
 - Add embedding-based semantic matching as an optional enhancement while keeping deterministic explanations.
 - Add pagination, sorting, and status filters to application, test, and interview endpoints.
-- Add email verification and password reset API flows.
+- Add email verification API flows.
 - Add cloud/object storage configuration for CV files.
 - Add audit metadata for job changes and test/interview updates.
 - Add database seed data for tests, applications, assignments, and interviews to support demos.

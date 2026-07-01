@@ -2,10 +2,11 @@
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin \App\Models\User */
+/** @mixin User */
 class UserResource extends JsonResource
 {
     /**
@@ -18,7 +19,7 @@ class UserResource extends JsonResource
             'name' => $this->name,
             'email' => $this->email,
             'role' => $this->role?->value ?? $this->role,
-            'status' => $this->status,
+            'status' => $this->status?->value ?? $this->status,
             'job_seeker_profile' => $this->when(
                 $this->relationLoaded('jobSeekerProfile') && $this->jobSeekerProfile,
                 fn (): JobSeekerProfileResource => new JobSeekerProfileResource($this->jobSeekerProfile),

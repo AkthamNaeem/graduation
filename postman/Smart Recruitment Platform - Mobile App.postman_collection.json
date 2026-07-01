@@ -6,7 +6,13 @@
   },
   "auth": {
     "type": "bearer",
-    "bearer": [{ "key": "token", "value": "{{job_seeker_token}}", "type": "string" }]
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{job_seeker_token}}",
+        "type": "string"
+      }
+    ]
   },
   "item": [
     {
@@ -15,109 +21,1215 @@
         {
           "name": "Register Job Seeker",
           "request": {
-            "auth": { "type": "noauth" },
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json" }],
-            "description": "Mobile App / Job Seeker: create a new job seeker account.",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "description": "Mobile App / Job Seeker: create a job seeker account. Requires accepted terms; optional phone is saved on the job seeker profile.",
             "url": "{{base_url}}/auth/register/job-seeker",
-            "body": { "mode": "raw", "raw": "{\n  \"name\": \"Jane Applicant\",\n  \"email\": \"jane@example.com\",\n  \"password\": \"password\",\n  \"password_confirmation\": \"password\"\n}", "options": { "raw": { "language": "json" } } }
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Applicant\",\n  \"email\": \"{{job_seeker_email}}\",\n  \"phone\": \"+1 555 0100\",\n  \"password\": \"password\",\n  \"password_confirmation\": \"password\",\n  \"terms_accepted\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
           },
-          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('201 or 200', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 422]));"] } }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('register job seeker response', () => pm.expect(pm.response.code).to.be.oneOf([201, 422]));"
+                ]
+              }
+            }
+          ]
         },
         {
           "name": "Login Job Seeker",
           "request": {
-            "auth": { "type": "noauth" },
             "method": "POST",
-            "header": [{ "key": "Accept", "value": "application/json" }],
-            "description": "Mobile App / Job Seeker: login and copy the returned token into {{job_seeker_token}}.",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "description": "Mobile App / Job Seeker: login and stores the returned Sanctum token in {{job_seeker_token}}.",
             "url": "{{base_url}}/auth/login",
-            "body": { "mode": "raw", "raw": "{\n  \"email\": \"jane@example.com\",\n  \"password\": \"password\"\n}", "options": { "raw": { "language": "json" } } }
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{job_seeker_email}}\",\n  \"password\": \"password\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
           },
-          "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('login response', () => pm.expect(pm.response.code).to.be.oneOf([200, 422]));"] } }]
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('login response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 422]));",
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data.token) pm.environment.set('job_seeker_token', json.data.token);",
+                  "}"
+                ]
+              }
+            }
+          ]
         },
-        { "name": "Me", "request": { "method": "GET", "description": "Mobile App / Job Seeker: fetch authenticated account and nested profile.", "url": "{{base_url}}/auth/me" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('me loaded', () => pm.expect(pm.response.code).to.be.oneOf([200, 401]));"] } }] },
-        { "name": "Logout", "request": { "method": "POST", "description": "Mobile App / Job Seeker: revoke the current Sanctum token.", "url": "{{base_url}}/auth/logout" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('logout response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401]));"] } }] }
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "description": "Mobile App / Job Seeker: fetch the authenticated user and nested job seeker profile.",
+            "url": "{{base_url}}/auth/me",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{job_seeker_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('me response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "description": "Mobile App / Job Seeker: request a password reset email. The API always returns a generic success message.",
+            "url": "{{base_url}}/auth/forgot-password",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{job_seeker_email}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('forgot password response', () => pm.expect(pm.response.code).to.be.oneOf([200, 422]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "description": "Mobile App / Job Seeker: reset password using a broker token from email or tests. Set {{reset_token}} before sending.",
+            "url": "{{base_url}}/auth/reset-password",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{job_seeker_email}}\",\n  \"token\": \"{{reset_token}}\",\n  \"password\": \"new-password\",\n  \"password_confirmation\": \"new-password\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('reset password response', () => pm.expect(pm.response.code).to.be.oneOf([200, 422]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Change Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "description": "Mobile App / Job Seeker: change password while authenticated. Other tokens are revoked and the current token remains valid.",
+            "url": "{{base_url}}/auth/change-password",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{job_seeker_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_password\": \"password\",\n  \"password\": \"new-password\",\n  \"password_confirmation\": \"new-password\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('change password response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 422]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "description": "Mobile App / Job Seeker: revoke the current Sanctum token.",
+            "url": "{{base_url}}/auth/logout",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{job_seeker_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('logout response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout All Devices",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "description": "Mobile App / Job Seeker: revoke all Sanctum tokens for the authenticated job seeker.",
+            "url": "{{base_url}}/auth/logout-all",
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{job_seeker_token}}",
+                  "type": "string"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('logout all response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401]));"
+                ]
+              }
+            }
+          ]
+        }
       ]
     },
     {
       "name": "02 Public Jobs",
       "item": [
-        { "name": "List Public Jobs", "request": { "auth": { "type": "noauth" }, "method": "GET", "description": "Mobile App / Public: browse published jobs.", "url": "{{base_url}}/jobs" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('jobs loaded', () => pm.expect(pm.response.code).to.eql(200));"] } }] },
-        { "name": "Show Public Job", "request": { "auth": { "type": "noauth" }, "method": "GET", "description": "Mobile App / Public: view public job details.", "url": "{{base_url}}/jobs/{{job_id}}" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('job response', () => pm.expect(pm.response.code).to.be.oneOf([200, 404]));"] } }] },
-        { "name": "Recommended Jobs", "request": { "method": "GET", "description": "Mobile App / Job Seeker: get explainable recommended jobs.", "url": "{{base_url}}/jobs/recommended" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('recommendations response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403]));"] } }] }
+        {
+          "name": "List Public Jobs",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "description": "Mobile App / Public: browse published jobs.",
+            "url": "{{base_url}}/jobs"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('jobs loaded', () => pm.expect(pm.response.code).to.eql(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Show Public Job",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "description": "Mobile App / Public: view public job details.",
+            "url": "{{base_url}}/jobs/{{job_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('job response', () => pm.expect(pm.response.code).to.be.oneOf([200, 404]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Recommended Jobs",
+          "request": {
+            "method": "GET",
+            "description": "Mobile App / Job Seeker: get explainable recommended jobs.",
+            "url": "{{base_url}}/jobs/recommended"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('recommendations response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403]));"
+                ]
+              }
+            }
+          ]
+        }
       ]
     },
     {
       "name": "03 Public Skills / Reference Data",
       "item": [
-        { "name": "List Public Skills", "request": { "auth": { "type": "noauth" }, "method": "GET", "description": "Mobile App / Public: load skills for search and profile forms.", "url": "{{base_url}}/skills" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('skills loaded', () => pm.expect(pm.response.code).to.eql(200));"] } }] }
+        {
+          "name": "List Public Skills",
+          "request": {
+            "auth": {
+              "type": "noauth"
+            },
+            "method": "GET",
+            "description": "Mobile App / Public: load skills for search and profile forms.",
+            "url": "{{base_url}}/skills"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('skills loaded', () => pm.expect(pm.response.code).to.eql(200));"
+                ]
+              }
+            }
+          ]
+        }
       ]
     },
     {
       "name": "04 Job Seeker Profile",
       "item": [
-        { "name": "Get Profile", "request": { "method": "GET", "description": "Mobile App / Job Seeker: load profile with experiences, education, and skills.", "url": "{{base_url}}/profile" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('profile response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403]));"] } }] },
-        { "name": "Update Profile", "request": { "method": "PUT", "header": [{ "key": "Accept", "value": "application/json" }], "description": "Mobile App / Job Seeker: update manual profile fields.", "url": "{{base_url}}/profile", "body": { "mode": "raw", "raw": "{\n  \"headline\": \"Laravel Backend Developer\",\n  \"summary\": \"Builds recruitment APIs.\",\n  \"phone\": \"+1 555 0101\",\n  \"location\": \"Remote\",\n  \"portfolio_url\": \"https://portfolio.example.com\"\n}", "options": { "raw": { "language": "json" } } } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('update response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 422]));"] } }] },
-        { "name": "Create Experience", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }], "description": "Mobile App / Job Seeker: add a manual experience.", "url": "{{base_url}}/profile/experiences", "body": { "mode": "raw", "raw": "{\n  \"title\": \"Backend Developer\",\n  \"company_name\": \"Northwind Software\",\n  \"location\": \"Remote\",\n  \"start_date\": \"2024-01-01\",\n  \"is_current\": true,\n  \"description\": \"Built Laravel APIs.\"\n}", "options": { "raw": { "language": "json" } } } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('create response', () => pm.expect(pm.response.code).to.be.oneOf([201, 401, 403, 422]));"] } }] },
-        { "name": "List Experiences", "request": { "method": "GET", "description": "Mobile App / Job Seeker: list manual experiences.", "url": "{{base_url}}/profile/experiences" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('list response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403]));"] } }] },
-        { "name": "Update Experience", "request": { "method": "PUT", "header": [{ "key": "Accept", "value": "application/json" }], "description": "Mobile App / Job Seeker: update an owned experience.", "url": "{{base_url}}/profile/experiences/{{experience_id}}", "body": { "mode": "raw", "raw": "{\n  \"title\": \"Senior Backend Developer\",\n  \"description\": \"Built and maintained Laravel APIs.\"\n}", "options": { "raw": { "language": "json" } } } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('update response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404, 422]));"] } }] },
-        { "name": "Create Education", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }], "description": "Mobile App / Job Seeker: add education.", "url": "{{base_url}}/profile/education", "body": { "mode": "raw", "raw": "{\n  \"institution\": \"State University\",\n  \"degree\": \"Bachelor of Science\",\n  \"field_of_study\": \"Computer Science\",\n  \"start_date\": \"2020-09-01\",\n  \"end_date\": \"2024-06-01\"\n}", "options": { "raw": { "language": "json" } } } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('create response', () => pm.expect(pm.response.code).to.be.oneOf([201, 401, 403, 422]));"] } }] },
-        { "name": "List Education", "request": { "method": "GET", "description": "Mobile App / Job Seeker: list education.", "url": "{{base_url}}/profile/education" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('list response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403]));"] } }] },
-        { "name": "Attach Skill", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }], "description": "Mobile App / Job Seeker: attach a catalog skill to profile.", "url": "{{base_url}}/profile/skills", "body": { "mode": "raw", "raw": "{\n  \"skill_id\": {{skill_id}}\n}", "options": { "raw": { "language": "json" } } } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('attach response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 422]));"] } }] },
-        { "name": "Detach Skill", "request": { "method": "DELETE", "description": "Mobile App / Job Seeker: remove a profile skill.", "url": "{{base_url}}/profile/skills/{{skill_id}}" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('detach response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404]));"] } }] }
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "description": "Mobile App / Job Seeker: load profile with experiences, education, and skills.",
+            "url": "{{base_url}}/profile"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('profile response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "description": "Mobile App / Job Seeker: update manual profile fields.",
+            "url": "{{base_url}}/profile",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"headline\": \"Laravel Backend Developer\",\n  \"summary\": \"Builds recruitment APIs.\",\n  \"phone\": \"+1 555 0101\",\n  \"location\": \"Remote\",\n  \"portfolio_url\": \"https://portfolio.example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('update response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 422]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Experience",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "description": "Mobile App / Job Seeker: add a manual experience.",
+            "url": "{{base_url}}/profile/experiences",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Backend Developer\",\n  \"company_name\": \"Northwind Software\",\n  \"location\": \"Remote\",\n  \"start_date\": \"2024-01-01\",\n  \"is_current\": true,\n  \"description\": \"Built Laravel APIs.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('create response', () => pm.expect(pm.response.code).to.be.oneOf([201, 401, 403, 422]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Experiences",
+          "request": {
+            "method": "GET",
+            "description": "Mobile App / Job Seeker: list manual experiences.",
+            "url": "{{base_url}}/profile/experiences"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('list response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Experience",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "description": "Mobile App / Job Seeker: update an owned experience.",
+            "url": "{{base_url}}/profile/experiences/{{experience_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Senior Backend Developer\",\n  \"description\": \"Built and maintained Laravel APIs.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('update response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404, 422]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Education",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "description": "Mobile App / Job Seeker: add education.",
+            "url": "{{base_url}}/profile/education",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"institution\": \"State University\",\n  \"degree\": \"Bachelor of Science\",\n  \"field_of_study\": \"Computer Science\",\n  \"start_date\": \"2020-09-01\",\n  \"end_date\": \"2024-06-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('create response', () => pm.expect(pm.response.code).to.be.oneOf([201, 401, 403, 422]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List Education",
+          "request": {
+            "method": "GET",
+            "description": "Mobile App / Job Seeker: list education.",
+            "url": "{{base_url}}/profile/education"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('list response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Attach Skill",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "description": "Mobile App / Job Seeker: attach a catalog skill to profile.",
+            "url": "{{base_url}}/profile/skills",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"skill_id\": {{skill_id}}\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('attach response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 422]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Detach Skill",
+          "request": {
+            "method": "DELETE",
+            "description": "Mobile App / Job Seeker: remove a profile skill.",
+            "url": "{{base_url}}/profile/skills/{{skill_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('detach response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404]));"
+                ]
+              }
+            }
+          ]
+        }
       ]
     },
     {
       "name": "05 CV Upload & Parsing",
       "item": [
-        { "name": "List CV Files", "request": { "method": "GET", "description": "Mobile App / Job Seeker: list uploaded CV files.", "url": "{{base_url}}/cv" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('cv list response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403]));"] } }] },
-        { "name": "Upload CV", "request": { "method": "POST", "description": "Mobile App / Job Seeker: upload PDF/DOCX CV and queue parsing.", "url": "{{base_url}}/cv/upload", "body": { "mode": "formdata", "formdata": [{ "key": "file", "type": "file", "src": "" }] } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('upload response', () => pm.expect(pm.response.code).to.be.oneOf([201, 401, 403, 422]));"] } }] },
-        { "name": "Show CV File", "request": { "method": "GET", "description": "Mobile App / Job Seeker: view one CV upload record.", "url": "{{base_url}}/cv/{{cv_file_id}}" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('show response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404]));"] } }] },
-        { "name": "Show Parsed CV", "request": { "method": "GET", "description": "Mobile App / Job Seeker: view parsed CV output.", "url": "{{base_url}}/cv/{{cv_file_id}}/parsed" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('parsed response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404]));"] } }] },
-        { "name": "Confirm CV Review", "request": { "method": "POST", "description": "Mobile App / Job Seeker: starts safe review flow and returns suggestions; does not directly overwrite profile.", "url": "{{base_url}}/cv/{{cv_file_id}}/confirm" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('confirm response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404, 422]));"] } }] }
+        {
+          "name": "List CV Files",
+          "request": {
+            "method": "GET",
+            "description": "Mobile App / Job Seeker: list uploaded CV files.",
+            "url": "{{base_url}}/cv"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('cv list response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Upload CV",
+          "request": {
+            "method": "POST",
+            "description": "Mobile App / Job Seeker: upload PDF/DOCX CV and queue parsing.",
+            "url": "{{base_url}}/cv/upload",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ""
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('upload response', () => pm.expect(pm.response.code).to.be.oneOf([201, 401, 403, 422]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Show CV File",
+          "request": {
+            "method": "GET",
+            "description": "Mobile App / Job Seeker: view one CV upload record.",
+            "url": "{{base_url}}/cv/{{cv_file_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('show response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Show Parsed CV",
+          "request": {
+            "method": "GET",
+            "description": "Mobile App / Job Seeker: view parsed CV output.",
+            "url": "{{base_url}}/cv/{{cv_file_id}}/parsed"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('parsed response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Confirm CV Review",
+          "request": {
+            "method": "POST",
+            "description": "Mobile App / Job Seeker: starts safe review flow and returns suggestions; does not directly overwrite profile.",
+            "url": "{{base_url}}/cv/{{cv_file_id}}/confirm"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('confirm response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404, 422]));"
+                ]
+              }
+            }
+          ]
+        }
       ]
     },
     {
       "name": "06 Profile Suggestions",
       "item": [
-        { "name": "List CV Suggestions", "request": { "method": "GET", "description": "Mobile App / Job Seeker: list pending/applied/rejected profile suggestions for a CV.", "url": "{{base_url}}/cv/{{cv_file_id}}/suggestions" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('suggestions response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404]));"] } }] },
-        { "name": "Generate CV Suggestions", "request": { "method": "POST", "description": "Mobile App / Job Seeker: compare parsed CV with profile and generate reviewable suggestions.", "url": "{{base_url}}/cv/{{cv_file_id}}/suggestions/generate" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('generate response', () => pm.expect(pm.response.code).to.be.oneOf([201, 200, 401, 403, 404]));"] } }] },
-        { "name": "Accept Suggestion", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }], "description": "Mobile App / Job Seeker: accept one suggestion, optionally with edited values.", "url": "{{base_url}}/profile/suggestions/{{suggestion_id}}/accept", "body": { "mode": "raw", "raw": "{\n  \"edited_value\": {\n    \"title\": \"Backend Developer\",\n    \"company_name\": \"Northwind Software\"\n  }\n}", "options": { "raw": { "language": "json" } } } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('accept response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404, 422]));"] } }] },
-        { "name": "Reject Suggestion", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }], "description": "Mobile App / Job Seeker: reject a suggestion and keep audit history.", "url": "{{base_url}}/profile/suggestions/{{suggestion_id}}/reject", "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Not part of my current profile.\"\n}", "options": { "raw": { "language": "json" } } } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('reject response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404, 422]));"] } }] },
-        { "name": "Apply Accepted Suggestions Bulk", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }], "description": "Mobile App / Job Seeker: apply accepted suggestions by id.", "url": "{{base_url}}/profile/suggestions/apply-bulk", "body": { "mode": "raw", "raw": "{\n  \"suggestion_ids\": [{{suggestion_id}}]\n}", "options": { "raw": { "language": "json" } } } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('bulk response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404, 422]));"] } }] }
+        {
+          "name": "List CV Suggestions",
+          "request": {
+            "method": "GET",
+            "description": "Mobile App / Job Seeker: list pending/applied/rejected profile suggestions for a CV.",
+            "url": "{{base_url}}/cv/{{cv_file_id}}/suggestions"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('suggestions response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Generate CV Suggestions",
+          "request": {
+            "method": "POST",
+            "description": "Mobile App / Job Seeker: compare parsed CV with profile and generate reviewable suggestions.",
+            "url": "{{base_url}}/cv/{{cv_file_id}}/suggestions/generate"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('generate response', () => pm.expect(pm.response.code).to.be.oneOf([201, 200, 401, 403, 404]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Accept Suggestion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "description": "Mobile App / Job Seeker: accept one suggestion, optionally with edited values.",
+            "url": "{{base_url}}/profile/suggestions/{{suggestion_id}}/accept",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"edited_value\": {\n    \"title\": \"Backend Developer\",\n    \"company_name\": \"Northwind Software\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('accept response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404, 422]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reject Suggestion",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "description": "Mobile App / Job Seeker: reject a suggestion and keep audit history.",
+            "url": "{{base_url}}/profile/suggestions/{{suggestion_id}}/reject",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Not part of my current profile.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('reject response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404, 422]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Apply Accepted Suggestions Bulk",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "description": "Mobile App / Job Seeker: apply accepted suggestions by id.",
+            "url": "{{base_url}}/profile/suggestions/apply-bulk",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"suggestion_ids\": [{{suggestion_id}}]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('bulk response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404, 422]));"
+                ]
+              }
+            }
+          ]
+        }
       ]
     },
     {
       "name": "07 Applications",
       "item": [
-        { "name": "Apply To Job", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }], "description": "Mobile App / Job Seeker: submit application for a job.", "url": "{{base_url}}/jobs/{{job_id}}/applications", "body": { "mode": "raw", "raw": "{\n  \"cover_letter\": \"I am interested in this role.\"\n}", "options": { "raw": { "language": "json" } } } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('apply response', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 401, 403, 404, 422]));"] } }] },
-        { "name": "My Applications", "request": { "method": "GET", "description": "Mobile App / Job Seeker: list own applications.", "url": "{{base_url}}/applications/my" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('my applications response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403]));"] } }] },
-        { "name": "Show Application", "request": { "method": "GET", "description": "Mobile App / Job Seeker: view own application details.", "url": "{{base_url}}/applications/{{application_id}}" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('show response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404]));"] } }] },
-        { "name": "Withdraw Application", "request": { "method": "POST", "description": "Mobile App / Job Seeker: withdraw own active application.", "url": "{{base_url}}/applications/{{application_id}}/withdraw" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('withdraw response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404, 422]));"] } }] }
+        {
+          "name": "Apply To Job",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "description": "Mobile App / Job Seeker: submit application for a job.",
+            "url": "{{base_url}}/jobs/{{job_id}}/applications",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"cover_letter\": \"I am interested in this role.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('apply response', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 401, 403, 404, 422]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "My Applications",
+          "request": {
+            "method": "GET",
+            "description": "Mobile App / Job Seeker: list own applications.",
+            "url": "{{base_url}}/applications/my"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('my applications response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Show Application",
+          "request": {
+            "method": "GET",
+            "description": "Mobile App / Job Seeker: view own application details.",
+            "url": "{{base_url}}/applications/{{application_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('show response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Withdraw Application",
+          "request": {
+            "method": "POST",
+            "description": "Mobile App / Job Seeker: withdraw own active application.",
+            "url": "{{base_url}}/applications/{{application_id}}/withdraw"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('withdraw response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404, 422]));"
+                ]
+              }
+            }
+          ]
+        }
       ]
     },
     {
       "name": "08 Tests",
       "item": [
-        { "name": "My Assigned Tests", "request": { "method": "GET", "description": "Mobile App / Job Seeker: list assigned tests.", "url": "{{base_url}}/my/tests" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('assigned tests response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403]));"] } }] },
-        { "name": "Start Test Attempt", "request": { "method": "POST", "description": "Mobile App / Job Seeker: start an assigned test attempt.", "url": "{{base_url}}/tests/{{assignment_id}}/start" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('start response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404, 422]));"] } }] },
-        { "name": "Submit Test Attempt", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }], "description": "Mobile App / Job Seeker: submit answers for an assigned test.", "url": "{{base_url}}/tests/{{assignment_id}}/submit", "body": { "mode": "raw", "raw": "{\n  \"answers\": [\n    { \"question_id\": 1, \"answer\": \"A\" }\n  ]\n}", "options": { "raw": { "language": "json" } } } }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('submit response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404, 422]));"] } }] }
+        {
+          "name": "My Assigned Tests",
+          "request": {
+            "method": "GET",
+            "description": "Mobile App / Job Seeker: list assigned tests.",
+            "url": "{{base_url}}/my/tests"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('assigned tests response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Start Test Attempt",
+          "request": {
+            "method": "POST",
+            "description": "Mobile App / Job Seeker: start an assigned test attempt.",
+            "url": "{{base_url}}/tests/{{assignment_id}}/start"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('start response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404, 422]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Submit Test Attempt",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "description": "Mobile App / Job Seeker: submit answers for an assigned test.",
+            "url": "{{base_url}}/tests/{{assignment_id}}/submit",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"answers\": [\n    { \"question_id\": 1, \"answer\": \"A\" }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('submit response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404, 422]));"
+                ]
+              }
+            }
+          ]
+        }
       ]
     },
     {
       "name": "09 Interviews",
       "item": [
-        { "name": "My Interviews", "request": { "method": "GET", "description": "Mobile App / Job Seeker: list scheduled interviews.", "url": "{{base_url}}/my/interviews" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('interviews response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403]));"] } }] },
-        { "name": "Show Interview", "request": { "method": "GET", "description": "Mobile App / Job Seeker: view interview details.", "url": "{{base_url}}/interviews/{{interview_id}}" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('show response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404]));"] } }] }
+        {
+          "name": "My Interviews",
+          "request": {
+            "method": "GET",
+            "description": "Mobile App / Job Seeker: list scheduled interviews.",
+            "url": "{{base_url}}/my/interviews"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('interviews response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Show Interview",
+          "request": {
+            "method": "GET",
+            "description": "Mobile App / Job Seeker: view interview details.",
+            "url": "{{base_url}}/interviews/{{interview_id}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('show response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404]));"
+                ]
+              }
+            }
+          ]
+        }
       ]
     },
     {
       "name": "10 Notifications",
       "item": [
-        { "name": "List Notifications", "request": { "method": "GET", "description": "Mobile App / Job Seeker: list notifications.", "url": "{{base_url}}/notifications" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('notifications response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401]));"] } }] },
-        { "name": "Unread Count", "request": { "method": "GET", "description": "Mobile App / Job Seeker: get unread notification count.", "url": "{{base_url}}/notifications/unread-count" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('count response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401]));"] } }] },
-        { "name": "Mark Notification Read", "request": { "method": "POST", "description": "Mobile App / Job Seeker: mark one notification as read.", "url": "{{base_url}}/notifications/{{notification_id}}/read" }, "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": ["pm.test('read response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 404]));"] } }] }
+        {
+          "name": "List Notifications",
+          "request": {
+            "method": "GET",
+            "description": "Mobile App / Job Seeker: list notifications.",
+            "url": "{{base_url}}/notifications"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('notifications response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Unread Count",
+          "request": {
+            "method": "GET",
+            "description": "Mobile App / Job Seeker: get unread notification count.",
+            "url": "{{base_url}}/notifications/unread-count"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('count response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Mark Notification Read",
+          "request": {
+            "method": "POST",
+            "description": "Mobile App / Job Seeker: mark one notification as read.",
+            "url": "{{base_url}}/notifications/{{notification_id}}/read"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('read response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 404]));"
+                ]
+              }
+            }
+          ]
+        }
       ]
     }
   ]

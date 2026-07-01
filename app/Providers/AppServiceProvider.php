@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Enums\UserRole;
 use App\Events\ApplicationStatusChanged;
 use App\Events\InterviewEvaluated;
 use App\Events\InterviewScheduled;
@@ -14,14 +15,15 @@ use App\Listeners\CreateTestAssignedNotification;
 use App\Listeners\CreateTestEvaluatedNotification;
 use App\Models\ApplicationTestAssignment;
 use App\Models\Interview;
-use App\Models\JobPosting;
 use App\Models\JobApplication;
+use App\Models\JobPosting;
 use App\Models\TestAttempt;
 use App\Policies\ApplicationTestAssignmentPolicy;
 use App\Policies\InterviewPolicy;
 use App\Policies\JobApplicationPolicy;
 use App\Policies\JobPostingPolicy;
 use App\Policies\TestAttemptPolicy;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -47,13 +49,19 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(ApplicationTestAssignment::class, ApplicationTestAssignmentPolicy::class);
         Gate::policy(Interview::class, InterviewPolicy::class);
         Gate::policy(TestAttempt::class, TestAttemptPolicy::class);
-        Gate::define('access-admin', fn ($user): bool => $user->role === \App\Enums\UserRole::ADMIN);
+        Gate::define('access-admin', fn ($user): bool => $user->role === UserRole::ADMIN);
 
         Event::listen(ApplicationStatusChanged::class, CreateApplicationStatusChangedNotification::class);
         Event::listen(TestAssigned::class, CreateTestAssignedNotification::class);
         Event::listen(TestEvaluated::class, CreateTestEvaluatedNotification::class);
         Event::listen(InterviewScheduled::class, CreateInterviewScheduledNotification::class);
         Event::listen(InterviewEvaluated::class, CreateInterviewEvaluatedNotification::class);
+
+        ResetPassword::createUrlUsing(function ($notifiable, string $token): string {
+            return rtrim((string) config('app.url'), '/')
+                .'/reset-password?token='.$token
+                .'&email='.urlencode((string) $notifiable->getEmailForPasswordReset());
+        });
 
         JsonResource::withoutWrapping();
     }

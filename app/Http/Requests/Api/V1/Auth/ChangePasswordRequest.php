@@ -5,7 +5,7 @@ namespace App\Http\Requests\Api\V1\Auth;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rules\Password;
 
-class JobSeekerRegisterRequest extends FormRequest
+class ChangePasswordRequest extends FormRequest
 {
     public function authorize(): bool
     {
@@ -18,10 +18,7 @@ class JobSeekerRegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'terms_accepted' => ['required', 'accepted'],
-            'phone' => ['nullable', 'string', 'max:30'],
+            'current_password' => ['required', 'string'],
             'password' => ['required', 'confirmed', Password::defaults()],
         ];
     }

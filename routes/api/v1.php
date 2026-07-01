@@ -1,12 +1,12 @@
 <?php
 
-use App\Http\Controllers\Api\V1\Auth\AuthController;
-use App\Http\Controllers\Api\V1\Auth\RegistrationController;
 use App\Http\Controllers\Api\V1\Admin\AdminCompanyController;
 use App\Http\Controllers\Api\V1\Admin\AdminSkillController;
 use App\Http\Controllers\Api\V1\Admin\AdminTestController;
 use App\Http\Controllers\Api\V1\Admin\AdminUserController;
 use App\Http\Controllers\Api\V1\Application\JobApplicationController;
+use App\Http\Controllers\Api\V1\Auth\AuthController;
+use App\Http\Controllers\Api\V1\Auth\RegistrationController;
 use App\Http\Controllers\Api\V1\CV\CVController;
 use App\Http\Controllers\Api\V1\Interview\InterviewController;
 use App\Http\Controllers\Api\V1\JobPosting\JobPostingController;
@@ -16,8 +16,8 @@ use App\Http\Controllers\Api\V1\Profile\EducationController;
 use App\Http\Controllers\Api\V1\Profile\EmployerProfileController;
 use App\Http\Controllers\Api\V1\Profile\ExperienceController;
 use App\Http\Controllers\Api\V1\Profile\ProfileController;
-use App\Http\Controllers\Api\V1\Profile\ProfileSuggestionController;
 use App\Http\Controllers\Api\V1\Profile\ProfileSkillController;
+use App\Http\Controllers\Api\V1\Profile\ProfileSuggestionController;
 use App\Http\Controllers\Api\V1\Skill\SkillController;
 use App\Http\Controllers\Api\V1\Test\TestAssignmentController;
 use App\Http\Controllers\Api\V1\Test\TestAttemptController;
@@ -32,10 +32,14 @@ Route::prefix('auth')
         Route::post('register/employer', [RegistrationController::class, 'registerEmployer'])
             ->name('register.employer');
         Route::post('login', [AuthController::class, 'login'])->name('login');
+        Route::post('forgot-password', [AuthController::class, 'forgotPassword'])->name('forgot-password');
+        Route::post('reset-password', [AuthController::class, 'resetPassword'])->name('reset-password');
 
         Route::middleware('auth:sanctum')->group(function (): void {
             Route::get('me', [AuthController::class, 'me'])->name('me');
+            Route::post('change-password', [AuthController::class, 'changePassword'])->name('change-password');
             Route::post('logout', [AuthController::class, 'logout'])->name('logout');
+            Route::post('logout-all', [AuthController::class, 'logoutAll'])->name('logout-all');
         });
     });
 
