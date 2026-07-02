@@ -42,6 +42,7 @@ class JobSeekerProfile extends Model
     {
         return $this->belongsToMany(Skill::class, 'job_seeker_skills')
             ->using(JobSeekerSkill::class)
+            ->withPivot(['source_type', 'source_cv_file_id', 'user_verified_at'])
             ->withTimestamps();
     }
 
