@@ -23,6 +23,9 @@ class ExperienceResource extends JsonResource
             'end_date' => $this->end_date?->toDateString(),
             'is_current' => $this->is_current,
             'description' => $this->description,
+            'source_type' => $this->source_type,
+            'source_cv_file_id' => $this->source_cv_file_id,
+            'user_verified_at' => $this->user_verified_at?->toISOString(),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];
