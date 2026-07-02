@@ -20,6 +20,9 @@ class Education extends Model
         'start_date',
         'end_date',
         'description',
+        'source_type',
+        'source_cv_file_id',
+        'user_verified_at',
     ];
 
     /**
@@ -30,11 +33,17 @@ class Education extends Model
         return [
             'start_date' => 'date',
             'end_date' => 'date',
+            'user_verified_at' => 'datetime',
         ];
     }
 
     public function jobSeekerProfile(): BelongsTo
     {
         return $this->belongsTo(JobSeekerProfile::class);
+    }
+
+    public function sourceCvFile(): BelongsTo
+    {
+        return $this->belongsTo(CVFile::class, 'source_cv_file_id');
     }
 }
