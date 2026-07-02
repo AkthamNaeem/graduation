@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Admin\AdminCompanyController;
+use App\Http\Controllers\Api\V1\Admin\AdminReportController;
 use App\Http\Controllers\Api\V1\Admin\AdminSkillController;
 use App\Http\Controllers\Api\V1\Admin\AdminTestController;
 use App\Http\Controllers\Api\V1\Admin\AdminUserController;
@@ -58,17 +59,25 @@ Route::middleware('auth:sanctum')->group(function (): void {
         ->group(function (): void {
             Route::get('users', [AdminUserController::class, 'index'])->name('users.index');
             Route::get('users/{user}', [AdminUserController::class, 'show'])->name('users.show');
+            Route::patch('users/{user}/activate', [AdminUserController::class, 'activate'])->name('users.activate');
+            Route::patch('users/{user}/suspend', [AdminUserController::class, 'suspend'])->name('users.suspend');
             Route::patch('users/{user}/role', [AdminUserController::class, 'updateRole'])->name('users.role');
             Route::patch('users/{user}/status', [AdminUserController::class, 'updateStatus'])->name('users.status');
             Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+            Route::get('reports/overview', [AdminReportController::class, 'overview'])->name('reports.overview');
+            Route::get('reports/applications', [AdminReportController::class, 'applications'])->name('reports.applications');
+            Route::get('reports/jobs', [AdminReportController::class, 'jobs'])->name('reports.jobs');
+            Route::get('reports/cv-parsing', [AdminReportController::class, 'cvParsing'])->name('reports.cv-parsing');
 
             Route::get('companies', [AdminCompanyController::class, 'index'])->name('companies.index');
+            Route::get('companies/{company}', [AdminCompanyController::class, 'show'])->name('companies.show');
             Route::patch('companies/{company}/approve', [AdminCompanyController::class, 'approve'])->name('companies.approve');
             Route::patch('companies/{company}/reject', [AdminCompanyController::class, 'reject'])->name('companies.reject');
             Route::patch('companies/{company}/suspend', [AdminCompanyController::class, 'suspend'])->name('companies.suspend');
 
             Route::get('skills', [AdminSkillController::class, 'index'])->name('skills.index');
             Route::post('skills', [AdminSkillController::class, 'store'])->name('skills.store');
+            Route::patch('skills/{skill}', [AdminSkillController::class, 'update'])->name('skills.patch');
             Route::put('skills/{skill}', [AdminSkillController::class, 'update'])->name('skills.update');
             Route::delete('skills/{skill}', [AdminSkillController::class, 'destroy'])->name('skills.destroy');
 

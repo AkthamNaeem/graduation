@@ -32,6 +32,7 @@ The implementation follows a service-oriented Laravel structure using Form Reque
 | 7 | Interview Module | Interview scheduling, listing, update/delete before completion, completion, evaluation items, status updates | Implemented |
 | 8 | AI Matching | Deterministic TF-IDF matching, cosine similarity, recommendations for job seekers, ranked candidates for employers, score breakdowns | Partially Implemented (IR-based matching, not deep AI) |
 | 9 | Notifications + Admin APIs | In-app notification table, workflow event/listener dispatch, notification endpoints, admin APIs for users, companies, skills, and tests | Implemented |
+| 10 | Admin & Reports Completion | Completed admin user/company/skill filters and detail actions, safe skill deletion behavior, and basic read-only JSON report endpoints for dashboard statistics | Implemented |
 
 ## 4. Database Structure
 
@@ -1072,7 +1073,64 @@ Limitations:
 - Update/delete actions that are less sensitive, such as job skill attach/detach and routine profile edits, are not exhaustively audited.
 - Company suspension is represented by `companies.approval_status = suspended`; there is no separate suspension reason table.
 
-## 18. Known Limitations
+## 18. Phase 10 Admin & Reports Completion
+
+Phase 10 completes the backend surface needed for a practical Admin Dashboard MVP. These endpoints are backend-only and return JSON data for frontend/admin dashboard screens; no frontend UI or chart rendering is implemented in this repository.
+
+Admin user capabilities:
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/api/v1/admin/users` | Paginated user listing with `search`, `role`, `status`, `created_from`, `created_to`, `sort_by`, and `sort_direction` filters |
+| GET | `/api/v1/admin/users/{user}` | User detail with role/status and loaded profile summary where available |
+| PATCH | `/api/v1/admin/users/{user}/activate` | Mark a user active and write `user.activated` audit log |
+| PATCH | `/api/v1/admin/users/{user}/suspend` | Mark a user suspended, revoke Sanctum tokens, and write `user.suspended` audit log |
+| PATCH | `/api/v1/admin/users/{user}/role` | Existing administrative role update endpoint |
+| PATCH | `/api/v1/admin/users/{user}/status` | Existing generic status update endpoint retained for compatibility |
+
+Admin company capabilities:
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/api/v1/admin/companies` | Paginated company listing with `search`, `approval_status`, `industry`, `created_from`, `created_to`, `sort_by`, and `sort_direction` filters |
+| GET | `/api/v1/admin/companies/{company}` | Company detail with employer user, job, and application counts where practical |
+| PATCH | `/api/v1/admin/companies/{company}/approve` | Mark company approved and write `company.approved` audit log |
+| PATCH | `/api/v1/admin/companies/{company}/reject` | Mark company rejected and write `company.rejected` audit log |
+| PATCH | `/api/v1/admin/companies/{company}/suspend` | Mark company suspended and write `company.suspended` audit log |
+
+Admin skills/reference data capabilities:
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/api/v1/admin/skills` | Paginated skill listing with `search`, `sort_by`, and `sort_direction` filters |
+| POST | `/api/v1/admin/skills` | Create a reusable skill, generate slug when omitted, reject duplicate names case-insensitively, and write `skill.created` audit log |
+| PATCH/PUT | `/api/v1/admin/skills/{skill}` | Update a skill name/slug, prevent duplicate names, and write `skill.updated` audit log |
+| DELETE | `/api/v1/admin/skills/{skill}` | Delete unused skills only; used skills return HTTP 409 instead of breaking profile/job relationships; successful deletes write `skill.deleted` audit log |
+
+Admin reports:
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | `/api/v1/admin/reports/overview` | Read-only summary counts for users, companies, jobs, applications, tests, interviews, notifications, CV files, CV parsing results, and audit logs |
+| GET | `/api/v1/admin/reports/applications` | Read-only application statistics with `date_from`, `date_to`, `company_id`, and `job_id` filters |
+| GET | `/api/v1/admin/reports/jobs` | Read-only job statistics with `date_from`, `date_to`, `company_id`, and `status` filters |
+| GET | `/api/v1/admin/reports/cv-parsing` | Read-only CV upload/parsing and profile suggestion statistics with date filters |
+
+Report responses are basic JSON statistics for dashboard cards/tables, not frontend charts. Queries use database aggregation and avoid loading all records into memory.
+
+Postman updates:
+
+- `Smart Recruitment Platform - Web App.postman_collection.json` now includes updated admin folders for users, companies, skills, and audit/reports.
+- `Smart Recruitment Platform - Environment.postman_environment.json` includes reusable admin dashboard variables such as `admin_token`, `user_id`, `company_id`, `skill_id`, `job_id`, `application_id`, and `audit_log_id`.
+- `Smart Recruitment Platform - Mobile App.postman_collection.json` was not modified for this backend-only admin phase.
+
+Limitations:
+
+- Skills do not have `status` or `category` columns in the current schema, so the admin skill API supports only real fields: `name` and `slug`.
+- Used skills cannot be deactivated because there is no existing status/soft-delete column. The safe MVP behavior is HTTP 409 conflict for used skills and hard delete only for unused skills.
+- Reports are aggregate counts only; there are no exports, charts, drill-down datasets, or advanced analytics dimensions.
+
+## 19. Known Limitations
 
 - Partially Implemented: CV parsing is MVP/basic. It uses regex and simple section-line parsing, so complex CV formats may parse poorly.
 - Partially Implemented: CV parsing only supports PDF and DOCX.
@@ -1080,7 +1138,7 @@ Limitations:
 - Partially Implemented: Parsed skills are only attached if they already exist in the `skills` table; unknown skills are ignored.
 - Partially Implemented: Matching is deterministic IR-based matching, not deep AI, semantic embeddings, or LLM reasoning.
 - Not Implemented: Matching has no configurable weights through admin settings; section weights are hardcoded.
-- Partially Implemented: Admin APIs exist for users, companies, skills, and tests, but no admin dashboard UI or admin analytics are implemented.
+- Partially Implemented: Admin APIs and basic admin report endpoints exist, but no admin dashboard UI, exports, charts, or advanced analytics are implemented.
 - Partially Implemented: In-app notifications cover core candidate and employer workflow events, but no email, push, digest, or external delivery is implemented.
 - Not Implemented: No advanced employer analytics or dashboard endpoints are implemented.
 - Not Implemented: Seeders do not create sample test catalog entries, applications, test assignments, interviews, or evaluations.
@@ -1093,7 +1151,7 @@ Limitations:
 - Not Implemented: No OpenAPI/Swagger documentation is present.
 - Automated tests are implemented and broad for current modules, but there are no browser/end-to-end tests because this repository is backend-only.
 
-## 19. Improvement Plan Preparation
+## 20. Improvement Plan Preparation
 
 ### High Priority
 

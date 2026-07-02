@@ -3,11 +3,19 @@
 namespace Tests\Feature\Api\V1;
 
 use App\Enums\UserRole;
+use App\Models\ApplicationStatus;
 use App\Models\AuditLog;
 use App\Models\Company;
+use App\Models\CVFile;
+use App\Models\CVParsingResult;
 use App\Models\EmployerProfile;
+use App\Models\JobApplication;
+use App\Models\JobPosting;
+use App\Models\JobSeekerProfile;
+use App\Models\ProfileChangeSuggestion;
 use App\Models\Skill;
 use App\Models\User;
+use Database\Seeders\ApplicationStatusSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -68,6 +76,54 @@ class AdminApiTest extends TestCase
         ]);
     }
 
+    public function test_admin_can_filter_users_and_activate_or_suspend_user(): void
+    {
+        $admin = $this->admin();
+        $candidate = User::factory()->create([
+            'name' => 'Filtered Candidate',
+            'role' => UserRole::JOB_SEEKER,
+            'status' => 'active',
+        ]);
+        User::factory()->create([
+            'name' => 'Filtered Employer',
+            'role' => UserRole::EMPLOYER,
+            'status' => 'suspended',
+        ]);
+        $candidateToken = $candidate->createToken('candidate-token')->plainTextToken;
+
+        $this->withToken($this->tokenFor($admin))
+            ->getJson('/api/v1/admin/users?search=Candidate&role=job_seeker&status=active')
+            ->assertOk()
+            ->assertJsonCount(1, 'data.data')
+            ->assertJsonPath('data.data.0.id', $candidate->id);
+
+        $this->withToken($this->tokenFor($admin))
+            ->patchJson("/api/v1/admin/users/{$candidate->id}/suspend")
+            ->assertOk()
+            ->assertJsonPath('data.status', 'suspended');
+
+        $this->assertDatabaseMissing('personal_access_tokens', [
+            'tokenable_id' => $candidate->id,
+        ]);
+
+        $this->withToken($this->tokenFor($admin))
+            ->patchJson("/api/v1/admin/users/{$candidate->id}/activate")
+            ->assertOk()
+            ->assertJsonPath('data.status', 'active');
+
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'user.suspended',
+            'entity_type' => User::class,
+            'entity_id' => $candidate->id,
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'user.activated',
+            'entity_type' => User::class,
+            'entity_id' => $candidate->id,
+        ]);
+        $this->assertNotEmpty($candidateToken);
+    }
+
     public function test_admin_can_list_approve_and_reject_companies(): void
     {
         $admin = $this->admin();
@@ -83,6 +139,17 @@ class AdminApiTest extends TestCase
             ->getJson('/api/v1/admin/companies')
             ->assertOk()
             ->assertJsonPath('data.data.0.name', 'Acme Hiring Co.');
+
+        $this->withToken($this->tokenFor($admin))
+            ->getJson('/api/v1/admin/companies?approval_status=pending')
+            ->assertOk()
+            ->assertJsonCount(1, 'data.data');
+
+        $this->withToken($this->tokenFor($admin))
+            ->getJson("/api/v1/admin/companies/{$company->id}")
+            ->assertOk()
+            ->assertJsonPath('data.id', $company->id)
+            ->assertJsonPath('data.counts.employer_users', 1);
 
         $this->withToken($this->tokenFor($admin))
             ->patchJson("/api/v1/admin/companies/{$company->id}/approve")
@@ -218,10 +285,127 @@ class AdminApiTest extends TestCase
 
         $this->withToken($this->tokenFor($admin))
             ->postJson('/api/v1/admin/skills', [
-                'name' => 'Laravel',
+                'name' => 'laravel',
                 'slug' => 'laravel',
             ])
             ->assertJsonValidationErrors(['name', 'slug']);
+    }
+
+    public function test_used_skill_is_not_hard_deleted(): void
+    {
+        $admin = $this->admin();
+        $skill = Skill::create(['name' => 'PHP', 'slug' => 'php']);
+        $user = User::factory()->create(['role' => UserRole::JOB_SEEKER]);
+        $profile = JobSeekerProfile::create(['user_id' => $user->id]);
+
+        $profile->skills()->attach($skill->id);
+
+        $this->withToken($this->tokenFor($admin))
+            ->deleteJson("/api/v1/admin/skills/{$skill->id}")
+            ->assertStatus(409)
+            ->assertJsonPath('success', false);
+
+        $this->assertDatabaseHas('skills', ['id' => $skill->id]);
+    }
+
+    public function test_non_admin_cannot_access_reports(): void
+    {
+        $employer = User::factory()->create(['role' => UserRole::EMPLOYER]);
+
+        $this->withToken($this->tokenFor($employer))
+            ->getJson('/api/v1/admin/reports/overview')
+            ->assertForbidden()
+            ->assertJsonPath('success', false);
+    }
+
+    public function test_admin_can_access_overview_report_with_expected_keys(): void
+    {
+        $admin = $this->admin();
+
+        $this->withToken($this->tokenFor($admin))
+            ->getJson('/api/v1/admin/reports/overview')
+            ->assertOk()
+            ->assertJsonStructure([
+                'data' => [
+                    'users' => ['total', 'by_role', 'by_status'],
+                    'companies' => ['total', 'by_approval_status'],
+                    'jobs' => ['total', 'by_status'],
+                    'applications' => ['total', 'by_status'],
+                    'tests' => ['total', 'assignments', 'attempts'],
+                    'interviews' => ['total', 'by_status'],
+                    'notifications' => ['total', 'unread'],
+                    'cv_files' => ['total', 'by_status'],
+                    'cv_parsing_results' => ['success', 'failed'],
+                    'audit_logs' => ['count'],
+                ],
+            ]);
+    }
+
+    public function test_admin_reports_return_application_job_and_cv_counts(): void
+    {
+        $this->seed(ApplicationStatusSeeder::class);
+
+        $admin = $this->admin();
+        $company = Company::create(['name' => 'Reports Co.', 'approval_status' => 'approved']);
+        $job = JobPosting::create([
+            'company_id' => $company->id,
+            'title' => 'Backend Developer',
+            'description' => 'Build APIs',
+            'employment_type' => 'full_time',
+            'experience_level' => 'mid',
+            'status' => 'open',
+        ]);
+        $profile = JobSeekerProfile::create([
+            'user_id' => User::factory()->create(['role' => UserRole::JOB_SEEKER])->id,
+        ]);
+        JobApplication::create([
+            'job_posting_id' => $job->id,
+            'job_seeker_profile_id' => $profile->id,
+            'application_status_id' => ApplicationStatus::query()->where('slug', 'accepted')->value('id'),
+        ]);
+        $cvFile = CVFile::create([
+            'user_id' => $profile->user_id,
+            'original_name' => 'resume.pdf',
+            'stored_path' => 'cv/resume.pdf',
+            'disk' => 'local',
+            'mime_type' => 'application/pdf',
+            'extension' => 'pdf',
+            'size_bytes' => 1000,
+            'status' => 'parsed',
+        ]);
+        CVParsingResult::create([
+            'cv_file_id' => $cvFile->id,
+            'raw_text' => 'Laravel developer',
+            'parsed_json' => ['skills' => ['Laravel']],
+        ]);
+        ProfileChangeSuggestion::create([
+            'user_id' => $profile->user_id,
+            'cv_file_id' => $cvFile->id,
+            'job_seeker_profile_id' => $profile->id,
+            'entity_type' => ProfileChangeSuggestion::ENTITY_SKILL,
+            'suggestion_type' => ProfileChangeSuggestion::TYPE_ADD,
+            'status' => ProfileChangeSuggestion::STATUS_ACCEPTED,
+            'new_value' => ['name' => 'Laravel'],
+        ]);
+
+        $this->withToken($this->tokenFor($admin))
+            ->getJson('/api/v1/admin/reports/applications')
+            ->assertOk()
+            ->assertJsonPath('data.total', 1)
+            ->assertJsonPath('data.by_status.accepted', 1);
+
+        $this->withToken($this->tokenFor($admin))
+            ->getJson('/api/v1/admin/reports/jobs')
+            ->assertOk()
+            ->assertJsonPath('data.total', 1)
+            ->assertJsonPath('data.by_status.open', 1);
+
+        $this->withToken($this->tokenFor($admin))
+            ->getJson('/api/v1/admin/reports/cv-parsing')
+            ->assertOk()
+            ->assertJsonPath('data.total_uploaded_cvs', 1)
+            ->assertJsonPath('data.parsed_count', 1)
+            ->assertJsonPath('data.suggestions_accepted', 1);
     }
 
     public function test_admin_can_crud_tests_without_breaking_catalog_routes(): void

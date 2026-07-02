@@ -20,7 +20,22 @@ class UpdateAdminSkillRequest extends FormRequest
         $skillId = $skill instanceof Skill ? $skill->id : null;
 
         return [
-            'name' => ['sometimes', 'required', 'string', 'max:255', Rule::unique('skills', 'name')->ignore($skillId)],
+            'name' => [
+                'sometimes',
+                'required',
+                'string',
+                'max:255',
+                function (string $attribute, mixed $value, \Closure $fail) use ($skillId): void {
+                    $exists = Skill::query()
+                        ->whereRaw('LOWER(name) = ?', [strtolower((string) $value)])
+                        ->when($skillId, fn ($query, int $id) => $query->whereKeyNot($id))
+                        ->exists();
+
+                    if ($exists) {
+                        $fail('The name has already been taken.');
+                    }
+                },
+            ],
             'slug' => ['sometimes', 'required', 'string', 'max:255', 'alpha_dash', Rule::unique('skills', 'slug')->ignore($skillId)],
         ];
     }
