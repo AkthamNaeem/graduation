@@ -19,6 +19,9 @@ class Experience extends Model
         'end_date',
         'is_current',
         'description',
+        'source_type',
+        'source_cv_file_id',
+        'user_verified_at',
     ];
 
     /**
@@ -30,11 +33,17 @@ class Experience extends Model
             'start_date' => 'date',
             'end_date' => 'date',
             'is_current' => 'boolean',
+            'user_verified_at' => 'datetime',
         ];
     }
 
     public function jobSeekerProfile(): BelongsTo
     {
         return $this->belongsTo(JobSeekerProfile::class);
+    }
+
+    public function sourceCvFile(): BelongsTo
+    {
+        return $this->belongsTo(CVFile::class, 'source_cv_file_id');
     }
 }
