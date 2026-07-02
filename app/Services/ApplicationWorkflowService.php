@@ -7,6 +7,7 @@ use App\Events\ApplicationStatusChanged;
 use App\Events\ApplicationSubmitted;
 use App\Models\ApplicationStatus;
 use App\Models\ApplicationStatusHistory;
+use App\Models\CVFile;
 use App\Models\JobApplication;
 use App\Models\JobPosting;
 use App\Models\JobSeekerProfile;
@@ -54,7 +55,10 @@ class ApplicationWorkflowService
         private readonly AuditLogService $auditLogService,
     ) {}
 
-    public function applyToJob(User $user, JobPosting $jobPosting): JobApplication
+    /**
+     * @param  array<string, mixed>  $applicationData
+     */
+    public function applyToJob(User $user, JobPosting $jobPosting, array $applicationData): JobApplication
     {
         if ($user->role !== UserRole::JOB_SEEKER) {
             throw ValidationException::withMessages([
@@ -76,15 +80,22 @@ class ApplicationWorkflowService
             ]);
         }
 
-        $this->checkDuplicateApplication($jobPosting, $profile);
+        $selectedCvFileId = (int) ($applicationData['selected_cv_file_id'] ?? 0);
+        $this->ensureSelectedCvBelongsToUser($selectedCvFileId, $user);
 
-        return DB::transaction(function () use ($jobPosting, $profile, $user): JobApplication {
+        return DB::transaction(function () use ($jobPosting, $profile, $user, $applicationData, $selectedCvFileId): JobApplication {
+            $this->checkDuplicateApplication($jobPosting, $profile);
+
             $submittedStatus = $this->statusBySlug(self::STATUS_SUBMITTED);
 
             $application = JobApplication::create([
                 'job_posting_id' => $jobPosting->id,
                 'job_seeker_profile_id' => $profile->id,
+                'selected_cv_file_id' => $selectedCvFileId,
                 'application_status_id' => $submittedStatus->id,
+                'cover_letter' => $applicationData['cover_letter'] ?? null,
+                'consent_to_share_profile' => (bool) ($applicationData['consent_to_share_profile'] ?? false),
+                'screening_answers' => $applicationData['screening_answers'] ?? null,
             ]);
 
             $this->recordHistory($application, null, $submittedStatus, $user);
@@ -251,6 +262,20 @@ class ApplicationWorkflowService
         return $this->loadApplication($jobApplication);
     }
 
+    private function ensureSelectedCvBelongsToUser(int $selectedCvFileId, User $user): void
+    {
+        $exists = CVFile::query()
+            ->whereKey($selectedCvFileId)
+            ->where('user_id', $user->id)
+            ->exists();
+
+        if (! $exists) {
+            throw ValidationException::withMessages([
+                'selected_cv_file_id' => ['The selected CV file must belong to the authenticated job seeker.'],
+            ]);
+        }
+    }
+
     private function statusBySlug(string $slug): ApplicationStatus
     {
         return ApplicationStatus::query()
@@ -273,6 +298,7 @@ class ApplicationWorkflowService
             'jobPosting.skills',
             'jobSeekerProfile.user',
             'jobSeekerProfile.skills',
+            'selectedCvFile',
             'applicationStatus',
             'statusHistory.fromStatus',
             'statusHistory.toStatus',
