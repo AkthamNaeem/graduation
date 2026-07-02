@@ -17,6 +17,9 @@ use Illuminate\Validation\ValidationException;
 
 class ProfileSyncService
 {
+    private const SOURCE_CV_CONFIRMED = 'cv_confirmed';
+    private const SOURCE_CV_MERGED = 'cv_merged';
+
     public function __construct(
         private readonly AuditLogService $auditLogService,
     ) {}
@@ -91,7 +94,7 @@ class ProfileSyncService
             ]);
         }
 
-        $appliedSuggestion = DB::transaction(function () use ($user, $suggestion, $editedValue): ProfileChangeSuggestion {
+        return DB::transaction(function () use ($user, $suggestion, $editedValue): ProfileChangeSuggestion {
             $before = $suggestion->only(['status', 'user_edited_value', 'decided_at', 'applied_at']);
 
             $suggestion->forceFill([
@@ -113,8 +116,6 @@ class ProfileSyncService
 
             return $applied;
         });
-
-        return $appliedSuggestion;
     }
 
     public function reject(User $user, ProfileChangeSuggestion $suggestion, ?string $reason = null): ProfileChangeSuggestion
@@ -136,7 +137,6 @@ class ProfileSyncService
         ])->save();
 
         $this->markCVConfirmedIfReviewed($suggestion);
-
         $suggestion = $suggestion->refresh();
 
         $this->auditLogService->record(
@@ -219,7 +219,7 @@ class ProfileSyncService
             ProfileChangeSuggestion::ENTITY_PROFILE => $this->applyProfileUpdate($profile, $value),
             ProfileChangeSuggestion::ENTITY_EXPERIENCE => $this->applyExperience($profile, $suggestion, $value),
             ProfileChangeSuggestion::ENTITY_EDUCATION => $this->applyEducation($profile, $suggestion, $value),
-            ProfileChangeSuggestion::ENTITY_SKILL => $this->applySkill($profile, $value),
+            ProfileChangeSuggestion::ENTITY_SKILL => $this->applySkill($profile, $suggestion, $value),
             default => null,
         };
 
@@ -421,7 +421,10 @@ class ProfileSyncService
     {
         if ($suggestion->suggestion_type === ProfileChangeSuggestion::TYPE_ADD) {
             if (! $profile->experiences()->get()->contains(fn (Experience $experience): bool => $this->experienceKey($experience->toArray()) === $this->experienceKey($value))) {
-                $profile->experiences()->create($this->experiencePayload($value));
+                $profile->experiences()->create(array_merge(
+                    $this->experiencePayload($value),
+                    $this->cvSourcePayload($suggestion, self::SOURCE_CV_CONFIRMED),
+                ));
             }
 
             return;
@@ -431,7 +434,14 @@ class ProfileSyncService
             $experience = $profile->experiences()->whereKey($suggestion->old_value['id'])->first();
 
             if ($experience instanceof Experience) {
-                $experience->update($this->onlyEmptyFields($experience, $this->experiencePayload($value)));
+                $updates = $this->onlyEmptyFields($experience, $this->experiencePayload($value));
+
+                if ($updates !== []) {
+                    $experience->update(array_merge(
+                        $updates,
+                        $this->cvSourcePayload($suggestion, self::SOURCE_CV_MERGED),
+                    ));
+                }
             }
         }
     }
@@ -443,7 +453,10 @@ class ProfileSyncService
     {
         if ($suggestion->suggestion_type === ProfileChangeSuggestion::TYPE_ADD) {
             if (! $profile->education()->get()->contains(fn (Education $education): bool => $this->educationKey($education->toArray()) === $this->educationKey($value))) {
-                $profile->education()->create($this->educationPayload($value));
+                $profile->education()->create(array_merge(
+                    $this->educationPayload($value),
+                    $this->cvSourcePayload($suggestion, self::SOURCE_CV_CONFIRMED),
+                ));
             }
 
             return;
@@ -453,7 +466,14 @@ class ProfileSyncService
             $education = $profile->education()->whereKey($suggestion->old_value['id'])->first();
 
             if ($education instanceof Education) {
-                $education->update($this->onlyEmptyFields($education, $this->educationPayload($value)));
+                $updates = $this->onlyEmptyFields($education, $this->educationPayload($value));
+
+                if ($updates !== []) {
+                    $education->update(array_merge(
+                        $updates,
+                        $this->cvSourcePayload($suggestion, self::SOURCE_CV_MERGED),
+                    ));
+                }
             }
         }
     }
@@ -461,7 +481,7 @@ class ProfileSyncService
     /**
      * @param  array<string, mixed>  $value
      */
-    private function applySkill(JobSeekerProfile $profile, array $value): void
+    private function applySkill(JobSeekerProfile $profile, ProfileChangeSuggestion $suggestion, array $value): void
     {
         $name = $this->cleanString($value['name'] ?? null);
         $slug = $this->cleanString($value['slug'] ?? null);
@@ -471,7 +491,9 @@ class ProfileSyncService
         }
 
         $skill = Skill::query()->firstOrCreate(['slug' => $slug], ['name' => $name]);
-        $profile->skills()->syncWithoutDetaching([$skill->id]);
+        $profile->skills()->syncWithoutDetaching([
+            $skill->id => $this->cvSourcePayload($suggestion, self::SOURCE_CV_CONFIRMED),
+        ]);
     }
 
     /**
@@ -494,6 +516,18 @@ class ProfileSyncService
         return collect($value)
             ->only(['institution', 'degree', 'field_of_study', 'start_date', 'end_date', 'description'])
             ->all();
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function cvSourcePayload(ProfileChangeSuggestion $suggestion, string $sourceType): array
+    {
+        return [
+            'source_type' => $sourceType,
+            'source_cv_file_id' => $suggestion->cv_file_id,
+            'user_verified_at' => now(),
+        ];
     }
 
     /**
