@@ -27,7 +27,7 @@ class JobApplicationController extends Controller
     {
         return ApiResponse::success(
             data: new JobApplicationResource(
-                $this->applicationWorkflowService->applyToJob($request->user('sanctum'), $jobPosting),
+                $this->applicationWorkflowService->applyToJob($request->user('sanctum'), $jobPosting, $request->validated()),
             ),
             message: 'Job application created successfully.',
             status: 201,
