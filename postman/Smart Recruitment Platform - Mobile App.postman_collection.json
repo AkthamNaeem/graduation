@@ -514,7 +514,7 @@
                 "value": "application/json"
               }
             ],
-            "description": "Mobile App / Job Seeker: add a manual experience.",
+            "description": "Mobile App / Job Seeker: add a manual experience. Responses include source_type, source_cv_file_id, and user_verified_at; manually entered data is saved as manual and verified.",
             "url": "{{base_url}}/profile/experiences",
             "body": {
               "mode": "raw",
@@ -542,7 +542,7 @@
           "name": "List Experiences",
           "request": {
             "method": "GET",
-            "description": "Mobile App / Job Seeker: list manual experiences.",
+            "description": "Mobile App / Job Seeker: list manual experiences. Responses include source_type, source_cv_file_id, and user_verified_at.",
             "url": "{{base_url}}/profile/experiences"
           },
           "event": [
@@ -567,7 +567,7 @@
                 "value": "application/json"
               }
             ],
-            "description": "Mobile App / Job Seeker: update an owned experience.",
+            "description": "Mobile App / Job Seeker: update an owned experience. Manual updates keep manual data as the verified source.",
             "url": "{{base_url}}/profile/experiences/{{experience_id}}",
             "body": {
               "mode": "raw",
@@ -601,7 +601,7 @@
                 "value": "application/json"
               }
             ],
-            "description": "Mobile App / Job Seeker: add education.",
+            "description": "Mobile App / Job Seeker: add education. Responses include source_type, source_cv_file_id, and user_verified_at; manually entered data is saved as manual and verified.",
             "url": "{{base_url}}/profile/education",
             "body": {
               "mode": "raw",
@@ -629,7 +629,7 @@
           "name": "List Education",
           "request": {
             "method": "GET",
-            "description": "Mobile App / Job Seeker: list education.",
+            "description": "Mobile App / Job Seeker: list education. Responses include source_type, source_cv_file_id, and user_verified_at.",
             "url": "{{base_url}}/profile/education"
           },
           "event": [
@@ -654,7 +654,7 @@
                 "value": "application/json"
               }
             ],
-            "description": "Mobile App / Job Seeker: attach a catalog skill to profile.",
+            "description": "Mobile App / Job Seeker: attach a catalog skill to profile. Skill responses loaded through the profile include pivot source_type, source_cv_file_id, and user_verified_at.",
             "url": "{{base_url}}/profile/skills",
             "body": {
               "mode": "raw",
@@ -792,7 +792,7 @@
           "name": "Confirm CV Review",
           "request": {
             "method": "POST",
-            "description": "Mobile App / Job Seeker: starts safe review flow and returns suggestions; does not directly overwrite profile.",
+            "description": "Mobile App / Job Seeker: starts safe review flow and returns suggestions; does not directly overwrite profile. Accepted CV suggestions create or merge profile data only after user approval.",
             "url": "{{base_url}}/cv/{{cv_file_id}}/confirm"
           },
           "event": [
@@ -860,7 +860,7 @@
                 "value": "application/json"
               }
             ],
-            "description": "Mobile App / Job Seeker: accept one suggestion, optionally with edited values.",
+            "description": "Mobile App / Job Seeker: accept one suggestion, optionally with edited values. Accepted CV data is tracked as cv_confirmed for new records or cv_merged when only empty fields are filled; existing manual values are not overwritten.",
             "url": "{{base_url}}/profile/suggestions/{{suggestion_id}}/accept",
             "body": {
               "mode": "raw",
@@ -928,7 +928,7 @@
                 "value": "application/json"
               }
             ],
-            "description": "Mobile App / Job Seeker: apply accepted suggestions by id.",
+            "description": "Mobile App / Job Seeker: apply accepted suggestions by id. Accepted CV data is tracked as cv_confirmed or cv_merged, and manual data has priority during merges.",
             "url": "{{base_url}}/profile/suggestions/apply-bulk",
             "body": {
               "mode": "raw",
@@ -967,11 +967,11 @@
                 "value": "application/json"
               }
             ],
-            "description": "Mobile App / Job Seeker: submit application for a job.",
+            "description": "Mobile App / Job Seeker: submit application for a job. Requires selected_cv_file_id owned by the authenticated job seeker and consent_to_share_profile=true. Duplicate applications for the same job seeker and job are blocked in the MVP.",
             "url": "{{base_url}}/jobs/{{job_id}}/applications",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"cover_letter\": \"I am interested in this role.\"\n}",
+              "raw": "{\n  \"selected_cv_file_id\": {{cv_file_id}},\n  \"cover_letter\": \"I am interested in this position.\",\n  \"consent_to_share_profile\": true,\n  \"screening_answers\": {\n    \"notice_period\": \"immediate\"\n  }\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -986,6 +986,40 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('apply response', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 401, 403, 404, 422]));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Apply To Job Alias",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "description": "Mobile App / Job Seeker: submit application using the /applications/{jobPosting} alias. Requires selected_cv_file_id owned by the authenticated job seeker and consent_to_share_profile=true.",
+            "url": "{{base_url}}/applications/{{job_id}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"selected_cv_file_id\": {{cv_file_id}},\n  \"cover_letter\": \"I am interested in this position.\",\n  \"consent_to_share_profile\": true,\n  \"screening_answers\": {\n    \"notice_period\": \"immediate\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('apply alias response', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 401, 403, 404, 422]));"
                 ]
               }
             }

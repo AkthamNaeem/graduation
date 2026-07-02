@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Models\ApplicationStatus;
 use App\Models\ApplicationTestAssignment;
 use App\Models\Company;
+use App\Models\CVFile;
 use App\Models\EmployerProfile;
 use App\Models\Interview;
 use App\Models\JobApplication;
@@ -158,7 +159,10 @@ class NotificationTest extends TestCase
         $jobPosting = $this->jobPostingFor($company, ['status' => 'open', 'published_at' => now()->subHour()]);
 
         $this->withToken($this->tokenFor($candidate))
-            ->postJson("/api/v1/jobs/{$jobPosting->id}/applications")
+            ->postJson("/api/v1/jobs/{$jobPosting->id}/applications", [
+                'selected_cv_file_id' => $this->cvFor($candidate)->id,
+                'consent_to_share_profile' => true,
+            ])
             ->assertCreated();
 
         $this->assertDatabaseHas('notifications', [
@@ -499,6 +503,20 @@ class NotificationTest extends TestCase
         ]);
 
         return $application->load('applicationStatus', 'jobPosting', 'jobSeekerProfile');
+    }
+
+    private function cvFor(User $jobSeeker): CVFile
+    {
+        return CVFile::create([
+            'user_id' => $jobSeeker->id,
+            'original_name' => 'backend-developer-cv.pdf',
+            'stored_path' => 'cv-files/backend-developer-cv.pdf',
+            'disk' => 'local',
+            'mime_type' => 'application/pdf',
+            'extension' => 'pdf',
+            'size_bytes' => 128000,
+            'status' => 'parsed',
+        ]);
     }
 
     private function test_catalog_entry(): RecruitmentTest

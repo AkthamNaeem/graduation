@@ -1016,6 +1016,14 @@ Admin endpoints:
 | PUT | `/api/v1/admin/tests/{test}` | Update test catalog entry |
 | DELETE | `/api/v1/admin/tests/{test}` | Delete test catalog entry |
 
+## 16.5 Phase A/B Contract Verification Notes
+
+Application submission now requires `selected_cv_file_id` and accepted `consent_to_share_profile`; the selected CV is validated against the authenticated job seeker in both the request and application workflow service. `JobApplicationResource` exposes `selected_cv_file_id` as the mobile/frontend contract anchor. It does not expose `cover_letter`, `consent_to_share_profile`, or `screening_answers` in the general application resource to avoid broad disclosure of applicant-provided private submission details across applicant and employer list/detail views.
+
+The current MVP duplicate rule remains strict: a job seeker can have only one application per job posting, including after terminal statuses such as `withdrawn` or `rejected`.
+
+Profile source tracking is non-AI source metadata only. Manual profile data is stored as `manual`; accepted CV-created records are stored as `cv_confirmed`; accepted CV merge updates only fill empty fields and are stored as `cv_merged`. Existing manual values remain the source of truth during merges.
+
 ## 17. Phase 9.5 Audit Logs and Company Approval Enforcement
 
 Phase 9.5 adds a general `AuditLog` trail for sensitive platform actions and stricter employer workflow access based on company approval status.

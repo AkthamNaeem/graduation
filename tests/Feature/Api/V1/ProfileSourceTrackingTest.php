@@ -5,6 +5,8 @@ namespace Tests\Feature\Api\V1;
 use App\Enums\UserRole;
 use App\Models\CVFile;
 use App\Models\CVParsingResult;
+use App\Models\Education;
+use App\Models\Experience;
 use App\Models\JobSeekerProfile;
 use App\Models\ProfileChangeSuggestion;
 use App\Models\Skill;
@@ -91,6 +93,99 @@ class ProfileSourceTrackingTest extends TestCase
         ]);
     }
 
+    public function test_manual_skill_attachment_is_marked_as_manual_and_verified(): void
+    {
+        $jobSeeker = $this->jobSeeker();
+        $skill = Skill::create(['name' => 'Laravel', 'slug' => 'laravel']);
+
+        $this->withToken($this->tokenFor($jobSeeker))
+            ->postJson('/api/v1/profile/skills', ['skill_id' => $skill->id])
+            ->assertOk()
+            ->assertJsonPath('data.skills.0.source_type', 'manual')
+            ->assertJsonPath('data.skills.0.source_cv_file_id', null);
+
+        $this->assertDatabaseHas('job_seeker_skills', [
+            'job_seeker_profile_id' => $jobSeeker->jobSeekerProfile->id,
+            'skill_id' => $skill->id,
+            'source_type' => 'manual',
+            'source_cv_file_id' => null,
+        ]);
+
+        $this->assertNotNull(
+            $jobSeeker->jobSeekerProfile->skills()->whereKey($skill->id)->first()?->pivot->user_verified_at,
+        );
+    }
+
+    public function test_cv_merge_fills_only_empty_fields_and_marks_records_as_cv_merged(): void
+    {
+        $jobSeeker = $this->jobSeeker();
+        $profile = $jobSeeker->jobSeekerProfile;
+
+        Experience::create([
+            'job_seeker_profile_id' => $profile->id,
+            'title' => 'Laravel Developer',
+            'company_name' => 'Acme Software',
+            'location' => 'Manual City',
+            'source_type' => 'manual',
+            'user_verified_at' => now(),
+        ]);
+
+        Education::create([
+            'job_seeker_profile_id' => $profile->id,
+            'institution' => 'Tishreen University',
+            'degree' => 'Bachelor',
+            'field_of_study' => 'Manual Major',
+            'source_type' => 'manual',
+            'user_verified_at' => now(),
+        ]);
+
+        $cvFile = $this->cvWithParsedData($jobSeeker, [
+            'experience' => [
+                [
+                    'title' => 'Laravel Developer',
+                    'company_name' => 'Acme Software',
+                    'location' => 'CV City',
+                    'description' => 'Built recruitment APIs.',
+                ],
+            ],
+            'education' => [
+                [
+                    'institution' => 'Tishreen University',
+                    'degree' => 'Bachelor',
+                    'field_of_study' => 'CV Major',
+                    'description' => 'Software engineering track.',
+                ],
+            ],
+            'skills' => [],
+        ]);
+
+        /** @var ProfileSyncService $service */
+        $service = app(ProfileSyncService::class);
+        $suggestions = $service->generateSuggestionsFromParsedCV($jobSeeker, $cvFile);
+
+        $suggestions->each(fn (ProfileChangeSuggestion $suggestion) => $service->accept($jobSeeker, $suggestion));
+
+        $this->assertDatabaseHas('experiences', [
+            'job_seeker_profile_id' => $profile->id,
+            'title' => 'Laravel Developer',
+            'company_name' => 'Acme Software',
+            'location' => 'Manual City',
+            'description' => 'Built recruitment APIs.',
+            'source_type' => 'cv_merged',
+            'source_cv_file_id' => $cvFile->id,
+        ]);
+
+        $this->assertDatabaseHas('education', [
+            'job_seeker_profile_id' => $profile->id,
+            'institution' => 'Tishreen University',
+            'degree' => 'Bachelor',
+            'field_of_study' => 'Manual Major',
+            'description' => 'Software engineering track.',
+            'source_type' => 'cv_merged',
+            'source_cv_file_id' => $cvFile->id,
+        ]);
+    }
+
     private function jobSeeker(string $email = 'jobseeker@example.com'): User
     {
         $user = User::factory()->create([
@@ -106,7 +201,7 @@ class ProfileSourceTrackingTest extends TestCase
         return $user->load('jobSeekerProfile');
     }
 
-    private function cvWithParsedData(User $jobSeeker): CVFile
+    private function cvWithParsedData(User $jobSeeker, ?array $parsedJson = null): CVFile
     {
         $cvFile = CVFile::create([
             'user_id' => $jobSeeker->id,
@@ -122,7 +217,7 @@ class ProfileSourceTrackingTest extends TestCase
         CVParsingResult::create([
             'cv_file_id' => $cvFile->id,
             'raw_text' => 'Laravel Developer PHP Tishreen University',
-            'parsed_json' => [
+            'parsed_json' => $parsedJson ?? [
                 'experience' => [
                     [
                         'title' => 'Laravel Developer',
