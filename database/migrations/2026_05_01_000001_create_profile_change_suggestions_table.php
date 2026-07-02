@@ -26,9 +26,9 @@ return new class extends Migration
             $table->timestamp('decided_at')->nullable();
             $table->timestamps();
 
-            $table->index(['user_id', 'status']);
-            $table->index(['cv_file_id', 'status']);
-            $table->index(['job_seeker_profile_id', 'entity_type']);
+            $table->index(['user_id', 'status'], 'pcs_user_status_idx');
+            $table->index(['cv_file_id', 'status'], 'pcs_cv_status_idx');
+            $table->index(['job_seeker_profile_id', 'entity_type'], 'pcs_profile_entity_idx');
         });
     }
 
