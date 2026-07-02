@@ -14,7 +14,16 @@ class JobApplication extends Model
     protected $fillable = [
         'job_posting_id',
         'job_seeker_profile_id',
+        'selected_cv_file_id',
         'application_status_id',
+        'cover_letter',
+        'consent_to_share_profile',
+        'screening_answers',
+    ];
+
+    protected $casts = [
+        'consent_to_share_profile' => 'boolean',
+        'screening_answers' => 'array',
     ];
 
     public function jobPosting(): BelongsTo
@@ -25,6 +34,11 @@ class JobApplication extends Model
     public function jobSeekerProfile(): BelongsTo
     {
         return $this->belongsTo(JobSeekerProfile::class);
+    }
+
+    public function selectedCvFile(): BelongsTo
+    {
+        return $this->belongsTo(CVFile::class, 'selected_cv_file_id');
     }
 
     public function applicationStatus(): BelongsTo
