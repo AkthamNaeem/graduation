@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Collection;
 
 class ProfileService
 {
+    private const SOURCE_MANUAL = 'manual';
+
     public function __construct(
         private readonly AuditLogService $auditLogService,
     ) {}
@@ -46,7 +48,7 @@ class ProfileService
     {
         return $this->jobSeekerProfile($user)
             ->experiences()
-            ->create($data);
+            ->create(array_merge($data, $this->manualSourcePayload()));
     }
 
     public function getExperience(User $user, Experience $experience): Experience
@@ -57,7 +59,7 @@ class ProfileService
     public function updateExperience(User $user, Experience $experience, array $data): Experience
     {
         $experience = $this->ownedExperience($user, $experience);
-        $experience->update($data);
+        $experience->update(array_merge($data, $this->manualSourcePayload()));
 
         return $experience->refresh();
     }
@@ -82,7 +84,7 @@ class ProfileService
     {
         return $this->jobSeekerProfile($user)
             ->education()
-            ->create($data);
+            ->create(array_merge($data, $this->manualSourcePayload()));
     }
 
     public function getEducationRecord(User $user, Education $education): Education
@@ -93,7 +95,7 @@ class ProfileService
     public function updateEducation(User $user, Education $education, array $data): Education
     {
         $education = $this->ownedEducation($user, $education);
-        $education->update($data);
+        $education->update(array_merge($data, $this->manualSourcePayload()));
 
         return $education->refresh();
     }
@@ -106,7 +108,9 @@ class ProfileService
     public function attachSkill(User $user, Skill $skill): JobSeekerProfile
     {
         $profile = $this->jobSeekerProfile($user);
-        $profile->skills()->syncWithoutDetaching([$skill->id]);
+        $profile->skills()->syncWithoutDetaching([
+            $skill->id => $this->manualSourcePayload(),
+        ]);
 
         return $profile->load(['user', 'experiences', 'education', 'skills']);
     }
@@ -184,5 +188,17 @@ class ProfileService
         );
 
         return $education;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function manualSourcePayload(): array
+    {
+        return [
+            'source_type' => self::SOURCE_MANUAL,
+            'source_cv_file_id' => null,
+            'user_verified_at' => now(),
+        ];
     }
 }
