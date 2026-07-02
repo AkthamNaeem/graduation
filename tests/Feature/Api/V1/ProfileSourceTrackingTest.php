@@ -138,8 +138,6 @@ class ProfileSourceTrackingTest extends TestCase
                 ],
                 'skills' => ['PHP'],
             ],
-            'confidence_score' => 0.80,
-            'parser_version' => 'test-parser',
         ]);
 
         return $cvFile->load('parsingResult');
