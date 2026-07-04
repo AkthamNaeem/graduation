@@ -20,8 +20,15 @@ class ApplicationTestAssignmentResource extends JsonResource
             'test_id' => $this->test_id,
             'assigned_by_user_id' => $this->assigned_by_user_id,
             'note' => $this->note,
+            'status' => $this->status,
             'assigned_at' => $this->assigned_at?->toISOString(),
+            'deadline_at' => $this->deadline_at?->toISOString(),
+            'started_at' => $this->started_at?->toISOString(),
+            'submitted_at' => $this->submitted_at?->toISOString(),
+            'evaluated_at' => $this->evaluated_at?->toISOString(),
+            'cancelled_at' => $this->cancelled_at?->toISOString(),
             'state' => $this->state(),
+            'test_snapshot' => $this->safeSnapshot(),
             'test' => TestResource::make($this->whenLoaded('test')),
             'attempt' => TestAttemptResource::make($this->whenLoaded('testAttempt')),
             'job_application' => JobApplicationResource::make($this->whenLoaded('jobApplication')),
@@ -32,6 +39,10 @@ class ApplicationTestAssignmentResource extends JsonResource
 
     private function state(): string
     {
+        if (is_string($this->status) && $this->status !== '') {
+            return $this->status;
+        }
+
         $attempt = $this->whenLoaded('testAttempt');
 
         if (! $attempt instanceof TestAttempt) {
@@ -47,5 +58,30 @@ class ApplicationTestAssignmentResource extends JsonResource
         }
 
         return 'in_progress';
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    private function safeSnapshot(): ?array
+    {
+        if (! is_array($this->test_snapshot)) {
+            return null;
+        }
+
+        $snapshot = $this->test_snapshot;
+        $snapshot['questions'] = collect($snapshot['questions'] ?? [])
+            ->map(function (array $question): array {
+                $question['options'] = collect($question['options'] ?? [])
+                    ->map(fn (array $option): array => collect($option)->except('is_correct')->all())
+                    ->values()
+                    ->all();
+
+                return collect($question)->except('expected_answer')->all();
+            })
+            ->values()
+            ->all();
+
+        return $snapshot;
     }
 }
