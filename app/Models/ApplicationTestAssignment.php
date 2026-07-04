@@ -12,12 +12,26 @@ class ApplicationTestAssignment extends Model
 {
     use HasFactory;
 
+    public const STATUS_ASSIGNED = 'assigned';
+    public const STATUS_STARTED = 'started';
+    public const STATUS_SUBMITTED = 'submitted';
+    public const STATUS_EVALUATED = 'evaluated';
+    public const STATUS_CANCELLED = 'cancelled';
+    public const STATUS_EXPIRED = 'expired';
+
     protected $fillable = [
         'job_application_id',
         'test_id',
         'assigned_by_user_id',
         'note',
+        'status',
         'assigned_at',
+        'deadline_at',
+        'test_snapshot',
+        'started_at',
+        'submitted_at',
+        'evaluated_at',
+        'cancelled_at',
     ];
 
     /**
@@ -27,6 +41,12 @@ class ApplicationTestAssignment extends Model
     {
         return [
             'assigned_at' => 'datetime',
+            'deadline_at' => 'datetime',
+            'test_snapshot' => 'array',
+            'started_at' => 'datetime',
+            'submitted_at' => 'datetime',
+            'evaluated_at' => 'datetime',
+            'cancelled_at' => 'datetime',
         ];
     }
 
