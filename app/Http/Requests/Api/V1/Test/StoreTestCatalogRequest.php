@@ -4,6 +4,7 @@ namespace App\Http\Requests\Api\V1\Test;
 
 use App\Http\Requests\Api\V1\Test\Concerns\AuthorizesTestCatalog;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class StoreTestCatalogRequest extends FormRequest
@@ -21,6 +22,8 @@ class StoreTestCatalogRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'company_id' => ['sometimes', 'nullable', 'integer', 'exists:companies,id'],
+            'visibility' => ['sometimes', 'string', Rule::in(['company', 'global'])],
             'title' => ['required', 'string', 'max:255'],
             'description' => ['sometimes', 'nullable', 'string'],
             'instructions' => ['sometimes', 'nullable', 'string'],
