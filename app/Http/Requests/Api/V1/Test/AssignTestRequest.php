@@ -33,6 +33,7 @@ class AssignTestRequest extends FormRequest
                 Rule::exists('tests', 'id')->where(fn ($query) => $query->where('is_active', true)),
             ],
             'note' => ['sometimes', 'nullable', 'string'],
+            'deadline_at' => ['sometimes', 'nullable', 'date', 'after:now'],
         ];
     }
 }
