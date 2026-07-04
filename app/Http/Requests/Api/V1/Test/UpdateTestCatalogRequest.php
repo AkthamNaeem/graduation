@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Api\V1\Test;
 
 use App\Models\Test;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class UpdateTestCatalogRequest extends StoreTestCatalogRequest
@@ -19,6 +20,8 @@ class UpdateTestCatalogRequest extends StoreTestCatalogRequest
     public function rules(): array
     {
         return [
+            'company_id' => ['sometimes', 'nullable', 'integer', 'exists:companies,id'],
+            'visibility' => ['sometimes', 'string', Rule::in(['company', 'global'])],
             'title' => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['sometimes', 'nullable', 'string'],
             'instructions' => ['sometimes', 'nullable', 'string'],
