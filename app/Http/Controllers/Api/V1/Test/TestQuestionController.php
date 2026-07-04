@@ -41,8 +41,14 @@ class TestQuestionController extends Controller
 
     public function show(ManageTestQuestionRequest $request, Test $test, TestQuestion $testQuestion): JsonResponse
     {
+        $question = $this->testService
+            ->listQuestions($this->authenticatedUser($request), $test)
+            ->firstWhere('id', $testQuestion->id);
+
+        abort_if($question === null, 404);
+
         return ApiResponse::success(
-            data: new TestQuestionResource($this->testService->getQuestion($this->authenticatedUser($request), $test, $testQuestion)),
+            data: new TestQuestionResource($question->load('options')),
             message: 'Test question retrieved successfully.',
         );
     }
