@@ -24,6 +24,7 @@ use App\Http\Controllers\Api\V1\Skill\SkillController;
 use App\Http\Controllers\Api\V1\Test\TestAssignmentController;
 use App\Http\Controllers\Api\V1\Test\TestAttemptController;
 use App\Http\Controllers\Api\V1\Test\TestCatalogController;
+use App\Http\Controllers\Api\V1\Test\TestQuestionController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')
@@ -85,6 +86,13 @@ Route::middleware('auth:sanctum')->group(function (): void {
             Route::post('tests', [AdminTestController::class, 'store'])->name('tests.store');
             Route::put('tests/{test}', [AdminTestController::class, 'update'])->name('tests.update');
             Route::delete('tests/{test}', [AdminTestController::class, 'destroy'])->name('tests.destroy');
+            Route::get('tests/{test}/questions', [TestQuestionController::class, 'index'])->name('tests.questions.index');
+            Route::post('tests/{test}/questions', [TestQuestionController::class, 'store'])->name('tests.questions.store');
+            Route::patch('tests/{test}/questions/reorder', [TestQuestionController::class, 'reorder'])->name('tests.questions.reorder');
+            Route::get('tests/{test}/questions/{testQuestion}', [TestQuestionController::class, 'show'])->name('tests.questions.show');
+            Route::put('tests/{test}/questions/{testQuestion}', [TestQuestionController::class, 'update'])->name('tests.questions.update');
+            Route::patch('tests/{test}/questions/{testQuestion}', [TestQuestionController::class, 'update'])->name('tests.questions.patch');
+            Route::delete('tests/{test}/questions/{testQuestion}', [TestQuestionController::class, 'destroy'])->name('tests.questions.destroy');
         });
 
     Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
@@ -137,6 +145,13 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::put('tests/{test}', [TestCatalogController::class, 'update'])->name('tests.update');
         Route::patch('tests/{test}', [TestCatalogController::class, 'update'])->name('tests.patch');
         Route::delete('tests/{test}', [TestCatalogController::class, 'destroy'])->name('tests.destroy');
+        Route::get('tests/{test}/questions', [TestQuestionController::class, 'index'])->name('tests.questions.index');
+        Route::post('tests/{test}/questions', [TestQuestionController::class, 'store'])->name('tests.questions.store');
+        Route::patch('tests/{test}/questions/reorder', [TestQuestionController::class, 'reorder'])->name('tests.questions.reorder');
+        Route::get('tests/{test}/questions/{testQuestion}', [TestQuestionController::class, 'show'])->name('tests.questions.show');
+        Route::put('tests/{test}/questions/{testQuestion}', [TestQuestionController::class, 'update'])->name('tests.questions.update');
+        Route::patch('tests/{test}/questions/{testQuestion}', [TestQuestionController::class, 'update'])->name('tests.questions.patch');
+        Route::delete('tests/{test}/questions/{testQuestion}', [TestQuestionController::class, 'destroy'])->name('tests.questions.destroy');
         Route::post('tests/{testAttempt}/evaluate', [TestAttemptController::class, 'evaluate'])->name('tests.evaluate');
     });
     Route::get('jobs/recommended', [JobPostingController::class, 'recommended'])->name('jobs.recommended');
