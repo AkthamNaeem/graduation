@@ -35,7 +35,10 @@ class TestService
         $companyId = $this->companyIdFor($user);
 
         return Test::query()
-            ->when($user->role === UserRole::JOB_SEEKER, fn ($query) => $query->where('is_active', true))
+            ->when($user->role === UserRole::JOB_SEEKER, function ($query): void {
+                $query->where('is_active', true)
+                    ->where('visibility', Test::VISIBILITY_GLOBAL);
+            })
             ->when($user->role === UserRole::EMPLOYER, function ($query) use ($companyId): void {
                 $query->where(function ($subQuery) use ($companyId): void {
                     $subQuery->where('visibility', Test::VISIBILITY_GLOBAL)
@@ -49,6 +52,10 @@ class TestService
     public function getCatalogTest(User $user, Test $test): Test
     {
         $this->ensureCanReadTest($user, $test);
+
+        if (in_array($user->role, [UserRole::ADMIN, UserRole::EMPLOYER], true)) {
+            return $test->load('questions.options');
+        }
 
         return $test;
     }
@@ -237,7 +244,7 @@ class TestService
                 ->findOrFail($application->id);
 
             $test = Test::query()->with('questions.options')->findOrFail($testId);
-            $this->ensureCanManageTest($actor, $test);
+            $this->ensureCanUseTest($actor, $test);
 
             if (! $test->is_active) {
                 throw ValidationException::withMessages([
@@ -674,7 +681,7 @@ class TestService
             return;
         }
 
-        if ($user->role === UserRole::JOB_SEEKER && $test->is_active) {
+        if ($user->role === UserRole::JOB_SEEKER && $test->is_active && $test->visibility === Test::VISIBILITY_GLOBAL) {
             return;
         }
 
@@ -688,6 +695,19 @@ class TestService
         }
 
         if ($user->role === UserRole::EMPLOYER && $test->company_id === $this->companyIdFor($user)) {
+            return;
+        }
+
+        abort(403);
+    }
+
+    private function ensureCanUseTest(User $user, Test $test): void
+    {
+        if ($user->role === UserRole::ADMIN) {
+            return;
+        }
+
+        if ($user->role === UserRole::EMPLOYER && ($test->visibility === Test::VISIBILITY_GLOBAL || $test->company_id === $this->companyIdFor($user))) {
             return;
         }
 
@@ -708,8 +728,16 @@ class TestService
         if ($actor->role === UserRole::EMPLOYER) {
             unset($data['company_id'], $data['visibility']);
 
+            $companyId = $this->companyIdFor($actor);
+
+            if ($companyId === null) {
+                throw ValidationException::withMessages([
+                    'company_id' => ['Employer must belong to a company before managing tests.'],
+                ]);
+            }
+
             return array_merge($data, array_filter([
-                'company_id' => $this->companyIdFor($actor),
+                'company_id' => $companyId,
                 'created_by_user_id' => $isUpdate ? null : $actor->id,
                 'visibility' => Test::VISIBILITY_COMPANY,
             ], fn ($value): bool => $value !== null));
