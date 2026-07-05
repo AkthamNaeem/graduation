@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::table('tests', function (Blueprint $table) {
             $table->foreignId('company_id')->nullable()->after('id')->constrained()->nullOnDelete();
             $table->foreignId('created_by_user_id')->nullable()->after('company_id')->constrained('users')->nullOnDelete();
-            $table->string('visibility', 30)->default('company')->after('created_by_user_id');
+            $table->string('visibility', 30)->default('global')->after('created_by_user_id');
             $table->unsignedInteger('version')->default(1)->after('visibility');
             $table->foreignId('parent_test_id')->nullable()->after('version')->constrained('tests')->nullOnDelete();
             $table->timestamp('locked_at')->nullable()->after('parent_test_id');
