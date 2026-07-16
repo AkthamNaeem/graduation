@@ -9,8 +9,9 @@ class UpdateTestCatalogRequest extends StoreTestCatalogRequest
 {
     public function authorize(): bool
     {
-        return $this->route('test') instanceof Test
-            && $this->canManageTestCatalog();
+        $test = $this->route('test');
+
+        return $test instanceof Test && $this->canUpdateTest($test);
     }
 
     /**
@@ -19,6 +20,7 @@ class UpdateTestCatalogRequest extends StoreTestCatalogRequest
     public function rules(): array
     {
         return [
+            'company_id' => ['prohibited'],
             'title' => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['sometimes', 'nullable', 'string'],
             'instructions' => ['sometimes', 'nullable', 'string'],

@@ -26,11 +26,13 @@ use App\Models\Interview;
 use App\Models\JobApplication;
 use App\Models\JobPosting;
 use App\Models\TestAttempt;
+use App\Models\Test;
 use App\Policies\ApplicationTestAssignmentPolicy;
 use App\Policies\InterviewPolicy;
 use App\Policies\JobApplicationPolicy;
 use App\Policies\JobPostingPolicy;
 use App\Policies\TestAttemptPolicy;
+use App\Policies\TestPolicy;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Event;
@@ -57,6 +59,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(ApplicationTestAssignment::class, ApplicationTestAssignmentPolicy::class);
         Gate::policy(Interview::class, InterviewPolicy::class);
         Gate::policy(TestAttempt::class, TestAttemptPolicy::class);
+        Gate::policy(Test::class, TestPolicy::class);
         Gate::define('access-admin', fn ($user): bool => $user->role === UserRole::ADMIN);
 
         Event::listen(ApplicationStatusChanged::class, CreateApplicationStatusChangedNotification::class);

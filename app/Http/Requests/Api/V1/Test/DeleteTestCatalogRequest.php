@@ -12,8 +12,9 @@ class DeleteTestCatalogRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return $this->route('test') instanceof Test
-            && $this->canManageTestCatalog();
+        $test = $this->route('test');
+
+        return $test instanceof Test && $this->canDeleteTest($test);
     }
 
     /**

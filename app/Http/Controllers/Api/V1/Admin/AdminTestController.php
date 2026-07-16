@@ -22,12 +22,10 @@ class AdminTestController extends Controller
 
     public function index(IndexAdminRequest $request): JsonResponse
     {
-        $tests = Test::query()
-            ->latest()
-            ->paginate($request->integer('per_page', 15));
-
         return ApiResponse::success(
-            data: TestResource::collection($tests),
+            data: TestResource::collection(
+                $this->testService->getCatalogTests($request->user('sanctum'), $request->integer('per_page', 15)),
+            ),
             message: 'Tests retrieved successfully.',
         );
     }
@@ -35,7 +33,7 @@ class AdminTestController extends Controller
     public function store(StoreAdminTestRequest $request): JsonResponse
     {
         return ApiResponse::success(
-            data: new TestResource($this->testService->createCatalogTest($request->validated())),
+            data: new TestResource($this->testService->createCatalogTest($request->user('sanctum'), $request->validated())),
             message: 'Test created successfully.',
             status: 201,
         );

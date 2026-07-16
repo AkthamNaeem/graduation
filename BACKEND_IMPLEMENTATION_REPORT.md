@@ -1187,3 +1187,88 @@ Limitations:
 - Add localized validation messages and API documentation examples.
 - Add configurable application status workflows per company or job.
 - Add analytics endpoints for employer hiring funnels and candidate conversion.
+
+## 21. Company-Owned Test Questions and Options
+
+Implemented on 2026-07-17 as an extension of the existing test catalog and assignment flow.
+
+### Database and Ownership
+
+- `tests.company_id` associates each newly created test with a company. The migration keeps this column nullable only so legacy test rows are not assigned to a guessed company; application writes require a company.
+- `test_questions` stores ordered, scored, required/optional questions with the supported types `single_choice`, `multiple_choice`, `true_false`, `short_text`, `long_text`, and `file_upload`.
+- `test_options` stores ordered options and their correct-answer flag.
+- Employer test creation always derives the company from the authenticated employer profile. Employer-supplied `company_id` is prohibited.
+- Admin creation requires an explicit valid `company_id`; administrators can manage tests across companies.
+- Test catalog reads and all structure mutations are policy-scoped. Nested test/question/option identifiers are checked to prevent cross-company and cross-parent IDOR access.
+
+### Question and Option APIs
+
+- Added list, create, show, update, delete, and full-set reorder endpoints under `/api/v1/tests/{test}/questions`.
+- Added create, update, delete, and full-set reorder endpoints under `/api/v1/tests/{test}/questions/{question}/options`.
+- Question creation/update with an `options` payload is transactional.
+- Reordering requires the complete current ID set and uses a collision-safe two-pass update.
+- Validation enforces compatible option use, case-insensitive unique option text, unique ordering, minimum option counts, and correct-answer cardinality for each choice type.
+- Correct-answer flags remain available to authorized employer/admin managers but are omitted from job seeker test catalog resources.
+
+### Assignment Immutability
+
+- `TestService::ensureTestIsMutable()` is the single guard used by test, question, and option mutation paths.
+- Once any `application_test_assignment` references a test, updates, deletes, question/option changes, and reordering return HTTP 409. This prevents an assigned assessment from changing underneath an existing assignment.
+- Assignment additionally validates that the selected test and application belong to the same company.
+
+### Verification
+
+- `TestQuestionModuleTest` covers company ownership, admin access, IDOR rejection, supported question types, answer validation, duplicate option validation, CRUD, complete-set reordering, assignment immutability, cross-company assignment rejection, and job seeker access/correct-answer hiding.
+- The Web Postman collection now contains employer test/question/option management requests and the environment includes `question_id` and `option_id` variables.
+
+### Deliberately Remaining Outside This Increment
+
+- Per-question candidate answer persistence was implemented in the subsequent increment documented in section 22.
+- Objective auto-grading and answer-level manual grading.
+- Assignment deadlines and candidate attempt deadline enforcement.
+- Versioning or assignment snapshots; the current MVP safety strategy is strict immutability after first assignment.
+- Test catalog seed/demo data.
+
+## 22. Normalized TestAnswer Persistence
+
+Implemented on 2026-07-17 on top of the company-owned immutable test structure.
+
+### Database and Relationships
+
+- `test_answers` is the canonical answer store. Each row belongs to one `TestAttempt` and one `TestQuestion`, with a unique constraint on that pair.
+- `test_answer_options` is the normalized many-to-many selection store, allowing multiple-choice answers without arrays or a single `selected_option_id` column.
+- File answers store only private storage metadata: disk, internal path, original name, detected MIME type, and size. Scores and correct answers are not stored in answer rows.
+- `TestAttempt::testAnswers()`, `TestQuestion::testAnswers()`, and the `TestAnswer`/`TestOption` many-to-many relationships expose the normalized model graph.
+
+### Draft APIs and Validation
+
+- Added candidate draft list, single-answer upsert, delete, atomic bulk upsert, private file upload, and authorized download endpoints under `/api/v1/test-attempts/{testAttempt}/answers`.
+- `single_choice` and `true_false` require exactly one option; `multiple_choice` requires at least one. Every selected option is verified against its question.
+- `short_text` and `long_text` are trimmed, reject whitespace-only values, and use 1,000/10,000-character limits. Text questions reject options and files.
+- `file_upload` accepts PDF, DOC, DOCX, TXT, ZIP, PNG, JPG, and JPEG up to 10 MB. Both MIME and extension are validated.
+- Bulk saving excludes files, validates every answer first, and commits all upserts in one transaction.
+
+### Ownership, Privacy, and File Lifecycle
+
+- Only the candidate who owns the assignment can create, replace, or delete draft answers.
+- The owning employer and administrators can read normalized answers and download files but cannot mutate candidate answers.
+- Full attempt/question/option ownership checks prevent cross-candidate, cross-company, and cross-test IDOR.
+- Files always use the private `local` disk. Resources never expose the disk or internal path and never expose `is_correct` to candidates.
+- Replacing a file stores the new file before the database update and removes it if persistence fails; the previous file is removed only after a successful update. Deleting a draft file answer removes its private file.
+
+### Submit and Legacy Compatibility
+
+- Final submit uses the existing endpoint and validates every required question against normalized answers before setting `submitted_at`.
+- Missing required questions return HTTP 422 with `unanswered_question_ids`.
+- Successful submit and the `test_completed` workflow transition/history record run in the same transaction. No automatic score is calculated and no score is stored on `JobApplication`.
+- Submitted attempts reject further answer mutation and repeat submit with HTTP 409.
+- The legacy nullable `test_attempts.answers` JSON column remains for database compatibility, but new writes no longer use it and API resources return only normalized answers.
+- A transitional structured `answers` array on submit is normalized through `TestAnswerService`. Unstructured legacy maps are accepted only for legacy tests with no question definitions because they cannot be backfilled safely.
+
+### Remaining Testing Module Work
+
+- Objective auto-grading and an explainable score breakdown.
+- Answer-level manual grading.
+- Assignment deadline enforcement.
+- Passing-score decision policy and result breakdown APIs.
+- Snapshot/versioning only if strict test immutability is relaxed later.

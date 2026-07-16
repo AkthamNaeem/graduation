@@ -183,7 +183,7 @@ class NotificationTest extends TestCase
         $candidate = $this->jobSeeker('candidate@example.com');
         $jobPosting = $this->jobPostingFor($company, ['status' => 'open', 'published_at' => now()->subHour()]);
         $application = $this->applicationFor($jobPosting, $candidate->jobSeekerProfile, 'under_review');
-        $test = $this->test_catalog_entry();
+        $test = $this->test_catalog_entry($company);
 
         $this->withToken($this->tokenFor($employer))
             ->postJson("/api/v1/applications/{$application->id}/status", [
@@ -519,9 +519,12 @@ class NotificationTest extends TestCase
         ]);
     }
 
-    private function test_catalog_entry(): RecruitmentTest
+    private function test_catalog_entry(?Company $company = null): RecruitmentTest
     {
-        return RecruitmentTest::create([
+        $company ??= Company::create(['name' => 'Notification Test Co.', 'approval_status' => 'approved']);
+
+        return RecruitmentTest::forceCreate([
+            'company_id' => $company->id,
             'title' => 'Backend Assessment',
             'duration_minutes' => 60,
             'max_score' => 100,

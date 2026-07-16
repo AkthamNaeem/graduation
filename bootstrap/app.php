@@ -11,6 +11,7 @@ use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -32,9 +33,13 @@ return Application::configure(basePath: dirname(__DIR__))
                 return null;
             }
 
+            $errors = $exception->errors();
+
             return ApiResponse::error(
-                message: 'The given data was invalid.',
-                errors: $exception->errors(),
+                message: array_key_exists('unanswered_question_ids', $errors)
+                    ? 'Some required questions have not been answered.'
+                    : 'The given data was invalid.',
+                errors: $errors,
                 status: 422,
             );
         });
@@ -69,6 +74,17 @@ return Application::configure(basePath: dirname(__DIR__))
             return ApiResponse::error(
                 message: $exception->getMessage() ?: 'This action is unauthorized.',
                 status: 403,
+            );
+        });
+
+        $exceptions->render(function (ConflictHttpException $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return ApiResponse::error(
+                message: $exception->getMessage() ?: 'The requested operation conflicts with the current resource state.',
+                status: 409,
             );
         });
 

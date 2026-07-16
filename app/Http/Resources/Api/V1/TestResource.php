@@ -15,6 +15,7 @@ class TestResource extends JsonResource
     {
         return [
             'id' => $this->id,
+            'company_id' => $this->company_id,
             'title' => $this->title,
             'description' => $this->description,
             'instructions' => $this->instructions,
@@ -22,6 +23,8 @@ class TestResource extends JsonResource
             'max_score' => $this->max_score,
             'passing_score' => $this->passing_score,
             'is_active' => $this->is_active,
+            'company' => CompanyResource::make($this->whenLoaded('company')),
+            'questions' => TestQuestionResource::collection($this->whenLoaded('questions')),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

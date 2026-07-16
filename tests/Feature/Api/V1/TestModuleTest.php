@@ -37,7 +37,7 @@ class TestModuleTest extends TestCase
         $jobSeeker = $this->jobSeeker('candidate@example.com');
         $jobPosting = $this->jobPostingFor($company, ['status' => 'open', 'published_at' => now()->subHour()]);
         $application = $this->applicationFor($jobPosting, $jobSeeker->jobSeekerProfile, 'under_review');
-        $test = $this->test_catalog_entry();
+        $test = $this->test_catalog_entry(company: $company);
 
         $response = $this->withToken($this->tokenFor($employer))
             ->postJson("/api/v1/applications/{$application->id}/assign-test", [
@@ -132,9 +132,11 @@ class TestModuleTest extends TestCase
     public function test_admin_can_create_test_catalog_entries(): void
     {
         $admin = $this->admin();
+        $company = Company::create(['name' => 'Admin Test Co.', 'approval_status' => 'approved']);
 
         $this->withToken($this->tokenFor($admin))
             ->postJson('/api/v1/tests', [
+                'company_id' => $company->id,
                 'title' => 'Admin Created Assessment',
                 'duration_minutes' => 45,
                 'max_score' => 50,
@@ -197,7 +199,7 @@ class TestModuleTest extends TestCase
     public function test_test_catalog_validation_rejects_invalid_scores(): void
     {
         $employer = $this->employer();
-        $test = $this->test_catalog_entry('Scored Assessment');
+        $test = $this->test_catalog_entry('Scored Assessment', $employer->employerProfile->company);
 
         $this->withToken($this->tokenFor($employer))
             ->postJson('/api/v1/tests', [
@@ -225,7 +227,7 @@ class TestModuleTest extends TestCase
         $jobSeeker = $this->jobSeeker('candidate@example.com');
         $jobPosting = $this->jobPostingFor($company, ['status' => 'open', 'published_at' => now()->subHour()]);
         $application = $this->applicationFor($jobPosting, $jobSeeker->jobSeekerProfile, 'under_review');
-        $test = $this->test_catalog_entry();
+        $test = $this->test_catalog_entry(company: $company);
 
         $this->withToken($this->tokenFor($otherEmployer))
             ->postJson("/api/v1/applications/{$application->id}/assign-test", [
@@ -261,8 +263,8 @@ class TestModuleTest extends TestCase
         $jobPosting = $this->jobPostingFor($company, ['status' => 'open', 'published_at' => now()->subHour()]);
         $firstApplication = $this->applicationFor($jobPosting, $firstSeeker->jobSeekerProfile, 'under_review');
         $secondApplication = $this->applicationFor($jobPosting, $secondSeeker->jobSeekerProfile, 'under_review');
-        $firstTest = $this->test_catalog_entry('Backend Assessment');
-        $secondTest = $this->test_catalog_entry('Frontend Assessment');
+        $firstTest = $this->test_catalog_entry('Backend Assessment', $company);
+        $secondTest = $this->test_catalog_entry('Frontend Assessment', $company);
 
         $firstAssignment = $this->assignTest($employer, $firstApplication, $firstTest);
         $this->assignTest($employer, $secondApplication, $secondTest);
@@ -334,15 +336,20 @@ class TestModuleTest extends TestCase
                 ],
             ])
             ->assertOk()
-            ->assertJsonPath('data.answers.q1', 'Dependency injection')
+            ->assertJsonPath('data.answers', [])
             ->assertJsonPath('data.submitted_at', fn (mixed $value) => is_string($value) && $value !== '');
+
+        $this->assertDatabaseHas('test_attempts', [
+            'application_test_assignment_id' => $assignment->id,
+            'answers' => null,
+        ]);
 
         $this->withToken($this->tokenFor($candidate))
             ->postJson("/api/v1/tests/{$assignment->id}/submit", [
                 'answers' => ['q1' => 'second try'],
             ])
-            ->assertStatus(422)
-            ->assertJsonValidationErrors(['assignment_id']);
+            ->assertStatus(409)
+            ->assertJsonPath('message', 'This test attempt has already been submitted and can no longer be modified.');
     }
 
     public function test_employer_can_evaluate_submitted_attempt_and_application_moves_to_test_completed(): void
@@ -425,7 +432,7 @@ class TestModuleTest extends TestCase
         $jobSeeker = $this->jobSeeker('candidate@example.com');
         $jobPosting = $this->jobPostingFor($company, ['status' => 'open', 'published_at' => now()->subHour()]);
         $application = $this->applicationFor($jobPosting, $jobSeeker->jobSeekerProfile, 'under_review');
-        $test = $this->test_catalog_entry();
+        $test = $this->test_catalog_entry(company: $company);
 
         return $this->assignTest($employer, $application, $test);
     }
@@ -487,9 +494,12 @@ class TestModuleTest extends TestCase
         ]);
     }
 
-    private function test_catalog_entry(string $title = 'Laravel Assessment'): RecruitmentTest
+    private function test_catalog_entry(string $title = 'Laravel Assessment', ?Company $company = null): RecruitmentTest
     {
-        return RecruitmentTest::create([
+        $company ??= Company::create(['name' => 'Test Catalog Co. '.Str::random(8), 'approval_status' => 'approved']);
+
+        return RecruitmentTest::forceCreate([
+            'company_id' => $company->id,
             'title' => $title,
             'description' => 'Reusable technical assessment.',
             'instructions' => 'Answer all questions.',

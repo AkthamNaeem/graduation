@@ -12,7 +12,7 @@ class StoreTestCatalogRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return $this->canManageTestCatalog();
+        return $this->authenticatedUser()?->can('create', \App\Models\Test::class) ?? false;
     }
 
     /**
@@ -21,6 +21,9 @@ class StoreTestCatalogRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'company_id' => $this->authenticatedUser()?->role === \App\Enums\UserRole::ADMIN
+                ? ['required', 'integer', 'exists:companies,id']
+                : ['prohibited'],
             'title' => ['required', 'string', 'max:255'],
             'description' => ['sometimes', 'nullable', 'string'],
             'instructions' => ['sometimes', 'nullable', 'string'],

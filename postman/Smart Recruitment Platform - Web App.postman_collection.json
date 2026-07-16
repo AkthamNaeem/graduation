@@ -1042,6 +1042,9 @@
                      "name":  "08 Employer - Tests Management",
                      "item":  [
                                   {
+                                      "name": "Test Catalog",
+                                      "item": [
+                                  {
                                       "name":  "List Tests",
                                       "request":  {
                                                       "auth":  {
@@ -1069,6 +1072,90 @@
                                                                    }
                                                     }
                                                 ]
+                                  },
+                                  {
+                                      "name": "Create Company Test",
+                                      "request": {"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"POST","header":[{"key":"Accept","value":"application/json"},{"key":"Content-Type","value":"application/json"}],"description":"Creates a test owned by the authenticated employer's company. company_id is deliberately not accepted from employers.","url":"{{base_url}}/tests","body":{"mode":"raw","raw":"{\n  \"title\": \"Backend Fundamentals\",\n  \"description\": \"Laravel assessment\",\n  \"duration_minutes\": 45,\n  \"max_score\": 100,\n  \"passing_score\": 60,\n  \"is_active\": true\n}","options":{"raw":{"language":"json"}}}}
+                                  },
+                                  {
+                                      "name": "Update Company Test",
+                                      "request": {"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"PATCH","header":[{"key":"Accept","value":"application/json"},{"key":"Content-Type","value":"application/json"}],"description":"Updates an own-company test. Returns 409 once the test has any assignment.","url":"{{base_url}}/tests/{{test_id}}","body":{"mode":"raw","raw":"{\n  \"title\": \"Backend Fundamentals v2\"\n}","options":{"raw":{"language":"json"}}}}
+                                  },
+                                  {
+                                      "name": "Delete Company Test",
+                                      "request": {"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"DELETE","header":[{"key":"Accept","value":"application/json"}],"description":"Deletes an own-company test only before assignment; otherwise returns 409.","url":"{{base_url}}/tests/{{test_id}}"}
+                                  }
+                                      ]
+                                  },
+                                  {
+                                      "name": "Test Questions",
+                                      "item": [
+                                  {
+                                      "name": "List Test Questions",
+                                      "request": {"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"GET","header":[{"key":"Accept","value":"application/json"}],"description":"Lists ordered questions and options for an own-company test.","url":"{{base_url}}/tests/{{test_id}}/questions"}
+                                  },
+                                  {
+                                      "name": "Create Test Question",
+                                      "request": {"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"POST","header":[{"key":"Accept","value":"application/json"},{"key":"Content-Type","value":"application/json"}],"description":"Creates a question and its options atomically. Choice types enforce correct-answer rules.","url":"{{base_url}}/tests/{{test_id}}/questions","body":{"mode":"raw","raw":"{\n  \"question_text\": \"Which HTTP method is idempotent?\",\n  \"question_type\": \"single_choice\",\n  \"order_index\": 1,\n  \"points\": 10,\n  \"is_required\": true,\n  \"options\": [\n    {\"option_text\": \"GET\", \"order_index\": 1, \"is_correct\": true},\n    {\"option_text\": \"POST\", \"order_index\": 2, \"is_correct\": false}\n  ]\n}","options":{"raw":{"language":"json"}}}}
+                                  },
+                                  {
+                                      "name": "Create Multiple Choice Question",
+                                      "request": {"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"POST","header":[{"key":"Accept","value":"application/json"},{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/tests/{{test_id}}/questions","body":{"mode":"raw","raw":"{\n  \"question_text\": \"Select idempotent methods\",\n  \"question_type\": \"multiple_choice\",\n  \"order_index\": 2,\n  \"points\": 10,\n  \"is_required\": true,\n  \"options\": [\n    {\"option_text\": \"GET\", \"order_index\": 1, \"is_correct\": true},\n    {\"option_text\": \"PUT\", \"order_index\": 2, \"is_correct\": true}\n  ]\n}","options":{"raw":{"language":"json"}}}}
+                                  },
+                                  {
+                                      "name": "Create True False Question",
+                                      "request": {"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"POST","header":[{"key":"Accept","value":"application/json"},{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/tests/{{test_id}}/questions","body":{"mode":"raw","raw":"{\n  \"question_text\": \"GET is safe\",\n  \"question_type\": \"true_false\",\n  \"order_index\": 3,\n  \"points\": 5,\n  \"is_required\": true,\n  \"options\": [\n    {\"option_text\": \"True\", \"order_index\": 1, \"is_correct\": true},\n    {\"option_text\": \"False\", \"order_index\": 2, \"is_correct\": false}\n  ]\n}","options":{"raw":{"language":"json"}}}}
+                                  },
+                                  {
+                                      "name": "Create Short Text Question",
+                                      "request": {"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"POST","header":[{"key":"Accept","value":"application/json"},{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/tests/{{test_id}}/questions","body":{"mode":"raw","raw":"{\n  \"question_text\": \"Name a Laravel ORM\",\n  \"question_type\": \"short_text\",\n  \"order_index\": 4,\n  \"points\": 10,\n  \"is_required\": true\n}","options":{"raw":{"language":"json"}}}}
+                                  },
+                                  {
+                                      "name": "Create Long Text Question",
+                                      "request": {"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"POST","header":[{"key":"Accept","value":"application/json"},{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/tests/{{test_id}}/questions","body":{"mode":"raw","raw":"{\n  \"question_text\": \"Explain database transactions\",\n  \"question_type\": \"long_text\",\n  \"order_index\": 5,\n  \"points\": 20,\n  \"is_required\": true\n}","options":{"raw":{"language":"json"}}}}
+                                  },
+                                  {
+                                      "name": "Create File Upload Question",
+                                      "request": {"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"POST","header":[{"key":"Accept","value":"application/json"},{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/tests/{{test_id}}/questions","body":{"mode":"raw","raw":"{\n  \"question_text\": \"Upload the solution archive\",\n  \"question_type\": \"file_upload\",\n  \"order_index\": 6,\n  \"points\": 25,\n  \"is_required\": false\n}","options":{"raw":{"language":"json"}}}}
+                                  },
+                                  {
+                                      "name": "Show Test Question",
+                                      "request": {"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"GET","header":[{"key":"Accept","value":"application/json"}],"description":"Shows one question after verifying it belongs to the test.","url":"{{base_url}}/tests/{{test_id}}/questions/{{question_id}}"}
+                                  },
+                                  {
+                                      "name": "Update Test Question",
+                                      "request": {"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"PATCH","header":[{"key":"Accept","value":"application/json"},{"key":"Content-Type","value":"application/json"}],"description":"Updates a question/options before assignment; otherwise returns 409.","url":"{{base_url}}/tests/{{test_id}}/questions/{{question_id}}","body":{"mode":"raw","raw":"{\n  \"question_text\": \"Which HTTP methods are idempotent?\",\n  \"points\": 15\n}","options":{"raw":{"language":"json"}}}}
+                                  },
+                                  {
+                                      "name": "Delete Test Question",
+                                      "request": {"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"DELETE","header":[{"key":"Accept","value":"application/json"}],"description":"Deletes a question before assignment and rejects cross-test identifiers.","url":"{{base_url}}/tests/{{test_id}}/questions/{{question_id}}"}
+                                  },
+                                  {
+                                      "name": "Reorder Test Questions",
+                                      "request": {"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"POST","header":[{"key":"Accept","value":"application/json"},{"key":"Content-Type","value":"application/json"}],"description":"Reorders the complete question set. Partial or foreign ID sets are rejected.","url":"{{base_url}}/tests/{{test_id}}/questions/reorder","body":{"mode":"raw","raw":"{\n  \"questions\": [\n    {\"question_id\": {{question_id}}, \"order_index\": 1}\n  ]\n}","options":{"raw":{"language":"json"}}}}
+                                  }
+                                      ]
+                                  },
+                                  {
+                                      "name": "Test Options",
+                                      "item": [
+                                  {
+                                      "name": "Create Test Option",
+                                      "request": {"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"POST","header":[{"key":"Accept","value":"application/json"},{"key":"Content-Type","value":"application/json"}],"description":"Adds an option to a compatible question before assignment.","url":"{{base_url}}/tests/{{test_id}}/questions/{{question_id}}/options","body":{"mode":"raw","raw":"{\n  \"option_text\": \"PUT\",\n  \"order_index\": 3,\n  \"is_correct\": false\n}","options":{"raw":{"language":"json"}}}}
+                                  },
+                                  {
+                                      "name": "Update Test Option",
+                                      "request": {"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"PATCH","header":[{"key":"Accept","value":"application/json"},{"key":"Content-Type","value":"application/json"}],"description":"Updates an option while preserving the question type's complete correctness rules.","url":"{{base_url}}/tests/{{test_id}}/questions/{{question_id}}/options/{{option_id}}","body":{"mode":"raw","raw":"{\n  \"option_text\": \"PATCH\",\n  \"is_correct\": false\n}","options":{"raw":{"language":"json"}}}}
+                                  },
+                                  {
+                                      "name": "Delete Test Option",
+                                      "request": {"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"DELETE","header":[{"key":"Accept","value":"application/json"}],"description":"Deletes an option only when the remaining set is still valid.","url":"{{base_url}}/tests/{{test_id}}/questions/{{question_id}}/options/{{option_id}}"}
+                                  },
+                                  {
+                                      "name": "Reorder Test Options",
+                                      "request": {"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"POST","header":[{"key":"Accept","value":"application/json"},{"key":"Content-Type","value":"application/json"}],"description":"Reorders the complete option set. Partial or foreign ID sets are rejected.","url":"{{base_url}}/tests/{{test_id}}/questions/{{question_id}}/options/reorder","body":{"mode":"raw","raw":"{\n  \"options\": [\n    {\"option_id\": {{option_id}}, \"order_index\": 1}\n  ]\n}","options":{"raw":{"language":"json"}}}}
+                                  }
+                                      ]
                                   },
                                   {
                                       "name":  "Assign Test",
@@ -1186,6 +1273,15 @@
                                                                    }
                                                     }
                                                 ]
+                                  }
+                                  ,
+                                  {
+                                      "name": "View Candidate Answers",
+                                      "request": {"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"GET","description":"Employer reads normalized answers only for an application owned by the employer's company.","url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers"}
+                                  },
+                                  {
+                                      "name": "Download Candidate Answer File",
+                                      "request": {"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"GET","description":"Authorized private download for an own-company candidate submission.","url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/{{test_question_id}}/file"}
                                   }
                               ]
                  },

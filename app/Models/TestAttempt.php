@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TestAttempt extends Model
 {
@@ -43,5 +44,10 @@ class TestAttempt extends Model
     public function evaluatedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'evaluated_by_user_id');
+    }
+
+    public function testAnswers(): HasMany
+    {
+        return $this->hasMany(TestAnswer::class)->orderBy('test_question_id');
     }
 }

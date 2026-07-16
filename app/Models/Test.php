@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Test extends Model
 {
@@ -35,5 +36,15 @@ class Test extends Model
     public function applicationTestAssignments(): HasMany
     {
         return $this->hasMany(ApplicationTestAssignment::class);
+    }
+
+    public function company(): BelongsTo
+    {
+        return $this->belongsTo(Company::class);
+    }
+
+    public function questions(): HasMany
+    {
+        return $this->hasMany(TestQuestion::class)->orderBy('order_index')->orderBy('id');
     }
 }

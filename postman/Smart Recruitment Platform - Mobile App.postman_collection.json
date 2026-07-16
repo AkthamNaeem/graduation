@@ -1125,6 +1125,15 @@
             }
           ]
         },
+        {"name":"Get Attempt Questions","request":{"method":"GET","description":"Candidate-safe test structure; correct-answer flags are omitted.","url":"{{base_url}}/tests/{{test_id}}"}},
+        {"name":"Get Saved Answers","request":{"method":"GET","description":"Lists the authenticated candidate's normalized saved answers.","url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers"}},
+        {"name":"Save Single Choice Answer","request":{"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/{{test_question_id}}","body":{"mode":"raw","raw":"{\n  \"selected_option_ids\": [{{test_option_id}}]\n}","options":{"raw":{"language":"json"}}}}},
+        {"name":"Save Multiple Choice Answer","request":{"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/{{test_question_id}}","body":{"mode":"raw","raw":"{\n  \"selected_option_ids\": [{{test_option_id}}, 2]\n}","options":{"raw":{"language":"json"}}}}},
+        {"name":"Save Text Answer","request":{"method":"PATCH","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/{{test_question_id}}","body":{"mode":"raw","raw":"{\n  \"answer_text\": \"Dependency injection reduces coupling.\"\n}","options":{"raw":{"language":"json"}}}}},
+        {"name":"Upload File Answer","request":{"method":"POST","description":"Private multipart file answer, maximum 10 MB.","url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/{{test_question_id}}/file","body":{"mode":"formdata","formdata":[{"key":"answer_file","type":"file","src":[]}]}}},
+        {"name":"Delete Draft Answer","request":{"method":"DELETE","url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/{{test_question_id}}"}},
+        {"name":"Bulk Save Answers","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"description":"Atomic upsert; file questions are excluded.","url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/bulk","body":{"mode":"raw","raw":"{\n  \"answers\": [\n    {\"question_id\": {{test_question_id}}, \"answer_text\": \"Saved draft\"}\n  ]\n}","options":{"raw":{"language":"json"}}}}},
+        {"name":"Download Own Answer File","request":{"method":"GET","description":"Authorized private download; no storage path is exposed.","url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/{{test_question_id}}/file"}},
         {
           "name": "Submit Test Attempt",
           "request": {
@@ -1139,7 +1148,7 @@
             "url": "{{base_url}}/tests/{{assignment_id}}/submit",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"answers\": [\n    { \"question_id\": 1, \"answer\": \"A\" }\n  ]\n}",
+              "raw": "{\n  \"confirm\": true\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1153,7 +1162,7 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('submit response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404, 422]));"
+                  "pm.test('submit response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404, 409, 422]));"
                 ]
               }
             }

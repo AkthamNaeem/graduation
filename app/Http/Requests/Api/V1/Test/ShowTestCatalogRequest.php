@@ -16,7 +16,7 @@ class ShowTestCatalogRequest extends FormRequest
 
         return $test instanceof Test
             && $this->canReadTestCatalog()
-            && ($test->is_active || $this->canManageTestCatalog());
+            && $this->canViewTest($test);
     }
 
     /**

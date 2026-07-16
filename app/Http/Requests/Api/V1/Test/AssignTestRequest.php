@@ -26,11 +26,18 @@ class AssignTestRequest extends FormRequest
      */
     public function rules(): array
     {
+        $jobApplication = $this->route('jobApplication');
+        $companyId = $jobApplication instanceof JobApplication
+            ? $jobApplication->jobPosting?->company_id
+            : null;
+
         return [
             'test_id' => [
                 'required',
                 'integer',
-                Rule::exists('tests', 'id')->where(fn ($query) => $query->where('is_active', true)),
+                Rule::exists('tests', 'id')->where(fn ($query) => $query
+                    ->where('is_active', true)
+                    ->where('company_id', $companyId)),
             ],
             'note' => ['sometimes', 'nullable', 'string'],
         ];

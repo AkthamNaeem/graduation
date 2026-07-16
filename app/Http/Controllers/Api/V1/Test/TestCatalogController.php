@@ -37,7 +37,7 @@ class TestCatalogController extends Controller
     public function store(StoreTestCatalogRequest $request): JsonResponse
     {
         return ApiResponse::success(
-            data: new TestResource($this->testService->createCatalogTest($request->validated())),
+            data: new TestResource($this->testService->createCatalogTest($request->user('sanctum'), $request->validated())),
             message: 'Test created successfully.',
             status: 201,
         );

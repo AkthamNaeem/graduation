@@ -7,6 +7,7 @@ use App\Events\TestAssigned;
 use App\Events\TestEvaluated;
 use App\Events\TestSubmitted;
 use App\Models\ApplicationTestAssignment;
+use App\Models\Company;
 use App\Models\JobApplication;
 use App\Models\Test;
 use App\Models\TestAttempt;
@@ -15,6 +16,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class TestService
 {
@@ -25,6 +27,7 @@ class TestService
     public function __construct(
         private readonly ApplicationWorkflowService $applicationWorkflowService,
         private readonly AuditLogService $auditLogService,
+        private readonly TestAnswerService $testAnswerService,
     ) {}
 
     /**
@@ -33,6 +36,10 @@ class TestService
     public function getCatalogTests(User $user, int $perPage = 15): LengthAwarePaginator
     {
         return Test::query()
+            ->with(['company', 'questions.options'])
+            ->when($user->role === UserRole::EMPLOYER, function ($query) use ($user): void {
+                $query->where('company_id', $user->employerProfile?->company_id);
+            })
             ->when($user->role === UserRole::JOB_SEEKER, fn ($query) => $query->where('is_active', true))
             ->latest()
             ->paginate($perPage);
@@ -41,14 +48,26 @@ class TestService
     /**
      * @param  array<string, mixed>  $data
      */
-    public function createCatalogTest(array $data): Test
+    public function createCatalogTest(User $actor, array $data): Test
     {
-        return Test::query()->create($data);
+        $companyId = $actor->role === UserRole::ADMIN
+            ? (int) ($data['company_id'] ?? 0)
+            : (int) ($actor->employerProfile?->company_id ?? 0);
+
+        $company = Company::query()->findOrFail($companyId);
+        unset($data['company_id']);
+
+        $test = new Test;
+        $test->fill($data);
+        $test->company()->associate($company);
+        $test->save();
+
+        return $test->load(['company', 'questions.options']);
     }
 
     public function getCatalogTest(Test $test): Test
     {
-        return $test;
+        return $test->load(['company', 'questions.options']);
     }
 
     /**
@@ -56,13 +75,16 @@ class TestService
      */
     public function updateCatalogTest(Test $test, array $data): Test
     {
+        $this->ensureTestIsMutable($test);
+        unset($data['company_id']);
         $test->update($data);
 
-        return $test->refresh();
+        return $test->refresh()->load(['company', 'questions.options']);
     }
 
     public function deleteCatalogTest(Test $test): void
     {
+        $this->ensureTestIsMutable($test);
         $test->delete();
     }
 
@@ -75,6 +97,12 @@ class TestService
                 ->findOrFail($application->id);
 
             $test = Test::query()->findOrFail($testId);
+
+            if ($test->company_id !== $jobApplication->jobPosting->company_id) {
+                throw ValidationException::withMessages([
+                    'test_id' => ['The selected test must belong to the same company as the application.'],
+                ]);
+            }
 
             if (! $test->is_active) {
                 throw ValidationException::withMessages([
@@ -178,11 +206,15 @@ class TestService
     /**
      * @param  array<int|string, mixed>  $answers
      */
-    public function submitAttempt(User $actor, ApplicationTestAssignment $assignment, array $answers): TestAttempt
+    public function submitAttempt(User $actor, ApplicationTestAssignment $assignment, ?array $answers = null): TestAttempt
     {
-        return DB::transaction(function () use ($assignment, $answers): TestAttempt {
+        return DB::transaction(function () use ($actor, $assignment, $answers): TestAttempt {
             $lockedAssignment = ApplicationTestAssignment::query()
-                ->with('testAttempt')
+                ->with([
+                    'testAttempt',
+                    'test.questions',
+                    'jobApplication.applicationStatus',
+                ])
                 ->lockForUpdate()
                 ->findOrFail($assignment->id);
 
@@ -195,15 +227,26 @@ class TestService
             }
 
             if ($attempt->submitted_at !== null) {
-                throw ValidationException::withMessages([
-                    'assignment_id' => ['This test attempt has already been submitted.'],
-                ]);
+                throw new ConflictHttpException('This test attempt has already been submitted and can no longer be modified.');
             }
 
-            $attempt->forceFill([
-                'answers' => $answers,
-                'submitted_at' => now(),
-            ])->save();
+            if ($answers !== null) {
+                $this->testAnswerService->importLegacyPayload($attempt, $answers);
+            }
+
+            $this->testAnswerService->validateRequiredAnswers($attempt);
+
+            $attempt->forceFill(['submitted_at' => now()])->save();
+
+            $jobApplication = $lockedAssignment->jobApplication;
+            if ($jobApplication->applicationStatus?->slug !== self::STATUS_TEST_COMPLETED) {
+                $this->applicationWorkflowService->changeStatus(
+                    $actor,
+                    $jobApplication,
+                    self::STATUS_TEST_COMPLETED,
+                    'Test attempt submitted.',
+                );
+            }
 
             DB::afterCommit(fn (): array => event(new TestSubmitted($attempt->id)));
 
@@ -280,6 +323,13 @@ class TestService
         return $assignment->load($this->assignmentRelations(includeApplicationContext: true));
     }
 
+    public function ensureTestIsMutable(Test $test): void
+    {
+        if ($test->applicationTestAssignments()->exists()) {
+            throw new ConflictHttpException('This test can no longer be modified because it has already been assigned.');
+        }
+    }
+
     private function loadAttempt(TestAttempt $attempt): TestAttempt
     {
         return $attempt->load($this->attemptRelations());
@@ -294,6 +344,8 @@ class TestService
             'test',
             'assignedBy',
             'testAttempt.evaluatedBy',
+            'testAttempt.testAnswers.question',
+            'testAttempt.testAnswers.selectedOptions',
         ];
 
         if ($includeApplicationContext) {
@@ -317,6 +369,8 @@ class TestService
     {
         return [
             'evaluatedBy',
+            'testAnswers.question',
+            'testAnswers.selectedOptions',
             'applicationTestAssignment.test',
             'applicationTestAssignment.assignedBy',
             'applicationTestAssignment.jobApplication.jobPosting.company',

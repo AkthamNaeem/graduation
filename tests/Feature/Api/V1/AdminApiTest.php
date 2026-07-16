@@ -411,9 +411,11 @@ class AdminApiTest extends TestCase
     public function test_admin_can_crud_tests_without_breaking_catalog_routes(): void
     {
         $admin = $this->admin();
+        $company = Company::create(['name' => 'Admin Catalog Co.', 'approval_status' => 'approved']);
 
         $createResponse = $this->withToken($this->tokenFor($admin))
             ->postJson('/api/v1/admin/tests', [
+                'company_id' => $company->id,
                 'title' => 'Backend Assessment',
                 'duration_minutes' => 75,
                 'max_score' => 100,

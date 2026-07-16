@@ -24,7 +24,8 @@ class SubmitTestAttemptRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'answers' => ['required', 'array'],
+            'confirm' => ['required_without:answers', 'in:true,1'],
+            'answers' => ['required_without:confirm', 'array'],
         ];
     }
 }

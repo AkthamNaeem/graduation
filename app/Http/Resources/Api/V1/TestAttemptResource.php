@@ -16,7 +16,7 @@ class TestAttemptResource extends JsonResource
         return [
             'id' => $this->id,
             'application_test_assignment_id' => $this->application_test_assignment_id,
-            'answers' => $this->answers,
+            'answers' => TestAnswerResource::collection($this->whenLoaded('testAnswers')),
             'score' => $this->score,
             'feedback' => $this->feedback,
             'evaluated_by_user_id' => $this->evaluated_by_user_id,
