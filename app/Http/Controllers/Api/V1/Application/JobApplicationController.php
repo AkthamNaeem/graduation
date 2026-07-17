@@ -51,7 +51,7 @@ class JobApplicationController extends Controller
     {
         return ApiResponse::success(
             data: new JobApplicationResource(
-                $this->applicationWorkflowService->getApplication($jobApplication),
+                $this->applicationWorkflowService->getApplication($request->user('sanctum'), $jobApplication),
             ),
             message: 'Job application retrieved successfully.',
         );

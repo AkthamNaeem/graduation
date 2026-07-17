@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\UserRole;
 use App\Events\InterviewCancelled;
 use App\Events\InterviewEvaluated;
 use App\Events\InterviewScheduled;
@@ -126,7 +127,7 @@ class InterviewService
         $profileId = $user->jobSeekerProfile?->id;
 
         return Interview::query()
-            ->with($this->interviewRelations(includeApplicationContext: true))
+            ->with($this->interviewRelations(includeApplicationContext: true, candidateSafe: true))
             ->whereHas('jobApplication', function ($query) use ($profileId): void {
                 $query->where('job_seeker_profile_id', $profileId);
             })
@@ -135,9 +136,13 @@ class InterviewService
             ->paginate($perPage);
     }
 
-    public function getInterview(Interview $interview): Interview
+    public function getInterview(Interview $interview, User $viewer): Interview
     {
-        return $this->loadInterview($interview, includeApplicationContext: true);
+        return $this->loadInterview(
+            $interview,
+            includeApplicationContext: true,
+            candidateSafe: $viewer->role === UserRole::JOB_SEEKER,
+        );
     }
 
     /**
@@ -312,17 +317,21 @@ class InterviewService
         });
     }
 
-    private function loadInterview(Interview $interview, bool $includeApplicationContext = false): Interview
+    private function loadInterview(
+        Interview $interview,
+        bool $includeApplicationContext = false,
+        bool $candidateSafe = false,
+    ): Interview
     {
-        return $interview->load($this->interviewRelations($includeApplicationContext));
+        return $interview->load($this->interviewRelations($includeApplicationContext, $candidateSafe));
     }
 
     /**
      * @return array<int, string>
      */
-    private function interviewRelations(bool $includeApplicationContext = false): array
+    private function interviewRelations(bool $includeApplicationContext = false, bool $candidateSafe = false): array
     {
-        $relations = [
+        $relations = $candidateSafe ? [] : [
             'scheduledBy',
             'completedBy',
             'evaluation.evaluatedBy',
@@ -332,12 +341,16 @@ class InterviewService
         if ($includeApplicationContext) {
             $relations[] = 'jobApplication.jobPosting.company';
             $relations[] = 'jobApplication.jobPosting.skills';
-            $relations[] = 'jobApplication.jobSeekerProfile.user';
-            $relations[] = 'jobApplication.jobSeekerProfile.skills';
+            $relations[] = 'jobApplication.selectedCvFile';
             $relations[] = 'jobApplication.applicationStatus';
             $relations[] = 'jobApplication.statusHistory.fromStatus';
             $relations[] = 'jobApplication.statusHistory.toStatus';
-            $relations[] = 'jobApplication.statusHistory.changedBy';
+
+            if (! $candidateSafe) {
+                $relations[] = 'jobApplication.jobSeekerProfile.user';
+                $relations[] = 'jobApplication.jobSeekerProfile.skills';
+                $relations[] = 'jobApplication.statusHistory.changedBy';
+            }
         }
 
         return $relations;

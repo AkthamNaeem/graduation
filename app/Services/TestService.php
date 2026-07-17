@@ -199,7 +199,7 @@ class TestService
     public function getMyAssignments(User $user, int $perPage = 15): LengthAwarePaginator
     {
         return ApplicationTestAssignment::query()
-            ->with($this->assignmentRelations(includeApplicationContext: true))
+            ->with($this->assignmentRelations(includeApplicationContext: true, candidateSafe: true))
             ->whereHas('jobApplication.jobSeekerProfile', function ($query) use ($user): void {
                 $query->where('user_id', $user->id);
             })
@@ -229,7 +229,7 @@ class TestService
                 'started_at' => now(),
             ]);
 
-            return $this->loadAttempt($attempt);
+            return $this->loadAttempt($attempt, candidateSafe: true);
         });
     }
 
@@ -310,7 +310,7 @@ class TestService
 
             DB::afterCommit(fn (): array => event(new TestSubmitted($attempt->id)));
 
-            return $this->loadAttempt($attempt);
+            return $this->loadAttempt($attempt, candidateSafe: true);
         });
     }
 
@@ -390,39 +390,47 @@ class TestService
         }
     }
 
-    private function loadAttempt(TestAttempt $attempt): TestAttempt
+    private function loadAttempt(TestAttempt $attempt, bool $candidateSafe = false): TestAttempt
     {
-        return $attempt->load($this->attemptRelations());
+        return $attempt->load($this->attemptRelations($candidateSafe));
     }
 
     /**
      * @return array<int, string>
      */
-    private function assignmentRelations(bool $includeApplicationContext = false): array
+    private function assignmentRelations(bool $includeApplicationContext = false, bool $candidateSafe = false): array
     {
         $relations = [
             'test',
-            'assignedBy',
-            'testAttempt.evaluatedBy',
+            'testAttempt',
             'testAttempt.testAnswers.question',
             'testAttempt.testAnswers.selectedOptions',
-            'testAttempt.testAnswers.grading',
-            'deadlineChanges.changedBy',
-            'retakeGrantedBy',
-            'seriesRoot',
-            'previousAssignment',
-            'nextAssignment',
         ];
+
+        if (! $candidateSafe) {
+            $relations[] = 'assignedBy';
+            $relations[] = 'testAttempt.evaluatedBy';
+            $relations[] = 'testAttempt.testAnswers.grading';
+            $relations[] = 'deadlineChanges.changedBy';
+            $relations[] = 'retakeGrantedBy';
+            $relations[] = 'seriesRoot';
+            $relations[] = 'previousAssignment';
+            $relations[] = 'nextAssignment';
+        }
 
         if ($includeApplicationContext) {
             $relations[] = 'jobApplication.jobPosting.company';
             $relations[] = 'jobApplication.jobPosting.skills';
-            $relations[] = 'jobApplication.jobSeekerProfile.user';
-            $relations[] = 'jobApplication.jobSeekerProfile.skills';
+            $relations[] = 'jobApplication.selectedCvFile';
             $relations[] = 'jobApplication.applicationStatus';
             $relations[] = 'jobApplication.statusHistory.fromStatus';
             $relations[] = 'jobApplication.statusHistory.toStatus';
-            $relations[] = 'jobApplication.statusHistory.changedBy';
+
+            if (! $candidateSafe) {
+                $relations[] = 'jobApplication.jobSeekerProfile.user';
+                $relations[] = 'jobApplication.jobSeekerProfile.skills';
+                $relations[] = 'jobApplication.statusHistory.changedBy';
+            }
         }
 
         return $relations;
@@ -431,23 +439,29 @@ class TestService
     /**
      * @return array<int, string>
      */
-    private function attemptRelations(): array
+    private function attemptRelations(bool $candidateSafe = false): array
     {
-        return [
-            'evaluatedBy',
+        $relations = [
             'testAnswers.question',
             'testAnswers.selectedOptions',
-            'testAnswers.grading',
             'applicationTestAssignment.test',
-            'applicationTestAssignment.assignedBy',
             'applicationTestAssignment.jobApplication.jobPosting.company',
             'applicationTestAssignment.jobApplication.jobPosting.skills',
-            'applicationTestAssignment.jobApplication.jobSeekerProfile.user',
-            'applicationTestAssignment.jobApplication.jobSeekerProfile.skills',
+            'applicationTestAssignment.jobApplication.selectedCvFile',
             'applicationTestAssignment.jobApplication.applicationStatus',
             'applicationTestAssignment.jobApplication.statusHistory.fromStatus',
             'applicationTestAssignment.jobApplication.statusHistory.toStatus',
-            'applicationTestAssignment.jobApplication.statusHistory.changedBy',
         ];
+
+        if (! $candidateSafe) {
+            $relations[] = 'evaluatedBy';
+            $relations[] = 'testAnswers.grading';
+            $relations[] = 'applicationTestAssignment.assignedBy';
+            $relations[] = 'applicationTestAssignment.jobApplication.jobSeekerProfile.user';
+            $relations[] = 'applicationTestAssignment.jobApplication.jobSeekerProfile.skills';
+            $relations[] = 'applicationTestAssignment.jobApplication.statusHistory.changedBy';
+        }
+
+        return $relations;
     }
 }

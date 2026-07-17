@@ -1029,7 +1029,7 @@
           "name": "My Applications",
           "request": {
             "method": "GET",
-            "description": "Mobile App / Job Seeker: list own applications.",
+            "description": "Mobile App / Job Seeker: list own applications with a candidate-safe status timeline. Internal hiring notes and actor identities are intentionally excluded.",
             "url": "{{base_url}}/applications/my"
           },
           "event": [
@@ -1038,17 +1038,18 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('my applications response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403]));"
+                  "pm.test('my applications response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403]));",
+                  "if (pm.response.code === 200) { const item = pm.response.json().data.data[0] || {}; const history = (item.status_history || [])[0] || {}; pm.test('candidate application timeline excludes internal fields', () => { pm.expect(history).not.to.have.property('note'); pm.expect(history).not.to.have.property('changed_by_user_id'); pm.expect(history).not.to.have.property('changed_by'); }); }"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Show Application",
+          "name": "Application Details",
           "request": {
             "method": "GET",
-            "description": "Mobile App / Job Seeker: view own application details.",
+            "description": "Mobile App / Job Seeker: view own candidate-safe application details. Internal hiring notes, employee identities, and interview evaluations are intentionally excluded.",
             "url": "{{base_url}}/applications/{{application_id}}"
           },
           "event": [
@@ -1057,7 +1058,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('show response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404]));"
+                  "pm.test('show response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404]));",
+                  "if (pm.response.code === 200) { const data = pm.response.json().data; pm.test('application details exclude private hiring data', () => { pm.expect(data).not.to.have.property('job_seeker_profile'); pm.expect(data).not.to.have.property('evaluation'); (data.status_history || []).forEach(item => { pm.expect(item).not.to.have.property('note'); pm.expect(item).not.to.have.property('changed_by'); }); }); }"
                 ]
               }
             }
@@ -1238,7 +1240,7 @@
           "name": "My Interviews",
           "request": {
             "method": "GET",
-            "description": "Mobile App / Job Seeker: list scheduled interviews.",
+            "description": "Mobile App / Job Seeker: list candidate-safe interview schedules. Internal notes, actor IDs, and evaluation details are intentionally excluded.",
             "url": "{{base_url}}/my/interviews"
           },
           "event": [
@@ -1247,17 +1249,18 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('interviews response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403]));"
+                  "pm.test('interviews response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403]));",
+                  "if (pm.response.code === 200) { const item = pm.response.json().data.data[0] || {}; pm.test('candidate interview list excludes private fields', () => { ['note','completion_note','scheduled_by_user_id','completed_by_user_id','evaluation'].forEach(key => pm.expect(item).not.to.have.property(key)); }); }"
                 ]
               }
             }
           ]
         },
         {
-          "name": "Show Interview",
+          "name": "Interview Details",
           "request": {
             "method": "GET",
-            "description": "Mobile App / Job Seeker: view interview details.",
+            "description": "Mobile App / Job Seeker: view an authorized candidate-safe interview schedule. Evaluations, recommendations, reviewer comments, internal notes, and internal actor IDs are intentionally excluded.",
             "url": "{{base_url}}/interviews/{{interview_id}}"
           },
           "event": [
@@ -1266,7 +1269,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('show response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404]));"
+                  "pm.test('show response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404]));",
+                  "if (pm.response.code === 200) { const data = pm.response.json().data; pm.test('interview details exclude private fields', () => { ['note','completion_note','scheduled_by_user_id','completed_by_user_id','evaluation','recommendation','overall_comment'].forEach(key => pm.expect(data).not.to.have.property(key)); }); }"
                 ]
               }
             }

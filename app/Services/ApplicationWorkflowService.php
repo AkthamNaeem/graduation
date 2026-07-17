@@ -102,7 +102,7 @@ class ApplicationWorkflowService
 
             DB::afterCommit(fn (): array => event(new ApplicationSubmitted($application->id)));
 
-            return $this->loadApplication($application);
+            return $this->loadApplication($application, candidateSafe: true);
         });
     }
 
@@ -203,7 +203,7 @@ class ApplicationWorkflowService
                 $note,
             )));
 
-            return $this->loadApplication($application);
+            return $this->loadApplication($application, candidateSafe: true);
         });
     }
 
@@ -262,7 +262,7 @@ class ApplicationWorkflowService
         $profileId = $user->jobSeekerProfile?->id;
 
         return JobApplication::query()
-            ->with($this->applicationRelations())
+            ->with($this->applicationRelations(candidateSafe: true))
             ->where('job_seeker_profile_id', $profileId)
             ->latest()
             ->paginate($perPage);
@@ -279,9 +279,12 @@ class ApplicationWorkflowService
             ->paginate($perPage);
     }
 
-    public function getApplication(JobApplication $jobApplication): JobApplication
+    public function getApplication(User $viewer, JobApplication $jobApplication): JobApplication
     {
-        return $this->loadApplication($jobApplication);
+        return $this->loadApplication(
+            $jobApplication,
+            candidateSafe: $viewer->role === UserRole::JOB_SEEKER,
+        );
     }
 
     private function ensureSelectedCvBelongsToUser(int $selectedCvFileId, User $user): void
@@ -305,26 +308,31 @@ class ApplicationWorkflowService
             ->firstOrFail();
     }
 
-    private function loadApplication(JobApplication $jobApplication): JobApplication
+    private function loadApplication(JobApplication $jobApplication, bool $candidateSafe = false): JobApplication
     {
-        return $jobApplication->load($this->applicationRelations());
+        return $jobApplication->load($this->applicationRelations($candidateSafe));
     }
 
     /**
      * @return array<int, string>
      */
-    private function applicationRelations(): array
+    private function applicationRelations(bool $candidateSafe = false): array
     {
-        return [
+        $relations = [
             'jobPosting.company',
             'jobPosting.skills',
-            'jobSeekerProfile.user',
-            'jobSeekerProfile.skills',
             'selectedCvFile',
             'applicationStatus',
             'statusHistory.fromStatus',
             'statusHistory.toStatus',
-            'statusHistory.changedBy',
         ];
+
+        if (! $candidateSafe) {
+            $relations[] = 'jobSeekerProfile.user';
+            $relations[] = 'jobSeekerProfile.skills';
+            $relations[] = 'statusHistory.changedBy';
+        }
+
+        return $relations;
     }
 }

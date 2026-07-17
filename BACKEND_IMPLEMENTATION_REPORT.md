@@ -27,9 +27,9 @@ The implementation follows a service-oriented Laravel structure using Form Reque
 | 2 | Core Profiles | Job seeker profile, employer profile, company profile, experiences, education, skills, role-scoped profile endpoints | Implemented |
 | 3 | CV Upload & Parsing | CV upload for PDF/DOCX, queued parsing job, raw text extraction, parsed JSON storage, confirm flow to append profile data | Partially Implemented (MVP/basic parsing) |
 | 4 | Job Posting | Employer job CRUD, public open-job listing, filters, skills attachment, publish and close workflows | Implemented |
-| 5 | Job Applications Workflow | Job applications, duplicate prevention, application statuses, transition validation, terminal states, status history | Implemented |
-| 6 | Testing Module | Company-owned immutable tests, structured questions/options, normalized draft answers, candidate start/submit, employer evaluation, status updates | Partially Implemented (grading, deadlines, and result breakdown remain) |
-| 7 | Interview Module | Interview scheduling, listing, update/delete before completion, completion, evaluation items, status updates | Implemented |
+| 5 | Job Applications Workflow | Job applications, duplicate prevention, application statuses, transition validation, terminal states, role-safe status-history resources | Implemented with candidate-safe response boundaries |
+| 6 | Testing Module | Company-owned immutable tests, structured questions/options, normalized answers, grading/results, deadlines, and retake series | Advanced / Partially Implemented (duration enforcement and catalog secrecy remain) |
+| 7 | Interview Module | Interview scheduling, completion and evaluation with candidate-safe and employer-management response boundaries | Implemented with remaining mode/attendance/status refinements |
 | 8 | AI Matching | Deterministic TF-IDF matching, cosine similarity, recommendations for job seekers, ranked candidates for employers, score breakdowns | Partially Implemented (IR-based matching, not deep AI) |
 | 9 | Notifications + Admin APIs | In-app notification table, workflow event/listener dispatch, notification endpoints, admin APIs for users, companies, skills, and tests | Implemented |
 | 10 | Admin & Reports Completion | Completed admin user/company/skill filters and detail actions, safe skill deletion behavior, and basic read-only JSON report endpoints for dashboard statistics | Implemented |
@@ -975,7 +975,7 @@ Privacy and authorization:
 
 - Notifications are user-facing messages; `AuditLog` remains internal/admin-facing.
 - Users can list, read, mark, and delete only their own notifications.
-- Job seeker payloads intentionally omit employer internal notes, private rejection reasons, test scores, interview recommendations, evaluator IDs, and interview evaluation details.
+- Job seeker application and interview payloads now enforce that boundary in API Resources: internal status notes and actors, interview management notes, actor IDs, recommendations, evaluation comments/items, and evaluator identity are absent from candidate JSON rather than returned as null.
 - Employer notifications are generated only for users attached to the job posting company through employer profiles.
 
 Notification endpoints:
@@ -1018,7 +1018,7 @@ Admin endpoints:
 
 ## 16.5 Phase A/B Contract Verification Notes
 
-Application submission now requires `selected_cv_file_id` and accepted `consent_to_share_profile`; the selected CV is validated against the authenticated job seeker in both the request and application workflow service. `JobApplicationResource` exposes `selected_cv_file_id` as the mobile/frontend contract anchor. It does not expose `cover_letter`, `consent_to_share_profile`, or `screening_answers` in the general application resource to avoid broad disclosure of applicant-provided private submission details across applicant and employer list/detail views.
+Application submission requires `selected_cv_file_id` and accepted `consent_to_share_profile`; the selected CV is validated against the authenticated job seeker in both the request and application workflow service. `JobApplicationResource` exposes the applicant's cover letter, consent flag, screening answers, and safe selected-CV metadata to the authorized applicant or owning employer. It never exposes the CV disk, stored path, or parser error details.
 
 The current MVP duplicate rule remains strict: a job seeker can have only one application per job posting, including after terminal statuses such as `withdrawn` or `rejected`.
 
@@ -1432,3 +1432,35 @@ Implemented on 2026-07-17 as an explicit employer/admin action. Passing score ne
 - A product policy for selecting or comparing retake results.
 - Objective partial credit if later required.
 - Snapshot/versioning only if strict test-definition immutability is relaxed.
+
+## 27. Candidate-Safe Application and Interview Resource Boundaries
+
+Application and interview records continue to store their complete internal history and evaluation data. This increment changes serialization and role-specific eager loading only; it does not alter the database schema, workflow transitions, stored notes, evaluations, notifications, or interview states.
+
+### Role Visibility
+
+- Job seekers receive application IDs, safe job/current-status data, applicant-provided cover letter and screening answers, safe selected-CV metadata, timestamps, and a simplified status timeline. Timeline entries omit internal notes, status actor IDs, actor objects, and administrative timestamps.
+- Job seeker interview responses retain the interview type/mode, scheduled time, computed end time when duration exists, public state, and the mode-appropriate meeting link or location. They omit scheduler/completer IDs, internal scheduling and completion notes, the evaluation object, recommendation, scored criteria, reviewer comments, and evaluator identity.
+- Owning employers retain the existing management fields, status-history notes, interview evaluation and items. Actor relations are serialized as limited `id`, `name`, and `role` summaries rather than complete user resources.
+- Administrators receive the management-shaped fields whenever an authorized admin endpoint serializes these resources. Existing application/interview policies do not add new admin access in this increment.
+
+### Nested Safety and Query Scope
+
+- The same conditional resources protect application timelines nested inside interviews and test-assignment responses.
+- Candidate application queries omit status actors and candidate-profile management relations.
+- Candidate interview queries omit scheduler/completer users, interview evaluations, evaluator users, and evaluation items.
+- Candidate test-assignment/start/submit loading omits application history actors and unused attempt evaluators/gradings while retaining the data required by the existing safe resources.
+
+### API and Compatibility Impact
+
+The affected candidate endpoints are `GET /api/v1/applications/my`, `GET /api/v1/applications/{application}`, `GET /api/v1/my/interviews`, and `GET /api/v1/interviews/{interview}`, including nested application data returned by candidate test-assignment flows. Removing internal candidate fields is an intentional security-related breaking response change. Employer list/detail and mutation responses retain their management contract.
+
+`ApplicationPrivacyTest` and `InterviewPrivacyTest` verify candidate ownership, company ownership, safe fields, absence of the complete private-field inventory, nested-resource safety, employer compatibility, and that candidate interview reads do not query evaluation tables. The Mobile Postman collection includes candidate-side privacy assertions; the Web collection documents the retained employer contract.
+
+### Remaining Outside This Increment
+
+- Suspended-user token enforcement and comprehensive approved-company enforcement.
+- Test catalog secrecy and test duration enforcement.
+- Job work mode, application deadline, and required/optional skill fields.
+- Request-more-information messaging.
+- Conditional interview-mode validation, attendance, and explicit interview cancellation/status redesign.

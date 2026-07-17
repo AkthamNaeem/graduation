@@ -914,7 +914,7 @@
                                                                               ]
                                                                },
                                                       "method":  "GET",
-                                                      "description":  "Web App / Employer Dashboard: list applications for an owned job.",
+                                                      "description":  "Web App / Employer Dashboard: list applications for an owned job. Authorized employer responses retain internal status notes and limited actor summaries; candidate responses intentionally exclude them.",
                                                       "url":  "{{base_url}}/jobs/{{job_id}}/applications"
                                                   },
                                       "event":  [
@@ -943,7 +943,7 @@
                                                                               ]
                                                                },
                                                       "method":  "GET",
-                                                      "description":  "Web App / Employer Dashboard: view an application for an owned job.",
+                                                                "description":  "Web App / Employer Dashboard: view an application for an owned job, including internal status notes and limited actor summaries. Candidate responses intentionally exclude internal hiring notes and evaluation details.",
                                                       "url":  "{{base_url}}/applications/{{application_id}}"
                                                   },
                                       "event":  [
@@ -1403,7 +1403,7 @@
                                                                               ]
                                                                },
                                                       "method":  "GET",
-                                                      "description":  "Web App / Employer Dashboard: list application interviews.",
+                                                      "description":  "Web App / Employer Dashboard: list application interviews with authorized management notes and evaluation details. Candidate responses intentionally exclude internal hiring notes and evaluation details.",
                                                       "url":  "{{base_url}}/applications/{{application_id}}/interviews"
                                                   },
                                       "event":  [
