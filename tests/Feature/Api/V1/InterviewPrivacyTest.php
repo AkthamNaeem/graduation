@@ -42,9 +42,9 @@ class InterviewPrivacyTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1, 'data.data')
             ->assertJsonPath('data.data.0.id', $interview->id)
-            ->assertJsonPath('data.data.0.interview_mode', 'video')
+            ->assertJsonPath('data.data.0.interview_mode', 'online')
             ->assertJsonPath('data.data.0.meeting_link', 'https://meet.example.com/private-room')
-            ->assertJsonPath('data.data.0.state', 'completed')
+            ->assertJsonPath('data.data.0.state', 'evaluated')
             ->assertJsonMissingPath('data.data.0.location');
 
         $this->assertSafeInterview($list, 'data.data.0');
@@ -57,7 +57,9 @@ class InterviewPrivacyTest extends TestCase
         $this->assertSafeInterview($details, 'data');
         $this->assertFalse(collect($queries)->contains(
             fn (string $sql): bool => str_contains($sql, 'interview_evaluations')
-                || str_contains($sql, 'interview_evaluation_items'),
+                || str_contains($sql, 'interview_evaluation_items')
+                || str_contains($sql, 'interview_status_histories')
+                || str_contains($sql, 'interview_schedule_changes'),
         ), 'Candidate interview endpoints queried hidden evaluation tables.');
 
         $otherCandidate = $this->jobSeeker('other-candidate@example.com');
@@ -100,9 +102,14 @@ class InterviewPrivacyTest extends TestCase
         foreach ([
             'scheduled_by_user_id',
             'completed_by_user_id',
+            'confirmed_by_user_id',
+            'cancelled_by_user_id',
+            'attendance_recorded_by_user_id',
             'evaluated_by_user_id',
             'note',
             'completion_note',
+            'cancellation_reason',
+            'attendance_note',
             'internal_note',
             'private_note',
             'evaluation',
@@ -110,6 +117,8 @@ class InterviewPrivacyTest extends TestCase
             'recommendation',
             'overall_comment',
             'reviewer_note',
+            'status_history',
+            'schedule_history',
             'job_application.status_history.0.note',
             'job_application.status_history.0.changed_by_user_id',
             'job_application.status_history.0.changed_by',
@@ -148,13 +157,16 @@ class InterviewPrivacyTest extends TestCase
         $interview = Interview::create([
             'job_application_id' => $application->id,
             'scheduled_by_user_id' => $employer->id,
-            'interview_type' => 'Technical Interview',
+            'interview_type' => 'technical',
+            'status' => 'evaluated',
             'scheduled_at' => now()->addDay(),
+            'scheduled_end_at' => now()->addDay()->addHour(),
             'duration_minutes' => 60,
-            'interview_mode' => 'video',
-            'location' => 'Internal remote label',
+            'interview_mode' => 'online',
+            'location' => null,
             'meeting_link' => 'https://meet.example.com/private-room',
             'note' => 'Internal interview preparation note.',
+            'internal_note' => 'Internal interview preparation note.',
             'completion_note' => 'Private completion note.',
             'completed_at' => now(),
             'completed_by_user_id' => $employer->id,

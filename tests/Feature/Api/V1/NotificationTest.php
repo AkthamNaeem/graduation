@@ -9,15 +9,14 @@ use App\Events\ApplicationStatusChanged;
 use App\Events\ApplicationSubmitted;
 use App\Events\InterviewCancelled;
 use App\Events\InterviewEvaluated;
+use App\Events\InterviewRescheduled;
 use App\Events\InterviewScheduled;
-use App\Events\InterviewUpdated;
 use App\Events\TestAssigned;
 use App\Events\TestEvaluated;
 use App\Events\TestSubmitted;
 use App\Models\ApplicationInformationRequest;
 use App\Models\ApplicationStatus;
 use App\Models\ApplicationTestAssignment;
-use App\Models\AuditLog;
 use App\Models\Company;
 use App\Models\CVFile;
 use App\Models\EmployerProfile;
@@ -31,6 +30,7 @@ use App\Models\TestAttempt;
 use App\Models\User;
 use Database\Seeders\ApplicationStatusSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -308,8 +308,9 @@ class NotificationTest extends TestCase
 
         $interview = Interview::findOrFail($interviewResponse->json('data.id'));
 
-        event(new InterviewScheduled($interview->id));
-        event(new InterviewScheduled($interview->id));
+        $scheduledHistoryId = $interview->statusHistory()->where('to_status', 'scheduled')->value('id');
+        event(new InterviewScheduled($interview->id, $scheduledHistoryId));
+        event(new InterviewScheduled($interview->id, $scheduledHistoryId));
 
         $this->assertDatabaseHas('notifications', [
             'user_id' => $candidate->id,
@@ -318,28 +319,35 @@ class NotificationTest extends TestCase
         $this->assertSame(1, Notification::query()->where('user_id', $candidate->id)->where('type', 'interview.scheduled')->count());
 
         $this->withToken($this->tokenFor($employer))
-            ->putJson("/api/v1/interviews/{$interview->id}", [
-                'interview_type' => 'technical',
-                'scheduled_at' => now()->addDays(2)->toISOString(),
-                'duration_minutes' => 45,
-                'interview_mode' => 'video',
+            ->postJson("/api/v1/interviews/{$interview->id}/reschedule", [
+                'mode' => 'online',
+                'scheduled_start_at' => now()->addDays(2)->toISOString(),
+                'scheduled_end_at' => now()->addDays(2)->addMinutes(45)->toISOString(),
                 'meeting_link' => 'https://example.test/meeting-2',
+                'reason' => 'Panel availability changed.',
             ])
             ->assertOk();
 
-        $interviewUpdateOccurrence = AuditLog::query()
-            ->where('action', 'interview.updated')
-            ->where('entity_id', $interview->id)
-            ->latest('id')
-            ->value('id');
-        event(new InterviewUpdated($interview->id, $interviewUpdateOccurrence));
-        event(new InterviewUpdated($interview->id, $interviewUpdateOccurrence));
+        $scheduleChangeId = $interview->scheduleChanges()->latest('id')->value('id');
+        event(new InterviewRescheduled($interview->id, $scheduleChangeId));
+        event(new InterviewRescheduled($interview->id, $scheduleChangeId));
 
         $this->assertDatabaseHas('notifications', [
             'user_id' => $candidate->id,
             'type' => 'interview.rescheduled',
         ]);
         $this->assertSame(1, Notification::query()->where('user_id', $candidate->id)->where('type', 'interview.rescheduled')->count());
+
+        $this->withToken($this->tokenFor($candidate))
+            ->postJson("/api/v1/interviews/{$interview->id}/confirm")
+            ->assertOk();
+
+        Carbon::setTestNow($interview->fresh()->scheduled_at);
+        $this->withToken($this->tokenFor($employer))
+            ->putJson("/api/v1/interviews/{$interview->id}/attendance", [
+                'candidate_status' => 'present',
+                'interviewer_status' => 'present',
+            ])->assertOk();
 
         $this->withToken($this->tokenFor($employer))
             ->postJson("/api/v1/interviews/{$interview->id}/complete", [
@@ -357,8 +365,9 @@ class NotificationTest extends TestCase
             ])
             ->assertOk();
 
-        event(new InterviewEvaluated($interview->id));
-        event(new InterviewEvaluated($interview->id));
+        $evaluatedHistoryId = $interview->statusHistory()->where('to_status', 'evaluated')->value('id');
+        event(new InterviewEvaluated($interview->id, $evaluatedHistoryId));
+        event(new InterviewEvaluated($interview->id, $evaluatedHistoryId));
 
         $this->assertDatabaseHas('notifications', [
             'user_id' => $candidate->id,
@@ -463,8 +472,9 @@ class NotificationTest extends TestCase
             ->deleteJson("/api/v1/interviews/{$interview->id}")
             ->assertOk();
 
-        event(new InterviewCancelled($application->id, $interview->id, $scheduledAt));
-        event(new InterviewCancelled($application->id, $interview->id, $scheduledAt));
+        $cancelledHistoryId = $interview->statusHistory()->where('to_status', 'cancelled')->value('id');
+        event(new InterviewCancelled($application->id, $interview->id, $scheduledAt, $cancelledHistoryId));
+        event(new InterviewCancelled($application->id, $interview->id, $scheduledAt, $cancelledHistoryId));
 
         $this->assertDatabaseHas('notifications', [
             'user_id' => $candidate->id,

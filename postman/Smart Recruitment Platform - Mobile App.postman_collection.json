@@ -1303,11 +1303,23 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('show response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404]));",
-                  "if (pm.response.code === 200) { const data = pm.response.json().data; pm.test('interview details exclude private fields', () => { ['note','completion_note','scheduled_by_user_id','completed_by_user_id','evaluation','recommendation','overall_comment'].forEach(key => pm.expect(data).not.to.have.property(key)); }); }"
+                  "if (pm.response.code === 200) { const data = pm.response.json().data; pm.test('interview details exclude private fields', () => { ['note','internal_note','completion_note','cancellation_reason','attendance_note','scheduled_by_user_id','confirmed_by_user_id','completed_by_user_id','cancelled_by_user_id','attendance_recorded_by_user_id','evaluation','recommendation','overall_comment','status_history','schedule_history'].forEach(key => pm.expect(data).not.to.have.property(key)); }); }"
                 ]
               }
             }
           ]
+        },
+        {
+          "name": "Confirm Interview",
+          "request": {"method":"POST","description":"Candidate owner confirms a scheduled or rescheduled interview.","url":"{{base_url}}/interviews/{{interview_id}}/confirm"}
+        },
+        {
+          "name": "View Rescheduled Interview",
+          "request": {"method":"GET","description":"Candidate-safe view of the new schedule; confirmation returns to pending.","url":"{{base_url}}/interviews/{{interview_id}}"}
+        },
+        {
+          "name": "View Cancelled Interview",
+          "request": {"method":"GET","description":"Candidate-safe cancellation view exposes only cancellation_message, never the internal reason or actor.","url":"{{base_url}}/interviews/{{interview_id}}"}
         }
       ]
     },

@@ -1391,7 +1391,7 @@
                      "name":  "09 Employer - Interviews Management",
                      "item":  [
                                   {
-                                      "name":  "Schedule Interview",
+                                      "name":  "Schedule Online Interview",
                                       "request":  {
                                                       "auth":  {
                                                                    "type":  "bearer",
@@ -1414,7 +1414,7 @@
                                                       "url":  "{{base_url}}/applications/{{application_id}}/interviews",
                                                       "body":  {
                                                                    "mode":  "raw",
-                                                                   "raw":  "{\n  \"scheduled_at\": \"2026-07-10T10:00:00Z\",\n  \"location\": \"Google Meet\",\n  \"notes\": \"Technical interview\"\n}",
+                                                                   "raw":  "{\n  \"type\": \"technical\",\n  \"mode\": \"online\",\n  \"scheduled_start_at\": \"{{interview_start_at}}\",\n  \"scheduled_end_at\": \"{{interview_end_at}}\",\n  \"meeting_link\": \"https://meet.example.com/interview\",\n  \"candidate_message\": \"Please join ten minutes early.\",\n  \"internal_note\": \"Technical interview\"\n}",
                                                                    "options":  {
                                                                                    "raw":  {
                                                                                                "language":  "json"
@@ -1434,6 +1434,7 @@
                                                     }
                                                 ]
                                   },
+                                  {"name":"Schedule On-site Interview","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"description":"Schedule an on-site interview; meeting_link is intentionally omitted.","url":"{{base_url}}/applications/{{application_id}}/interviews","body":{"mode":"raw","raw":"{\n  \"type\": \"{{interview_type}}\",\n  \"mode\": \"on_site\",\n  \"scheduled_start_at\": \"{{interview_start_at}}\",\n  \"scheduled_end_at\": \"{{interview_end_at}}\",\n  \"location_text\": \"Damascus HQ\"\n}","options":{"raw":{"language":"json"}}}}},
                                   {
                                       "name":  "Application Interviews",
                                       "request":  {
@@ -1464,7 +1465,7 @@
                                                 ]
                                   },
                                   {
-                                      "name":  "Update Interview",
+                                      "name":  "Update Interview Metadata",
                                       "request":  {
                                                       "auth":  {
                                                                    "type":  "bearer",
@@ -1487,7 +1488,7 @@
                                                       "url":  "{{base_url}}/interviews/{{interview_id}}",
                                                       "body":  {
                                                                    "mode":  "raw",
-                                                                   "raw":  "{\n  \"scheduled_at\": \"2026-07-11T10:00:00Z\",\n  \"notes\": \"Rescheduled technical interview\"\n}",
+                                                                   "raw":  "{\n  \"type\": \"final\",\n  \"candidate_message\": \"Please bring an identity document.\",\n  \"internal_note\": \"Internal preparation note.\"\n}",
                                                                    "options":  {
                                                                                    "raw":  {
                                                                                                "language":  "json"
@@ -1507,6 +1508,15 @@
                                                     }
                                                 ]
                                   },
+                                  {"name":"Reschedule Interview","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/interviews/{{interview_id}}/reschedule","body":{"mode":"raw","raw":"{\n  \"mode\": \"{{interview_mode}}\",\n  \"scheduled_start_at\": \"{{interview_start_at}}\",\n  \"scheduled_end_at\": \"{{interview_end_at}}\",\n  \"meeting_link\": \"https://meet.example.com/rescheduled\",\n  \"reason\": \"Panel availability changed.\"\n}","options":{"raw":{"language":"json"}}}}},
+                                  {"name":"Cancel Interview","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/interviews/{{interview_id}}/cancel","body":{"mode":"raw","raw":"{\n  \"reason\": \"Internal cancellation reason.\",\n  \"candidate_message\": \"This interview has been cancelled.\"\n}","options":{"raw":{"language":"json"}}}}},
+                                  {"name":"Update Attendance","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/interviews/{{interview_id}}/attendance","body":{"mode":"raw","raw":"{\n  \"candidate_status\": \"present\",\n  \"interviewer_status\": \"present\",\n  \"note\": \"Both parties attended.\"\n}","options":{"raw":{"language":"json"}}}}},
+                                  {"name":"Mark No Show","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/interviews/{{interview_id}}/no-show","body":{"mode":"raw","raw":"{\n  \"party\": \"candidate\",\n  \"reason\": \"Candidate did not attend.\"\n}","options":{"raw":{"language":"json"}}}}},
+                                  {"name":"View Status History","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"GET","url":"{{base_url}}/interviews/{{interview_id}}/status-history?per_page=25"}},
+                                  {"name":"View Schedule History","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"GET","url":"{{base_url}}/interviews/{{interview_id}}/schedule-history?per_page=25"}},
+                                  {"name":"Invalid Online Configuration","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"description":"Expected 422 INTERVIEW_MODE_CONFIGURATION_INVALID because meeting_link is missing.","url":"{{base_url}}/applications/{{application_id}}/interviews","body":{"mode":"raw","raw":"{\n  \"type\": \"hr\",\n  \"mode\": \"online\",\n  \"scheduled_start_at\": \"{{interview_start_at}}\",\n  \"scheduled_end_at\": \"{{interview_end_at}}\"\n}","options":{"raw":{"language":"json"}}}}},
+                                  {"name":"Duplicate Active Interview","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"POST","description":"Expected 409 INTERVIEW_ALREADY_ACTIVE_FOR_TYPE when the same application/type has an active interview.","url":"{{base_url}}/applications/{{application_id}}/interviews"}},
+                                  {"name":"Invalid Lifecycle Transition","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"POST","description":"Expected 409 when attempting completion before candidate confirmation or evaluation before completion.","url":"{{base_url}}/interviews/{{interview_id}}/complete"}},
                                   {
                                       "name":  "Complete Interview",
                                       "request":  {
@@ -1521,8 +1531,9 @@
                                                                               ]
                                                                },
                                                       "method":  "POST",
-                                                      "description":  "Web App / Employer Dashboard: mark an interview as completed.",
-                                                      "url":  "{{base_url}}/interviews/{{interview_id}}/complete"
+                                                      "description":  "Web App / Employer Dashboard: mark a started, confirmed interview with present attendance as completed.",
+                                                      "url":  "{{base_url}}/interviews/{{interview_id}}/complete",
+                                                      "body": {"mode":"raw","raw":"{\n  \"completion_note\": \"Interview completed.\"\n}","options":{"raw":{"language":"json"}}}
                                                   },
                                       "event":  [
                                                     {
@@ -1560,7 +1571,7 @@
                                                       "url":  "{{base_url}}/interviews/{{interview_id}}/evaluate",
                                                       "body":  {
                                                                    "mode":  "raw",
-                                                                   "raw":  "{\n  \"overall_score\": 4,\n  \"notes\": \"Strong technical communication.\",\n  \"items\": []\n}",
+                                                                   "raw":  "{\n  \"recommendation\": \"advance\",\n  \"overall_comment\": \"Strong technical communication.\",\n  \"items\": [{\"criterion\": \"Technical depth\", \"score\": 5}]\n}",
                                                                    "options":  {
                                                                                    "raw":  {
                                                                                                "language":  "json"

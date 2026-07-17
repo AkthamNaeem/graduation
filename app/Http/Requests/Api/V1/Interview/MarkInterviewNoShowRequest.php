@@ -5,8 +5,9 @@ namespace App\Http\Requests\Api\V1\Interview;
 use App\Http\Requests\Api\V1\Application\Concerns\ResolvesApplicationUser;
 use App\Models\Interview;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
-class CompleteInterviewRequest extends FormRequest
+class MarkInterviewNoShowRequest extends FormRequest
 {
     use ResolvesApplicationUser;
 
@@ -14,17 +15,14 @@ class CompleteInterviewRequest extends FormRequest
     {
         $interview = $this->route('interview');
 
-        return $interview instanceof Interview
-            && ($this->authenticatedUser()?->can('complete', $interview) ?? false);
+        return $interview instanceof Interview && ($this->authenticatedUser()?->can('markNoShow', $interview) ?? false);
     }
 
-    /**
-     * @return array<string, mixed>
-     */
     public function rules(): array
     {
         return [
-            'completion_note' => ['sometimes', 'nullable', 'string', 'max:5000'],
+            'party' => ['required', Rule::in(['candidate', 'interviewer', 'both'])],
+            'reason' => ['required', 'string', 'max:2000'],
         ];
     }
 }

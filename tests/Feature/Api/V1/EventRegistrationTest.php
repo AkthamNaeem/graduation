@@ -8,8 +8,13 @@ use App\Events\ApplicationInformationRequestUpdated;
 use App\Events\ApplicationInformationResponded;
 use App\Events\ApplicationStatusChanged;
 use App\Events\ApplicationSubmitted;
+use App\Events\InterviewAttendanceUpdated;
 use App\Events\InterviewCancelled;
+use App\Events\InterviewCompleted;
+use App\Events\InterviewConfirmed;
 use App\Events\InterviewEvaluated;
+use App\Events\InterviewNoShow;
+use App\Events\InterviewRescheduled;
 use App\Events\InterviewScheduled;
 use App\Events\InterviewUpdated;
 use App\Events\TestAssigned;
@@ -36,7 +41,12 @@ class EventRegistrationTest extends TestCase
             'application status changed' => [ApplicationStatusChanged::class],
             'application submitted' => [ApplicationSubmitted::class],
             'interview cancelled' => [InterviewCancelled::class],
+            'interview attendance updated' => [InterviewAttendanceUpdated::class],
+            'interview completed' => [InterviewCompleted::class],
+            'interview confirmed' => [InterviewConfirmed::class],
             'interview evaluated' => [InterviewEvaluated::class],
+            'interview no show' => [InterviewNoShow::class],
+            'interview rescheduled' => [InterviewRescheduled::class],
             'interview scheduled' => [InterviewScheduled::class],
             'interview updated' => [InterviewUpdated::class],
             'test assigned' => [TestAssigned::class],

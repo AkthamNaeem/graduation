@@ -2,13 +2,11 @@
 
 namespace App\Http\Requests\Api\V1\Interview;
 
-use App\Enums\InterviewType;
 use App\Http\Requests\Api\V1\Application\Concerns\ResolvesApplicationUser;
 use App\Models\Interview;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
-class UpdateInterviewRequest extends FormRequest
+class CancelInterviewRequest extends FormRequest
 {
     use ResolvesApplicationUser;
 
@@ -16,19 +14,14 @@ class UpdateInterviewRequest extends FormRequest
     {
         $interview = $this->route('interview');
 
-        return $interview instanceof Interview
-            && ($this->authenticatedUser()?->can('update', $interview) ?? false);
+        return $interview instanceof Interview && ($this->authenticatedUser()?->can('cancel', $interview) ?? false);
     }
 
-    /**
-     * @return array<string, mixed>
-     */
     public function rules(): array
     {
         return [
-            'type' => ['sometimes', 'string', Rule::enum(InterviewType::class)],
+            'reason' => ['required', 'string', 'max:2000'],
             'candidate_message' => ['sometimes', 'nullable', 'string', 'max:2000'],
-            'internal_note' => ['sometimes', 'nullable', 'string', 'max:5000'],
         ];
     }
 }

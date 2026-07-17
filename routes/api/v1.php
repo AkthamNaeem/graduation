@@ -145,9 +145,17 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function (): void {
         Route::post('applications/{jobApplication}/interviews', [InterviewController::class, 'store'])->name('applications.interviews.store');
         Route::get('applications/{jobApplication}/interviews', [InterviewController::class, 'indexByApplication'])->name('applications.interviews.index');
         Route::put('interviews/{interview}', [InterviewController::class, 'update'])->name('interviews.update');
+        Route::patch('interviews/{interview}', [InterviewController::class, 'update'])->name('interviews.patch');
+        Route::post('interviews/{interview}/reschedule', [InterviewController::class, 'reschedule'])->name('interviews.reschedule');
+        Route::post('interviews/{interview}/cancel', [InterviewController::class, 'cancel'])->name('interviews.cancel');
+        Route::put('interviews/{interview}/attendance', [InterviewController::class, 'attendance'])->name('interviews.attendance');
+        Route::post('interviews/{interview}/no-show', [InterviewController::class, 'noShow'])->name('interviews.no-show');
+        Route::get('interviews/{interview}/status-history', [InterviewController::class, 'statusHistory'])->name('interviews.status-history');
+        Route::get('interviews/{interview}/schedule-history', [InterviewController::class, 'scheduleHistory'])->name('interviews.schedule-history');
         Route::delete('interviews/{interview}', [InterviewController::class, 'destroy'])->name('interviews.destroy');
         Route::post('interviews/{interview}/complete', [InterviewController::class, 'complete'])->name('interviews.complete');
         Route::post('interviews/{interview}/evaluate', [InterviewController::class, 'evaluate'])->name('interviews.evaluate');
+        Route::post('interviews/{interview}/evaluation', [InterviewController::class, 'evaluate'])->name('interviews.evaluation.store');
         Route::post('tests', [TestCatalogController::class, 'store'])->name('tests.store');
         Route::put('tests/{test}', [TestCatalogController::class, 'update'])->name('tests.update');
         Route::patch('tests/{test}', [TestCatalogController::class, 'update'])->name('tests.patch');
@@ -175,6 +183,7 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function (): void {
         Route::get('applications/{jobApplication}', [JobApplicationController::class, 'show'])->name('applications.show');
         Route::post('applications/{jobApplication}/withdraw', [JobApplicationController::class, 'withdraw'])->name('applications.withdraw');
         Route::get('my/interviews', [InterviewController::class, 'my'])->name('interviews.my');
+        Route::post('interviews/{interview}/confirm', [InterviewController::class, 'confirm'])->name('interviews.confirm');
         Route::get('interviews/{interview}', [InterviewController::class, 'show'])->name('interviews.show');
         Route::get('tests', [TestCatalogController::class, 'index'])->name('tests.index');
         Route::get('tests/{test}', [TestCatalogController::class, 'show'])->name('tests.show');

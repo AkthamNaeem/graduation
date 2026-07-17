@@ -33,6 +33,7 @@ class CreateInterviewEvaluatedNotification extends IdempotentNotificationListene
                 'company_id' => $interview->jobApplication->jobPosting?->company_id,
                 'status' => 'final_review',
             ]),
+            $event->historyId,
         );
     }
 }

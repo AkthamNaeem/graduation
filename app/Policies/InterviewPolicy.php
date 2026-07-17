@@ -37,6 +37,37 @@ class InterviewPolicy
             && $this->belongsToCompany($user, $interview->jobApplication->jobPosting->company_id);
     }
 
+    public function confirm(User $user, Interview $interview): bool
+    {
+        return $user->role === UserRole::JOB_SEEKER
+            && $user->jobSeekerProfile?->id === $interview->jobApplication->job_seeker_profile_id;
+    }
+
+    public function reschedule(User $user, Interview $interview): bool
+    {
+        return $this->update($user, $interview);
+    }
+
+    public function cancel(User $user, Interview $interview): bool
+    {
+        return $this->update($user, $interview);
+    }
+
+    public function manageAttendance(User $user, Interview $interview): bool
+    {
+        return $this->update($user, $interview);
+    }
+
+    public function markNoShow(User $user, Interview $interview): bool
+    {
+        return $this->update($user, $interview);
+    }
+
+    public function viewHistory(User $user, Interview $interview): bool
+    {
+        return $this->update($user, $interview);
+    }
+
     public function delete(User $user, Interview $interview): bool
     {
         return $this->update($user, $interview);

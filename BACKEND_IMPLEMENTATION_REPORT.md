@@ -1462,7 +1462,7 @@ The affected candidate endpoints are `GET /api/v1/applications/my`, `GET /api/v1
 - Test catalog secrecy and test duration enforcement.
 - Job work mode, application deadline, and required/optional skill fields.
 - Request-more-information messaging.
-- Conditional interview-mode validation, attendance, and explicit interview cancellation/status redesign.
+- Interview lifecycle, conditional mode validation, attendance, and status policy are implemented in section 35.
 
 ## 28. Global User and Company Recruitment-State Enforcement
 
@@ -1623,7 +1623,7 @@ This increment closes the previously documented test-catalog secrecy gap without
 - Test attempt duration enforcement is implemented in section 32 below.
 - The formal test-score invariant is implemented in section 33 below.
 - Duplicate event-listener registration and event-driven notification idempotency are implemented in section 34.
-- Conditional interview validation, attendance, and explicit interview cancellation/status redesign.
+- Interview lifecycle, conditional mode validation, attendance, and status policy are implemented in section 35.
 - Primary-CV selection and any general application internal-notes feature.
 
 ## 33. Canonical Test Score Invariant
@@ -1667,3 +1667,21 @@ All covered domain services continue dispatching only through `DB::afterCommit`.
 Covered events are `ApplicationSubmitted`, `ApplicationStatusChanged`, all four application-information events, `InterviewScheduled`, `InterviewUpdated`, `InterviewCancelled`, `InterviewEvaluated`, `TestAssigned`, `TestSubmitted`, `TestEvaluated`, `TestAssignmentDeadlineExtended`, and `TestRetakeGranted`. Tests verify single registration, repeated dispatch, one row per recipient, stable historical payloads, callback rollback, successful retry, independent recipients/occurrences, API duplicate regressions, and the existing deadline, retake, information-request, interview, grading, and application workflows.
 
 The exactly-once guarantee is limited to persisted effects inside this database. No external email, SMS, or push provider is currently integrated; a future provider must use an outbox/delivery record and the provider's supported idempotency contract before any external exactly-once claim can be made. Postman descriptions for assignment and evaluation now note single-notification behavior; no ledger endpoint or effect key is exposed.
+
+## 35. Complete Interview Lifecycle
+
+The existing interview service, controller, policy, evaluation entities, application workflow, audit service, and exact-once event infrastructure now form one canonical lifecycle. Interview types are restricted to `hr`, `technical`, and `final`; statuses are `scheduled`, `confirmed`, `rescheduled`, `completed`, `cancelled`, `no_show`, and `evaluated`. Active uniqueness means one active (`scheduled`, `confirmed`, or `rescheduled`) interview per application and type. The check runs while the application row is locked and does not rely on a database-specific partial index.
+
+Schedule and reschedule accept explicit UTC-compatible `scheduled_start_at` and `scheduled_end_at`. Start must be in the future, end must be after start, and duration cannot exceed eight hours. `online` requires a valid `meeting_link` and clears location; `on_site` requires `location_text` up to 1000 characters and clears meeting link. Rescheduling records old and new times, mode, relevant location/link, actor, and reason in `interview_schedule_changes`, resets confirmation and attendance, and emits a new occurrence. Metadata-only edits are limited to unconfirmed scheduled interviews and do not emit audit/events on a no-op.
+
+Only the owning candidate can confirm. Employers in the owning approved company can reschedule, cancel, record attendance, mark no-show, complete, evaluate, and view paginated histories. Cancellation preserves the interview row, internal reason, safe candidate message, actor, and timestamp. Attendance uses separate candidate and interviewer states (`pending`, `present`, `absent`, or `excused`) because the current domain has one scheduling interviewer rather than a multi-interviewer panel relation. Attendance cannot be recorded before start or after the interview reaches a final state, and a no-op creates no audit or notification.
+
+No-show is available at or after start for candidate, interviewer, or both and closes the interview without automatically accepting or rejecting the application. Completion requires `confirmed`, `now >= scheduled_start_at`, and present attendance for both parties. Evaluation requires `completed` and creates the existing evaluation/items once. HR and technical evaluations leave the application at `interview_completed`; only an evaluated final interview advances it to `final_review`.
+
+Every status change creates exactly one ordered `interview_status_histories` row. Application changes continue through `ApplicationWorkflowService`, so application history is not duplicated. Domain mutations use transactions, application/interview row locks in a consistent order where both are needed, state revalidation, and post-commit dispatch. Interview notification events now cover schedule, confirmation, reschedule, cancellation, attendance update, no-show, completion, and evaluation. Each discovered listener is registered once and uses the persisted exact-once ledger with a status-history, schedule-change, or audit occurrence ID.
+
+Candidate resources expose the actionable schedule, relevant online/on-site field, safe message, confirmation state, candidate attendance state, and lifecycle status. They omit internal notes, cancellation reasons, attendance notes, evaluation data, actor IDs, and both management histories entirely rather than returning those fields as null. Candidate list/detail queries do not load evaluation or history tables. Employer resources retain management details and eager-loaded evaluation/history data; standalone history endpoints are paginated and eager-load actors without resource queries.
+
+The migration normalizes legacy type/mode/status values, derives explicit end times where legacy duration exists, preserves legacy notes as internal notes, adds lifecycle/attendance/cancellation/confirmation fields and indexes, and creates the two history tables. Web Postman includes online/on-site scheduling, reschedule, cancel, attendance, no-show, complete, evaluate, both histories, and representative errors. Mobile Postman includes candidate-safe list/detail, confirmation, rescheduled view, and cancelled view. Environment variables include interview type, mode, start, and end.
+
+This closes the previously listed interview attendance/status-validation gap. Remaining gaps are primary CV selection and multi-CV lifecycle management, general application internal notes, and external calendar/email/SMS/push delivery. Video/audio recording, face/voice analysis, AI interview bots, automatic meeting-link creation, and frontend work remain intentionally out of scope.

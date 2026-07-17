@@ -6,7 +6,7 @@ use App\Http\Requests\Api\V1\Application\Concerns\ResolvesApplicationUser;
 use App\Models\Interview;
 use Illuminate\Foundation\Http\FormRequest;
 
-class CompleteInterviewRequest extends FormRequest
+class ConfirmInterviewRequest extends FormRequest
 {
     use ResolvesApplicationUser;
 
@@ -14,17 +14,11 @@ class CompleteInterviewRequest extends FormRequest
     {
         $interview = $this->route('interview');
 
-        return $interview instanceof Interview
-            && ($this->authenticatedUser()?->can('complete', $interview) ?? false);
+        return $interview instanceof Interview && ($this->authenticatedUser()?->can('confirm', $interview) ?? false);
     }
 
-    /**
-     * @return array<string, mixed>
-     */
     public function rules(): array
     {
-        return [
-            'completion_note' => ['sometimes', 'nullable', 'string', 'max:5000'],
-        ];
+        return [];
     }
 }

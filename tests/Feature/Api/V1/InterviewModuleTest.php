@@ -14,6 +14,7 @@ use App\Models\JobSeekerProfile;
 use App\Models\User;
 use Database\Seeders\ApplicationStatusSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -37,8 +38,9 @@ class InterviewModuleTest extends TestCase
             ->postJson("/api/v1/applications/{$application->id}/interviews", $this->interviewPayload())
             ->assertCreated()
             ->assertJsonPath('data.job_application_id', $application->id)
-            ->assertJsonPath('data.interview_type', 'Technical Interview')
-            ->assertJsonPath('data.interview_mode', 'video')
+            ->assertJsonPath('data.interview_type', 'technical')
+            ->assertJsonPath('data.interview_mode', 'online')
+            ->assertJsonPath('data.status', 'scheduled')
             ->assertJsonPath('data.completed_at', null)
             ->assertJsonPath('data.job_application.status.slug', 'interview_scheduled');
 
@@ -48,8 +50,8 @@ class InterviewModuleTest extends TestCase
             'id' => $interviewId,
             'job_application_id' => $application->id,
             'scheduled_by_user_id' => $employer->id,
-            'interview_type' => 'Technical Interview',
-            'interview_mode' => 'video',
+            'interview_type' => 'technical',
+            'interview_mode' => 'online',
         ]);
 
         $this->assertDatabaseHas('job_applications', [
@@ -74,8 +76,8 @@ class InterviewModuleTest extends TestCase
 
         $this->withToken($this->tokenFor($employer))
             ->postJson("/api/v1/applications/{$acceptedApplication->id}/interviews", $this->interviewPayload())
-            ->assertStatus(422)
-            ->assertJsonValidationErrors(['job_application_id']);
+            ->assertStatus(409)
+            ->assertJsonPath('code', 'INTERVIEW_INVALID_STATUS_TRANSITION');
 
         [$sameEmployer, $application] = $this->employerApplicationScenario('shortlisted', 'candidate@example.com', 'owner-two@example.com');
 
@@ -85,10 +87,11 @@ class InterviewModuleTest extends TestCase
 
         $this->withToken($this->tokenFor($sameEmployer))
             ->postJson("/api/v1/applications/{$application->id}/interviews", $this->interviewPayload([
-                'scheduled_at' => now()->addDays(3)->toISOString(),
+                'scheduled_start_at' => now()->addDays(3)->toISOString(),
+                'scheduled_end_at' => now()->addDays(3)->addHour()->toISOString(),
             ]))
-            ->assertStatus(422)
-            ->assertJsonValidationErrors(['job_application_id']);
+            ->assertStatus(409)
+            ->assertJsonPath('code', 'INTERVIEW_ALREADY_ACTIVE_FOR_TYPE');
     }
 
     public function test_employer_can_list_update_and_delete_interviews_with_status_recalculation(): void
@@ -108,24 +111,22 @@ class InterviewModuleTest extends TestCase
             ->assertJsonPath('data.0.id', $interviewId);
 
         $this->withToken($this->tokenFor($employer))
-            ->putJson("/api/v1/interviews/{$interviewId}", $this->interviewPayload([
-                'interview_type' => 'Final Team Interview',
-                'interview_mode' => 'in_person',
-                'location' => 'Damascus HQ',
-                'meeting_link' => null,
-            ]))
+            ->patchJson("/api/v1/interviews/{$interviewId}", [
+                'type' => 'final',
+                'candidate_message' => 'Please bring an identity document.',
+            ])
             ->assertOk()
-            ->assertJsonPath('data.interview_type', 'Final Team Interview')
-            ->assertJsonPath('data.interview_mode', 'in_person')
-            ->assertJsonPath('data.location', 'Damascus HQ');
+            ->assertJsonPath('data.interview_type', 'final')
+            ->assertJsonPath('data.candidate_message', 'Please bring an identity document.');
 
         $this->withToken($this->tokenFor($employer))
             ->deleteJson("/api/v1/interviews/{$interviewId}")
             ->assertOk()
             ->assertJsonPath('data', null);
 
-        $this->assertDatabaseMissing('interviews', [
+        $this->assertDatabaseHas('interviews', [
             'id' => $interviewId,
+            'status' => 'cancelled',
         ]);
 
         $this->assertDatabaseHas('audit_logs', [
@@ -145,7 +146,7 @@ class InterviewModuleTest extends TestCase
     {
         [$employer, $application] = $this->employerApplicationScenario('test_completed');
 
-        $interviewId = $this->scheduleInterview($employer, $application);
+        $interviewId = $this->scheduleConfirmedStartedInterview($employer, $application);
 
         $this->withToken($this->tokenFor($employer))
             ->postJson("/api/v1/interviews/{$interviewId}/complete", [
@@ -160,24 +161,26 @@ class InterviewModuleTest extends TestCase
             ->putJson("/api/v1/interviews/{$interviewId}", $this->interviewPayload([
                 'interview_type' => 'Rescheduled Interview',
             ]))
-            ->assertStatus(422)
-            ->assertJsonValidationErrors(['interview_id']);
+            ->assertStatus(409)
+            ->assertJsonPath('code', 'INTERVIEW_INVALID_STATUS_TRANSITION');
 
         $this->withToken($this->tokenFor($employer))
             ->deleteJson("/api/v1/interviews/{$interviewId}")
-            ->assertStatus(422)
-            ->assertJsonValidationErrors(['interview_id']);
+            ->assertStatus(409)
+            ->assertJsonPath('code', 'INTERVIEW_CANCELLATION_NOT_ALLOWED');
     }
 
     public function test_interview_must_be_completed_before_evaluation_and_cannot_be_evaluated_twice(): void
     {
         [$employer, $application] = $this->employerApplicationScenario('shortlisted');
-        $interviewId = $this->scheduleInterview($employer, $application);
+        $interviewId = $this->scheduleInterview($employer, $application, ['type' => 'final']);
 
         $this->withToken($this->tokenFor($employer))
             ->postJson("/api/v1/interviews/{$interviewId}/evaluate", $this->evaluationPayload())
-            ->assertStatus(422)
-            ->assertJsonValidationErrors(['interview_id']);
+            ->assertStatus(409)
+            ->assertJsonPath('code', 'INTERVIEW_EVALUATION_NOT_ALLOWED');
+
+        $this->confirmAndStartInterview($employer, $application, $interviewId);
 
         $this->withToken($this->tokenFor($employer))
             ->postJson("/api/v1/interviews/{$interviewId}/complete", [
@@ -216,15 +219,15 @@ class InterviewModuleTest extends TestCase
             ->postJson("/api/v1/interviews/{$interviewId}/evaluate", $this->evaluationPayload([
                 'recommendation' => 'hold',
             ]))
-            ->assertStatus(422)
-            ->assertJsonValidationErrors(['interview_id']);
+            ->assertStatus(409)
+            ->assertJsonPath('code', 'INTERVIEW_EVALUATION_NOT_ALLOWED');
     }
 
     public function test_multiple_sequential_interviews_are_supported_and_statuses_follow_the_workflow(): void
     {
         [$employer, $application] = $this->employerApplicationScenario('under_review');
 
-        $firstInterviewId = $this->scheduleInterview($employer, $application);
+        $firstInterviewId = $this->scheduleConfirmedStartedInterview($employer, $application);
 
         $this->withToken($this->tokenFor($employer))
             ->postJson("/api/v1/interviews/{$firstInterviewId}/complete", [
@@ -238,8 +241,9 @@ class InterviewModuleTest extends TestCase
         ]);
 
         $secondInterviewId = $this->scheduleInterview($employer, $application, [
-            'interview_type' => 'Leadership Interview',
-            'scheduled_at' => now()->addDays(2)->toISOString(),
+            'type' => 'hr',
+            'scheduled_start_at' => now()->addDays(2)->toISOString(),
+            'scheduled_end_at' => now()->addDays(2)->addHour()->toISOString(),
         ]);
 
         $this->assertDatabaseHas('job_applications', [
@@ -257,9 +261,12 @@ class InterviewModuleTest extends TestCase
         ]);
 
         $thirdInterviewId = $this->scheduleInterview($employer, $application, [
-            'interview_type' => 'Executive Interview',
-            'scheduled_at' => now()->addDays(4)->toISOString(),
+            'type' => 'final',
+            'scheduled_start_at' => now()->addDays(4)->toISOString(),
+            'scheduled_end_at' => now()->addDays(4)->addHour()->toISOString(),
         ]);
+
+        $this->confirmAndStartInterview($employer, $application, $thirdInterviewId);
 
         $this->withToken($this->tokenFor($employer))
             ->postJson("/api/v1/interviews/{$thirdInterviewId}/complete", [
@@ -322,6 +329,31 @@ class InterviewModuleTest extends TestCase
         return (int) $response->json('data.id');
     }
 
+    private function scheduleConfirmedStartedInterview(User $employer, JobApplication $application, array $overrides = []): int
+    {
+        $interviewId = $this->scheduleInterview($employer, $application, $overrides);
+        $this->confirmAndStartInterview($employer, $application, $interviewId);
+
+        return $interviewId;
+    }
+
+    private function confirmAndStartInterview(User $employer, JobApplication $application, int $interviewId): void
+    {
+        $candidate = $application->jobSeekerProfile->user;
+        $this->withToken($this->tokenFor($candidate))
+            ->postJson("/api/v1/interviews/{$interviewId}/confirm")
+            ->assertOk()
+            ->assertJsonPath('data.status', 'confirmed');
+
+        Carbon::setTestNow(Interview::findOrFail($interviewId)->scheduled_at);
+        $this->withToken($this->tokenFor($employer))
+            ->putJson("/api/v1/interviews/{$interviewId}/attendance", [
+                'candidate_status' => 'present',
+                'interviewer_status' => 'present',
+                'note' => 'Both parties joined.',
+            ])->assertOk();
+    }
+
     /**
      * @return array{0: User, 1: JobApplication}
      */
@@ -346,13 +378,12 @@ class InterviewModuleTest extends TestCase
     private function interviewPayload(array $overrides = []): array
     {
         return array_merge([
-            'interview_type' => 'Technical Interview',
-            'scheduled_at' => now()->addDay()->toISOString(),
-            'duration_minutes' => 60,
-            'interview_mode' => 'video',
-            'location' => 'Remote',
+            'type' => 'technical',
+            'scheduled_start_at' => now()->addDay()->toISOString(),
+            'scheduled_end_at' => now()->addDay()->addHour()->toISOString(),
+            'mode' => 'online',
             'meeting_link' => 'https://meet.example.com/interview-room',
-            'note' => 'Focus on Laravel architecture and APIs.',
+            'internal_note' => 'Focus on Laravel architecture and APIs.',
         ], $overrides);
     }
 
