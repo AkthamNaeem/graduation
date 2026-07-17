@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class TestAnswer extends Model
 {
@@ -40,5 +41,10 @@ class TestAnswer extends Model
     public function selectedOptions(): BelongsToMany
     {
         return $this->belongsToMany(TestOption::class, 'test_answer_options')->withTimestamps();
+    }
+
+    public function grading(): HasOne
+    {
+        return $this->hasOne(TestAnswerGrading::class);
     }
 }

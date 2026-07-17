@@ -28,7 +28,7 @@ The implementation follows a service-oriented Laravel structure using Form Reque
 | 3 | CV Upload & Parsing | CV upload for PDF/DOCX, queued parsing job, raw text extraction, parsed JSON storage, confirm flow to append profile data | Partially Implemented (MVP/basic parsing) |
 | 4 | Job Posting | Employer job CRUD, public open-job listing, filters, skills attachment, publish and close workflows | Implemented |
 | 5 | Job Applications Workflow | Job applications, duplicate prevention, application statuses, transition validation, terminal states, status history | Implemented |
-| 6 | Testing Module | Test catalog model, employer test assignment, candidate start/submit, employer evaluation, status updates | Implemented |
+| 6 | Testing Module | Company-owned immutable tests, structured questions/options, normalized draft answers, candidate start/submit, employer evaluation, status updates | Partially Implemented (grading, deadlines, and result breakdown remain) |
 | 7 | Interview Module | Interview scheduling, listing, update/delete before completion, completion, evaluation items, status updates | Implemented |
 | 8 | AI Matching | Deterministic TF-IDF matching, cosine similarity, recommendations for job seekers, ranked candidates for employers, score breakdowns | Partially Implemented (IR-based matching, not deep AI) |
 | 9 | Notifications + Admin APIs | In-app notification table, workflow event/listener dispatch, notification endpoints, admin APIs for users, companies, skills, and tests | Implemented |
@@ -184,7 +184,7 @@ Main relationships: belongs to `job_applications`, `tests`, and assigning `users
 
 Purpose: Stores candidate test attempts and employer evaluation results.
 
-Key columns: `id`, `application_test_assignment_id`, `answers`, `started_at`, `submitted_at`, `score`, `feedback`, `evaluated_by_user_id`, `evaluated_at`, timestamps.
+Key columns: `id`, `application_test_assignment_id`, legacy nullable `answers` JSON, `started_at`, `submitted_at`, `score`, `feedback`, `evaluated_by_user_id`, `evaluated_at`, timestamps. New answer writes use `test_answers` and `test_answer_options`, not this legacy JSON column.
 
 Main relationships: belongs to `application_test_assignments`; belongs to evaluating `users`; unique `application_test_assignment_id` enforces one attempt per assignment.
 
@@ -469,7 +469,7 @@ Public listing always returns only jobs with `status = open`; draft and closed j
 | GET | `/api/v1/applications/{jobApplication}/tests` | Required | Owning employer | List test assignments for application | None | Collection of `ApplicationTestAssignmentResource` |
 | GET | `/api/v1/my/tests` | Required | Job seeker | List own assigned tests | Optional `per_page` from 1 to 100 | Paginated `ApplicationTestAssignmentResource` collection with state |
 | POST | `/api/v1/tests/{applicationTestAssignment}/start` | Required | Assigned job seeker | Start test attempt | None | Created `TestAttemptResource` |
-| POST | `/api/v1/tests/{applicationTestAssignment}/submit` | Required | Assigned job seeker | Submit test answers | `answers` array | Updated `TestAttemptResource` with `submitted_at` |
+| POST | `/api/v1/tests/{applicationTestAssignment}/submit` | Required | Assigned job seeker | Submit the current normalized attempt | `confirm: true`; transitional structured `answers` array is deprecated | Updated `TestAttemptResource` with normalized answers and `submitted_at` |
 | POST | `/api/v1/tests/{testAttempt}/evaluate` | Required | Owning employer | Evaluate submitted test attempt | `score`, optional `feedback` | Updated `TestAttemptResource`; application moves to `test_completed` |
 
 ### Interviews
@@ -849,7 +849,7 @@ Main Form Request classes:
 - `IndexTestCatalogRequest` / `ShowTestCatalogRequest` / `StoreTestCatalogRequest` / `UpdateTestCatalogRequest` / `DeleteTestCatalogRequest`: validate test catalog access and fields, including positive duration/max score and `passing_score <= max_score`.
 - `ListMyTestsRequest`: validates assigned test list pagination.
 - `AssignTestRequest`: validates active `test_id` and optional note.
-- `SubmitTestAttemptRequest`: validates `answers` array.
+- `SubmitTestAttemptRequest`: prefers `confirm: true`; temporarily accepts a structured `answers` array that is normalized through `TestAnswerService` and never written to legacy JSON.
 - `EvaluateTestAttemptRequest`: validates numeric score within the test's max score and optional feedback.
 - `ListMyInterviewsRequest`: validates job seeker interview list pagination.
 - `CreateInterviewRequest`: validates future `scheduled_at`, interview mode, meeting link, duration, notes.
@@ -1259,16 +1259,96 @@ Implemented on 2026-07-17 on top of the company-owned immutable test structure.
 ### Submit and Legacy Compatibility
 
 - Final submit uses the existing endpoint and validates every required question against normalized answers before setting `submitted_at`.
+- Final submit defensively revalidates stored answer shape, choice cardinality, and option-to-question ownership so malformed pivot data cannot bypass the draft API rules.
 - Missing required questions return HTTP 422 with `unanswered_question_ids`.
-- Successful submit and the `test_completed` workflow transition/history record run in the same transaction. No automatic score is calculated and no score is stored on `JobApplication`.
+- Successful submit, objective auto-grading, and the `test_completed` workflow transition/history record run in the same transaction. No score is stored on `JobApplication`.
 - Submitted attempts reject further answer mutation and repeat submit with HTTP 409.
 - The legacy nullable `test_attempts.answers` JSON column remains for database compatibility, but new writes no longer use it and API resources return only normalized answers.
 - A transitional structured `answers` array on submit is normalized through `TestAnswerService`. Unstructured legacy maps are accepted only for legacy tests with no question definitions because they cannot be backfilled safely.
 
 ### Remaining Testing Module Work
 
-- Objective auto-grading and an explainable score breakdown.
 - Answer-level manual grading.
 - Assignment deadline enforcement.
-- Passing-score decision policy and result breakdown APIs.
+- Final result completion after subjective grading and reviewer notes.
 - Snapshot/versioning only if strict test immutability is relaxed later.
+
+## 23. Objective Auto-Grading and Explainable TestAttempt Results
+
+Implemented as a submit-time extension of normalized `TestAnswer` persistence. The grading system is advisory and never accepts or rejects an application.
+
+### Schema and Status
+
+- A new migration adds `objective_score`, `objective_max_score`, `manual_score`, `manual_max_score`, `total_score`, `max_score`, `percentage`, `grading_status`, `auto_graded_at`, and `manually_graded_at` to `test_attempts`.
+- `TestAttemptGradingStatus` defines `pending`, `auto_graded`, `manual_grading_required`, and `fully_graded`. The subsequent manual-grading increment documented in section 24 owns the transition to `fully_graded` for mixed tests.
+- `test_answer_gradings` stores one grading row per actual answer, constrained by `unique(test_answer_id)`. Automatic rows have no grader identity and contain correctness, awarded/max points, a concise explanation, and grading time.
+- Optional unanswered objective questions do not create fake answer or grading rows. Result breakdowns synthesize their zero-point outcome from the immutable question definition.
+- The legacy `test_attempts.score`, `feedback`, `evaluated_by_user_id`, and `evaluated_at` fields remain the backward-compatible attempt-level employer evaluation. They do not overwrite automatic totals and are not interpreted as answer-level manual grading.
+
+### Calculation Policy
+
+- `single_choice` and `true_false` award all question points only when the one selected option matches the correct option; otherwise they award zero.
+- `multiple_choice` uses order-independent exact-set matching. Missing a correct option, adding an incorrect option, or selecting only a subset awards zero; partial credit is not implemented.
+- Optional objective questions always contribute their points to `objective_max_score` and receive zero if unanswered.
+- Subjective question points contribute to `manual_max_score`; `manual_score`, `total_score`, and `percentage` remain null until all existing subjective answers are manually graded.
+- Objective-only attempts set `total_score = objective_score`, `max_score = objective_max_score`, and `grading_status = auto_graded`. Percentage is calculated only when the objective maximum is greater than zero.
+- Mixed attempts use `manual_grading_required`, expose only the objective subtotal, and do not claim a final percentage.
+- `tests.passing_score` is an absolute-points threshold because catalog validation constrains it to `tests.max_score`. `is_passing_score_met` is returned only for an `auto_graded` or `fully_graded` result with a non-zero derived maximum. It is informational and never changes workflow state.
+
+### Atomic Submit and Audit
+
+- The existing submit endpoint validates ownership, required answers, stored answer shape, and option hierarchy before setting `submitted_at` and invoking `TestGradingService`.
+- Grading rows, attempt totals, application transition/history, and submit state share the outer database transaction. A grading or workflow failure rolls all of them back.
+- `TestSubmitted` remains registered with `DB::afterCommit`, so a rolled-back submit produces no submit notification.
+- Repeat submit returns HTTP 409 before grading and cannot duplicate grading rows, history, or notifications.
+- One safe `test_attempt.auto_graded` audit record contains totals/status/timestamp only; answer text, correct option sets, files, and private paths are excluded.
+
+### Result API and Privacy
+
+- `GET /api/v1/test-attempts/{testAttempt}/result` returns a candidate-safe summary to the attempt owner and a detailed question breakdown to the owning employer or an administrator.
+- Candidate results omit breakdown correctness, correct options, explanations, reviewer identity, and private file information.
+- Employer/admin breakdowns include question text/type, answered state, awarded/max points, selected options, correct options, automatic explanations, and subjective manual grading details. Candidate responses remain summary-only.
+- Cross-candidate and cross-company access is denied through `TestAttemptPolicy`; an unsubmitted attempt returns HTTP 409.
+
+### Remaining Work
+
+- Assignment deadlines, a retake policy if required, and any future explicit partial-credit policy.
+
+## 24. Answer-Level Manual Grading and Final Mixed Results
+
+Implemented on 2026-07-17 on top of normalized answers and objective auto-grading. Manual grading remains advisory and does not accept or reject an application.
+
+### APIs and Authorization
+
+- Added single-answer `PUT`/`PATCH`/`DELETE` grading endpoints and an atomic bulk grading endpoint under `/api/v1/test-attempts/{testAttempt}`.
+- Only an administrator or an employer whose company owns the related application can grade. Candidates cannot grade, and cross-company, cross-attempt, and cross-test identifiers are rejected.
+- Attempts must already be submitted. Automatic grading rows cannot be overridden or deleted through manual grading APIs.
+
+### Manual Rules and Progress
+
+- Manual grading applies only to `short_text`, `long_text`, and `file_upload` answers. Awarded points must be between zero and the immutable question maximum.
+- Reviewer notes are optional, trimmed, limited to 5,000 characters, and exposed only to authorized employer/admin result views.
+- Bulk grading validates the entire payload before writing. Duplicate questions, objective questions, foreign questions, missing answers, or invalid point values roll back the whole request.
+- Employer/admin results expose manual progress counts and per-answer reviewer details. Candidate results omit notes, grader identity, correctness, explanations, and answer-level breakdowns.
+
+### Finalization and Optional Questions
+
+- While an existing subjective answer remains ungraded, `manual_score`, `total_score`, `percentage`, and `manually_graded_at` stay null and the attempt remains `manual_grading_required`.
+- After every existing subjective answer is graded, the attempt becomes `fully_graded`; manual, objective, total, maximum, percentage, passing-threshold outcome, and completion timestamp are recalculated from grading rows and immutable question points.
+- Optional unanswered subjective questions require no grading, create no fake answer/grading rows, contribute zero awarded points, and still contribute their configured points to the maximum score.
+- Deleting a manual grade reopens the attempt as `manual_grading_required` and clears final totals until grading is complete again. Zero-maximum tests keep percentage and passing outcome null.
+
+### Transactions, Audit, Notifications, and Legacy Evaluation
+
+- Grading writes lock the attempt and affected rows inside database transactions, preventing concurrent partial totals. Bulk updates and recalculation commit or roll back together.
+- Safe audit events record create/update/delete actions and the `fully_graded` transition with identifiers, status changes, and numeric before/after values. They exclude answer content, reviewer-note text, correct-option sets, and private file paths.
+- No notification is sent for each grading mutation or for finalization in this increment, avoiding grading noise until a dedicated result-notification product policy is defined.
+- The legacy attempt-level evaluation endpoint remains available and does not overwrite objective/manual totals or per-answer grading rows.
+
+### Deliberately Remaining Outside This Increment
+
+- Assignment deadline enforcement.
+- An explicit result-ready notification policy.
+- Result decision automation; no automatic application acceptance/rejection is performed.
+- Retake policy and partial-credit policy if later required.
+- Snapshot/versioning only if strict test-definition immutability is relaxed.

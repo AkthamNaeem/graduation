@@ -19,4 +19,9 @@ enum TestQuestionType: string
             self::TRUE_FALSE,
         ], true);
     }
+
+    public function requiresManualGrading(): bool
+    {
+        return ! $this->acceptsOptions();
+    }
 }

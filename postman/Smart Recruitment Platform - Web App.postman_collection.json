@@ -1202,7 +1202,7 @@
                                                 ]
                                   },
                                   {
-                                      "name":  "Application Tests",
+                                      "name":  "View Candidate Submission",
                                       "request":  {
                                                       "auth":  {
                                                                    "type":  "bearer",
@@ -1215,7 +1215,7 @@
                                                                               ]
                                                                },
                                                       "method":  "GET",
-                                                      "description":  "Web App / Employer Dashboard: list tests assigned to an application.",
+                                                      "description":  "Web App / Employer Dashboard: view the candidate test submission and its normalized attempt answers through the existing application tests resource.",
                                                       "url":  "{{base_url}}/applications/{{application_id}}/tests"
                                                   },
                                       "event":  [
@@ -1278,6 +1278,35 @@
                                   {
                                       "name": "View Candidate Answers",
                                       "request": {"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"GET","description":"Employer reads normalized answers only for an application owned by the employer's company.","url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers"}
+                                  },
+                                  {
+                                      "name": "View Attempt Result",
+                                      "request": {"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"GET","description":"Detailed own-company attempt result with explainable breakdown.","url":"{{base_url}}/test-attempts/{{test_attempt_id}}/result"}
+                                  },
+                                  {
+                                      "name": "View Objective Breakdown",
+                                      "request": {"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"GET","description":"Objective-only example: exact-set grading, final percentage, and an informational absolute-points passing indicator.","url":"{{base_url}}/test-attempts/{{test_attempt_id}}/result"},
+                                      "response": [{"name":"Objective result - passing score met","status":"OK","code":200,"_postman_previewlanguage":"json","header":[{"key":"Content-Type","value":"application/json"}],"body":"{\n  \"success\": true,\n  \"data\": {\n    \"grading_status\": \"auto_graded\",\n    \"objective_score\": \"8.00\",\n    \"objective_max_score\": \"10.00\",\n    \"total_score\": \"8.00\",\n    \"max_score\": \"10.00\",\n    \"percentage\": \"80.00\",\n    \"is_passing_score_met\": true,\n    \"breakdown\": [{\"question_id\": 11,\"is_correct\": true,\"awarded_points\": \"2.00\",\"max_points\": \"2.00\"}]\n  }\n}"}]
+                                  },
+                                  {
+                                      "name": "View Mixed Result Requiring Manual Grading",
+                                      "request": {"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"GET","description":"Mixed example: objective subtotal is available while total, percentage, and passing indicator remain pending.","url":"{{base_url}}/test-attempts/{{test_attempt_id}}/result"},
+                                      "response": [{"name":"Mixed result - passing score pending","status":"OK","code":200,"_postman_previewlanguage":"json","header":[{"key":"Content-Type","value":"application/json"}],"body":"{\n  \"success\": true,\n  \"data\": {\n    \"grading_status\": \"manual_grading_required\",\n    \"objective_score\": \"7.00\",\n    \"objective_max_score\": \"10.00\",\n    \"manual_score\": null,\n    \"manual_max_score\": \"10.00\",\n    \"total_score\": null,\n    \"max_score\": \"20.00\",\n    \"percentage\": null,\n    \"is_passing_score_met\": null\n  }\n}"}]
+                                  },
+                                  {
+                                      "name": "Manual Grading",
+                                      "item": [
+                                          {"name":"Grade Short Text Answer","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/{{subjective_question_id}}/grading","body":{"mode":"raw","raw":"{\n  \"awarded_points\": 4,\n  \"reviewer_note\": \"Clear and concise answer.\"\n}","options":{"raw":{"language":"json"}}}}},
+                                          {"name":"Grade Long Text Answer","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/{{subjective_question_id}}/grading","body":{"mode":"raw","raw":"{\n  \"awarded_points\": 7.5,\n  \"reviewer_note\": \"Good explanation with one missing edge case.\"\n}","options":{"raw":{"language":"json"}}}}},
+                                          {"name":"Grade File Answer","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/{{subjective_question_id}}/grading","body":{"mode":"raw","raw":"{\n  \"awarded_points\": 8,\n  \"reviewer_note\": \"The submitted solution works but lacks tests.\"\n}","options":{"raw":{"language":"json"}}}}},
+                                          {"name":"Update Manual Grade","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"PATCH","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/{{subjective_question_id}}/grading","body":{"mode":"raw","raw":"{\n  \"awarded_points\": 8.5,\n  \"reviewer_note\": \"Revised after review.\"\n}","options":{"raw":{"language":"json"}}}}},
+                                          {"name":"Delete Manual Grade","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"DELETE","url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/{{subjective_question_id}}/grading"}},
+                                          {"name":"Bulk Manual Grading","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/test-attempts/{{test_attempt_id}}/gradings/bulk","body":{"mode":"raw","raw":"{\n  \"gradings\": [\n    {\"question_id\": {{subjective_question_id}}, \"awarded_points\": 4, \"reviewer_note\": \"Clear answer.\"}\n  ]\n}","options":{"raw":{"language":"json"}}}}},
+                                          {"name":"View Manual Grading Progress","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"GET","url":"{{base_url}}/test-attempts/{{test_attempt_id}}/result","description":"Shows total, graded, remaining, and complete manual-grading progress."}},
+                                          {"name":"View Fully Graded Result","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"GET","url":"{{base_url}}/test-attempts/{{test_attempt_id}}/result","description":"Shows finalized objective plus manual totals and detailed reviewer breakdown."}},
+                                          {"name":"Invalid Objective Manual Grade","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/{{test_question_id}}/grading","body":{"mode":"raw","raw":"{\n  \"awarded_points\": 0\n}","options":{"raw":{"language":"json"}}}}},
+                                          {"name":"Invalid Points Above Maximum","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/{{subjective_question_id}}/grading","body":{"mode":"raw","raw":"{\n  \"awarded_points\": 9999\n}","options":{"raw":{"language":"json"}}}}}
+                                      ]
                                   },
                                   {
                                       "name": "Download Candidate Answer File",

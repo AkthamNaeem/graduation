@@ -5,12 +5,15 @@ namespace App\Http\Controllers\Api\V1\Test;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Test\EvaluateTestAttemptRequest;
 use App\Http\Requests\Api\V1\Test\StartTestAttemptRequest;
+use App\Http\Requests\Api\V1\Test\ShowTestAttemptResultRequest;
 use App\Http\Requests\Api\V1\Test\SubmitTestAttemptRequest;
 use App\Http\Resources\Api\V1\TestAttemptResource;
+use App\Http\Resources\Api\V1\TestAttemptResultResource;
 use App\Models\ApplicationTestAssignment;
 use App\Models\TestAttempt;
 use App\Models\User;
 use App\Services\TestService;
+use App\Services\TestGradingService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,6 +23,7 @@ class TestAttemptController extends Controller
 {
     public function __construct(
         private readonly TestService $testService,
+        private readonly TestGradingService $testGradingService,
     ) {
     }
 
@@ -60,6 +64,14 @@ class TestAttemptController extends Controller
                 ),
             ),
             message: 'Test attempt evaluated successfully.',
+        );
+    }
+
+    public function result(ShowTestAttemptResultRequest $request, TestAttempt $testAttempt): JsonResponse
+    {
+        return ApiResponse::success(
+            new TestAttemptResultResource($this->testGradingService->getResult($testAttempt)),
+            'Test attempt result retrieved successfully.',
         );
     }
 

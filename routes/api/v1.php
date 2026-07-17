@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\V1\Test\TestAnswerController;
 use App\Http\Controllers\Api\V1\Test\TestAttemptController;
 use App\Http\Controllers\Api\V1\Test\TestCatalogController;
 use App\Http\Controllers\Api\V1\Test\TestQuestionController;
+use App\Http\Controllers\Api\V1\Test\TestManualGradingController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')
@@ -168,6 +169,11 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::post('tests/{applicationTestAssignment}/start', [TestAttemptController::class, 'start'])->name('tests.start');
     Route::post('tests/{applicationTestAssignment}/submit', [TestAttemptController::class, 'submit'])->name('tests.submit');
     Route::get('test-attempts/{testAttempt}/answers', [TestAnswerController::class, 'index'])->name('test-attempts.answers.index');
+    Route::get('test-attempts/{testAttempt}/result', [TestAttemptController::class, 'result'])->name('test-attempts.result');
+    Route::post('test-attempts/{testAttempt}/gradings/bulk', [TestManualGradingController::class, 'bulk'])->name('test-attempts.gradings.bulk');
+    Route::put('test-attempts/{testAttempt}/answers/{question}/grading', [TestManualGradingController::class, 'upsert'])->name('test-attempts.answers.grading.update');
+    Route::patch('test-attempts/{testAttempt}/answers/{question}/grading', [TestManualGradingController::class, 'upsert'])->name('test-attempts.answers.grading.patch');
+    Route::delete('test-attempts/{testAttempt}/answers/{question}/grading', [TestManualGradingController::class, 'destroy'])->name('test-attempts.answers.grading.destroy');
     Route::post('test-attempts/{testAttempt}/answers/bulk', [TestAnswerController::class, 'bulk'])->name('test-attempts.answers.bulk');
     Route::post('test-attempts/{testAttempt}/answers/{question}/file', [TestAnswerController::class, 'upsert'])->name('test-attempts.answers.file');
     Route::get('test-attempts/{testAttempt}/answers/{question}/file', [TestAnswerController::class, 'download'])->name('test-attempts.answers.download');

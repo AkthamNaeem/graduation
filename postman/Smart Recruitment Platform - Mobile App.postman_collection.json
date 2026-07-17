@@ -1107,7 +1107,7 @@
           ]
         },
         {
-          "name": "Start Test Attempt",
+          "name": "Start Attempt",
           "request": {
             "method": "POST",
             "description": "Mobile App / Job Seeker: start an assigned test attempt.",
@@ -1135,7 +1135,7 @@
         {"name":"Bulk Save Answers","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"description":"Atomic upsert; file questions are excluded.","url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/bulk","body":{"mode":"raw","raw":"{\n  \"answers\": [\n    {\"question_id\": {{test_question_id}}, \"answer_text\": \"Saved draft\"}\n  ]\n}","options":{"raw":{"language":"json"}}}}},
         {"name":"Download Own Answer File","request":{"method":"GET","description":"Authorized private download; no storage path is exposed.","url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/{{test_question_id}}/file"}},
         {
-          "name": "Submit Test Attempt",
+          "name": "Submit Attempt",
           "request": {
             "method": "POST",
             "header": [
@@ -1165,6 +1165,32 @@
                   "pm.test('submit response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404, 409, 422]));"
                 ]
               }
+            }
+          ]
+        },
+        {
+          "name": "View Safe Test Result",
+          "request": {
+            "method": "GET",
+            "description": "Candidate-safe summary only; reviewer notes, graders, correct options, and per-question correctness are omitted.",
+            "url": "{{base_url}}/test-attempts/{{test_attempt_id}}/result"
+          },
+          "response": [
+            {
+              "name": "Manual grading required",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{"key":"Content-Type","value":"application/json"}],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"grading_status\": \"manual_grading_required\",\n    \"objective_score\": \"8.00\",\n    \"objective_max_score\": \"10.00\",\n    \"manual_score\": null,\n    \"manual_max_score\": \"10.00\",\n    \"total_score\": null,\n    \"max_score\": \"20.00\",\n    \"percentage\": null,\n    \"is_passing_score_met\": null\n  }\n}"
+            },
+            {
+              "name": "Fully graded",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [{"key":"Content-Type","value":"application/json"}],
+              "body": "{\n  \"success\": true,\n  \"data\": {\n    \"grading_status\": \"fully_graded\",\n    \"objective_score\": \"8.00\",\n    \"objective_max_score\": \"10.00\",\n    \"manual_score\": \"7.00\",\n    \"manual_max_score\": \"10.00\",\n    \"total_score\": \"15.00\",\n    \"max_score\": \"20.00\",\n    \"percentage\": \"75.00\",\n    \"is_passing_score_met\": true\n  }\n}"
             }
           ]
         }

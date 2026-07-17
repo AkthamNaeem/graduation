@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\TestAttemptGradingStatus;
 use App\Enums\UserRole;
 use App\Events\TestAssigned;
 use App\Events\TestEvaluated;
@@ -28,6 +29,7 @@ class TestService
         private readonly ApplicationWorkflowService $applicationWorkflowService,
         private readonly AuditLogService $auditLogService,
         private readonly TestAnswerService $testAnswerService,
+        private readonly TestGradingService $testGradingService,
     ) {}
 
     /**
@@ -237,6 +239,34 @@ class TestService
             $this->testAnswerService->validateRequiredAnswers($attempt);
 
             $attempt->forceFill(['submitted_at' => now()])->save();
+            $this->testGradingService->gradeSubmittedAttempt($attempt);
+
+            $this->auditLogService->record(
+                'test_attempt.auto_graded',
+                $actor,
+                TestAttempt::class,
+                $attempt->id,
+                null,
+                $attempt->only([
+                    'objective_score',
+                    'objective_max_score',
+                    'grading_status',
+                    'auto_graded_at',
+                ]),
+                ['attempt_id' => $attempt->id],
+            );
+
+            if ($attempt->grading_status === TestAttemptGradingStatus::FULLY_GRADED) {
+                $this->auditLogService->record(
+                    'test_attempt.fully_graded',
+                    $actor,
+                    TestAttempt::class,
+                    $attempt->id,
+                    ['grading_status' => TestAttemptGradingStatus::PENDING->value],
+                    ['grading_status' => TestAttemptGradingStatus::FULLY_GRADED->value, 'total_score' => $attempt->total_score],
+                    ['attempt_id' => $attempt->id, 'manual_grading_required' => false],
+                );
+            }
 
             $jobApplication = $lockedAssignment->jobApplication;
             if ($jobApplication->applicationStatus?->slug !== self::STATUS_TEST_COMPLETED) {
@@ -346,6 +376,7 @@ class TestService
             'testAttempt.evaluatedBy',
             'testAttempt.testAnswers.question',
             'testAttempt.testAnswers.selectedOptions',
+            'testAttempt.testAnswers.grading',
         ];
 
         if ($includeApplicationContext) {
@@ -371,6 +402,7 @@ class TestService
             'evaluatedBy',
             'testAnswers.question',
             'testAnswers.selectedOptions',
+            'testAnswers.grading',
             'applicationTestAssignment.test',
             'applicationTestAssignment.assignedBy',
             'applicationTestAssignment.jobApplication.jobPosting.company',

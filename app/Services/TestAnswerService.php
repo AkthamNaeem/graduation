@@ -201,6 +201,21 @@ class TestAnswerService
         if ($missing !== []) {
             throw ValidationException::withMessages(['unanswered_question_ids' => $missing]);
         }
+
+        $questions = $attempt->applicationTestAssignment->test->questions->keyBy('id');
+        $invalid = $attempt->testAnswers
+            ->filter(function (TestAnswer $answer) use ($questions): bool {
+                $question = $questions->get($answer->test_question_id);
+
+                return ! $question instanceof TestQuestion || ! $this->isComplete($question, $answer);
+            })
+            ->pluck('test_question_id')
+            ->values()
+            ->all();
+
+        if ($invalid !== []) {
+            throw ValidationException::withMessages(['invalid_answer_question_ids' => $invalid]);
+        }
     }
 
     public function importLegacyPayload(TestAttempt $attempt, array $answers): void
@@ -277,13 +292,35 @@ class TestAnswerService
     private function isComplete(TestQuestion $question, TestAnswer $answer): bool
     {
         if ($question->question_type->acceptsOptions()) {
-            return $answer->selectedOptions->isNotEmpty();
+            $optionCount = $answer->selectedOptions->count();
+            $expectedCountIsValid = $question->question_type === TestQuestionType::MULTIPLE_CHOICE
+                ? $optionCount >= 1
+                : $optionCount === 1;
+
+            return $answer->answer_text === null
+                && $answer->file_path === null
+                && $expectedCountIsValid
+                && $answer->selectedOptions->every(
+                    fn ($option): bool => $option->test_question_id === $question->id,
+                );
         }
         if (in_array($question->question_type, [TestQuestionType::SHORT_TEXT, TestQuestionType::LONG_TEXT], true)) {
-            return trim((string) $answer->answer_text) !== '';
+            $text = trim((string) $answer->answer_text);
+            $max = $question->question_type === TestQuestionType::SHORT_TEXT ? 1000 : 10000;
+
+            return $answer->selectedOptions->isEmpty()
+                && $answer->file_path === null
+                && $text !== ''
+                && mb_strlen($text) <= $max;
         }
 
-        return $answer->file_path !== null
+        return $answer->selectedOptions->isEmpty()
+            && $answer->answer_text === null
+            && $answer->file_path !== null
+            && $answer->file_disk !== null
+            && $answer->file_original_name !== null
+            && $answer->file_mime_type !== null
+            && $answer->file_size !== null
             && Storage::disk($answer->file_disk ?: self::FILE_DISK)->exists($answer->file_path);
     }
 

@@ -32,4 +32,20 @@ trait AuthorizesTestAnswers
         return $attempt instanceof TestAttempt
             && ($this->authenticatedUser()?->can('downloadAnswer', $attempt) ?? false);
     }
+
+    protected function canViewResult(): bool
+    {
+        $attempt = $this->route('testAttempt');
+
+        return $attempt instanceof TestAttempt
+            && ($this->authenticatedUser()?->can('viewResult', $attempt) ?? false);
+    }
+
+    protected function canManageManualGradings(): bool
+    {
+        $attempt = $this->route('testAttempt');
+
+        return $attempt instanceof TestAttempt
+            && ($this->authenticatedUser()?->can('manageManualGradings', $attempt) ?? false);
+    }
 }

@@ -220,6 +220,30 @@ class TestAnswerModuleTest extends TestCase
         $this->assertFalse(\Schema::hasColumn('job_applications', 'score'));
     }
 
+    public function test_submit_revalidates_persisted_option_hierarchy_and_cardinality(): void
+    {
+        $scenario = $this->scenario();
+        $single = $this->question($scenario['test'], 'single_choice', 1, false);
+        $other = $this->question($scenario['test'], 'single_choice', 2, false);
+        $data = $this->assignAndStart($scenario);
+        $answer = TestAnswer::create([
+            'test_attempt_id' => $data['attempt']->id,
+            'test_question_id' => $single->id,
+        ]);
+        $answer->selectedOptions()->attach([
+            $single->options[0]->id,
+            $other->options[0]->id,
+        ]);
+
+        $this->withToken($this->tokenFor($scenario['candidate']))
+            ->postJson("/api/v1/tests/{$data['assignment']->id}/submit", ['confirm' => true])
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.invalid_answer_question_ids', [$single->id]);
+
+        $this->assertNull($data['attempt']->fresh()->submitted_at);
+        $this->assertSame('test_pending', $scenario['application']->fresh()->applicationStatus->slug);
+    }
+
     public function test_answers_and_submit_are_immutable_after_submission(): void
     {
         $scenario = $this->scenario();
