@@ -31,6 +31,7 @@ class TestService
         private readonly TestAnswerService $testAnswerService,
         private readonly TestGradingService $testGradingService,
         private readonly TestAssignmentDeadlineService $testAssignmentDeadlineService,
+        private readonly TestAttemptTimingService $testAttemptTimingService,
         private readonly TestRetakeService $testRetakeService,
         private readonly CompanyRecruitmentAccessService $companyAccessService,
     ) {}
@@ -208,6 +209,7 @@ class TestService
                     'id',
                     'application_test_assignment_id',
                     'started_at',
+                    'effective_deadline_at',
                     'submitted_at',
                     'grading_status',
                 ]),
@@ -240,27 +242,48 @@ class TestService
 
     public function startAttempt(User $actor, ApplicationTestAssignment $assignment): TestAttempt
     {
-        return DB::transaction(function () use ($assignment): TestAttempt {
+        return DB::transaction(function () use ($actor, $assignment): TestAttempt {
             $lockedAssignment = ApplicationTestAssignment::query()
-                ->with(['testAttempt', 'jobApplication.applicationStatus'])
+                ->with(['test', 'testAttempt.applicationTestAssignment.test', 'jobApplication.applicationStatus'])
                 ->lockForUpdate()
                 ->findOrFail($assignment->id);
 
             $this->companyAccessService->assertRecruitmentAvailable($lockedAssignment);
-
             $this->testRetakeService->assertLatestCanStart($lockedAssignment);
-            $this->testAssignmentDeadlineService->assertCanStart($lockedAssignment);
 
             if ($lockedAssignment->testAttempt instanceof TestAttempt) {
-                throw ValidationException::withMessages([
-                    'assignment_id' => ['This test assignment has already been started.'],
-                ]);
+                return $this->loadAttempt($lockedAssignment->testAttempt, candidateSafe: true);
             }
+
+            $this->testAssignmentDeadlineService->assertCanStart($lockedAssignment);
 
             $attempt = TestAttempt::create([
                 'application_test_assignment_id' => $lockedAssignment->id,
                 'started_at' => now(),
             ]);
+
+            $effectiveDeadline = $this->testAttemptTimingService->snapshot($attempt);
+            $durationDeadline = $this->testAttemptTimingService->durationDeadline($attempt);
+
+            $this->auditLogService->record(
+                'test_attempt.started',
+                $actor,
+                TestAttempt::class,
+                $attempt->id,
+                null,
+                ['started_at' => $attempt->started_at?->toISOString(), 'effective_deadline_at' => $effectiveDeadline->toISOString()],
+                [
+                    'attempt_id' => $attempt->id,
+                    'assignment_id' => $lockedAssignment->id,
+                    'test_id' => $lockedAssignment->test_id,
+                    'started_at' => $attempt->started_at?->toISOString(),
+                    'duration_minutes' => $lockedAssignment->test->duration_minutes,
+                    'duration_deadline_at' => $durationDeadline->toISOString(),
+                    'assignment_deadline_at' => $lockedAssignment->deadline_at?->toISOString(),
+                    'effective_deadline_at' => $effectiveDeadline->toISOString(),
+                    'actor_id' => $actor->id,
+                ],
+            );
 
             return $this->loadAttempt($attempt, candidateSafe: true);
         });
@@ -274,7 +297,7 @@ class TestService
         return DB::transaction(function () use ($actor, $assignment, $answers): TestAttempt {
             $lockedAssignment = ApplicationTestAssignment::query()
                 ->with([
-                    'testAttempt',
+                    'testAttempt.applicationTestAssignment.test',
                     'test.questions',
                     'jobApplication.applicationStatus',
                 ])
@@ -480,7 +503,7 @@ class TestService
             return [
                 'testAnswers.question',
                 'testAnswers.selectedOptions',
-                'applicationTestAssignment',
+                'applicationTestAssignment.test',
             ];
         }
 

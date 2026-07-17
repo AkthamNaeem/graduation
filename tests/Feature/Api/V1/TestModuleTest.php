@@ -215,6 +215,17 @@ class TestModuleTest extends TestCase
             ])
             ->assertStatus(422)
             ->assertJsonValidationErrors(['passing_score']);
+
+        foreach ([0, -1, 1441] as $duration) {
+            $this->withToken($this->tokenFor($employer))
+                ->postJson('/api/v1/tests', [
+                    'title' => 'Invalid Duration',
+                    'duration_minutes' => $duration,
+                    'max_score' => 100,
+                ])
+                ->assertUnprocessable()
+                ->assertJsonValidationErrors(['duration_minutes']);
+        }
     }
 
     public function test_unauthorized_employer_cannot_assign_list_or_evaluate_tests(): void
@@ -296,8 +307,10 @@ class TestModuleTest extends TestCase
 
         $this->withToken($this->tokenFor($assignment->jobApplication->jobSeekerProfile->user))
             ->postJson("/api/v1/tests/{$assignment->id}/start")
-            ->assertStatus(422)
-            ->assertJsonValidationErrors(['assignment_id']);
+            ->assertCreated()
+            ->assertJsonPath('data.application_test_assignment_id', $assignment->id);
+
+        $this->assertSame(1, TestAttempt::where('application_test_assignment_id', $assignment->id)->count());
     }
 
     public function test_candidate_can_submit_only_own_active_attempt_and_cannot_resubmit(): void

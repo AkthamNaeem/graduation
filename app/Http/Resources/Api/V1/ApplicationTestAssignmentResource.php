@@ -2,13 +2,15 @@
 
 namespace App\Http\Resources\Api\V1;
 
-use App\Models\TestAttempt;
 use App\Enums\UserRole;
+use App\Models\ApplicationTestAssignment;
+use App\Models\TestAttempt;
+use App\Services\TestAttemptTimingService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Laravel\Sanctum\PersonalAccessToken;
 
-/** @mixin \App\Models\ApplicationTestAssignment */
+/** @mixin ApplicationTestAssignment */
 class ApplicationTestAssignmentResource extends JsonResource
 {
     /**
@@ -17,13 +19,19 @@ class ApplicationTestAssignmentResource extends JsonResource
     public function toArray(Request $request): array
     {
         $attempt = $this->relationLoaded('testAttempt') ? $this->getRelation('testAttempt') : null;
+        if ($attempt instanceof TestAttempt) {
+            $attempt->setRelation('applicationTestAssignment', $this->resource);
+        }
+        $timing = app(TestAttemptTimingService::class);
+        $effectiveDeadline = $attempt instanceof TestAttempt ? $timing->effectiveDeadline($attempt) : null;
+        $timeExpired = $attempt instanceof TestAttempt && $timing->isExpired($attempt);
         $expired = $this->isExpired();
         $role = ($token = $request->bearerToken())
             ? PersonalAccessToken::findToken($token)?->tokenable?->role
             : null;
         $manager = $role === UserRole::EMPLOYER || $role === UserRole::ADMIN;
         $rootId = $this->seriesRootId();
-        $seriesCount = \App\Models\ApplicationTestAssignment::query()
+        $seriesCount = ApplicationTestAssignment::query()
             ->where(fn ($query) => $query->whereKey($rootId)->orWhere('series_root_assignment_id', $rootId))
             ->count();
         $latest = $this->isLatestAssignment();
@@ -45,6 +53,8 @@ class ApplicationTestAssignmentResource extends JsonResource
             'note' => $this->note,
             'assigned_at' => $this->assigned_at?->toISOString(),
             'deadline_at' => $this->deadline_at?->toISOString(),
+            'effective_deadline_at' => $effectiveDeadline?->toISOString(),
+            'is_time_expired' => $timeExpired,
             'has_deadline' => $this->hasDeadline(),
             'is_expired' => $expired,
             'remaining_seconds' => $this->remainingSeconds(),

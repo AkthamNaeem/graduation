@@ -3,11 +3,13 @@
 namespace App\Http\Resources\Api\V1;
 
 use App\Enums\UserRole;
+use App\Models\TestAttempt;
+use App\Services\TestAttemptTimingService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Laravel\Sanctum\PersonalAccessToken;
 
-/** @mixin \App\Models\TestAttempt */
+/** @mixin TestAttempt */
 class TestAttemptResource extends JsonResource
 {
     /**
@@ -18,13 +20,20 @@ class TestAttemptResource extends JsonResource
         $token = $request->bearerToken();
         $role = $token ? PersonalAccessToken::findToken($token)?->tokenable?->role : null;
         $assignment = $this->applicationTestAssignment;
-        $expired = $assignment?->isExpired() ?? false;
+        $timing = app(TestAttemptTimingService::class);
+        $deadline = $timing->effectiveDeadline($this->resource);
+        $timeExpired = $timing->isExpired($this->resource);
+        $expired = $this->submitted_at === null && $timeExpired;
 
         return [
             'id' => $this->id,
             'application_test_assignment_id' => $this->application_test_assignment_id,
             'attempt_number' => $assignment?->attempt_number,
             'deadline_at' => $assignment?->deadline_at?->toISOString(),
+            'duration_deadline_at' => $timing->durationDeadline($this->resource)->toISOString(),
+            'effective_deadline_at' => $deadline->toISOString(),
+            'remaining_seconds' => $timing->remainingSeconds($this->resource),
+            'is_time_expired' => $timeExpired,
             'is_expired' => $expired,
             'can_edit_answers' => $this->submitted_at === null && ! $expired,
             'can_submit' => $this->submitted_at === null && ! $expired,

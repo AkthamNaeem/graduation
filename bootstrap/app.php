@@ -3,6 +3,7 @@
 use App\Exceptions\ApplicationInformationRequestException;
 use App\Exceptions\JobPostingOperationException;
 use App\Exceptions\RecruitmentAccessException;
+use App\Exceptions\TestAttemptTimingException;
 use App\Exceptions\TestContentAccessException;
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\EnsureCompanyApproved;
@@ -34,6 +35,14 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (TestAttemptTimingException $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return ApiResponse::error($exception->getMessage(), $exception->errors, $exception->status, $exception->errorCode);
+        });
+
         $exceptions->render(function (TestContentAccessException $exception, Request $request) {
             if (! $request->is('api/*')) {
                 return null;

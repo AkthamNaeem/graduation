@@ -19,6 +19,7 @@ class TestAssignmentDeadlineService
 
     public function __construct(
         private readonly AuditLogService $auditLogService,
+        private readonly TestAttemptTimingService $timingService,
     ) {}
 
     public function normalizeInitialDeadline(?string $deadline): ?CarbonImmutable
@@ -44,7 +45,7 @@ class TestAssignmentDeadlineService
             throw new ConflictHttpException('A test attempt cannot be started for a final application.');
         }
 
-        if ($assignment->isExpired()) {
+        if ($assignment->deadline_at !== null && now()->greaterThan($assignment->deadline_at)) {
             throw new ConflictHttpException('This test assignment has expired and can no longer be started.');
         }
     }
@@ -57,15 +58,14 @@ class TestAssignmentDeadlineService
         }
         $assignment = $query->firstOrFail();
 
-        if ($assignment->isExpired()) {
-            throw new ConflictHttpException('This test assignment has expired and its answers can no longer be modified.');
-        }
+        $this->timingService->assertCanMutate($attempt);
     }
 
     public function assertCanSubmit(ApplicationTestAssignment $assignment): void
     {
-        if ($assignment->isExpired()) {
-            throw new ConflictHttpException('This test assignment has expired and can no longer be submitted.');
+        $attempt = $assignment->testAttempt;
+        if ($attempt instanceof TestAttempt) {
+            $this->timingService->assertCanMutate($attempt);
         }
     }
 
@@ -76,7 +76,7 @@ class TestAssignmentDeadlineService
     {
         return DB::transaction(function () use ($actor, $assignment, $data): ApplicationTestAssignment {
             $locked = ApplicationTestAssignment::query()
-                ->with(['testAttempt', 'jobApplication.applicationStatus', 'deadlineChanges.changedBy'])
+                ->with(['test', 'testAttempt', 'testAttempt.applicationTestAssignment.test', 'jobApplication.applicationStatus', 'deadlineChanges.changedBy'])
                 ->lockForUpdate()
                 ->findOrFail($assignment->id);
 
@@ -114,6 +114,11 @@ class TestAssignmentDeadlineService
             ]);
 
             $locked->forceFill(['deadline_at' => $newDeadline])->save();
+
+            if ($locked->testAttempt instanceof TestAttempt && $locked->testAttempt->submitted_at === null) {
+                $locked->testAttempt->setRelation('applicationTestAssignment', $locked);
+                $this->timingService->snapshot($locked->testAttempt, recalculate: true);
+            }
 
             $this->auditLogService->record(
                 $previousDeadline === null ? 'test_assignment.deadline_set' : 'test_assignment.deadline_extended',

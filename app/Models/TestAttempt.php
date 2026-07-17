@@ -16,6 +16,7 @@ class TestAttempt extends Model
         'application_test_assignment_id',
         'answers',
         'started_at',
+        'effective_deadline_at',
         'submitted_at',
         'objective_score',
         'objective_max_score',
@@ -41,6 +42,7 @@ class TestAttempt extends Model
         return [
             'answers' => 'array',
             'started_at' => 'datetime',
+            'effective_deadline_at' => 'datetime',
             'submitted_at' => 'datetime',
             'objective_score' => 'decimal:2',
             'objective_max_score' => 'decimal:2',

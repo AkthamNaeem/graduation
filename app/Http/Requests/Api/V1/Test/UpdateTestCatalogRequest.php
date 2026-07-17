@@ -24,7 +24,7 @@ class UpdateTestCatalogRequest extends StoreTestCatalogRequest
             'title' => ['sometimes', 'required', 'string', 'max:255'],
             'description' => ['sometimes', 'nullable', 'string'],
             'instructions' => ['sometimes', 'nullable', 'string'],
-            'duration_minutes' => ['sometimes', 'required', 'integer', 'min:1'],
+            'duration_minutes' => ['sometimes', 'required', 'integer', 'min:1', 'max:1440'],
             'max_score' => ['sometimes', 'required', 'numeric', 'min:1'],
             'passing_score' => ['sometimes', 'nullable', 'numeric', 'min:0'],
             'is_active' => ['sometimes', 'boolean'],

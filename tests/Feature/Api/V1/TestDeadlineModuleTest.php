@@ -40,7 +40,7 @@ class TestDeadlineModuleTest extends TestCase
         parent::tearDown();
     }
 
-    public function testTestAssignmentCreationSupportsNullAndFutureDeadlinesInUtc(): void
+    public function test_test_assignment_creation_supports_null_and_future_deadlines_in_utc(): void
     {
         [$employer, $candidate, $application, $test] = $this->scenario();
 
@@ -134,7 +134,9 @@ class TestDeadlineModuleTest extends TestCase
         CarbonImmutable::setTestNow('2026-07-20T13:00:01Z');
         $url = "/api/v1/test-attempts/{$attempt->id}/answers/{$text->id}";
         $this->withToken($this->tokenFor($candidate))->putJson($url, ['answer_text' => 'Changed'])
-            ->assertConflict()->assertJsonPath('message', 'This test assignment has expired and its answers can no longer be modified.');
+            ->assertConflict()
+            ->assertJsonPath('message', 'The allowed time for this test attempt has expired.')
+            ->assertJsonPath('code', 'TEST_ATTEMPT_TIME_EXPIRED');
         $this->withToken($this->tokenFor($candidate))->deleteJson($url)->assertConflict();
         $this->withToken($this->tokenFor($candidate))->postJson("/api/v1/test-attempts/{$attempt->id}/answers/bulk", [
             'answers' => [['question_id' => $text->id, 'answer_text' => 'Bulk changed']],
@@ -173,7 +175,8 @@ class TestDeadlineModuleTest extends TestCase
         $this->withToken($this->tokenFor($candidate2))
             ->postJson("/api/v1/tests/{$lateAssignment->id}/submit", ['confirm' => true])
             ->assertConflict()
-            ->assertJsonPath('message', 'This test assignment has expired and can no longer be submitted.');
+            ->assertJsonPath('message', 'The allowed time for this test attempt has expired.')
+            ->assertJsonPath('code', 'TEST_ATTEMPT_TIME_EXPIRED');
 
         $this->assertNull($lateAttempt->refresh()->submitted_at);
         $this->assertSame(0, $lateAttempt->testAnswers()->whereHas('grading')->count());
@@ -294,6 +297,101 @@ class TestDeadlineModuleTest extends TestCase
                     'deadline_at' => '2026-07-22T12:00:00Z',
                 ])->assertConflict();
         }
+    }
+
+    public function test_duration_deadline_is_snapshotted_and_repeated_start_is_idempotent(): void
+    {
+        [$employer, $candidate, $application, $test] = $this->scenario('duration-snapshot');
+        $assignment = $this->assign($employer, $application, $test);
+
+        $first = $this->withToken($this->tokenFor($candidate))
+            ->postJson("/api/v1/tests/{$assignment->id}/start")
+            ->assertCreated()
+            ->assertJsonPath('data.duration_deadline_at', '2026-07-20T13:00:00.000000Z')
+            ->assertJsonPath('data.effective_deadline_at', '2026-07-20T13:00:00.000000Z')
+            ->assertJsonPath('data.remaining_seconds', 3600)
+            ->assertJsonPath('data.is_time_expired', false)
+            ->json('data');
+
+        CarbonImmutable::setTestNow('2026-07-20T12:30:00Z');
+        $second = $this->withToken($this->tokenFor($candidate))
+            ->postJson("/api/v1/tests/{$assignment->id}/start")
+            ->assertCreated()
+            ->json('data');
+
+        $this->assertSame($first['id'], $second['id']);
+        $this->assertSame($first['started_at'], $second['started_at']);
+        $this->assertSame($first['effective_deadline_at'], $second['effective_deadline_at']);
+        $this->assertDatabaseCount('test_attempts', 1);
+        $this->assertDatabaseHas('audit_logs', ['action' => 'test_attempt.started', 'entity_id' => $first['id']]);
+    }
+
+    public function test_duration_boundary_allows_mutation_and_submit_only_through_exact_deadline(): void
+    {
+        [$employer, $candidate, $application, $test] = $this->scenario('duration-boundary');
+        $question = $this->question($test, 'short_text', 1);
+        $assignment = $this->assign($employer, $application, $test);
+        $attempt = $this->start($candidate, $assignment);
+
+        CarbonImmutable::setTestNow('2026-07-20T13:00:00Z');
+        $this->withToken($this->tokenFor($candidate))
+            ->putJson("/api/v1/test-attempts/{$attempt->id}/answers/{$question->id}", ['answer_text' => 'At boundary'])
+            ->assertOk();
+        $this->withToken($this->tokenFor($candidate))
+            ->postJson("/api/v1/tests/{$assignment->id}/submit", ['confirm' => true])
+            ->assertOk();
+
+        [$employer2, $candidate2, $application2, $test2] = $this->scenario('duration-after');
+        CarbonImmutable::setTestNow('2026-07-20T12:00:00Z');
+        $question2 = $this->question($test2, 'short_text', 1);
+        $assignment2 = $this->assign($employer2, $application2, $test2);
+        $attempt2 = $this->start($candidate2, $assignment2);
+        CarbonImmutable::setTestNow('2026-07-20T13:00:01Z');
+
+        $this->withToken($this->tokenFor($candidate2))
+            ->putJson("/api/v1/test-attempts/{$attempt2->id}/answers/{$question2->id}", ['answer_text' => 'Too late'])
+            ->assertConflict()
+            ->assertJsonPath('code', 'TEST_ATTEMPT_TIME_EXPIRED');
+        $this->withToken($this->tokenFor($candidate2))
+            ->postJson("/api/v1/tests/{$assignment2->id}/submit", ['confirm' => true])
+            ->assertConflict()
+            ->assertJsonPath('code', 'TEST_ATTEMPT_TIME_EXPIRED');
+        $this->assertNull($attempt2->refresh()->submitted_at);
+    }
+
+    public function test_assignment_extension_recalculates_but_never_exceeds_duration_deadline(): void
+    {
+        [$employer, $candidate, $application, $test] = $this->scenario('extension-cap');
+        $assignment = $this->assign($employer, $application, $test, '2026-07-20T12:30:00Z');
+        $attempt = $this->start($candidate, $assignment);
+        $this->assertSame('2026-07-20T12:30:00.000000Z', $attempt->refresh()->effective_deadline_at->toISOString());
+
+        $this->withToken($this->tokenFor($employer))
+            ->patchJson("/api/v1/test-assignments/{$assignment->id}/deadline", [
+                'deadline_at' => '2026-07-20T14:00:00Z',
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.effective_deadline_at', '2026-07-20T13:00:00.000000Z');
+
+        $this->assertSame('2026-07-20T13:00:00.000000Z', $attempt->refresh()->effective_deadline_at->toISOString());
+        $this->assertSame('2026-07-20T12:00:00.000000Z', $attempt->started_at->toISOString());
+    }
+
+    public function test_legacy_unsubmitted_attempt_snapshots_on_first_mutation_without_free_time(): void
+    {
+        [$employer, $candidate, $application, $test] = $this->scenario('legacy');
+        $question = $this->question($test, 'short_text', 1);
+        $assignment = $this->assign($employer, $application, $test);
+        $attempt = $this->start($candidate, $assignment);
+        $attempt->forceFill(['effective_deadline_at' => null])->save();
+
+        CarbonImmutable::setTestNow('2026-07-20T12:30:00Z');
+        $this->withToken($this->tokenFor($candidate))
+            ->putJson("/api/v1/test-attempts/{$attempt->id}/answers/{$question->id}", ['answer_text' => 'Legacy save'])
+            ->assertOk();
+
+        $this->assertSame('2026-07-20T13:00:00.000000Z', $attempt->refresh()->effective_deadline_at->toISOString());
+        $this->assertSame('2026-07-20T12:00:00.000000Z', $attempt->started_at->toISOString());
     }
 
     /** @return array{User, User, JobApplication, RecruitmentTest} */

@@ -4,6 +4,7 @@ namespace App\Http\Resources\Api\V1;
 
 use App\Models\ApplicationTestAssignment;
 use App\Models\TestAttempt;
+use App\Services\TestAttemptTimingService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -13,6 +14,12 @@ class CandidateApplicationTestAssignmentResource extends JsonResource
     public function toArray(Request $request): array
     {
         $attempt = $this->relationLoaded('testAttempt') ? $this->testAttempt : null;
+        if ($attempt instanceof TestAttempt) {
+            $attempt->setRelation('applicationTestAssignment', $this->resource);
+        }
+        $timing = app(TestAttemptTimingService::class);
+        $effectiveDeadline = $attempt instanceof TestAttempt ? $timing->effectiveDeadline($attempt) : null;
+        $timeExpired = $attempt instanceof TestAttempt && $timing->isExpired($attempt);
         $latest = (bool) $this->getAttribute('candidate_is_latest');
         $seriesCount = (int) $this->getAttribute('candidate_series_count');
         $expired = $this->isExpired();
@@ -29,6 +36,8 @@ class CandidateApplicationTestAssignmentResource extends JsonResource
             'is_superseded' => ! $latest,
             'assigned_at' => $this->assigned_at?->toISOString(),
             'deadline_at' => $this->deadline_at?->toISOString(),
+            'effective_deadline_at' => $effectiveDeadline?->toISOString(),
+            'is_time_expired' => $timeExpired,
             'has_deadline' => $this->hasDeadline(),
             'is_expired' => $expired,
             'remaining_seconds' => $this->remainingSeconds(),
@@ -39,6 +48,11 @@ class CandidateApplicationTestAssignmentResource extends JsonResource
                 'id' => $attempt->id,
                 'attempt_id' => $attempt->id,
                 'started_at' => $attempt->started_at?->toISOString(),
+                'effective_deadline_at' => $effectiveDeadline?->toISOString(),
+                'remaining_seconds' => $timing->remainingSeconds($attempt),
+                'is_time_expired' => $timeExpired,
+                'can_edit_answers' => $attempt->submitted_at === null && ! $timeExpired,
+                'can_submit' => $attempt->submitted_at === null && ! $timeExpired,
                 'submitted_at' => $attempt->submitted_at?->toISOString(),
                 'grading_status' => $attempt->grading_status?->value,
                 'questions_url' => "/api/v1/test-attempts/{$attempt->id}/questions",

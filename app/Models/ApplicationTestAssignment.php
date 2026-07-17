@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\TestAttemptTimingService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -113,16 +114,25 @@ class ApplicationTestAssignment extends Model
 
     public function isExpired(?Carbon $at = null): bool
     {
-        if (! $this->hasDeadline()) {
-            return false;
-        }
-
         $attempt = $this->relationLoaded('testAttempt')
             ? $this->getRelation('testAttempt')
             : $this->testAttempt()->first();
 
-        return $attempt?->submitted_at === null
-            && ($at ?? now())->greaterThan($this->deadline_at);
+        if ($attempt?->submitted_at !== null) {
+            return false;
+        }
+
+        if ($attempt instanceof TestAttempt) {
+            $attempt->setRelation('applicationTestAssignment', $this);
+
+            return app(TestAttemptTimingService::class)->isExpired($attempt, $at);
+        }
+
+        if (! $this->hasDeadline()) {
+            return false;
+        }
+
+        return ($at ?? now())->greaterThan($this->deadline_at);
     }
 
     public function isAvailable(?Carbon $at = null): bool
@@ -132,6 +142,16 @@ class ApplicationTestAssignment extends Model
 
     public function remainingSeconds(?Carbon $at = null): ?int
     {
+        $attempt = $this->relationLoaded('testAttempt')
+            ? $this->getRelation('testAttempt')
+            : $this->testAttempt()->first();
+
+        if ($attempt instanceof TestAttempt) {
+            $attempt->setRelation('applicationTestAssignment', $this);
+
+            return app(TestAttemptTimingService::class)->remainingSeconds($attempt, $at);
+        }
+
         if (! $this->hasDeadline()) {
             return null;
         }

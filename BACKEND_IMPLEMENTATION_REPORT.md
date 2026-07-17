@@ -1620,8 +1620,22 @@ This increment closes the previously documented test-catalog secrecy gap without
 
 ### Remaining Outside This Increment
 
-- Enforcing `duration_minutes` against attempt start time and the earlier assignment deadline.
+- Test attempt duration enforcement is implemented in section 32 below.
 - Establishing and enforcing the formal test-score invariant.
 - Cleaning up pre-existing duplicate event-listener registration.
 - Conditional interview validation, attendance, and explicit interview cancellation/status redesign.
 - Primary-CV selection and any general application internal-notes feature.
+
+## 32. Effective Test Attempt Deadline
+
+Test attempts now snapshot `effective_deadline_at` when Start succeeds. `TestAttemptTimingService` calculates `started_at + tests.duration_minutes` and chooses the earlier of that value and the optional assignment deadline. Equality is permitted; answer mutations and Submit fail only when `now > effective_deadline_at`, returning `409 TEST_ATTEMPT_TIME_EXPIRED`. There is no pause, scheduler, reminder, automatic submission, automatic retake, or application-status transition caused by time expiry.
+
+`test_attempts.effective_deadline_at` is nullable for legacy compatibility. An unsubmitted legacy attempt with a start time calculates and persists its snapshot on its next mutation; submitted historical attempts remain readable. A missing start time or invalid legacy duration fails closed with `TEST_ATTEMPT_START_TIME_MISSING` or `INVALID_TEST_DURATION`. New catalog durations are integers from 1 through 1440 minutes, and assigned tests retain the existing strict definition immutability.
+
+Start locks the assignment, creates one attempt, records the snapshot and a safe `test_attempt.started` audit event. Repeated Start returns the same attempt without changing its timestamps or creating a second audit event. Answer saves, bulk saves, deletes, file uploads/replacements, and Submit recheck timing inside their transactions. A file stored immediately before the transactional recheck is deleted if the deadline has passed, preventing orphan files.
+
+Assignment deadline extension locks the assignment and recalculates an active attempt to `min(original duration deadline, new assignment deadline)`. It can therefore restore time cut short by the old assignment deadline, but never extend the attempt beyond its original duration or reset `started_at`; extending after duration expiry does not reopen the attempt. Retakes create independent attempts with fresh start and deadline snapshots. Company suspension does not pause time.
+
+Attempt and assignment resources expose `effective_deadline_at`, non-negative `remaining_seconds`, `is_time_expired`, and availability flags. Submitted results and safe questions/answers remain readable after expiry. Mobile Postman captures the effective deadline and demonstrates the stable late-save/late-submit error contract.
+
+Feature coverage verifies duration/assignment precedence, exact-boundary save and Submit, rejection one second later, idempotent Start, extension capped by duration, rollback/no-orphan behavior, resources, audit, and duration validation. The existing grading, workflow, authorization, deadline, retake, company-state, privacy, and notification behavior remains in place.

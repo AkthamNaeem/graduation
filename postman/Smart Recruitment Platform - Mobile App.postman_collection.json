@@ -1156,7 +1156,8 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('start response', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 401, 403, 404, 409, 422]));"
+                  "pm.test('start response', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 401, 403, 404, 409, 422]));",
+                  "if (pm.response.code === 201) { const data = pm.response.json().data; pm.expect(data.effective_deadline_at).to.be.a('string'); pm.expect(data.remaining_seconds).to.be.at.least(0); pm.expect(data.is_time_expired).to.eql(false); pm.expect(data.can_edit_answers).to.eql(true); pm.expect(data.can_submit).to.eql(true); pm.environment.set('test_attempt_id', data.id); pm.environment.set('test_attempt_effective_deadline', data.effective_deadline_at); }"
                 ]
               }
             }
@@ -1170,7 +1171,8 @@
         {"name":"Get Saved Answers","request":{"method":"GET","description":"Lists the authenticated candidate's normalized saved answers.","url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers"}},
         {"name":"Save Single Choice Answer","request":{"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/{{test_question_id}}","body":{"mode":"raw","raw":"{\n  \"selected_option_ids\": [{{test_option_id}}]\n}","options":{"raw":{"language":"json"}}}}},
         {"name":"Save Multiple Choice Answer","request":{"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/{{test_question_id}}","body":{"mode":"raw","raw":"{\n  \"selected_option_ids\": [{{test_option_id}}, 2]\n}","options":{"raw":{"language":"json"}}}}},
-        {"name":"Save Text Answer","request":{"method":"PATCH","header":[{"key":"Content-Type","value":"application/json"}],"description":"Draft save is rejected with 403 COMPANY_RECRUITMENT_UNAVAILABLE while the company is non-approved, or 409 after assignment expiry.","url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/{{test_question_id}}","body":{"mode":"raw","raw":"{\n  \"answer_text\": \"Dependency injection reduces coupling.\"\n}","options":{"raw":{"language":"json"}}}}},
+        {"name":"Save Text Answer","request":{"method":"PATCH","header":[{"key":"Content-Type","value":"application/json"}],"description":"Draft save is allowed through exact equality with effective_deadline_at.","url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/{{test_question_id}}","body":{"mode":"raw","raw":"{\n  \"answer_text\": \"Dependency injection reduces coupling.\"\n}","options":{"raw":{"language":"json"}}}}},
+        {"name":"Save After Effective Deadline Error","request":{"method":"PATCH","header":[{"key":"Content-Type","value":"application/json"}],"description":"Run after test_attempt_effective_deadline. Returns 409 TEST_ATTEMPT_TIME_EXPIRED without changing the saved answer.","url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/{{test_question_id}}","body":{"mode":"raw","raw":"{\n  \"answer_text\": \"Too late\"\n}","options":{"raw":{"language":"json"}}}},"event":[{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('attempt time expired', () => { pm.response.to.have.status(409); pm.expect(pm.response.json().code).to.eql('TEST_ATTEMPT_TIME_EXPIRED'); });"]}}]},
         {"name":"Upload File Answer","request":{"method":"POST","description":"Private multipart file answer, maximum 10 MB.","url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/{{test_question_id}}/file","body":{"mode":"formdata","formdata":[{"key":"answer_file","type":"file","src":[]}]}}},
         {"name":"Delete Draft Answer","request":{"method":"DELETE","url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/{{test_question_id}}"}},
         {"name":"Bulk Save Answers","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"description":"Atomic upsert; file questions are excluded.","url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/bulk","body":{"mode":"raw","raw":"{\n  \"answers\": [\n    {\"question_id\": {{test_question_id}}, \"answer_text\": \"Saved draft\"}\n  ]\n}","options":{"raw":{"language":"json"}}}}},
@@ -1209,7 +1211,7 @@
             }
           ],
           "response": [
-            {"name":"409 submit expired","status":"Conflict","code":409,"_postman_previewlanguage":"json","header":[{"key":"Content-Type","value":"application/json"}],"body":"{\n  \"success\": false,\n  \"message\": \"This test assignment has expired and can no longer be submitted.\"\n}"}
+            {"name":"409 submit expired","status":"Conflict","code":409,"_postman_previewlanguage":"json","header":[{"key":"Content-Type","value":"application/json"}],"body":"{\n  \"success\": false,\n  \"message\": \"The allowed time for this test attempt has expired.\",\n  \"errors\": [],\n  \"code\": \"TEST_ATTEMPT_TIME_EXPIRED\"\n}"}
           ]
         },
         {

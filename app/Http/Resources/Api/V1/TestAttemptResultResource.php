@@ -4,12 +4,14 @@ namespace App\Http\Resources\Api\V1;
 
 use App\Enums\UserRole;
 use App\Models\TestAnswer;
+use App\Models\TestAttempt;
 use App\Models\TestQuestion;
+use App\Services\TestAttemptTimingService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Laravel\Sanctum\PersonalAccessToken;
 
-/** @mixin \App\Models\TestAttempt */
+/** @mixin TestAttempt */
 class TestAttemptResultResource extends JsonResource
 {
     public function toArray(Request $request): array
@@ -17,11 +19,15 @@ class TestAttemptResultResource extends JsonResource
         $role = $this->role($request);
         $detailed = $role === UserRole::EMPLOYER || $role === UserRole::ADMIN;
         $assignment = $this->applicationTestAssignment;
+        $timing = app(TestAttemptTimingService::class);
 
         return [
             'attempt_id' => $this->id,
             'attempt_number' => $assignment?->attempt_number,
             'deadline_at' => $assignment?->deadline_at?->toISOString(),
+            'effective_deadline_at' => $timing->effectiveDeadline($this->resource)->toISOString(),
+            'remaining_seconds' => $timing->remainingSeconds($this->resource),
+            'is_time_expired' => $timing->isExpired($this->resource),
             'is_expired' => $assignment?->isExpired() ?? false,
             'grading_status' => $this->grading_status?->value,
             'objective_score' => $this->objective_score,

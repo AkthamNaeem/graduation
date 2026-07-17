@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Api\V1\Test;
 
+use App\Enums\UserRole;
 use App\Http\Requests\Api\V1\Test\Concerns\AuthorizesTestCatalog;
+use App\Models\Test;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Validator;
 
@@ -12,7 +14,7 @@ class StoreTestCatalogRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return $this->authenticatedUser()?->can('create', \App\Models\Test::class) ?? false;
+        return $this->authenticatedUser()?->can('create', Test::class) ?? false;
     }
 
     /**
@@ -21,13 +23,13 @@ class StoreTestCatalogRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'company_id' => $this->authenticatedUser()?->role === \App\Enums\UserRole::ADMIN
+            'company_id' => $this->authenticatedUser()?->role === UserRole::ADMIN
                 ? ['required', 'integer', 'exists:companies,id']
                 : ['prohibited'],
             'title' => ['required', 'string', 'max:255'],
             'description' => ['sometimes', 'nullable', 'string'],
             'instructions' => ['sometimes', 'nullable', 'string'],
-            'duration_minutes' => ['required', 'integer', 'min:1'],
+            'duration_minutes' => ['required', 'integer', 'min:1', 'max:1440'],
             'max_score' => ['required', 'numeric', 'min:1'],
             'passing_score' => ['sometimes', 'nullable', 'numeric', 'min:0'],
             'is_active' => ['sometimes', 'boolean'],
