@@ -1311,7 +1311,7 @@ Implemented as a submit-time extension of normalized `TestAnswer` persistence. T
 
 ### Remaining Work
 
-- A retake policy if required and any future explicit partial-credit policy.
+- Any future explicit partial-credit policy.
 
 ## 24. Answer-Level Manual Grading and Final Mixed Results
 
@@ -1348,7 +1348,7 @@ Implemented on 2026-07-17 on top of normalized answers and objective auto-gradin
 
 - An explicit result-ready notification policy.
 - Result decision automation; no automatic application acceptance/rejection is performed.
-- Retake policy and partial-credit policy if later required.
+- Partial-credit policy if later required.
 - Snapshot/versioning only if strict test-definition immutability is relaxed.
 
 ## 25. Test Assignment Deadlines, Expiration, and Extensions
@@ -1386,8 +1386,49 @@ Implemented on 2026-07-17 without changing application decision workflow, submit
 
 ### Deliberately Remaining Outside This Increment
 
-- Retake and reassignment policy.
 - Scheduled deadline reminders and advanced expiration reports.
 - Result-ready notification policy.
 - An explicit objective partial-credit policy if later required.
+- Snapshot/versioning only if strict test-definition immutability is relaxed.
+
+## 26. Controlled Test Retake Policy and Assignment Series
+
+Implemented on 2026-07-17 as an explicit employer/admin action. Passing score never grants a retake and no result is selected or combined automatically.
+
+### Assignment-Per-Attempt Model and Migration
+
+- Every attempt continues to belong to exactly one `ApplicationTestAssignment`; a retake creates a new assignment and does not reopen or reuse the prior attempt.
+- The old `unique(job_application_id, test_id)` constraint is replaced by `unique(job_application_id, test_id, attempt_number)`. A unique previous-assignment link provides an additional defense against two concurrent next assignments.
+- Assignments now store `series_root_assignment_id`, `previous_assignment_id`, `attempt_number`, `max_attempts`, `retake_granted_by_user_id`, and an internal `retake_reason`.
+- Existing rows are safely backfilled by database defaults as attempt 1 with maximum 1 and null root/previous/retake metadata. Self-referencing foreign keys restrict deletion of assignments used by later series entries.
+- The root assignment is the official policy source. Policy increases are synchronized to existing series rows for consistent resource output; the value cannot be reduced and is bounded from 1 to 5.
+
+### Eligibility, Workflow, and Isolation
+
+- `POST /api/v1/test-assignments/{assignment}/retake` requires the latest assignment, a submitted attempt, `test_completed`, attempts remaining, and no interview/final/terminal state.
+- An expired unsubmitted assignment must use deadline extension instead. Active `test_pending` assignments cannot receive a parallel retake.
+- A successful grant creates the next assignment with the same application/test, an incremented attempt number, root/previous links, a fresh optional UTC deadline, and either new instructions or the previous assignment note. Attempts, answers, files, grading, results, and deadline-change history are never copied.
+- A dedicated `ApplicationWorkflowService::grantTestRetake()` transition records `test_completed → test_pending` without opening that transition to general status APIs. Submitting the new attempt uses the existing `test_pending → test_completed` path.
+- Only the latest pending assignment can start. Older assignments and all submitted attempts remain immutable and readable for history.
+
+### APIs, Series Visibility, and Privacy
+
+- Initial assignment accepts optional `max_attempts`; `PATCH /api/v1/test-assignments/{assignment}/retake-policy` explicitly raises the root limit without creating a retake.
+- `GET /api/v1/test-assignments/{assignment}/attempt-series` returns attempts used/remaining, the operationally latest assignment, and each preserved result summary. It never computes best, average, or combined scores.
+- Candidates can view only their own series and candidate-safe result summaries. Internal retake reason, grant actor, reviewer notes, correct answers, and audit metadata are omitted.
+- The owning employer and administrators can view internal retake metadata and use existing per-attempt result endpoints for authorized detailed breakdowns. Cross-company and cross-candidate access is rejected by policy.
+
+### Transactions, Audit, and Notification
+
+- Retake grants lock the application, series root, and series rows. Unique attempt-number and previous-assignment constraints defend against concurrent duplicate grants and lost updates.
+- Assignment creation, the workflow history transition, and safe audit metadata commit or roll back together. The audit actions are `test_assignment.retake_policy_updated` and `test_assignment.retake_granted`; internal reason text and test content are excluded from audit metadata.
+- One `test.retake_granted` notification is dispatched after commit with assignment ID, attempt number, maximum attempts, and the new deadline only. Policy changes do not notify the candidate.
+- Retakes are prohibited after interview pending/scheduled/completed, final review, accepted, rejected, or withdrawn. No application score or automatic acceptance/rejection is introduced.
+
+### Deliberately Remaining Outside This Increment
+
+- Scheduled deadline reminders and result-ready notifications.
+- Advanced test/expiration/series reporting.
+- A product policy for selecting or comparing retake results.
+- Objective partial credit if later required.
 - Snapshot/versioning only if strict test-definition immutability is relaxed.

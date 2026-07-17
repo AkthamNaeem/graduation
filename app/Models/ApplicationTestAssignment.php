@@ -15,9 +15,15 @@ class ApplicationTestAssignment extends Model
 
     protected $fillable = [
         'job_application_id',
+        'series_root_assignment_id',
+        'previous_assignment_id',
+        'attempt_number',
+        'max_attempts',
         'test_id',
         'assigned_by_user_id',
+        'retake_granted_by_user_id',
         'note',
+        'retake_reason',
         'assigned_at',
         'deadline_at',
     ];
@@ -30,6 +36,8 @@ class ApplicationTestAssignment extends Model
         return [
             'assigned_at' => 'datetime',
             'deadline_at' => 'datetime',
+            'attempt_number' => 'integer',
+            'max_attempts' => 'integer',
         ];
     }
 
@@ -46,6 +54,41 @@ class ApplicationTestAssignment extends Model
     public function assignedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'assigned_by_user_id');
+    }
+
+    public function retakeGrantedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'retake_granted_by_user_id');
+    }
+
+    public function seriesRoot(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'series_root_assignment_id');
+    }
+
+    public function previousAssignment(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'previous_assignment_id');
+    }
+
+    public function nextAssignment(): HasOne
+    {
+        return $this->hasOne(self::class, 'previous_assignment_id');
+    }
+
+    public function seriesAssignments(): HasMany
+    {
+        return $this->hasMany(self::class, 'series_root_assignment_id');
+    }
+
+    public function seriesRootId(): int
+    {
+        return $this->series_root_assignment_id ?? $this->id;
+    }
+
+    public function isLatestAssignment(): bool
+    {
+        return ! $this->nextAssignment()->exists();
     }
 
     public function testAttempt(): HasOne

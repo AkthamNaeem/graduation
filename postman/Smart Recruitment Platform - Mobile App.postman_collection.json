@@ -1204,6 +1204,30 @@
               "body": "{\n  \"success\": true,\n  \"data\": {\n    \"grading_status\": \"fully_graded\",\n    \"objective_score\": \"8.00\",\n    \"objective_max_score\": \"10.00\",\n    \"manual_score\": \"7.00\",\n    \"manual_max_score\": \"10.00\",\n    \"total_score\": \"15.00\",\n    \"max_score\": \"20.00\",\n    \"percentage\": \"75.00\",\n    \"is_passing_score_met\": true\n  }\n}"
             }
           ]
+        },
+        {
+          "name": "View Test Attempts",
+          "request": {"method":"GET","description":"Candidate-safe attempt series with attempt numbers, deadlines, preserved summary results, and attempts remaining.","url":"{{base_url}}/test-assignments/{{test_assignment_id}}/attempt-series"}
+        },
+        {
+          "name": "View Retake Invitation",
+          "request": {"method":"GET","description":"The latest item from My Assigned Tests is operationally current; internal retake reason and grant actor are omitted.","url":"{{base_url}}/my/tests"}
+        },
+        {
+          "name": "Start Latest Retake",
+          "request": {"method":"POST","description":"Starts only the latest pending retake assignment.","url":"{{base_url}}/tests/{{retake_assignment_id}}/start"}
+        },
+        {
+          "name": "View Previous Result",
+          "request": {"method":"GET","description":"Previous submitted result remains immutable and candidate-safe.","url":"{{base_url}}/test-attempts/{{test_attempt_id}}/result"}
+        },
+        {
+          "name": "Submit Retake",
+          "request": {"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"description":"Submits the new attempt independently and returns the application to test_completed.","url":"{{base_url}}/tests/{{retake_assignment_id}}/submit","body":{"mode":"raw","raw":"{\n  \"confirm\": true\n}","options":{"raw":{"language":"json"}}}}
+        },
+        {
+          "name": "Superseded Assignment Error",
+          "request": {"method":"POST","description":"Expected 409: the previous assignment was superseded by a newer retake.","url":"{{base_url}}/tests/{{previous_test_assignment_id}}/start"}
         }
       ]
     },

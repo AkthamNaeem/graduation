@@ -31,6 +31,7 @@ class TestService
         private readonly TestAnswerService $testAnswerService,
         private readonly TestGradingService $testGradingService,
         private readonly TestAssignmentDeadlineService $testAssignmentDeadlineService,
+        private readonly TestRetakeService $testRetakeService,
     ) {}
 
     /**
@@ -91,9 +92,9 @@ class TestService
         $test->delete();
     }
 
-    public function assignTest(User $actor, JobApplication $application, int $testId, ?string $note, ?string $deadlineAt = null): ApplicationTestAssignment
+    public function assignTest(User $actor, JobApplication $application, int $testId, ?string $note, ?string $deadlineAt = null, int $maxAttempts = 1): ApplicationTestAssignment
     {
-        return DB::transaction(function () use ($actor, $application, $testId, $note, $deadlineAt): ApplicationTestAssignment {
+        return DB::transaction(function () use ($actor, $application, $testId, $note, $deadlineAt, $maxAttempts): ApplicationTestAssignment {
             $jobApplication = JobApplication::query()
                 ->with('applicationStatus')
                 ->lockForUpdate()
@@ -127,6 +128,8 @@ class TestService
             $deadline = $this->testAssignmentDeadlineService->normalizeInitialDeadline($deadlineAt);
 
             $assignment = ApplicationTestAssignment::create([
+                'attempt_number' => 1,
+                'max_attempts' => $maxAttempts,
                 'job_application_id' => $jobApplication->id,
                 'test_id' => $test->id,
                 'assigned_by_user_id' => $actor->id,
@@ -141,7 +144,7 @@ class TestService
                 ApplicationTestAssignment::class,
                 $assignment->id,
                 null,
-                $assignment->only(['job_application_id', 'test_id', 'assigned_by_user_id', 'assigned_at']),
+                $assignment->only(['job_application_id', 'test_id', 'assigned_by_user_id', 'attempt_number', 'max_attempts', 'assigned_at']),
                 ['note' => $note],
             );
 
@@ -212,6 +215,7 @@ class TestService
                 ->lockForUpdate()
                 ->findOrFail($assignment->id);
 
+            $this->testRetakeService->assertLatestCanStart($lockedAssignment);
             $this->testAssignmentDeadlineService->assertCanStart($lockedAssignment);
 
             if ($lockedAssignment->testAttempt instanceof TestAttempt) {
@@ -404,6 +408,10 @@ class TestService
             'testAttempt.testAnswers.selectedOptions',
             'testAttempt.testAnswers.grading',
             'deadlineChanges.changedBy',
+            'retakeGrantedBy',
+            'seriesRoot',
+            'previousAssignment',
+            'nextAssignment',
         ];
 
         if ($includeApplicationContext) {

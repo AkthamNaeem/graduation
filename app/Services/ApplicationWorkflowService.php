@@ -155,6 +155,28 @@ class ApplicationWorkflowService
         });
     }
 
+    public function grantTestRetake(User $user, JobApplication $jobApplication, string $note): JobApplication
+    {
+        return DB::transaction(function () use ($user, $jobApplication, $note): JobApplication {
+            $application = JobApplication::query()
+                ->with('applicationStatus')
+                ->lockForUpdate()
+                ->findOrFail($jobApplication->id);
+
+            if ($application->applicationStatus?->slug !== 'test_completed') {
+                throw ValidationException::withMessages([
+                    'status' => ['A test retake can only reopen an application from test_completed.'],
+                ]);
+            }
+
+            $pending = $this->statusBySlug('test_pending');
+            $this->recordHistory($application, $application->applicationStatus, $pending, $user, $note);
+            $application->forceFill(['application_status_id' => $pending->id])->save();
+
+            return $this->loadApplication($application);
+        });
+    }
+
     public function withdrawApplication(User $user, JobApplication $jobApplication, ?string $note = null): JobApplication
     {
         return DB::transaction(function () use ($jobApplication, $user, $note): JobApplication {

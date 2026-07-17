@@ -45,6 +45,20 @@ class ApplicationTestAssignmentPolicy
         return $this->extendDeadline($user, $assignment);
     }
 
+    public function manageRetakes(User $user, ApplicationTestAssignment $assignment): bool
+    {
+        return $this->extendDeadline($user, $assignment);
+    }
+
+    public function viewSeries(User $user, ApplicationTestAssignment $assignment): bool
+    {
+        if ($user->role === UserRole::JOB_SEEKER) {
+            return $user->jobSeekerProfile?->id === $assignment->jobApplication->job_seeker_profile_id;
+        }
+
+        return $this->manageRetakes($user, $assignment);
+    }
+
     private function belongsToCompany(User $user, int $companyId): bool
     {
         return $user->employerProfile()

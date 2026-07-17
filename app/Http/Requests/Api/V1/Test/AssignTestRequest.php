@@ -41,6 +41,7 @@ class AssignTestRequest extends FormRequest
             ],
             'note' => ['sometimes', 'nullable', 'string'],
             'deadline_at' => ['sometimes', 'nullable', 'date'],
+            'max_attempts' => ['sometimes', 'integer', 'min:1', 'max:5'],
         ];
     }
 }

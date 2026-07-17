@@ -32,6 +32,7 @@ class TestAssignmentController extends Controller
                     (int) $request->validated('test_id'),
                     $request->validated('note'),
                     $request->validated('deadline_at'),
+                    (int) $request->validated('max_attempts', 1),
                 ),
             ),
             message: 'Test assigned successfully.',

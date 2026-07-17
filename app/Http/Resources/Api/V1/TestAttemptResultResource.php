@@ -20,6 +20,7 @@ class TestAttemptResultResource extends JsonResource
 
         return [
             'attempt_id' => $this->id,
+            'attempt_number' => $assignment?->attempt_number,
             'deadline_at' => $assignment?->deadline_at?->toISOString(),
             'is_expired' => $assignment?->isExpired() ?? false,
             'grading_status' => $this->grading_status?->value,

@@ -28,6 +28,7 @@ use App\Http\Controllers\Api\V1\Test\TestAttemptController;
 use App\Http\Controllers\Api\V1\Test\TestCatalogController;
 use App\Http\Controllers\Api\V1\Test\TestQuestionController;
 use App\Http\Controllers\Api\V1\Test\TestManualGradingController;
+use App\Http\Controllers\Api\V1\Test\TestRetakeController;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')
@@ -167,6 +168,9 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('tests', [TestCatalogController::class, 'index'])->name('tests.index');
     Route::get('tests/{test}', [TestCatalogController::class, 'show'])->name('tests.show');
     Route::get('my/tests', [TestAssignmentController::class, 'my'])->name('tests.my');
+    Route::patch('test-assignments/{applicationTestAssignment}/retake-policy', [TestRetakeController::class, 'updatePolicy'])->name('test-assignments.retake-policy.update');
+    Route::post('test-assignments/{applicationTestAssignment}/retake', [TestRetakeController::class, 'grant'])->name('test-assignments.retake.grant');
+    Route::get('test-assignments/{applicationTestAssignment}/attempt-series', [TestRetakeController::class, 'series'])->name('test-assignments.attempt-series');
     Route::patch('test-assignments/{applicationTestAssignment}/deadline', [TestAssignmentDeadlineController::class, 'update'])->name('test-assignments.deadline.update');
     Route::get('test-assignments/{applicationTestAssignment}/deadline-history', [TestAssignmentDeadlineController::class, 'history'])->name('test-assignments.deadline-history');
     Route::post('tests/{applicationTestAssignment}/start', [TestAttemptController::class, 'start'])->name('tests.start');

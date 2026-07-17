@@ -22,19 +22,33 @@ class ApplicationTestAssignmentResource extends JsonResource
             ? PersonalAccessToken::findToken($token)?->tokenable?->role
             : null;
         $manager = $role === UserRole::EMPLOYER || $role === UserRole::ADMIN;
+        $rootId = $this->seriesRootId();
+        $seriesCount = \App\Models\ApplicationTestAssignment::query()
+            ->where(fn ($query) => $query->whereKey($rootId)->orWhere('series_root_assignment_id', $rootId))
+            ->count();
+        $latest = $this->isLatestAssignment();
 
         return [
             'id' => $this->id,
             'job_application_id' => $this->job_application_id,
             'test_id' => $this->test_id,
-            'assigned_by_user_id' => $this->assigned_by_user_id,
+            'assigned_by_user_id' => $this->when($manager, $this->assigned_by_user_id),
+            'attempt_number' => $this->attempt_number,
+            'max_attempts' => $this->max_attempts,
+            'attempts_remaining' => max(0, $this->max_attempts - $seriesCount),
+            'series_root_assignment_id' => $this->series_root_assignment_id,
+            'previous_assignment_id' => $this->previous_assignment_id,
+            'is_latest_assignment' => $latest,
+            'is_superseded' => ! $latest,
+            'retake_reason' => $this->when($manager, $this->retake_reason),
+            'retake_granted_by_user_id' => $this->when($manager, $this->retake_granted_by_user_id),
             'note' => $this->note,
             'assigned_at' => $this->assigned_at?->toISOString(),
             'deadline_at' => $this->deadline_at?->toISOString(),
             'has_deadline' => $this->hasDeadline(),
             'is_expired' => $expired,
             'remaining_seconds' => $this->remainingSeconds(),
-            'can_start' => ! $attempt instanceof TestAttempt && ! $expired,
+            'can_start' => $latest && ! $attempt instanceof TestAttempt && ! $expired,
             'can_edit_answers' => $attempt instanceof TestAttempt && $attempt->submitted_at === null && ! $expired,
             'can_submit' => $attempt instanceof TestAttempt && $attempt->submitted_at === null && ! $expired,
             'extension_count' => $this->when($manager, fn (): int => $this->deadlineChanges->count()),
