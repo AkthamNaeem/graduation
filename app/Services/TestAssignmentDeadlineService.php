@@ -137,7 +137,7 @@ class TestAssignmentDeadlineService
                 ],
             );
 
-            DB::afterCommit(fn (): array => event(new TestAssignmentDeadlineExtended($locked->id)));
+            DB::afterCommit(fn (): array => event(new TestAssignmentDeadlineExtended($locked->id, $change->id)));
 
             return $locked->refresh()->load([
                 'test',

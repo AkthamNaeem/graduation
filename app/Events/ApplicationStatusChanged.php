@@ -10,6 +10,6 @@ class ApplicationStatusChanged
         public readonly string $toStatus,
         public readonly int $changedByUserId,
         public readonly ?string $note = null,
-    ) {
-    }
+        public readonly ?int $historyId = null,
+    ) {}
 }

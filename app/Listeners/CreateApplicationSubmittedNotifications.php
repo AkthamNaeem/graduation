@@ -4,14 +4,9 @@ namespace App\Listeners;
 
 use App\Events\ApplicationSubmitted;
 use App\Models\JobApplication;
-use App\Services\NotificationService;
 
-class CreateApplicationSubmittedNotifications
+class CreateApplicationSubmittedNotifications extends IdempotentNotificationListener
 {
-    public function __construct(
-        private readonly NotificationService $notificationService,
-    ) {}
-
     public function handle(ApplicationSubmitted $event): void
     {
         $application = JobApplication::query()
@@ -36,12 +31,19 @@ class CreateApplicationSubmittedNotifications
             'status' => 'submitted',
         ];
 
-        $this->notificationService->createForUser(
-            $candidate,
+        $this->notificationOnce(
             'application.submitted',
-            'Application submitted',
-            "Your application for {$job->title} was submitted successfully.",
-            $data,
+            ApplicationSubmitted::class,
+            'job_application',
+            $application->id,
+            $candidate,
+            fn () => $this->notificationService->createForUser(
+                $candidate,
+                'application.submitted',
+                'Application submitted',
+                "Your application for {$job->title} was submitted successfully.",
+                $data,
+            ),
         );
 
         $employers = $job->company?->employerProfiles
@@ -49,12 +51,21 @@ class CreateApplicationSubmittedNotifications
             ->filter()
             ->values() ?? collect();
 
-        $this->notificationService->createForUsers(
-            $employers,
-            'application.received',
-            'New application received',
-            "A candidate applied for {$job->title}.",
-            $data,
-        );
+        foreach ($employers as $employer) {
+            $this->notificationOnce(
+                'application.received',
+                ApplicationSubmitted::class,
+                'job_application',
+                $application->id,
+                $employer,
+                fn () => $this->notificationService->createForUser(
+                    $employer,
+                    'application.received',
+                    'New application received',
+                    "A candidate applied for {$job->title}.",
+                    $data,
+                ),
+            );
+        }
     }
 }

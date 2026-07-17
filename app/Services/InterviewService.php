@@ -150,13 +150,23 @@ class InterviewService
      */
     public function updateInterview(User $actor, Interview $interview, array $data): Interview
     {
-        return DB::transaction(function () use ($interview, $data): Interview {
+        return DB::transaction(function () use ($actor, $interview, $data): Interview {
             $lockedInterview = Interview::query()
                 ->with('evaluation')
                 ->lockForUpdate()
                 ->findOrFail($interview->id);
 
             $this->ensureInterviewEditable($lockedInterview);
+
+            $before = $lockedInterview->only([
+                'interview_type',
+                'scheduled_at',
+                'duration_minutes',
+                'interview_mode',
+                'location',
+                'meeting_link',
+                'note',
+            ]);
 
             $lockedInterview->forceFill([
                 'interview_type' => $data['interview_type'],
@@ -168,7 +178,18 @@ class InterviewService
                 'note' => $data['note'] ?? null,
             ])->save();
 
-            DB::afterCommit(fn (): array => event(new InterviewUpdated($lockedInterview->id)));
+            $after = $lockedInterview->only(array_keys($before));
+            $audit = $this->auditLogService->record(
+                'interview.updated',
+                $actor,
+                Interview::class,
+                $lockedInterview->id,
+                $before,
+                $after,
+            );
+            $occurrenceId = $audit?->id ?? 'state-'.hash('sha256', json_encode($after, JSON_THROW_ON_ERROR));
+
+            DB::afterCommit(fn (): array => event(new InterviewUpdated($lockedInterview->id, $occurrenceId)));
 
             return $this->loadInterview($lockedInterview, includeApplicationContext: true);
         });
@@ -321,8 +342,7 @@ class InterviewService
         Interview $interview,
         bool $includeApplicationContext = false,
         bool $candidateSafe = false,
-    ): Interview
-    {
+    ): Interview {
         return $interview->load($this->interviewRelations($includeApplicationContext, $candidateSafe));
     }
 

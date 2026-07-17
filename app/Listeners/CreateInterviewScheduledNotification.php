@@ -4,14 +4,9 @@ namespace App\Listeners;
 
 use App\Events\InterviewScheduled;
 use App\Models\Interview;
-use App\Services\NotificationService;
 
-class CreateInterviewScheduledNotification
+class CreateInterviewScheduledNotification extends IdempotentNotificationListener
 {
-    public function __construct(
-        private readonly NotificationService $notificationService,
-    ) {}
-
     public function handle(InterviewScheduled $event): void
     {
         $interview = Interview::query()
@@ -26,12 +21,13 @@ class CreateInterviewScheduledNotification
 
         $scheduledAt = $interview->scheduled_at?->toISOString() ?? 'the scheduled time';
 
-        $this->notificationService->createNotification(
-            $candidate->id,
+        $this->notificationOnce(
             'interview.scheduled',
-            'Interview scheduled',
-            "Your interview for {$interview->jobApplication->jobPosting->title} is scheduled for {$scheduledAt}.",
-            [
+            InterviewScheduled::class,
+            'interview',
+            $interview->id,
+            $candidate,
+            fn () => $this->notificationService->createForUser($candidate, 'interview.scheduled', 'Interview scheduled', "Your interview for {$interview->jobApplication->jobPosting->title} is scheduled for {$scheduledAt}.", [
                 'interview_id' => $interview->id,
                 'application_id' => $interview->job_application_id,
                 'job_id' => $interview->jobApplication->job_posting_id,
@@ -39,7 +35,7 @@ class CreateInterviewScheduledNotification
                 'company_id' => $interview->jobApplication->jobPosting?->company_id,
                 'scheduled_at' => $interview->scheduled_at?->toISOString(),
                 'status' => 'interview_scheduled',
-            ],
+            ]),
         );
     }
 }

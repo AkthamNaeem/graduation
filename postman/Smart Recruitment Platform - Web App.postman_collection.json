@@ -1222,7 +1222,7 @@
                                                                          "value":  "application/json"
                                                                      }
                                                                  ],
-                                                      "description":  "Web App / Employer Dashboard: assign a test to an application.",
+                                                      "description":  "Web App / Employer Dashboard: assign a test to an application. A successful assignment persists one candidate notification; duplicate requests or repeated event dispatches do not create another notification.",
                                                       "url":  "{{base_url}}/applications/{{application_id}}/assign-test",
                                                       "body":  {
                                                                    "mode":  "raw",
@@ -1295,7 +1295,7 @@
                                                                          "value":  "application/json"
                                                                      }
                                                                  ],
-                                                      "description":  "Web App / Employer Dashboard: evaluate a submitted test attempt.",
+                                                      "description":  "Web App / Employer Dashboard: evaluate a submitted test attempt. The final evaluation notification is persisted once for the logical attempt event, including listener retries.",
                                                       "url":  "{{base_url}}/tests/{{attempt_id}}/evaluate",
                                                       "body":  {
                                                                    "mode":  "raw",

@@ -3,9 +3,12 @@
 namespace Tests\Feature\Api\V1;
 
 use App\Enums\UserRole;
+use App\Events\ApplicationInformationRequestUpdated;
+use App\Events\ApplicationInformationResponded;
 use App\Models\ApplicationInformationRequest;
 use App\Models\ApplicationInformationResponseAttachment;
 use App\Models\ApplicationStatus;
+use App\Models\AuditLog;
 use App\Models\Company;
 use App\Models\CVFile;
 use App\Models\EmployerProfile;
@@ -87,6 +90,9 @@ class ApplicationInformationRequestTest extends TestCase
         Storage::disk('local')->assertExists($attachment->stored_path);
         $this->assertDatabaseHas('job_applications', ['id' => $application->id, 'application_status_id' => $this->statusId('under_review')]);
         $this->assertDatabaseHas('notifications', ['user_id' => $employer->id, 'type' => 'application.information_submitted']);
+        event(new ApplicationInformationResponded($request->id));
+        event(new ApplicationInformationResponded($request->id));
+        $this->assertSame(1, $employer->notifications()->where('type', 'application.information_submitted')->count());
         $this->withToken($this->token($candidate))->get("/api/v1/information-response-attachments/{$attachmentId}/download")->assertOk()->assertHeader('X-Content-Type-Options', 'nosniff');
         $this->withToken($this->token($candidate))->postJson("/api/v1/information-requests/{$request->id}/respond", ['message' => 'again'])->assertConflict();
     }
@@ -120,6 +126,10 @@ class ApplicationInformationRequestTest extends TestCase
         $this->assertSame($createdNotifications, $candidate->notifications()->count());
         $this->withToken($this->token($employer))->patchJson("/api/v1/information-requests/{$request->id}", ['message' => 'Updated request', 'requested_items' => [['label' => 'Portfolio', 'is_required' => true]]])->assertOk();
         $this->assertSame($createdNotifications + 1, $candidate->notifications()->count());
+        $updateOccurrence = AuditLog::query()->where('action', 'application.information_request_updated')->where('entity_id', $request->id)->latest('id')->value('id');
+        event(new ApplicationInformationRequestUpdated($request->id, $updateOccurrence));
+        event(new ApplicationInformationRequestUpdated($request->id, $updateOccurrence));
+        $this->assertSame(1, $candidate->notifications()->where('type', 'application.information_request_updated')->count());
         $this->withToken($this->token($employer))->postJson("/api/v1/information-requests/{$request->id}/cancel", ['reason' => 'Received elsewhere'])->assertOk()->assertJsonPath('data.status', 'cancelled');
         $this->assertDatabaseHas('job_applications', ['id' => $application->id, 'application_status_id' => $this->statusId('test_completed')]);
         $this->assertDatabaseCount('application_information_requests', 1);
@@ -179,7 +189,7 @@ class ApplicationInformationRequestTest extends TestCase
 
     private function statusId(string $slug): int
     {
-        return (int) ApplicationStatus::where('slug',$slug)->value('id');
+        return (int) ApplicationStatus::where('slug', $slug)->value('id');
     }
 
     private function token(User $user): string

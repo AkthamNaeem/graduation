@@ -102,8 +102,9 @@ class ApplicationInformationRequestService
             $changed = $before !== $this->comparable($locked);
 
             if ($changed) {
-                $this->audit->record('application.information_request_updated', $actor, ApplicationInformationRequest::class, $locked->id, ['status' => 'pending'], ['status' => 'pending'], $this->metadata($locked, $lockedApplication->applicationStatus->slug, $lockedApplication->applicationStatus->slug));
-                DB::afterCommit(fn (): array => event(new ApplicationInformationRequestUpdated($locked->id)));
+                $audit = $this->audit->record('application.information_request_updated', $actor, ApplicationInformationRequest::class, $locked->id, ['status' => 'pending'], ['status' => 'pending'], $this->metadata($locked, $lockedApplication->applicationStatus->slug, $lockedApplication->applicationStatus->slug));
+                $occurrenceId = $audit?->id ?? 'state-'.hash('sha256', json_encode($this->comparable($locked), JSON_THROW_ON_ERROR));
+                DB::afterCommit(fn (): array => event(new ApplicationInformationRequestUpdated($locked->id, $occurrenceId)));
             }
 
             return $this->view($locked);

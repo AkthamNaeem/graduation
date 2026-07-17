@@ -156,7 +156,7 @@ class ApplicationWorkflowService
                 'application_status_id' => $toStatus->id,
             ])->save();
 
-            $this->recordHistory($application, $fromStatus, $toStatus, $user, $note);
+            $history = $this->recordHistory($application, $fromStatus, $toStatus, $user, $note);
 
             if (in_array($toStatus->slug, ['accepted', 'rejected'], true)) {
                 $this->auditLogService->record(
@@ -176,6 +176,7 @@ class ApplicationWorkflowService
                 $toStatus->slug,
                 $user->id,
                 $note,
+                $history->id,
             )));
 
             return $this->loadApplication($application);
@@ -232,7 +233,7 @@ class ApplicationWorkflowService
                 'application_status_id' => $withdrawnStatus->id,
             ])->save();
 
-            $this->recordHistory($application, $fromStatus, $withdrawnStatus, $user, $note);
+            $history = $this->recordHistory($application, $fromStatus, $withdrawnStatus, $user, $note);
 
             DB::afterCommit(fn (): array => event(new ApplicationStatusChanged(
                 $application->id,
@@ -240,6 +241,7 @@ class ApplicationWorkflowService
                 $withdrawnStatus->slug,
                 $user->id,
                 $note,
+                $history->id,
             )));
 
             return $this->loadApplication($application, candidateSafe: true);
@@ -269,8 +271,8 @@ class ApplicationWorkflowService
         ApplicationStatus $to,
         User $actor,
         ?string $note = null,
-    ): void {
-        ApplicationStatusHistory::create([
+    ): ApplicationStatusHistory {
+        return ApplicationStatusHistory::create([
             'job_application_id' => $jobApplication->id,
             'from_application_status_id' => $from?->id,
             'to_application_status_id' => $to->id,

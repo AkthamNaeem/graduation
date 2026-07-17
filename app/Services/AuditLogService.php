@@ -22,11 +22,11 @@ class AuditLogService
         ?array $before = null,
         ?array $after = null,
         array $metadata = [],
-    ): void {
+    ): ?AuditLog {
         try {
             $request = request();
 
-            AuditLog::query()->create([
+            return AuditLog::query()->create([
                 'actor_user_id' => $actor?->id,
                 'action' => $action,
                 'entity_type' => $entityType,
@@ -44,6 +44,8 @@ class AuditLogService
                 'entity_id' => $entityId,
                 'exception' => $exception->getMessage(),
             ]);
+
+            return null;
         }
     }
 }

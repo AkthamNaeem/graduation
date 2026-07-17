@@ -4,12 +4,9 @@ namespace App\Listeners;
 
 use App\Events\ApplicationInformationRequestUpdated;
 use App\Models\ApplicationInformationRequest;
-use App\Services\NotificationService;
 
-class CreateApplicationInformationRequestUpdatedNotification
+class CreateApplicationInformationRequestUpdatedNotification extends IdempotentNotificationListener
 {
-    public function __construct(private readonly NotificationService $notifications) {}
-
     public function handle(ApplicationInformationRequestUpdated $event): void
     {
         $request = ApplicationInformationRequest::query()->with('jobApplication.jobSeekerProfile.user')->find($event->requestId);
@@ -17,6 +14,14 @@ class CreateApplicationInformationRequestUpdatedNotification
         if ($request === null || $candidate === null) {
             return;
         }
-        $this->notifications->createForUser($candidate, 'application.information_request_updated', 'Information request updated', 'The information requested for your application was updated.', ['application_id' => $request->job_application_id, 'information_request_id' => $request->id, 'due_at' => $request->due_at?->toISOString()]);
+        $this->notificationOnce(
+            'application.information_request_updated',
+            ApplicationInformationRequestUpdated::class,
+            'information_request',
+            $request->id,
+            $candidate,
+            fn () => $this->notificationService->createForUser($candidate, 'application.information_request_updated', 'Information request updated', 'The information requested for your application was updated.', ['application_id' => $request->job_application_id, 'information_request_id' => $request->id, 'due_at' => $request->due_at?->toISOString()]),
+            $event->occurrenceId,
+        );
     }
 }

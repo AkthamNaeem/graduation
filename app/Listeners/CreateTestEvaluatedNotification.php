@@ -4,14 +4,9 @@ namespace App\Listeners;
 
 use App\Events\TestEvaluated;
 use App\Models\TestAttempt;
-use App\Services\NotificationService;
 
-class CreateTestEvaluatedNotification
+class CreateTestEvaluatedNotification extends IdempotentNotificationListener
 {
-    public function __construct(
-        private readonly NotificationService $notificationService,
-    ) {}
-
     public function handle(TestEvaluated $event): void
     {
         $attempt = TestAttempt::query()
@@ -29,12 +24,13 @@ class CreateTestEvaluatedNotification
             return;
         }
 
-        $this->notificationService->createNotification(
-            $candidate->id,
+        $this->notificationOnce(
             'test.evaluated',
-            'Test evaluated',
-            "Your {$assignment->test->title} submission has been evaluated.",
-            [
+            TestEvaluated::class,
+            'test_attempt',
+            $attempt->id,
+            $candidate,
+            fn () => $this->notificationService->createForUser($candidate, 'test.evaluated', 'Test evaluated', "Your {$assignment->test->title} submission has been evaluated.", [
                 'test_attempt_id' => $attempt->id,
                 'test_assignment_id' => $assignment->id,
                 'application_id' => $assignment->job_application_id,
@@ -43,7 +39,7 @@ class CreateTestEvaluatedNotification
                 'company_id' => $assignment->jobApplication->jobPosting?->company_id,
                 'test_id' => $assignment->test_id,
                 'status' => 'test_completed',
-            ],
+            ]),
         );
     }
 }

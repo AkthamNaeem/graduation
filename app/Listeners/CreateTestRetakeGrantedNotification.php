@@ -4,14 +4,9 @@ namespace App\Listeners;
 
 use App\Events\TestRetakeGranted;
 use App\Models\ApplicationTestAssignment;
-use App\Services\NotificationService;
 
-class CreateTestRetakeGrantedNotification
+class CreateTestRetakeGrantedNotification extends IdempotentNotificationListener
 {
-    public function __construct(
-        private readonly NotificationService $notificationService,
-    ) {}
-
     public function handle(TestRetakeGranted $event): void
     {
         $assignment = ApplicationTestAssignment::query()
@@ -23,17 +18,18 @@ class CreateTestRetakeGrantedNotification
             return;
         }
 
-        $this->notificationService->createNotification(
-            $candidate->id,
+        $this->notificationOnce(
             'test.retake_granted',
-            'Test retake granted',
-            'A new test attempt is available.',
-            [
+            TestRetakeGranted::class,
+            'test_assignment',
+            $assignment->id,
+            $candidate,
+            fn () => $this->notificationService->createForUser($candidate, 'test.retake_granted', 'Test retake granted', 'A new test attempt is available.', [
                 'assignment_id' => $assignment->id,
                 'attempt_number' => $assignment->attempt_number,
                 'max_attempts' => $assignment->max_attempts,
                 'deadline_at' => $assignment->deadline_at?->toISOString(),
-            ],
+            ]),
         );
     }
 }

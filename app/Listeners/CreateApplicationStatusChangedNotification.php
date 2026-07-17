@@ -4,14 +4,9 @@ namespace App\Listeners;
 
 use App\Events\ApplicationStatusChanged;
 use App\Models\JobApplication;
-use App\Services\NotificationService;
 
-class CreateApplicationStatusChangedNotification
+class CreateApplicationStatusChangedNotification extends IdempotentNotificationListener
 {
-    public function __construct(
-        private readonly NotificationService $notificationService,
-    ) {}
-
     public function handle(ApplicationStatusChanged $event): void
     {
         $application = JobApplication::query()
@@ -45,18 +40,20 @@ class CreateApplicationStatusChangedNotification
             default => "Your application for {$jobTitle} moved to {$event->toStatus}.",
         };
 
-        $this->notificationService->createNotification(
-            $candidate->id,
+        $this->notificationOnce(
             $type,
-            $title,
-            $message,
-            [
+            ApplicationStatusChanged::class,
+            'job_application',
+            $application->id,
+            $candidate,
+            fn () => $this->notificationService->createForUser($candidate, $type, $title, $message, [
                 'application_id' => $application->id,
                 'job_id' => $application->job_posting_id,
                 'job_title' => $jobTitle,
                 'company_id' => $job?->company_id,
                 'status' => $event->toStatus,
-            ],
+            ]),
+            $event->historyId,
         );
     }
 }

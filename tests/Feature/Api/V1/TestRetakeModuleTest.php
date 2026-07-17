@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api\V1;
 
 use App\Enums\UserRole;
+use App\Events\TestRetakeGranted;
 use App\Models\ApplicationStatus;
 use App\Models\ApplicationTestAssignment;
 use App\Models\Company;
@@ -131,6 +132,9 @@ class TestRetakeModuleTest extends TestCase
         $this->assertSame('test_pending', $application->refresh()->applicationStatus->slug);
         $this->assertSame($historyBefore + 1, $application->statusHistory()->count());
         $this->assertDatabaseHas('audit_logs', ['action' => 'test_assignment.retake_granted', 'entity_id' => $second->id]);
+        $this->assertSame(1, $candidate->notifications()->where('type', 'test.retake_granted')->count());
+        event(new TestRetakeGranted($second->id));
+        event(new TestRetakeGranted($second->id));
         $this->assertSame(1, $candidate->notifications()->where('type', 'test.retake_granted')->count());
         $notification = $candidate->notifications()->where('type', 'test.retake_granted')->firstOrFail();
         $this->assertSame($second->id, $notification->data['assignment_id']);

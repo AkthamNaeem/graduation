@@ -1499,7 +1499,7 @@ The intentional breaking behavior is that previously usable tokens for suspended
 ### Remaining Outside This Increment
 
 - Test duration enforcement and a formal test-score invariant.
-- Duplicate event-listener cleanup.
+- Duplicate event-listener registration and event-driven notification idempotency are implemented in section 34.
 - Application information-request workflow.
 - Conditional interview validation, attendance, and explicit cancellation/status policy.
 
@@ -1544,7 +1544,7 @@ This increment completes the MVP job contract while preserving company-state gua
 ### Remaining Outside This Increment
 
 - Test catalog secrecy, test duration enforcement, and a formal test-score invariant.
-- Duplicate event-listener cleanup.
+- Duplicate event-listener registration and event-driven notification idempotency are implemented in section 34.
 - Application request-more-information entities/messages.
 - Conditional interview validation, attendance, and explicit cancellation/status policy.
 
@@ -1577,7 +1577,7 @@ This increment replaces the former status-only `need_more_information` behavior 
 ### Files, Events, Audit, and Concurrency
 
 - Attachments use the private `local` disk, UUID storage names, sanitized original basenames, and allow PDF, DOC, DOCX, TXT, ZIP, PNG, JPG/JPEG up to 10 MB each and five files total. Failed storage/database work deletes all newly stored files; download verifies physical existence and returns `X-Content-Type-Options: nosniff`.
-- Dedicated after-commit events cover request creation, material update, response, and cancellation. Candidate notifications contain safe request IDs, due dates, summaries/counts; the requester receives safe response/attachment counts. No-op PATCH requests do not notify. `event:list` shows each new listener once; pre-existing duplicated listener registrations remain outside this increment.
+- Dedicated after-commit events cover request creation, material update, response, and cancellation. Candidate notifications contain safe request IDs, due dates, summaries/counts; the requester receives safe response/attachment counts. No-op PATCH requests do not notify. Section 34 documents the single discovery-based registration source and database idempotency ledger now applied to these listeners.
 - Audit actions are `application.information_request_created`, `application.information_request_updated`, `application.information_request_cancelled`, and `application.information_response_submitted`. Metadata contains IDs, statuses, due date, and counts—never full messages/descriptions, candidate response text, filenames, contents, or paths.
 - Application then request row locks serialize create/create, update/respond, and cancel/respond races. Database uniqueness guarantees one response; domain conflicts are returned as stable 409 responses rather than raw SQL errors.
 
@@ -1590,7 +1590,7 @@ The Web collection adds employer request creation, listing, viewing, update/dead
 ### Remaining Outside This Increment
 
 - Test catalog secrecy, test duration enforcement, and a formal test-score invariant.
-- Existing duplicate event-listener registration cleanup.
+- Duplicate event-listener registration and event-driven notification idempotency are implemented in section 34.
 - Conditional interview-mode validation, attendance, and explicit interview cancellation/status redesign.
 - Primary-CV selection and any general application internal-notes feature.
 
@@ -1622,7 +1622,7 @@ This increment closes the previously documented test-catalog secrecy gap without
 
 - Test attempt duration enforcement is implemented in section 32 below.
 - The formal test-score invariant is implemented in section 33 below.
-- Cleaning up pre-existing duplicate event-listener registration.
+- Duplicate event-listener registration and event-driven notification idempotency are implemented in section 34.
 - Conditional interview validation, attendance, and explicit interview cancellation/status redesign.
 - Primary-CV selection and any general application internal-notes feature.
 
@@ -1651,3 +1651,19 @@ Assignment deadline extension locks the assignment and recalculates an active at
 Attempt and assignment resources expose `effective_deadline_at`, non-negative `remaining_seconds`, `is_time_expired`, and availability flags. Submitted results and safe questions/answers remain readable after expiry. Mobile Postman captures the effective deadline and demonstrates the stable late-save/late-submit error contract.
 
 Feature coverage verifies duration/assignment precedence, exact-boundary save and Submit, rejection one second later, idempotent Start, extension capped by duration, rollback/no-orphan behavior, resources, audit, and duration validation. The existing grading, workflow, authorization, deadline, retake, company-state, privacy, and notification behavior remains in place.
+
+## 34. Single Event Registration and Idempotent Persisted Side Effects
+
+Laravel event discovery is the sole application registration source for notification listeners. Nine manual `Event::listen` registrations were removed from `AppServiceProvider`; `event:list` now shows exactly one listener for every one of the 15 application events. A regression test reads the active dispatcher and enforces one registered listener per critical event, while also preventing manual registration from returning to the provider.
+
+The `event_side_effect_executions` ledger provides database-scoped exactly-once persisted side effects. Its deterministic `effect_key` is uniquely indexed and identifies the event namespace, aggregate, optional domain occurrence, recipient, effect type, and explicit version. The ledger stores identifiers and execution metadata only; it never stores notification payloads, candidate answers, file paths, tokens, review notes, or correct options, and it has no API route or public resource.
+
+Every event-driven notification listener extends the shared idempotent listener base. For each recipient, `EventSideEffectService::executeOnce` atomically inserts the unique marker, creates the database notification, and records `executed_at` inside one transaction. A duplicate insert returns a normal no-op. If the callback fails, both notification and marker roll back, the exception is rethrown, and a later retry can succeed. Multi-recipient events use one key and transaction per recipient, permitting independent retries without duplicating successful recipients.
+
+Keys use stable aggregate records. Test assignment, submission, evaluation, retake, application submission, interview schedule/cancel/evaluation, information request creation/cancellation, and information response use their immutable domain IDs. Repeated deadline extensions use the deadline-change row ID. Application status notifications use the status-history row ID. Material information-request and interview updates use their audit occurrence ID, with a deterministic state fingerprint fallback if audit recording is unavailable. A later real occurrence therefore receives a new key, while redispatching the same event cannot rewrite or replace its historical notification.
+
+All covered domain services continue dispatching only through `DB::afterCommit`. Application state, status history, assignments, submission timestamps, grading, deadline changes, retakes, responses, interview evaluation, and required audit writes remain in their original locked domain transactions; listeners create only the existing follow-up database notifications. A rolled-back domain transaction emits neither a notification nor a ledger record. No queue, outbox endpoint, cache, new API contract, or historical-notification cleanup was added.
+
+Covered events are `ApplicationSubmitted`, `ApplicationStatusChanged`, all four application-information events, `InterviewScheduled`, `InterviewUpdated`, `InterviewCancelled`, `InterviewEvaluated`, `TestAssigned`, `TestSubmitted`, `TestEvaluated`, `TestAssignmentDeadlineExtended`, and `TestRetakeGranted`. Tests verify single registration, repeated dispatch, one row per recipient, stable historical payloads, callback rollback, successful retry, independent recipients/occurrences, API duplicate regressions, and the existing deadline, retake, information-request, interview, grading, and application workflows.
+
+The exactly-once guarantee is limited to persisted effects inside this database. No external email, SMS, or push provider is currently integrated; a future provider must use an outbox/delivery record and the provider's supported idempotency contract before any external exactly-once claim can be made. Postman descriptions for assignment and evaluation now note single-notification behavior; no ledger endpoint or effect key is exposed.

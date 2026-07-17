@@ -3,9 +3,21 @@
 namespace Tests\Feature\Api\V1;
 
 use App\Enums\UserRole;
+use App\Events\ApplicationInformationRequestCancelled;
+use App\Events\ApplicationInformationRequested;
+use App\Events\ApplicationStatusChanged;
+use App\Events\ApplicationSubmitted;
+use App\Events\InterviewCancelled;
+use App\Events\InterviewEvaluated;
+use App\Events\InterviewScheduled;
+use App\Events\InterviewUpdated;
+use App\Events\TestAssigned;
+use App\Events\TestEvaluated;
+use App\Events\TestSubmitted;
 use App\Models\ApplicationInformationRequest;
 use App\Models\ApplicationStatus;
 use App\Models\ApplicationTestAssignment;
+use App\Models\AuditLog;
 use App\Models\Company;
 use App\Models\CVFile;
 use App\Models\EmployerProfile;
@@ -166,15 +178,22 @@ class NotificationTest extends TestCase
             ])
             ->assertCreated();
 
+        $application = JobApplication::query()->firstOrFail();
+        event(new ApplicationSubmitted($application->id));
+        event(new ApplicationSubmitted($application->id));
+
         $this->assertDatabaseHas('notifications', [
             'user_id' => $candidate->id,
             'type' => 'application.submitted',
         ]);
+        $this->assertSame(1, Notification::query()->where('user_id', $candidate->id)->where('type', 'application.submitted')->count());
+        $this->assertSame(1, Notification::query()->where('user_id', $employer->id)->where('type', 'application.received')->count());
 
         $this->assertDatabaseHas('notifications', [
             'user_id' => $employer->id,
             'type' => 'application.received',
         ]);
+
     }
 
     public function test_workflow_events_create_candidate_notifications(): void
@@ -198,6 +217,14 @@ class NotificationTest extends TestCase
             'type' => 'application.status_changed',
         ]);
 
+        $statusHistory = $application->statusHistory()->reorder()->latest('id')->firstOrFail();
+        $this->assertDatabaseHas('event_side_effect_executions', [
+            'effect_key' => "application.status_changed:job_application:{$application->id}:occurrence:{$statusHistory->id}:notification:user:{$candidate->id}:v1",
+        ]);
+        event(new ApplicationStatusChanged($application->id, 'under_review', 'shortlisted', $employer->id, 'Strong profile.', $statusHistory->id));
+        event(new ApplicationStatusChanged($application->id, 'under_review', 'shortlisted', $employer->id, 'Strong profile.', $statusHistory->id));
+        $this->assertSame(1, Notification::query()->where('user_id', $candidate->id)->where('type', 'application.status_changed')->count());
+
         $statusNotification = Notification::query()
             ->where('user_id', $candidate->id)
             ->where('type', 'application.status_changed')
@@ -215,10 +242,14 @@ class NotificationTest extends TestCase
 
         $assignment = ApplicationTestAssignment::findOrFail($assignmentResponse->json('data.id'));
 
+        event(new TestAssigned($assignment->id));
+        event(new TestAssigned($assignment->id));
+
         $this->assertDatabaseHas('notifications', [
             'user_id' => $candidate->id,
             'type' => 'test.assigned',
         ]);
+        $this->assertSame(1, Notification::query()->where('user_id', $candidate->id)->where('type', 'test.assigned')->count());
 
         $this->withToken($this->tokenFor($candidate))
             ->postJson("/api/v1/tests/{$assignment->id}/start")
@@ -232,10 +263,14 @@ class NotificationTest extends TestCase
 
         $attempt = TestAttempt::findOrFail($submitResponse->json('data.id'));
 
+        event(new TestSubmitted($attempt->id));
+        event(new TestSubmitted($attempt->id));
+
         $this->assertDatabaseHas('notifications', [
             'user_id' => $employer->id,
             'type' => 'test.submitted',
         ]);
+        $this->assertSame(1, Notification::query()->where('user_id', $employer->id)->where('type', 'test.submitted')->count());
 
         $this->withToken($this->tokenFor($employer))
             ->postJson("/api/v1/tests/{$attempt->id}/evaluate", [
@@ -244,10 +279,14 @@ class NotificationTest extends TestCase
             ])
             ->assertOk();
 
+        event(new TestEvaluated($attempt->id));
+        event(new TestEvaluated($attempt->id));
+
         $this->assertDatabaseHas('notifications', [
             'user_id' => $candidate->id,
             'type' => 'test.evaluated',
         ]);
+        $this->assertSame(1, Notification::query()->where('user_id', $candidate->id)->where('type', 'test.evaluated')->count());
 
         $testNotification = Notification::query()
             ->where('user_id', $candidate->id)
@@ -269,10 +308,14 @@ class NotificationTest extends TestCase
 
         $interview = Interview::findOrFail($interviewResponse->json('data.id'));
 
+        event(new InterviewScheduled($interview->id));
+        event(new InterviewScheduled($interview->id));
+
         $this->assertDatabaseHas('notifications', [
             'user_id' => $candidate->id,
             'type' => 'interview.scheduled',
         ]);
+        $this->assertSame(1, Notification::query()->where('user_id', $candidate->id)->where('type', 'interview.scheduled')->count());
 
         $this->withToken($this->tokenFor($employer))
             ->putJson("/api/v1/interviews/{$interview->id}", [
@@ -284,10 +327,19 @@ class NotificationTest extends TestCase
             ])
             ->assertOk();
 
+        $interviewUpdateOccurrence = AuditLog::query()
+            ->where('action', 'interview.updated')
+            ->where('entity_id', $interview->id)
+            ->latest('id')
+            ->value('id');
+        event(new InterviewUpdated($interview->id, $interviewUpdateOccurrence));
+        event(new InterviewUpdated($interview->id, $interviewUpdateOccurrence));
+
         $this->assertDatabaseHas('notifications', [
             'user_id' => $candidate->id,
             'type' => 'interview.rescheduled',
         ]);
+        $this->assertSame(1, Notification::query()->where('user_id', $candidate->id)->where('type', 'interview.rescheduled')->count());
 
         $this->withToken($this->tokenFor($employer))
             ->postJson("/api/v1/interviews/{$interview->id}/complete", [
@@ -305,10 +357,14 @@ class NotificationTest extends TestCase
             ])
             ->assertOk();
 
+        event(new InterviewEvaluated($interview->id));
+        event(new InterviewEvaluated($interview->id));
+
         $this->assertDatabaseHas('notifications', [
             'user_id' => $candidate->id,
             'type' => 'interview.evaluated',
         ]);
+        $this->assertSame(1, Notification::query()->where('user_id', $candidate->id)->where('type', 'interview.evaluated')->count());
 
         $interviewNotification = Notification::query()
             ->where('user_id', $candidate->id)
@@ -349,9 +405,16 @@ class NotificationTest extends TestCase
         $this->assertArrayNotHasKey('note', $needMoreInfo->data);
 
         $informationRequest = ApplicationInformationRequest::query()->where('job_application_id', $application->id)->firstOrFail();
+        event(new ApplicationInformationRequested($informationRequest->id));
+        event(new ApplicationInformationRequested($informationRequest->id));
+        $this->assertSame(1, Notification::query()->where('user_id', $candidate->id)->where('type', 'application.information_requested')->count());
         $this->withToken($this->tokenFor($employer))
             ->postJson("/api/v1/information-requests/{$informationRequest->id}/cancel")
             ->assertOk();
+
+        event(new ApplicationInformationRequestCancelled($informationRequest->id));
+        event(new ApplicationInformationRequestCancelled($informationRequest->id));
+        $this->assertSame(1, Notification::query()->where('user_id', $candidate->id)->where('type', 'application.information_request_cancelled')->count());
 
         $this->withToken($this->tokenFor($employer))
             ->postJson("/api/v1/applications/{$application->id}/status", [
@@ -394,15 +457,20 @@ class NotificationTest extends TestCase
             ->assertCreated();
 
         $interview = Interview::findOrFail($interviewResponse->json('data.id'));
+        $scheduledAt = $interview->scheduled_at?->toISOString();
 
         $this->withToken($this->tokenFor($employer))
             ->deleteJson("/api/v1/interviews/{$interview->id}")
             ->assertOk();
 
+        event(new InterviewCancelled($application->id, $interview->id, $scheduledAt));
+        event(new InterviewCancelled($application->id, $interview->id, $scheduledAt));
+
         $this->assertDatabaseHas('notifications', [
             'user_id' => $candidate->id,
             'type' => 'interview.cancelled',
         ]);
+        $this->assertSame(1, Notification::query()->where('user_id', $candidate->id)->where('type', 'interview.cancelled')->count());
     }
 
     public function test_final_accept_creates_candidate_notification(): void

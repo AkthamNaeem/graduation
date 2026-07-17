@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api\V1;
 
 use App\Enums\UserRole;
+use App\Events\TestAssignmentDeadlineExtended;
 use App\Models\ApplicationStatus;
 use App\Models\ApplicationTestAssignment;
 use App\Models\Company;
@@ -213,6 +214,11 @@ class TestDeadlineModuleTest extends TestCase
         ]);
         $this->assertSame(1, $candidate->notifications()->where('type', 'test.deadline_extended')->count());
 
+        $deadlineChangeId = $assignment->deadlineChanges()->latest('id')->value('id');
+        event(new TestAssignmentDeadlineExtended($assignment->id, $deadlineChangeId));
+        event(new TestAssignmentDeadlineExtended($assignment->id, $deadlineChangeId));
+        $this->assertSame(1, $candidate->notifications()->where('type', 'test.deadline_extended')->count());
+
         $this->withToken($this->tokenFor($employer))
             ->getJson("/api/v1/test-assignments/{$assignment->id}/deadline-history")
             ->assertOk()
@@ -232,6 +238,7 @@ class TestDeadlineModuleTest extends TestCase
             'new_deadline_at' => '2026-07-22 14:00:00',
             'changed_by_user_id' => $admin->id,
         ]);
+        $this->assertSame(2, $candidate->notifications()->where('type', 'test.deadline_extended')->count());
     }
 
     public function test_extension_rules_authorization_null_deadline_and_reactivation_are_enforced(): void

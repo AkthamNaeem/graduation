@@ -4,14 +4,9 @@ namespace App\Listeners;
 
 use App\Events\InterviewCancelled;
 use App\Models\JobApplication;
-use App\Services\NotificationService;
 
-class CreateInterviewCancelledNotification
+class CreateInterviewCancelledNotification extends IdempotentNotificationListener
 {
-    public function __construct(
-        private readonly NotificationService $notificationService,
-    ) {}
-
     public function handle(InterviewCancelled $event): void
     {
         $application = JobApplication::query()
@@ -25,19 +20,20 @@ class CreateInterviewCancelledNotification
             return;
         }
 
-        $this->notificationService->createForUser(
-            $candidate,
+        $this->notificationOnce(
             'interview.cancelled',
-            'Interview cancelled',
-            "Your interview for {$job->title} has been cancelled.",
-            [
+            InterviewCancelled::class,
+            'interview',
+            $event->interviewId,
+            $candidate,
+            fn () => $this->notificationService->createForUser($candidate, 'interview.cancelled', 'Interview cancelled', "Your interview for {$job->title} has been cancelled.", [
                 'application_id' => $application->id,
                 'job_id' => $job->id,
                 'job_title' => $job->title,
                 'company_id' => $job->company_id,
                 'interview_id' => $event->interviewId,
                 'scheduled_at' => $event->scheduledAt,
-            ],
+            ]),
         );
     }
 }

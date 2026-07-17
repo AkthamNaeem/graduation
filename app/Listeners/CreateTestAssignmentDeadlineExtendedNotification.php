@@ -4,14 +4,9 @@ namespace App\Listeners;
 
 use App\Events\TestAssignmentDeadlineExtended;
 use App\Models\ApplicationTestAssignment;
-use App\Services\NotificationService;
 
-class CreateTestAssignmentDeadlineExtendedNotification
+class CreateTestAssignmentDeadlineExtendedNotification extends IdempotentNotificationListener
 {
-    public function __construct(
-        private readonly NotificationService $notificationService,
-    ) {}
-
     public function handle(TestAssignmentDeadlineExtended $event): void
     {
         $assignment = ApplicationTestAssignment::query()
@@ -23,15 +18,17 @@ class CreateTestAssignmentDeadlineExtendedNotification
             return;
         }
 
-        $this->notificationService->createNotification(
-            $candidate->id,
+        $this->notificationOnce(
             'test.deadline_extended',
-            'Test deadline extended',
-            'Your test deadline has been extended.',
-            [
+            TestAssignmentDeadlineExtended::class,
+            'test_assignment',
+            $assignment->id,
+            $candidate,
+            fn () => $this->notificationService->createForUser($candidate, 'test.deadline_extended', 'Test deadline extended', 'Your test deadline has been extended.', [
                 'assignment_id' => $assignment->id,
                 'new_deadline_at' => $assignment->deadline_at?->toISOString(),
-            ],
+            ]),
+            $event->deadlineChangeId,
         );
     }
 }

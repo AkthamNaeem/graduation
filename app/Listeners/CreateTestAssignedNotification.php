@@ -4,14 +4,9 @@ namespace App\Listeners;
 
 use App\Events\TestAssigned;
 use App\Models\ApplicationTestAssignment;
-use App\Services\NotificationService;
 
-class CreateTestAssignedNotification
+class CreateTestAssignedNotification extends IdempotentNotificationListener
 {
-    public function __construct(
-        private readonly NotificationService $notificationService,
-    ) {}
-
     public function handle(TestAssigned $event): void
     {
         $assignment = ApplicationTestAssignment::query()
@@ -24,12 +19,13 @@ class CreateTestAssignedNotification
             return;
         }
 
-        $this->notificationService->createNotification(
-            $candidate->id,
+        $this->notificationOnce(
             'test.assigned',
-            'New test assigned',
-            "You have been assigned {$assignment->test->title}.",
-            [
+            TestAssigned::class,
+            'test_assignment',
+            $assignment->id,
+            $candidate,
+            fn () => $this->notificationService->createForUser($candidate, 'test.assigned', 'New test assigned', "You have been assigned {$assignment->test->title}.", [
                 'application_id' => $assignment->job_application_id,
                 'job_id' => $assignment->jobApplication->job_posting_id,
                 'job_title' => $assignment->jobApplication->jobPosting?->title,
@@ -40,7 +36,7 @@ class CreateTestAssignedNotification
                 'deadline_at' => $assignment->deadline_at?->toISOString(),
                 'attempt_number' => $assignment->attempt_number,
                 'max_attempts' => $assignment->max_attempts,
-            ],
+            ]),
         );
     }
 }
