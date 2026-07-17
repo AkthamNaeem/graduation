@@ -42,6 +42,16 @@ class JobApplicationResource extends JsonResource
             'consent_to_share_profile' => $this->consent_to_share_profile,
             'screening_answers' => $this->screening_answers,
             'status_history' => ApplicationStatusHistoryResource::collection($this->whenLoaded('statusHistory')),
+            'latest_information_request' => $this->when(
+                $this->relationLoaded('latestInformationRequest'),
+                fn (): ?array => $this->latestInformationRequest === null ? null : [
+                    'id' => $this->latestInformationRequest->id,
+                    'status' => $this->latestInformationRequest->status?->value,
+                    'due_at' => $this->latestInformationRequest->due_at?->toISOString(),
+                    'is_expired' => $this->latestInformationRequest->isExpired(),
+                    'can_respond' => ! $manager && $this->latestInformationRequest->canBeRespondedTo(),
+                ],
+            ),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

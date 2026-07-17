@@ -36,6 +36,7 @@ class MatchingTest extends TestCase
         $laravel = Skill::create(['name' => 'Laravel', 'slug' => 'laravel']);
         $mysql = Skill::create(['name' => 'MySQL', 'slug' => 'mysql']);
         $react = Skill::create(['name' => 'React', 'slug' => 'react']);
+        $kubernetes = Skill::create(['name' => 'Kubernetes', 'slug' => 'kubernetes']);
 
         $jobSeeker->jobSeekerProfile->skills()->attach([$laravel->id, $mysql->id]);
         Experience::create([
@@ -65,7 +66,11 @@ class MatchingTest extends TestCase
             'status' => 'open',
             'published_at' => now()->subHour(),
         ]);
-        $topMatch->skills()->attach([$laravel->id, $mysql->id]);
+        $topMatch->skills()->attach([
+            $laravel->id => ['requirement_type' => 'required'],
+            $mysql->id => ['requirement_type' => 'optional'],
+            $kubernetes->id => ['requirement_type' => 'required'],
+        ]);
 
         $lowerMatch = $this->jobPostingFor($company, [
             'title' => 'Frontend Engineer',
@@ -102,6 +107,10 @@ class MatchingTest extends TestCase
             ->assertJsonPath('data.1.id', $lowerMatch->id)
             ->assertJsonPath('data.0.matched_skills.0', 'Laravel')
             ->assertJsonPath('data.0.matched_skills.1', 'MySQL')
+            ->assertJsonPath('data.0.skill_breakdown.required_skills_matched', ['Laravel'])
+            ->assertJsonPath('data.0.skill_breakdown.required_skills_missing', ['Kubernetes'])
+            ->assertJsonPath('data.0.skill_breakdown.optional_skills_matched', ['MySQL'])
+            ->assertJsonPath('data.0.breakdown.skills', 0.6)
             ->assertJsonStructure([
                 'success',
                 'message',
@@ -111,6 +120,7 @@ class MatchingTest extends TestCase
                     'score',
                     'breakdown' => ['skills', 'experience', 'core', 'education'],
                     'matched_skills',
+                    'skill_breakdown' => ['required_skills_matched', 'required_skills_missing', 'optional_skills_matched'],
                 ]],
             ]);
     }

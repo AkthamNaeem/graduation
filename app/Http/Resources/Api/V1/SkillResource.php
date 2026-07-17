@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Enums\JobSkillRequirementType;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -17,6 +18,12 @@ class SkillResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'slug' => $this->slug,
+            'requirement_type' => $this->whenPivotLoaded(
+                'job_posting_skills',
+                fn () => $this->pivot->requirement_type instanceof JobSkillRequirementType
+                    ? $this->pivot->requirement_type->value
+                    : $this->pivot->requirement_type,
+            ),
             'source_type' => $this->whenPivotLoaded('job_seeker_skills', fn () => $this->pivot->source_type),
             'source_cv_file_id' => $this->whenPivotLoaded('job_seeker_skills', fn () => $this->pivot->source_cv_file_id),
             'user_verified_at' => $this->whenPivotLoaded('job_seeker_skills', fn () => $this->pivot->user_verified_at?->toISOString()),

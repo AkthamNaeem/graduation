@@ -29,6 +29,7 @@ class JobPostingTest extends TestCase
                 'employment_type' => 'full-time',
                 'experience_level' => 'mid-level',
                 'location' => 'Remote',
+                'work_mode' => 'remote',
                 'salary_min' => 70000,
                 'salary_max' => 90000,
             ])

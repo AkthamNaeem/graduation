@@ -26,6 +26,7 @@ class Skill extends Model
     {
         return $this->belongsToMany(JobPosting::class, 'job_posting_skills')
             ->using(JobPostingSkill::class)
+            ->withPivot('requirement_type')
             ->withTimestamps();
     }
 }

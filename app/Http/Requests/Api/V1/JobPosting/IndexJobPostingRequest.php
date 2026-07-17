@@ -2,11 +2,24 @@
 
 namespace App\Http\Requests\Api\V1\JobPosting;
 
+use App\Enums\JobSkillRequirementType;
+use App\Enums\JobWorkMode;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class IndexJobPostingRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        if ($this->has('accepting_applications')) {
+            $value = filter_var($this->input('accepting_applications'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if ($value !== null) {
+                $this->merge(['accepting_applications' => $value]);
+            }
+        }
+    }
+
     public function authorize(): bool
     {
         return true;
@@ -23,6 +36,9 @@ class IndexJobPostingRequest extends FormRequest
             'skill' => ['sometimes', 'nullable', 'string', 'max:255'],
             'experience_level' => ['sometimes', 'nullable', 'string', 'max:255'],
             'employment_type' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'work_mode' => ['sometimes', 'nullable', Rule::enum(JobWorkMode::class)],
+            'accepting_applications' => ['sometimes', 'boolean'],
+            'skill_requirement' => ['sometimes', Rule::enum(JobSkillRequirementType::class)],
             'salary_min' => ['sometimes', 'nullable', 'numeric', 'min:0'],
             'salary_max' => ['sometimes', 'nullable', 'numeric', 'min:0'],
             'sort_by' => ['sometimes', 'nullable', 'string', 'in:published_at,created_at,salary_min,salary_max,title'],
@@ -34,6 +50,10 @@ class IndexJobPostingRequest extends FormRequest
     public function withValidator(Validator $validator): void
     {
         $validator->after(function (Validator $validator): void {
+            if ($this->filled('skill_requirement') && ! $this->filled('skill')) {
+                $validator->errors()->add('skill_requirement', 'The skill requirement filter requires the skill filter.');
+            }
+
             if (! $this->filled('salary_min') || ! $this->filled('salary_max')) {
                 return;
             }

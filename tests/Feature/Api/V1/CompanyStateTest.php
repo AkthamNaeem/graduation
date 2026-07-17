@@ -89,6 +89,7 @@ class CompanyStateTest extends TestCase
             'description' => 'Recruitment resumed without replacing the employer token.',
             'employment_type' => 'full-time',
             'experience_level' => 'mid-level',
+            'work_mode' => 'remote',
         ])->assertCreated();
         $this->getJson("/api/v1/jobs/{$jobs['suspended']->id}")->assertOk();
         $this->assertSame(1, $employer->tokens()->count());

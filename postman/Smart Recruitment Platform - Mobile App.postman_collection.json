@@ -378,6 +378,9 @@
             }
           ]
         },
+        {"name":"Filter Jobs by Work Mode","request":{"method":"GET","description":"Browse approved-company jobs using the on_site, remote, or hybrid work mode.","url":"{{base_url}}/jobs?work_mode={{job_work_mode}}"}},
+        {"name":"Filter Accepting Applications","request":{"method":"GET","description":"Returns open approved-company jobs whose deadline is null or has not passed.","url":"{{base_url}}/jobs?accepting_applications=true"}},
+        {"name":"Job Details With Deadline","request":{"method":"GET","description":"Returns work_mode, application_deadline, deadline flags, can_apply, and required/optional skills. Expired open jobs remain visible with can_apply=false.","url":"{{base_url}}/jobs/{{job_id}}"}},
         {
           "name": "Show Public Job",
           "request": {
@@ -957,6 +960,8 @@
     {
       "name": "07 Applications",
       "item": [
+        {"name":"Apply Before Deadline","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"description":"Creates an application when the job is open, its company is approved, and now is at or before the deadline.","url":"{{base_url}}/jobs/{{job_id}}/applications","body":{"mode":"raw","raw":"{\n  \"selected_cv_file_id\": {{cv_file_id}},\n  \"consent_to_share_profile\": true\n}","options":{"raw":{"language":"json"}}}}},
+        {"name":"Apply After Deadline Error","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"description":"Use an open job whose deadline has passed. No application, history, or notification is created.","url":"{{base_url}}/jobs/{{job_id}}/applications","body":{"mode":"raw","raw":"{\n  \"selected_cv_file_id\": {{cv_file_id}},\n  \"consent_to_share_profile\": true\n}","options":{"raw":{"language":"json"}}}},"response":[{"name":"409 deadline passed","status":"Conflict","code":409,"_postman_previewlanguage":"json","header":[{"key":"Content-Type","value":"application/json"}],"body":"{\n  \"success\": false,\n  \"message\": \"The application deadline for this job has passed.\",\n  \"errors\": {},\n  \"code\": \"JOB_APPLICATION_DEADLINE_PASSED\"\n}"}]},
         {
           "name": "Apply To Job",
           "request": {
@@ -1087,6 +1092,18 @@
             }
           ]
         }
+      ]
+    },
+    {
+      "name": "07A Applications - Requested Information",
+      "item": [
+        {"name":"View Pending Information Request","request":{"method":"GET","url":"{{base_url}}/information-requests/{{information_request_id}}"}},
+        {"name":"Submit Message Response","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/information-requests/{{information_request_id}}/respond","body":{"mode":"raw","raw":"{\n  \"message\": \"Here is the requested information.\"\n}","options":{"raw":{"language":"json"}}}}},
+        {"name":"Submit Files Response","request":{"method":"POST","header":[],"url":"{{base_url}}/information-requests/{{information_request_id}}/respond","body":{"mode":"formdata","formdata":[{"key":"attachments[]","type":"file","src":[]}]}}},
+        {"name":"Submit Message and Files","request":{"method":"POST","header":[],"url":"{{base_url}}/information-requests/{{information_request_id}}/respond","body":{"mode":"formdata","formdata":[{"key":"message","value":"Supporting files attached.","type":"text"},{"key":"attachments[]","type":"file","src":[]}]}}},
+        {"name":"View Responded Request","request":{"method":"GET","url":"{{base_url}}/information-requests/{{information_request_id}}"}},
+        {"name":"Download Own Attachment","request":{"method":"GET","url":"{{base_url}}/information-response-attachments/{{information_attachment_id}}/download"}},
+        {"name":"Response Deadline Passed Error","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"description":"Returns 409 APPLICATION_INFORMATION_REQUEST_EXPIRED without changing application state.","url":"{{base_url}}/information-requests/{{information_request_id}}/respond","body":{"mode":"raw","raw":"{\n  \"message\": \"Late response\"\n}","options":{"raw":{"language":"json"}}}}}
       ]
     },
     {

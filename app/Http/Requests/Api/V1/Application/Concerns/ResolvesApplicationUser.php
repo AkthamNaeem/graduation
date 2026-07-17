@@ -19,9 +19,14 @@ trait ResolvesApplicationUser
         $accessToken = PersonalAccessToken::findToken($token);
         $tokenable = $accessToken?->tokenable;
 
-        return $tokenable instanceof User
-            ? $tokenable->withAccessToken($accessToken)
-            : null;
+        if (! $tokenable instanceof User) {
+            return null;
+        }
+
+        $user = $tokenable->withAccessToken($accessToken);
+        $this->setUserResolver(static fn (?string $guard = null): User => $user);
+
+        return $user;
     }
 
     protected function isJobSeekerUser(): bool

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class JobApplication extends Model
 {
@@ -59,5 +60,15 @@ class JobApplication extends Model
     public function interviews(): HasMany
     {
         return $this->hasMany(Interview::class)->latest('scheduled_at')->latest('id');
+    }
+
+    public function informationRequests(): HasMany
+    {
+        return $this->hasMany(ApplicationInformationRequest::class)->latest('id');
+    }
+
+    public function latestInformationRequest(): HasOne
+    {
+        return $this->hasOne(ApplicationInformationRequest::class)->latestOfMany();
     }
 }

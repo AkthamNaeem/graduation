@@ -1500,6 +1500,96 @@ The intentional breaking behavior is that previously usable tokens for suspended
 
 - Test catalog secrecy, test duration enforcement, and a formal test-score invariant.
 - Duplicate event-listener cleanup.
-- Job work mode, application deadline, and required/optional skill fields.
 - Application information-request workflow.
 - Conditional interview validation, attendance, and explicit cancellation/status policy.
+
+## 29. Job Posting MVP Fields and Application Deadline Enforcement
+
+This increment completes the MVP job contract while preserving company-state guards, application workflow states, public pagination, and candidate-safe resource boundaries.
+
+### Schema and Legacy Strategy
+
+- `job_postings.work_mode` stores `on_site`, `remote`, or `hybrid` and is indexed. Existing rows receive the explicit safe default `on_site`; the value is not inferred from location.
+- `job_postings.application_deadline` is a nullable indexed UTC timestamp. Null means no deadline.
+- `job_posting_skills.requirement_type` stores `required` or `optional`, is indexed, and defaults existing rows to `required`. The existing unique job/skill constraint remains unchanged, so changing classification updates one pivot row instead of creating duplicates.
+- PHP-backed enums and model casts are used; no database-specific enum was introduced, preserving SQLite/MySQL portability.
+
+### Validation, Publishing, and Application Boundary
+
+- New jobs require a valid work mode. `on_site` and `hybrid` require a non-empty location; `remote` permits null location. Updates validate the effective stored/input combination so location cannot be cleared while a location-dependent mode remains active.
+- Deadlines supplied on create/update must be future timestamps, may be shortened to another future time, extended, or removed with null. Jobs do not close automatically when time passes.
+- Publishing requires core job fields, a valid mode/location combination, at least one required skill, and a deadline that has not passed. Optional-only skill sets return `422 JOB_REQUIRED_SKILL_MISSING`; expired deadlines return `422 JOB_APPLICATION_DEADLINE_PASSED` without publication audit/state changes.
+- Application creation permits `now <= application_deadline` and rejects `now > application_deadline` with `409 JOB_APPLICATION_DEADLINE_PASSED`. Rejection occurs before application, status-history, or notification creation and never mutates the open job status.
+
+### Resources, Filters, and Skills Contract
+
+- Job resources now expose `work_mode`, ISO-8601 `application_deadline`, `has_application_deadline`, `is_application_deadline_passed`, and `can_apply`. The latter requires open status, approved company, and an unexpired/null deadline but is not used as a substitute for service enforcement.
+- Skills serialize as safe skill fields plus `requirement_type`; raw pivot IDs and timestamps are not exposed.
+- Public/employer filters add `work_mode`, boolean `accepting_applications`, and `skill_requirement` when paired with the existing `skill` filter. Search, location, salary, experience, employment, sorting, pagination, and company-approval filtering remain compatible.
+- Create/update accept structured `skills` items. The existing `skill_ids` attach contract remains supported and treats legacy IDs as required. Structured attach calls update the existing pivot classification idempotently.
+
+### Matching, Authorization, and Audit
+
+- Matching remains advisory and does not change application status or make acceptance decisions. Required matches receive full skill weight and optional matches receive half weight. Recommendation/ranking responses separate `required_skills_matched`, `required_skills_missing`, and `optional_skills_matched`; optional skills are never reported as missing required skills.
+- Existing owner/cross-company policies and approved-company middleware remain in force. Public jobs still require approved companies; owners retain expired jobs in `/jobs/my`.
+- Existing `job.created`, `job.updated`, `job.published`, and `job.closed` actions remain. Skill changes add `job.skills_updated`; deadline changes add `job.application_deadline_changed`. Metadata contains safe IDs, old/new field values, actor ID, and required/optional counts rather than full descriptions or candidate data.
+
+### Breaking Contract Changes and Verification
+
+- `work_mode` is now required for API-created jobs.
+- Publishing now requires at least one skill classified as required.
+- Job skill responses include `requirement_type`, and structured skill payloads are preferred while `skill_ids` remains transitional-compatible.
+- Job and application deadline tests use frozen UTC time to verify equality/past boundaries, visibility, extension, removal, and absence of partial side effects. Work-mode, skill-classification, filters, matching explanations, company-state, application, privacy, and notification regression suites remain covered.
+
+### Remaining Outside This Increment
+
+- Test catalog secrecy, test duration enforcement, and a formal test-score invariant.
+- Duplicate event-listener cleanup.
+- Application request-more-information entities/messages.
+- Conditional interview validation, attendance, and explicit cancellation/status policy.
+
+## 30. Application Request-More-Information Workflow
+
+This increment replaces the former status-only `need_more_information` behavior with a normalized, transactional employer/candidate workflow. It does not add chat, drafts, profile/CV mutation, automated decisions, or AI.
+
+### Schema and Domain Model
+
+- `application_information_requests` stores one historical request round, its requester, message, optional UTC due date, `pending|responded|cancelled` status, the previous application status, and response/cancellation timestamps. Expiry is computed from a pending request whose `due_at` is earlier than the current time; it is not persisted as a fourth status.
+- `application_information_request_items` stores the ordered requested checklist. Every request requires at least one item, ordering follows the submitted array, and labels are unique case-insensitively within the request.
+- `application_information_responses` stores exactly one final candidate response per request. `application_information_response_attachments` stores private attachment metadata without exposing disk or storage path.
+- Applications have many request rounds and expose only a safe latest-request summary in application resources. A transaction plus an application row lock enforces one pending request at a time across SQLite/MySQL-compatible deployments.
+
+### API and Workflow
+
+- Employer management: `POST|GET /api/v1/applications/{jobApplication}/information-requests`, `GET|PATCH /api/v1/information-requests/{informationRequest}`, and `POST /api/v1/information-requests/{informationRequest}/cancel`.
+- Candidate submission: `POST /api/v1/information-requests/{informationRequest}/respond`, accepting a trimmed optional message and up to five optional multipart files, with at least one of those forms of content required.
+- Authorized parties download private files through `GET /api/v1/information-response-attachments/{attachment}/download`; no public URL is generated.
+- Creation atomically locks the application, creates the request/items, records the previous state, transitions to `need_more_information`, appends one status history entry, and records a safe audit event. A successful candidate response atomically creates the response/attachments, marks the request responded, and moves the application to `under_review`. Cancellation preserves the request/items and restores the recorded previous status, falling back to `under_review` only if that status no longer exists.
+- The general status endpoint now rejects direct entry into `need_more_information` with `INFORMATION_REQUEST_ENDPOINT_REQUIRED` and rejects direct exits from that state with `INFORMATION_RESPONSE_REQUIRED`. Candidate withdrawal closes a pending request as cancelled in the same workflow transaction so no open request is orphaned.
+
+### Validation, Deadlines, Authorization, and Privacy
+
+- Request messages and item labels are trimmed and cannot be whitespace-only. Descriptions are limited to 2,000 characters; item labels to 255; duplicate labels are rejected case-insensitively. Due dates are nullable, must be future values when supplied, and may be extended or removed while pending.
+- Candidate responses are allowed at exact equality with `due_at` and rejected only when `now > due_at` with `409 APPLICATION_INFORMATION_REQUEST_EXPIRED`. Expiry does not reject the candidate, change application state, or close the request; employers may extend or cancel it.
+- Existing application/company ownership is rechecked inside the service, not just middleware/policies. Candidate A, cross-company employers, suspended users, and public callers are denied. Non-approved company state blocks create/update/cancel/respond/upload with `APPLICATION_INFORMATION_REQUEST_COMPANY_UNAVAILABLE`, while historical reads remain available under existing read policies. Existing conventions do not grant admins application-management access, so no new admin override was introduced.
+- Candidate resources omit requester/canceller IDs and summaries, employer email, internal notes, audit metadata, disks, and paths. Employer actor data is limited to `id` and `name`. Resource viewer resolution uses the current bearer token, preventing stale guard state from shaping a candidate response as an employer response.
+
+### Files, Events, Audit, and Concurrency
+
+- Attachments use the private `local` disk, UUID storage names, sanitized original basenames, and allow PDF, DOC, DOCX, TXT, ZIP, PNG, JPG/JPEG up to 10 MB each and five files total. Failed storage/database work deletes all newly stored files; download verifies physical existence and returns `X-Content-Type-Options: nosniff`.
+- Dedicated after-commit events cover request creation, material update, response, and cancellation. Candidate notifications contain safe request IDs, due dates, summaries/counts; the requester receives safe response/attachment counts. No-op PATCH requests do not notify. `event:list` shows each new listener once; pre-existing duplicated listener registrations remain outside this increment.
+- Audit actions are `application.information_request_created`, `application.information_request_updated`, `application.information_request_cancelled`, and `application.information_response_submitted`. Metadata contains IDs, statuses, due date, and counts—never full messages/descriptions, candidate response text, filenames, contents, or paths.
+- Application then request row locks serialize create/create, update/respond, and cancel/respond races. Database uniqueness guarantees one response; domain conflicts are returned as stable 409 responses rather than raw SQL errors.
+
+### Postman and Verification Coverage
+
+The Web collection adds employer request creation, listing, viewing, update/deadline management, cancellation, attachment download, duplicate-open, and cross-company examples. The Mobile collection adds candidate view, message/file/mixed response, responded view, download, and expired-deadline examples. Shared environment variables cover request, response, attachment, and due-date IDs; all three JSON files parse successfully.
+
+`ApplicationInformationRequestTest` covers atomic creation, ordered items, history, audit, notification, duplicate-open protection, direct-status bypass, IDOR-safe views, response workflow, due boundaries/extensions, no-op updates, cancellation/restoration, multiple rounds, company state, and validation. `ApplicationInformationResponseTest` covers empty response, MIME/count rejection, orphan-free failures, private downloads, cross-candidate/company denial, and suspended-company historical reads.
+
+### Remaining Outside This Increment
+
+- Test catalog secrecy, test duration enforcement, and a formal test-score invariant.
+- Existing duplicate event-listener registration cleanup.
+- Conditional interview-mode validation, attendance, and explicit interview cancellation/status redesign.
+- Primary-CV selection and any general application internal-notes feature.

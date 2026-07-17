@@ -100,7 +100,7 @@ class JobPostingController extends Controller
     {
         return ApiResponse::success(
             data: new JobPostingResource(
-                $this->jobPostingService->attachSkills($jobPosting, $request->validated('skill_ids')),
+                $this->jobPostingService->attachSkills($request->user('sanctum'), $jobPosting, $request->validated()),
             ),
             message: 'Skills attached successfully.',
         );
@@ -109,7 +109,7 @@ class JobPostingController extends Controller
     public function detachSkill(DetachJobPostingSkillRequest $request, JobPosting $jobPosting, Skill $skill): JsonResponse
     {
         return ApiResponse::success(
-            data: new JobPostingResource($this->jobPostingService->detachSkills($jobPosting, $skill)),
+            data: new JobPostingResource($this->jobPostingService->detachSkills($request->user('sanctum'), $jobPosting, $skill)),
             message: 'Skill detached successfully.',
         );
     }

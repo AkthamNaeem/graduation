@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\JobSkillRequirementType;
 use App\Enums\UserRole;
 use App\Models\JobPosting;
 use App\Models\JobSeekerProfile;
@@ -205,12 +206,15 @@ class MatchingService
         return $jobs
             ->map(function (JobPosting $job) use ($profile, $scoreCards): array {
                 $scoreCard = $scoreCards[(string) $job->id] ?? $this->emptyScoreCard();
+                $skillBreakdown = $this->skillRequirementBreakdown($profile->skills->pluck('name')->all(), $job);
+                $scoreCard = $this->applySkillRequirementWeighting($scoreCard, $skillBreakdown, $job);
 
                 return [
                     'job' => $job,
                     'score' => $scoreCard['score'],
                     'breakdown' => $scoreCard['breakdown'],
                     'matched_skills' => $this->matchedSkills($profile->skills->pluck('name')->all(), $job->skills->pluck('name')->all()),
+                    'skill_breakdown' => $skillBreakdown,
                 ];
             })
             ->sort(function (array $left, array $right): int {
@@ -262,8 +266,13 @@ class MatchingService
         $jobSkillNames = $jobPosting->skills->pluck('name')->all();
 
         return $applications
-            ->map(function ($application) use ($jobSkillNames, $scoreCards): array {
+            ->map(function ($application) use ($jobPosting, $jobSkillNames, $scoreCards): array {
                 $scoreCard = $scoreCards[(string) $application->id] ?? $this->emptyScoreCard();
+                $skillBreakdown = $this->skillRequirementBreakdown(
+                    $application->jobSeekerProfile->skills->pluck('name')->all(),
+                    $jobPosting,
+                );
+                $scoreCard = $this->applySkillRequirementWeighting($scoreCard, $skillBreakdown, $jobPosting);
 
                 return [
                     'job_application_id' => $application->id,
@@ -275,6 +284,7 @@ class MatchingService
                         $application->jobSeekerProfile->skills->pluck('name')->all(),
                         $jobSkillNames,
                     ),
+                    'skill_breakdown' => $skillBreakdown,
                 ];
             })
             ->sort(function (array $left, array $right): int {
@@ -395,6 +405,71 @@ class MatchingService
         sort($matchedSkills, SORT_NATURAL | SORT_FLAG_CASE);
 
         return $matchedSkills;
+    }
+
+    /**
+     * @param  array<int, string>  $candidateSkills
+     * @return array{required_skills_matched: array<int, string>, required_skills_missing: array<int, string>, optional_skills_matched: array<int, string>}
+     */
+    private function skillRequirementBreakdown(array $candidateSkills, JobPosting $jobPosting): array
+    {
+        $candidateLookup = collect($candidateSkills)
+            ->mapWithKeys(fn (string $name): array => [Str::lower(trim($name)) => $name]);
+        $requiredMatched = [];
+        $requiredMissing = [];
+        $optionalMatched = [];
+
+        foreach ($jobPosting->skills as $skill) {
+            $requirement = $skill->pivot->requirement_type instanceof JobSkillRequirementType
+                ? $skill->pivot->requirement_type
+                : JobSkillRequirementType::from($skill->pivot->requirement_type);
+            $matchedName = $candidateLookup->get(Str::lower(trim($skill->name)));
+
+            if ($requirement === JobSkillRequirementType::REQUIRED) {
+                $matchedName !== null ? $requiredMatched[] = $matchedName : $requiredMissing[] = $skill->name;
+            } elseif ($matchedName !== null) {
+                $optionalMatched[] = $matchedName;
+            }
+        }
+
+        return [
+            'required_skills_matched' => $requiredMatched,
+            'required_skills_missing' => $requiredMissing,
+            'optional_skills_matched' => $optionalMatched,
+        ];
+    }
+
+    /**
+     * @param  array{score: float, breakdown: array<string, float>}  $scoreCard
+     * @param  array{required_skills_matched: array<int, string>, required_skills_missing: array<int, string>, optional_skills_matched: array<int, string>}  $skillBreakdown
+     * @return array{score: float, breakdown: array<string, float>}
+     */
+    private function applySkillRequirementWeighting(array $scoreCard, array $skillBreakdown, JobPosting $jobPosting): array
+    {
+        $requiredTotal = count($skillBreakdown['required_skills_matched']) + count($skillBreakdown['required_skills_missing']);
+        $optionalTotal = $jobPosting->skills->filter(function ($skill): bool {
+            $requirement = $skill->pivot->requirement_type instanceof JobSkillRequirementType
+                ? $skill->pivot->requirement_type
+                : JobSkillRequirementType::from($skill->pivot->requirement_type);
+
+            return $requirement === JobSkillRequirementType::OPTIONAL;
+        })->count();
+        $maximum = $requiredTotal + ($optionalTotal * 0.5);
+
+        if ($maximum <= 0) {
+            return $scoreCard;
+        }
+
+        $scoreCard['breakdown']['skills'] = $this->roundScore(
+            (count($skillBreakdown['required_skills_matched']) + (count($skillBreakdown['optional_skills_matched']) * 0.5)) / $maximum,
+        );
+        $scoreCard['score'] = $this->roundScore(array_sum(array_map(
+            fn (string $section, float $weight): float => ($scoreCard['breakdown'][$section] ?? 0.0) * $weight,
+            array_keys(self::SECTION_WEIGHTS),
+            array_values(self::SECTION_WEIGHTS),
+        )));
+
+        return $scoreCard;
     }
 
     /**

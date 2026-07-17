@@ -2,9 +2,13 @@
 
 namespace App\Services;
 
+use App\Enums\ApplicationInformationRequestStatus;
 use App\Enums\UserRole;
 use App\Events\ApplicationStatusChanged;
 use App\Events\ApplicationSubmitted;
+use App\Exceptions\ApplicationInformationRequestException;
+use App\Exceptions\JobPostingOperationException;
+use App\Models\ApplicationInformationRequest;
 use App\Models\ApplicationStatus;
 use App\Models\ApplicationStatusHistory;
 use App\Models\CVFile;
@@ -75,6 +79,14 @@ class ApplicationWorkflowService
 
         $this->companyAccessService->assertRecruitmentAvailable($jobPosting);
 
+        if ($jobPosting->isApplicationDeadlinePassed()) {
+            throw new JobPostingOperationException(
+                'The application deadline for this job has passed.',
+                'JOB_APPLICATION_DEADLINE_PASSED',
+                409,
+            );
+        }
+
         $profile = $user->jobSeekerProfile;
 
         if (! $profile instanceof JobSeekerProfile) {
@@ -111,6 +123,12 @@ class ApplicationWorkflowService
 
     public function changeStatus(User $user, JobApplication $jobApplication, string $targetStatusSlug, ?string $note = null): JobApplication
     {
+        if ($targetStatusSlug === 'need_more_information') {
+            throw new ApplicationInformationRequestException(
+                'Use the information request endpoint to request additional information.',
+                'INFORMATION_REQUEST_ENDPOINT_REQUIRED',
+            );
+        }
         if ($targetStatusSlug === self::STATUS_WITHDRAWN) {
             throw ValidationException::withMessages([
                 'status' => ['Employers cannot move an application to withdrawn.'],
@@ -124,6 +142,12 @@ class ApplicationWorkflowService
                 ->findOrFail($jobApplication->id);
 
             $fromStatus = $application->applicationStatus;
+            if ($fromStatus->slug === 'need_more_information') {
+                throw new ApplicationInformationRequestException(
+                    'Submit or cancel the open information request before changing this application status.',
+                    'INFORMATION_RESPONSE_REQUIRED',
+                );
+            }
             $this->validateTransition($fromStatus->slug, $targetStatusSlug);
 
             $toStatus = $this->statusBySlug($targetStatusSlug);
@@ -190,6 +214,18 @@ class ApplicationWorkflowService
 
             $fromStatus = $application->applicationStatus;
             $this->validateTransition($fromStatus->slug, self::STATUS_WITHDRAWN);
+
+            if ($fromStatus->slug === 'need_more_information') {
+                ApplicationInformationRequest::query()
+                    ->where('job_application_id', $application->id)
+                    ->where('status', ApplicationInformationRequestStatus::PENDING->value)
+                    ->update([
+                        'status' => ApplicationInformationRequestStatus::CANCELLED->value,
+                        'cancelled_at' => now(),
+                        'cancelled_by_user_id' => $user->id,
+                        'updated_at' => now(),
+                    ]);
+            }
             $withdrawnStatus = $this->statusBySlug(self::STATUS_WITHDRAWN);
 
             $application->forceFill([
@@ -241,6 +277,39 @@ class ApplicationWorkflowService
             'changed_by_user_id' => $actor->id,
             'note' => $note,
         ]);
+    }
+
+    public function requestMoreInformation(User $actor, JobApplication $application): void
+    {
+        $from = $application->applicationStatus;
+        $this->validateTransition($from->slug, 'need_more_information');
+        $this->transitionInformationStatus($actor, $application, $from, $this->statusBySlug('need_more_information'));
+    }
+
+    public function submitRequestedInformation(User $actor, JobApplication $application): void
+    {
+        $from = $application->applicationStatus;
+        if ($from->slug !== 'need_more_information') {
+            throw new ApplicationInformationRequestException('The application is not awaiting requested information.', 'APPLICATION_INFORMATION_REQUEST_NOT_PENDING');
+        }
+        $this->transitionInformationStatus($actor, $application, $from, $this->statusBySlug('under_review'));
+    }
+
+    public function cancelInformationRequest(User $actor, JobApplication $application, string $targetStatus, ?string $note = null): void
+    {
+        $from = $application->applicationStatus;
+        if ($from->slug !== 'need_more_information') {
+            throw new ApplicationInformationRequestException('The information request is no longer pending.', 'APPLICATION_INFORMATION_REQUEST_NOT_PENDING');
+        }
+        $target = ApplicationStatus::query()->where('slug', $targetStatus)->first() ?? $this->statusBySlug('under_review');
+        $this->transitionInformationStatus($actor, $application, $from, $target, $note);
+    }
+
+    private function transitionInformationStatus(User $actor, JobApplication $application, ApplicationStatus $from, ApplicationStatus $to, ?string $note = null): void
+    {
+        $application->forceFill(['application_status_id' => $to->id])->save();
+        $application->setRelation('applicationStatus', $to);
+        $this->recordHistory($application, $from, $to, $actor, $note);
     }
 
     public function checkDuplicateApplication(JobPosting $jobPosting, JobSeekerProfile $profile): void
@@ -328,6 +397,7 @@ class ApplicationWorkflowService
             'applicationStatus',
             'statusHistory.fromStatus',
             'statusHistory.toStatus',
+            'latestInformationRequest.response',
         ];
 
         if (! $candidateSafe) {

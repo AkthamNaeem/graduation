@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api\V1;
 
 use App\Enums\UserRole;
+use App\Models\ApplicationInformationRequest;
 use App\Models\ApplicationStatus;
 use App\Models\ApplicationTestAssignment;
 use App\Models\Company;
@@ -328,24 +329,29 @@ class NotificationTest extends TestCase
         $application = $this->applicationFor($jobPosting, $candidate->jobSeekerProfile, 'under_review');
 
         $this->withToken($this->tokenFor($employer))
-            ->postJson("/api/v1/applications/{$application->id}/status", [
-                'status' => 'need_more_information',
-                'note' => 'Internal clarification request.',
+            ->postJson("/api/v1/applications/{$application->id}/information-requests", [
+                'message' => 'Please provide a supporting document.',
+                'requested_items' => [['label' => 'Supporting document']],
             ])
-            ->assertOk();
+            ->assertCreated();
 
         $this->assertDatabaseHas('notifications', [
             'user_id' => $candidate->id,
-            'type' => 'application.need_more_information',
+            'type' => 'application.information_requested',
         ]);
 
         $needMoreInfo = Notification::query()
             ->where('user_id', $candidate->id)
-            ->where('type', 'application.need_more_information')
+            ->where('type', 'application.information_requested')
             ->latest('id')
             ->firstOrFail();
 
         $this->assertArrayNotHasKey('note', $needMoreInfo->data);
+
+        $informationRequest = ApplicationInformationRequest::query()->where('job_application_id', $application->id)->firstOrFail();
+        $this->withToken($this->tokenFor($employer))
+            ->postJson("/api/v1/information-requests/{$informationRequest->id}/cancel")
+            ->assertOk();
 
         $this->withToken($this->tokenFor($employer))
             ->postJson("/api/v1/applications/{$application->id}/status", [

@@ -25,6 +25,7 @@ class RankedCandidateResource extends JsonResource
             'score' => $this->resource['score'],
             'breakdown' => $this->resource['breakdown'],
             'matched_skills' => $this->resource['matched_skills'],
+            'skill_breakdown' => $this->resource['skill_breakdown'],
             'job_seeker_profile' => new JobSeekerProfileResource($jobSeekerProfile),
         ];
     }
