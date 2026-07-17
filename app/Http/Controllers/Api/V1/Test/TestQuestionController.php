@@ -33,7 +33,7 @@ class TestQuestionController extends Controller
 
     public function store(StoreTestQuestionRequest $request, Test $test): JsonResponse
     {
-        return ApiResponse::success(new TestQuestionResource($this->service->createQuestion($test, $request->validated())), 'Test question created successfully.', 201);
+        return ApiResponse::success(new TestQuestionResource($this->service->createQuestion($test, $request->validated(), $request->user('sanctum'))), 'Test question created successfully.', 201);
     }
 
     public function show(ShowTestQuestionRequest $request, Test $test, TestQuestion $question): JsonResponse
@@ -43,12 +43,12 @@ class TestQuestionController extends Controller
 
     public function update(UpdateTestQuestionRequest $request, Test $test, TestQuestion $question): JsonResponse
     {
-        return ApiResponse::success(new TestQuestionResource($this->service->updateQuestion($test, $question, $request->validated())), 'Test question updated successfully.');
+        return ApiResponse::success(new TestQuestionResource($this->service->updateQuestion($test, $question, $request->validated(), $request->user('sanctum'))), 'Test question updated successfully.');
     }
 
     public function destroy(DeleteTestQuestionRequest $request, Test $test, TestQuestion $question): JsonResponse
     {
-        $this->service->deleteQuestion($test, $question);
+        $this->service->deleteQuestion($test, $question, $request->user('sanctum'));
 
         return ApiResponse::success(null, 'Test question deleted successfully.');
     }

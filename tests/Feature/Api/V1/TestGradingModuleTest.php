@@ -185,19 +185,17 @@ class TestGradingModuleTest extends TestCase
             ->assertJsonPath('data.percentage', null);
     }
 
-    public function test_zero_point_objective_test_has_no_percentage_or_passing_guess(): void
+    public function test_zero_point_objective_test_is_rejected_by_submit_defense(): void
     {
         $scenario = $this->scenario('zero', 1, 0);
         $question = $this->question($scenario['test'], 'single_choice', 1, 0, true, [0]);
         $data = $this->assignAndStart($scenario);
         $this->choiceAnswer($data['attempt'], $question, [$question->options[0]->id]);
 
-        $this->submit($scenario['candidate'], $data['assignment'])->assertOk()
-            ->assertJsonPath('data.grading_status', 'auto_graded')
-            ->assertJsonPath('data.total_score', '0.00')
-            ->assertJsonPath('data.max_score', '0.00')
-            ->assertJsonPath('data.percentage', null)
-            ->assertJsonPath('data.is_passing_score_met', null);
+        $this->submit($scenario['candidate'], $data['assignment'])
+            ->assertConflict()
+            ->assertJsonPath('code', 'TEST_HAS_NO_SCOREABLE_QUESTIONS');
+        $this->assertNull($data['attempt']->refresh()->submitted_at);
     }
 
     public function test_result_authorization_and_pre_submit_conflict_are_enforced(): void

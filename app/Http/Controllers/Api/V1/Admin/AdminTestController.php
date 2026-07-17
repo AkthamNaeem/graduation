@@ -17,8 +17,7 @@ class AdminTestController extends Controller
 {
     public function __construct(
         private readonly TestService $testService,
-    ) {
-    }
+    ) {}
 
     public function index(IndexAdminRequest $request): JsonResponse
     {
@@ -42,7 +41,7 @@ class AdminTestController extends Controller
     public function update(UpdateAdminTestRequest $request, Test $test): JsonResponse
     {
         return ApiResponse::success(
-            data: new TestResource($this->testService->updateCatalogTest($test, $request->validated())),
+            data: new TestResource($this->testService->updateCatalogTest($request->user('sanctum'), $test, $request->validated())),
             message: 'Test updated successfully.',
         );
     }

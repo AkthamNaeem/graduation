@@ -34,19 +34,17 @@ class TestQuestionModuleTest extends TestCase
         $secondCompany = $this->company('Second Co.');
         $firstEmployer = $this->employer('first@example.com', $firstCompany);
         $secondEmployer = $this->employer('second@example.com', $secondCompany);
-        $otherTest = $this->testFor($secondCompany, 'Other Company Test');
+        $otherTest = $this->recruitmentTestFor($secondCompany, 'Other Company Test');
 
         $this->withToken($this->tokenFor($firstEmployer))->postJson('/api/v1/tests', [
             'company_id' => $secondCompany->id,
             'title' => 'Tampered Test',
             'duration_minutes' => 30,
-            'max_score' => 20,
         ])->assertUnprocessable()->assertJsonValidationErrors(['company_id']);
 
         $created = $this->withToken($this->tokenFor($firstEmployer))->postJson('/api/v1/tests', [
             'title' => 'Owned Test',
             'duration_minutes' => 30,
-            'max_score' => 20,
         ])->assertCreated()->assertJsonPath('data.company_id', $firstCompany->id);
 
         $this->withToken($this->tokenFor($firstEmployer))->getJson('/api/v1/tests')
@@ -66,7 +64,6 @@ class TestQuestionModuleTest extends TestCase
             'company_id' => $company->id,
             'title' => 'Admin Test',
             'duration_minutes' => 45,
-            'max_score' => 50,
         ])->assertCreated()->assertJsonPath('data.company_id', $company->id);
 
         $this->withToken($this->tokenFor($admin))->patchJson('/api/v1/tests/'.$response->json('data.id'), [
@@ -149,7 +146,7 @@ class TestQuestionModuleTest extends TestCase
     public function test_questions_can_be_read_updated_deleted_and_reordered_without_cross_test_idor(): void
     {
         [$employer, $test] = $this->ownedTestScenario();
-        $otherTest = $this->testFor($test->company, 'Other Test');
+        $otherTest = $this->recruitmentTestFor($test->company, 'Other Test');
         $first = $this->questionFor($test, 1, 'First');
         $second = $this->questionFor($test, 2, 'Second');
         $otherQuestion = $this->questionFor($otherTest, 1, 'Other');
@@ -242,7 +239,7 @@ class TestQuestionModuleTest extends TestCase
         $otherCompany = $this->company('Other Test Co.');
         $employer = $this->employer('owner@example.com', $company);
         $application = $this->applicationFor($company);
-        $otherTest = $this->testFor($otherCompany, 'Foreign Test');
+        $otherTest = $this->recruitmentTestFor($otherCompany, 'Foreign Test');
 
         $this->withToken($this->tokenFor($employer))->postJson("/api/v1/applications/{$application->id}/assign-test", [
             'test_id' => $otherTest->id,
@@ -281,17 +278,17 @@ class TestQuestionModuleTest extends TestCase
     {
         $company = $this->company('Owned Test Co. '.Str::random(5));
 
-        return [$this->employer(Str::random(5).'@example.com', $company), $this->testFor($company)];
+        return [$this->employer(Str::random(5).'@example.com', $company), $this->recruitmentTestFor($company)];
     }
 
-    private function testFor(Company $company, string $title = 'Backend Test'): RecruitmentTest
+    private function recruitmentTestFor(Company $company, string $title = 'Backend Test'): RecruitmentTest
     {
         return RecruitmentTest::forceCreate([
             'company_id' => $company->id,
             'title' => $title,
             'duration_minutes' => 60,
             'max_score' => 100,
-            'passing_score' => 70,
+            'passing_score' => null,
             'is_active' => true,
         ]);
     }

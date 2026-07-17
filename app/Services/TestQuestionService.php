@@ -6,6 +6,7 @@ use App\Enums\TestQuestionType;
 use App\Models\Test;
 use App\Models\TestOption;
 use App\Models\TestQuestion;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -14,6 +15,8 @@ class TestQuestionService
 {
     public function __construct(
         private readonly TestService $testService,
+        private readonly TestScorePolicyService $scorePolicyService,
+        private readonly AuditLogService $auditLogService,
     ) {}
 
     /** @return Collection<int, TestQuestion> */
@@ -30,30 +33,38 @@ class TestQuestionService
     }
 
     /** @param array<string, mixed> $data */
-    public function createQuestion(Test $test, array $data): TestQuestion
+    public function createQuestion(Test $test, array $data, ?User $actor = null): TestQuestion
     {
-        $this->testService->ensureTestIsMutable($test);
         $this->validateOptionSet(TestQuestionType::from($data['question_type']), $data['options'] ?? []);
 
-        return DB::transaction(function () use ($test, $data): TestQuestion {
+        return DB::transaction(function () use ($test, $data, $actor): TestQuestion {
+            $lockedTest = Test::query()->lockForUpdate()->findOrFail($test->id);
+            $this->testService->ensureTestIsMutable($lockedTest);
+            $previousMax = $this->scorePolicyService->synchronizeMaxScore($lockedTest);
             $options = $data['options'] ?? [];
             unset($data['options']);
 
-            $question = $test->questions()->create($data);
+            $question = $lockedTest->questions()->create($data);
             $this->replaceOptions($question, $options);
+            $newMax = $this->scorePolicyService->synchronizeMaxScore($lockedTest);
+            $this->scorePolicyService->validatePassingScore($lockedTest);
+            $this->auditScoreMutation('test.question_created', $lockedTest, $question, $actor, null, $question->points, $previousMax, $newMax);
 
             return $question->load('options');
         });
     }
 
     /** @param array<string, mixed> $data */
-    public function updateQuestion(Test $test, TestQuestion $question, array $data): TestQuestion
+    public function updateQuestion(Test $test, TestQuestion $question, array $data, ?User $actor = null): TestQuestion
     {
         $this->ensureQuestionBelongsToTest($test, $question);
-        $this->testService->ensureTestIsMutable($test);
 
-        return DB::transaction(function () use ($question, $data): TestQuestion {
+        return DB::transaction(function () use ($test, $question, $data, $actor): TestQuestion {
+            $lockedTest = Test::query()->lockForUpdate()->findOrFail($test->id);
+            $this->testService->ensureTestIsMutable($lockedTest);
+            $previousMax = $this->scorePolicyService->synchronizeMaxScore($lockedTest);
             $question = TestQuestion::query()->with('options')->lockForUpdate()->findOrFail($question->id);
+            $previousPoints = $question->points;
             $type = isset($data['question_type'])
                 ? TestQuestionType::from($data['question_type'])
                 : $question->question_type;
@@ -71,15 +82,32 @@ class TestQuestionService
                 $this->replaceOptions($question, $options);
             }
 
+            $newMax = $this->scorePolicyService->synchronizeMaxScore($lockedTest);
+            $this->scorePolicyService->validatePassingScore($lockedTest);
+            if (array_key_exists('points', $data)) {
+                $this->auditScoreMutation('test.question_updated', $lockedTest, $question, $actor, $previousPoints, $question->points, $previousMax, $newMax);
+            }
+
             return $question->refresh()->load('options');
         });
     }
 
-    public function deleteQuestion(Test $test, TestQuestion $question): void
+    public function deleteQuestion(Test $test, TestQuestion $question, ?User $actor = null): void
     {
         $this->ensureQuestionBelongsToTest($test, $question);
-        $this->testService->ensureTestIsMutable($test);
-        $question->delete();
+        DB::transaction(function () use ($test, $question, $actor): void {
+            $lockedTest = Test::query()->lockForUpdate()->findOrFail($test->id);
+            $this->testService->ensureTestIsMutable($lockedTest);
+            $lockedQuestion = TestQuestion::query()->lockForUpdate()->findOrFail($question->id);
+            $previousMax = $this->scorePolicyService->synchronizeMaxScore($lockedTest);
+            $previousPoints = $lockedQuestion->points;
+            $questionId = $lockedQuestion->id;
+            $lockedQuestion->delete();
+            $newMax = $this->scorePolicyService->synchronizeMaxScore($lockedTest);
+            $this->scorePolicyService->validatePassingScore($lockedTest);
+            $lockedQuestion->id = $questionId;
+            $this->auditScoreMutation('test.question_deleted', $lockedTest, $lockedQuestion, $actor, $previousPoints, null, $previousMax, $newMax);
+        });
     }
 
     /** @param array<int, array{question_id:int, order_index:int}> $items */
@@ -236,5 +264,22 @@ class TestQuestionService
     {
         $this->ensureQuestionBelongsToTest($test, $question);
         abort_unless($option->test_question_id === $question->id, 404);
+    }
+
+    private function auditScoreMutation(string $action, Test $test, TestQuestion $question, ?User $actor, mixed $previousPoints, mixed $newPoints, string $previousMax, string $newMax): void
+    {
+        if ($actor === null) {
+            return;
+        }
+
+        $this->auditLogService->record(
+            $action,
+            $actor,
+            TestQuestion::class,
+            $question->id,
+            ['points' => $previousPoints, 'max_score' => $previousMax],
+            ['points' => $newPoints, 'max_score' => $newMax],
+            ['test_id' => $test->id, 'question_id' => $question->id, 'passing_score' => $test->passing_score, 'actor_id' => $actor->id],
+        );
     }
 }

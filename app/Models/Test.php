@@ -16,7 +16,6 @@ class Test extends Model
         'description',
         'instructions',
         'duration_minutes',
-        'max_score',
         'passing_score',
         'is_active',
     ];

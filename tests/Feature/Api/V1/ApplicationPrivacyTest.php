@@ -86,7 +86,7 @@ class ApplicationPrivacyTest extends TestCase
     public function test_candidate_nested_application_inside_test_assignment_keeps_safe_boundary(): void
     {
         [$employer, $candidate, $application] = $this->scenario();
-        $test = RecruitmentTest::create([
+        $test = RecruitmentTest::forceCreate([
             'title' => 'Privacy Boundary Test',
             'duration_minutes' => 30,
             'max_score' => 10,

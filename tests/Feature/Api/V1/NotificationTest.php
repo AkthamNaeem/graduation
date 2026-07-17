@@ -226,7 +226,7 @@ class NotificationTest extends TestCase
 
         $submitResponse = $this->withToken($this->tokenFor($candidate))
             ->postJson("/api/v1/tests/{$assignment->id}/submit", [
-                'answers' => ['q1' => 'a1'],
+                'confirm' => true,
             ])
             ->assertOk();
 
@@ -529,7 +529,7 @@ class NotificationTest extends TestCase
     {
         $company ??= Company::create(['name' => 'Notification Test Co.', 'approval_status' => 'approved']);
 
-        return RecruitmentTest::forceCreate([
+        $test = RecruitmentTest::forceCreate([
             'company_id' => $company->id,
             'title' => 'Backend Assessment',
             'duration_minutes' => 60,
@@ -537,6 +537,15 @@ class NotificationTest extends TestCase
             'passing_score' => 70,
             'is_active' => true,
         ]);
+        $test->questions()->create([
+            'question_text' => 'Notification scoreable question',
+            'question_type' => 'short_text',
+            'order_index' => 999,
+            'points' => 100,
+            'is_required' => false,
+        ]);
+
+        return $test;
     }
 
     private function tokenFor(User $user): string

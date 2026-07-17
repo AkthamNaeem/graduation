@@ -118,6 +118,13 @@ class CompanyStateTest extends TestCase
             'max_score' => 100,
             'is_active' => true,
         ]);
+        $test->questions()->create([
+            'question_text' => 'Company state scoreable question',
+            'question_type' => 'short_text',
+            'order_index' => 999,
+            'points' => 100,
+            'is_required' => false,
+        ]);
         $question = $test->questions()->create([
             'question_text' => 'Explain state guards.',
             'question_type' => 'short_text',

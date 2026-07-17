@@ -282,22 +282,16 @@ class ManualGradingModuleTest extends TestCase
             ->assertJsonPath('data.breakdown.0.awarded_points', '0.00');
     }
 
-    public function test_zero_max_subjective_result_finalizes_without_division_by_zero(): void
+    public function test_zero_max_subjective_result_is_rejected_by_submit_defense(): void
     {
         $scenario = $this->scenario('zero-manual', 1, 0);
         $short = $this->question($scenario['test'], 'short_text', 1, 0);
         $data = $this->assignAndStart($scenario);
         $this->textAnswer($data['attempt'], $short, 'Answer');
-        $this->submit($scenario['candidate'], $data['assignment'])->assertOk();
-
-        $this->grade($scenario['employer'], $data['attempt'], $short, 0)
-            ->assertOk()
-            ->assertJsonPath('data.grading_status', 'fully_graded')
-            ->assertJsonPath('data.manual_score', '0.00')
-            ->assertJsonPath('data.total_score', '0.00')
-            ->assertJsonPath('data.max_score', '0.00')
-            ->assertJsonPath('data.percentage', null)
-            ->assertJsonPath('data.is_passing_score_met', null);
+        $this->submit($scenario['candidate'], $data['assignment'])
+            ->assertConflict()
+            ->assertJsonPath('code', 'TEST_HAS_NO_SCOREABLE_QUESTIONS');
+        $this->assertNull($data['attempt']->refresh()->submitted_at);
     }
 
     public function test_legacy_evaluation_does_not_replace_finalized_per_answer_totals(): void

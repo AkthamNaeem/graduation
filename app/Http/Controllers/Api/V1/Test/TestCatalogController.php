@@ -18,8 +18,7 @@ class TestCatalogController extends Controller
 {
     public function __construct(
         private readonly TestService $testService,
-    ) {
-    }
+    ) {}
 
     public function index(IndexTestCatalogRequest $request): JsonResponse
     {
@@ -54,7 +53,7 @@ class TestCatalogController extends Controller
     public function update(UpdateTestCatalogRequest $request, Test $test): JsonResponse
     {
         return ApiResponse::success(
-            data: new TestResource($this->testService->updateCatalogTest($test, $request->validated())),
+            data: new TestResource($this->testService->updateCatalogTest($request->user('sanctum'), $test, $request->validated())),
             message: 'Test updated successfully.',
         );
     }

@@ -3,7 +3,6 @@
 namespace App\Http\Requests\Api\V1\Test;
 
 use App\Models\Test;
-use Illuminate\Validation\Validator;
 
 class UpdateTestCatalogRequest extends StoreTestCatalogRequest
 {
@@ -25,31 +24,9 @@ class UpdateTestCatalogRequest extends StoreTestCatalogRequest
             'description' => ['sometimes', 'nullable', 'string'],
             'instructions' => ['sometimes', 'nullable', 'string'],
             'duration_minutes' => ['sometimes', 'required', 'integer', 'min:1', 'max:1440'],
-            'max_score' => ['sometimes', 'required', 'numeric', 'min:1'],
+            'max_score' => ['prohibited'],
             'passing_score' => ['sometimes', 'nullable', 'numeric', 'min:0'],
             'is_active' => ['sometimes', 'boolean'],
         ];
-    }
-
-    public function withValidator(Validator $validator): void
-    {
-        $validator->after(function (Validator $validator): void {
-            $test = $this->route('test');
-
-            if (! $test instanceof Test) {
-                return;
-            }
-
-            $passingScore = $this->has('passing_score')
-                ? $this->input('passing_score')
-                : $test->passing_score;
-            $maxScore = $this->has('max_score')
-                ? $this->input('max_score')
-                : $test->max_score;
-
-            if ($passingScore !== null && (float) $passingScore > (float) $maxScore) {
-                $validator->errors()->add('passing_score', 'The passing score field must be less than or equal to max score.');
-            }
-        });
     }
 }

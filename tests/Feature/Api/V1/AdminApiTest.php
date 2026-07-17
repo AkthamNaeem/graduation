@@ -14,6 +14,7 @@ use App\Models\JobPosting;
 use App\Models\JobSeekerProfile;
 use App\Models\ProfileChangeSuggestion;
 use App\Models\Skill;
+use App\Models\Test as RecruitmentTest;
 use App\Models\User;
 use Database\Seeders\ApplicationStatusSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -418,14 +419,19 @@ class AdminApiTest extends TestCase
                 'company_id' => $company->id,
                 'title' => 'Backend Assessment',
                 'duration_minutes' => 75,
-                'max_score' => 100,
-                'passing_score' => 70,
                 'is_active' => true,
             ])
             ->assertCreated()
             ->assertJsonPath('data.title', 'Backend Assessment');
 
         $testId = $createResponse->json('data.id');
+        RecruitmentTest::findOrFail($testId)->questions()->create([
+            'question_text' => 'Admin scoreable question',
+            'question_type' => 'short_text',
+            'order_index' => 1,
+            'points' => 100,
+            'is_required' => false,
+        ]);
 
         $this->withToken($this->tokenFor($admin))
             ->getJson('/api/v1/admin/tests')

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\TestAttemptGradingStatus;
+use App\Services\TestScorePolicyService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -76,19 +77,11 @@ class TestAttempt extends Model
 
     public function passingScoreMet(): ?bool
     {
-        if (
-            ! in_array($this->grading_status, [
-                TestAttemptGradingStatus::AUTO_GRADED,
-                TestAttemptGradingStatus::FULLY_GRADED,
-            ], true)
-            || $this->total_score === null
-            || (float) $this->max_score <= 0
-        ) {
-            return null;
-        }
+        $complete = in_array($this->grading_status, [TestAttemptGradingStatus::AUTO_GRADED, TestAttemptGradingStatus::FULLY_GRADED], true);
+        $test = $this->applicationTestAssignment?->test;
 
-        $passingScore = $this->applicationTestAssignment?->test?->passing_score;
-
-        return $passingScore === null ? null : (float) $this->total_score >= (float) $passingScore;
+        return $test === null
+            ? null
+            : app(TestScorePolicyService::class)->passingScoreMet($test, $this->total_score, $this->max_score, $complete);
     }
 }

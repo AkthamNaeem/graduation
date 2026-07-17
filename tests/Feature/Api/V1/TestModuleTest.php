@@ -81,17 +81,24 @@ class TestModuleTest extends TestCase
                 'description' => 'Reusable backend screening test.',
                 'instructions' => 'Answer all questions.',
                 'duration_minutes' => 75,
-                'max_score' => 100,
-                'passing_score' => 70,
                 'is_active' => true,
             ])
             ->assertCreated()
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.title', 'Backend Assessment')
             ->assertJsonPath('data.duration_minutes', 75)
-            ->assertJsonPath('data.max_score', '100.00');
+            ->assertJsonPath('data.max_score', '0.00')
+            ->assertJsonPath('data.score_configuration_valid', false);
 
         $testId = $createResponse->json('data.id');
+
+        $this->withToken($this->tokenFor($employer))->postJson("/api/v1/tests/{$testId}/questions", [
+            'question_text' => 'Backend fundamentals',
+            'question_type' => 'short_text',
+            'order_index' => 1,
+            'points' => 100,
+            'is_required' => false,
+        ])->assertCreated();
 
         $this->withToken($this->tokenFor($employer))
             ->getJson('/api/v1/tests')
@@ -139,8 +146,6 @@ class TestModuleTest extends TestCase
                 'company_id' => $company->id,
                 'title' => 'Admin Created Assessment',
                 'duration_minutes' => 45,
-                'max_score' => 50,
-                'passing_score' => 35,
             ])
             ->assertCreated()
             ->assertJsonPath('data.title', 'Admin Created Assessment');
@@ -203,25 +208,23 @@ class TestModuleTest extends TestCase
             ->postJson('/api/v1/tests', [
                 'title' => 'Invalid Assessment',
                 'duration_minutes' => 60,
-                'max_score' => 100,
                 'passing_score' => 110,
             ])
             ->assertStatus(422)
-            ->assertJsonValidationErrors(['passing_score']);
+            ->assertJsonPath('code', 'TEST_PASSING_SCORE_EXCEEDS_MAX_SCORE');
 
         $this->withToken($this->tokenFor($employer))
             ->patchJson("/api/v1/tests/{$test->id}", [
                 'max_score' => 60,
             ])
             ->assertStatus(422)
-            ->assertJsonValidationErrors(['passing_score']);
+            ->assertJsonPath('code', 'TEST_MAX_SCORE_IS_SYSTEM_MANAGED');
 
         foreach ([0, -1, 1441] as $duration) {
             $this->withToken($this->tokenFor($employer))
                 ->postJson('/api/v1/tests', [
                     'title' => 'Invalid Duration',
                     'duration_minutes' => $duration,
-                    'max_score' => 100,
                 ])
                 ->assertUnprocessable()
                 ->assertJsonValidationErrors(['duration_minutes']);
@@ -285,7 +288,7 @@ class TestModuleTest extends TestCase
             ->assertJsonPath('data.data.0.id', $firstAssignment->id)
             ->assertJsonPath('data.data.0.test.title', 'Backend Assessment')
             ->assertJsonPath('data.data.0.job_application_id', $firstApplication->id)
-            ->assertJsonPath('data.data.0.test.question_count', 0)
+            ->assertJsonPath('data.data.0.test.question_count', 1)
             ->assertJsonMissingPath('data.data.0.test.questions')
             ->assertJsonMissingPath('data.data.0.test.passing_score')
             ->assertJsonPath('data.meta.current_page', 1);
@@ -344,10 +347,7 @@ class TestModuleTest extends TestCase
 
         $this->withToken($this->tokenFor($candidate))
             ->postJson("/api/v1/tests/{$assignment->id}/submit", [
-                'answers' => [
-                    'q1' => 'Dependency injection',
-                    'q2' => ['transactions', 'queues'],
-                ],
+                'confirm' => true,
             ])
             ->assertOk()
             ->assertJsonPath('data.answers', [])
@@ -360,7 +360,7 @@ class TestModuleTest extends TestCase
 
         $this->withToken($this->tokenFor($candidate))
             ->postJson("/api/v1/tests/{$assignment->id}/submit", [
-                'answers' => ['q1' => 'second try'],
+                'confirm' => true,
             ])
             ->assertStatus(409)
             ->assertJsonPath('message', 'This test attempt has already been submitted and can no longer be modified.');
@@ -420,7 +420,7 @@ class TestModuleTest extends TestCase
 
         $this->withToken($this->tokenFor($candidate))
             ->postJson("/api/v1/tests/{$assignment->id}/submit", [
-                'answers' => ['q1' => 'done'],
+                'confirm' => true,
             ])
             ->assertOk();
 
@@ -465,7 +465,7 @@ class TestModuleTest extends TestCase
 
         $this->withToken($this->tokenFor($candidate))
             ->postJson("/api/v1/tests/{$assignment->id}/submit", [
-                'answers' => ['q1' => 'finished'],
+                'confirm' => true,
             ])
             ->assertOk();
 
@@ -512,7 +512,7 @@ class TestModuleTest extends TestCase
     {
         $company ??= Company::create(['name' => 'Test Catalog Co. '.Str::random(8), 'approval_status' => 'approved']);
 
-        return RecruitmentTest::forceCreate([
+        $test = RecruitmentTest::forceCreate([
             'company_id' => $company->id,
             'title' => $title,
             'description' => 'Reusable technical assessment.',
@@ -522,6 +522,15 @@ class TestModuleTest extends TestCase
             'passing_score' => 70,
             'is_active' => true,
         ]);
+        $test->questions()->create([
+            'question_text' => 'Legacy scoreable question',
+            'question_type' => 'short_text',
+            'order_index' => 1,
+            'points' => 100,
+            'is_required' => false,
+        ]);
+
+        return $test;
     }
 
     private function employer(string $email = 'employer@example.com', ?Company $company = null): User

@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\TestAnswerGradingType;
 use App\Enums\TestAttemptGradingStatus;
+use App\Exceptions\TestScorePolicyException;
 use App\Models\TestAnswer;
 use App\Models\TestAnswerGrading;
 use App\Models\TestAttempt;
@@ -15,7 +16,10 @@ use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class TestManualGradingService
 {
-    public function __construct(private readonly AuditLogService $auditLogService) {}
+    public function __construct(
+        private readonly AuditLogService $auditLogService,
+        private readonly TestScorePolicyService $scorePolicyService,
+    ) {}
 
     /** @param array{awarded_points:int|float|string, reviewer_note?:string|null} $data */
     public function upsert(User $actor, TestAttempt $attempt, TestQuestion $question, array $data): TestAttempt
@@ -246,19 +250,26 @@ class TestManualGradingService
         $complete = $manualGradings->count() === $subjectiveAnswers->count();
         $statusBefore = $attempt->grading_status;
 
-        $attributes = [
-            'manual_max_score' => $subjectiveQuestions->sum(fn (TestQuestion $question): float => (float) $question->points),
-        ];
+        $manualMaxMinor = $subjectiveQuestions->sum(
+            fn (TestQuestion $question): int => $this->scorePolicyService->toMinorUnits((string) $question->points),
+        );
+        $maxScoreMinor = $this->scorePolicyService->toMinorUnits((string) $attempt->objective_max_score) + $manualMaxMinor;
+        if ($maxScoreMinor !== $this->scorePolicyService->toMinorUnits((string) $attempt->applicationTestAssignment->test->max_score)) {
+            throw new TestScorePolicyException('The test score configuration is invalid.', 'TEST_SCORE_CONFIGURATION_INVALID', 409);
+        }
+
+        $attributes = ['manual_max_score' => $this->scorePolicyService->fromMinorUnits($manualMaxMinor)];
 
         if ($complete) {
-            $manualScore = $manualGradings->sum(fn (TestAnswerGrading $grading): float => (float) $grading->awarded_points);
-            $totalScore = (float) $attempt->objective_score + $manualScore;
-            $maxScore = (float) $attempt->objective_max_score + (float) $attributes['manual_max_score'];
+            $manualScore = $manualGradings->sum(
+                fn (TestAnswerGrading $grading): int => $this->scorePolicyService->toMinorUnits((string) $grading->awarded_points),
+            );
+            $totalScore = $this->scorePolicyService->toMinorUnits((string) $attempt->objective_score) + $manualScore;
             $attributes += [
-                'manual_score' => $manualScore,
-                'total_score' => $totalScore,
-                'max_score' => $maxScore,
-                'percentage' => $maxScore > 0 ? round(($totalScore / $maxScore) * 100, 2) : null,
+                'manual_score' => $this->scorePolicyService->fromMinorUnits($manualScore),
+                'total_score' => $this->scorePolicyService->fromMinorUnits($totalScore),
+                'max_score' => $this->scorePolicyService->fromMinorUnits($maxScoreMinor),
+                'percentage' => $maxScoreMinor > 0 ? round(($totalScore / $maxScoreMinor) * 100, 2) : null,
                 'grading_status' => TestAttemptGradingStatus::FULLY_GRADED,
                 'manually_graded_at' => now(),
             ];
@@ -266,7 +277,7 @@ class TestManualGradingService
             $attributes += [
                 'manual_score' => null,
                 'total_score' => null,
-                'max_score' => (float) $attempt->objective_max_score + (float) $attributes['manual_max_score'],
+                'max_score' => $this->scorePolicyService->fromMinorUnits($maxScoreMinor),
                 'percentage' => null,
                 'grading_status' => TestAttemptGradingStatus::MANUAL_GRADING_REQUIRED,
                 'manually_graded_at' => null,

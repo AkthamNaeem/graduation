@@ -5,14 +5,18 @@ namespace App\Services;
 use App\Enums\TestAnswerGradingType;
 use App\Enums\TestAttemptGradingStatus;
 use App\Enums\TestQuestionType;
+use App\Exceptions\TestScorePolicyException;
 use App\Models\TestAnswer;
 use App\Models\TestAnswerGrading;
 use App\Models\TestAttempt;
 use App\Models\TestQuestion;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class TestGradingService
 {
+    public function __construct(private readonly TestScorePolicyService $scorePolicyService) {}
+
     public function gradeSubmittedAttempt(TestAttempt $attempt): TestAttempt
     {
         if ($attempt->submitted_at === null) {
@@ -29,15 +33,15 @@ class TestGradingService
 
         $questions = $attempt->applicationTestAssignment->test->questions;
         $answers = $attempt->testAnswers->keyBy('test_question_id');
-        $objectiveScore = 0.0;
-        $objectiveMaxScore = 0.0;
-        $manualMaxScore = 0.0;
+        $objectiveScore = 0;
+        $objectiveMaxScore = 0;
+        $manualMaxScore = 0;
         $hasSubjectiveQuestions = false;
         $requiresManualGrading = false;
         $gradedAt = now();
 
         foreach ($questions as $question) {
-            $points = (float) $question->points;
+            $points = $this->scorePolicyService->toMinorUnits((string) $question->points);
 
             if (! $question->question_type->acceptsOptions()) {
                 $hasSubjectiveQuestions = true;
@@ -55,7 +59,7 @@ class TestGradingService
             }
 
             $isCorrect = $this->isObjectiveAnswerCorrect($question, $answer);
-            $awardedPoints = $isCorrect ? $points : 0.0;
+            $awardedPoints = $isCorrect ? $points : 0;
             $objectiveScore += $awardedPoints;
 
             TestAnswerGrading::query()->updateOrCreate(
@@ -63,8 +67,8 @@ class TestGradingService
                 [
                     'grading_type' => TestAnswerGradingType::AUTOMATIC,
                     'is_correct' => $isCorrect,
-                    'awarded_points' => $awardedPoints,
-                    'max_points' => $points,
+                    'awarded_points' => $this->scorePolicyService->fromMinorUnits($awardedPoints),
+                    'max_points' => $this->scorePolicyService->fromMinorUnits($points),
                     'explanation' => $this->explanation($question->question_type, $isCorrect),
                     'graded_by' => null,
                     'graded_at' => $gradedAt,
@@ -73,6 +77,9 @@ class TestGradingService
         }
 
         $maxScore = $objectiveMaxScore + $manualMaxScore;
+        if ($maxScore !== $this->scorePolicyService->toMinorUnits((string) $attempt->applicationTestAssignment->test->max_score)) {
+            throw new TestScorePolicyException('The test score configuration is invalid.', 'TEST_SCORE_CONFIGURATION_INVALID', 409);
+        }
         $finalizedWithoutManualWork = $hasSubjectiveQuestions && ! $requiresManualGrading;
         $totalScore = $requiresManualGrading ? null : $objectiveScore;
         $percentage = ! $requiresManualGrading && $maxScore > 0
@@ -80,12 +87,12 @@ class TestGradingService
             : null;
 
         $attempt->forceFill([
-            'objective_score' => $objectiveScore,
-            'objective_max_score' => $objectiveMaxScore,
-            'manual_score' => $finalizedWithoutManualWork ? 0 : null,
-            'manual_max_score' => $manualMaxScore,
-            'total_score' => $totalScore,
-            'max_score' => $maxScore,
+            'objective_score' => $this->scorePolicyService->fromMinorUnits($objectiveScore),
+            'objective_max_score' => $this->scorePolicyService->fromMinorUnits($objectiveMaxScore),
+            'manual_score' => $finalizedWithoutManualWork ? '0.00' : null,
+            'manual_max_score' => $this->scorePolicyService->fromMinorUnits($manualMaxScore),
+            'total_score' => $totalScore === null ? null : $this->scorePolicyService->fromMinorUnits($totalScore),
+            'max_score' => $this->scorePolicyService->fromMinorUnits($maxScore),
             'percentage' => $percentage,
             'grading_status' => match (true) {
                 $requiresManualGrading => TestAttemptGradingStatus::MANUAL_GRADING_REQUIRED,
@@ -102,7 +109,7 @@ class TestGradingService
     public function getResult(TestAttempt $attempt): TestAttempt
     {
         if ($attempt->submitted_at === null) {
-            throw new \Symfony\Component\HttpKernel\Exception\ConflictHttpException(
+            throw new ConflictHttpException(
                 'This test attempt has not been submitted yet.',
             );
         }

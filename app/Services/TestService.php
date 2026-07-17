@@ -7,6 +7,7 @@ use App\Enums\UserRole;
 use App\Events\TestAssigned;
 use App\Events\TestEvaluated;
 use App\Events\TestSubmitted;
+use App\Exceptions\TestScorePolicyException;
 use App\Models\ApplicationTestAssignment;
 use App\Models\Company;
 use App\Models\JobApplication;
@@ -32,6 +33,7 @@ class TestService
         private readonly TestGradingService $testGradingService,
         private readonly TestAssignmentDeadlineService $testAssignmentDeadlineService,
         private readonly TestAttemptTimingService $testAttemptTimingService,
+        private readonly TestScorePolicyService $testScorePolicyService,
         private readonly TestRetakeService $testRetakeService,
         private readonly CompanyRecruitmentAccessService $companyAccessService,
     ) {}
@@ -56,19 +58,23 @@ class TestService
      */
     public function createCatalogTest(User $actor, array $data): Test
     {
-        $companyId = $actor->role === UserRole::ADMIN
-            ? (int) ($data['company_id'] ?? 0)
-            : (int) ($actor->employerProfile?->company_id ?? 0);
+        return DB::transaction(function () use ($actor, $data): Test {
+            $companyId = $actor->role === UserRole::ADMIN
+                ? (int) ($data['company_id'] ?? 0)
+                : (int) ($actor->employerProfile?->company_id ?? 0);
 
-        $company = Company::query()->findOrFail($companyId);
-        unset($data['company_id']);
+            $company = Company::query()->findOrFail($companyId);
+            unset($data['company_id'], $data['max_score']);
 
-        $test = new Test;
-        $test->fill($data);
-        $test->company()->associate($company);
-        $test->save();
+            $test = new Test;
+            $test->fill($data);
+            $test->forceFill(['max_score' => '0.00']);
+            $test->company()->associate($company);
+            $test->save();
+            $this->testScorePolicyService->validatePassingScore($test);
 
-        return $test->load(['company', 'questions.options']);
+            return $test->load(['company', 'questions.options']);
+        });
     }
 
     public function getCatalogTest(Test $test): Test
@@ -79,11 +85,31 @@ class TestService
     /**
      * @param  array<string, mixed>  $data
      */
-    public function updateCatalogTest(Test $test, array $data): Test
+    public function updateCatalogTest(User $actor, Test $test, array $data): Test
     {
-        $this->ensureTestIsMutable($test);
-        unset($data['company_id']);
-        $test->update($data);
+        DB::transaction(function () use ($actor, $test, $data): void {
+            $locked = Test::query()->lockForUpdate()->findOrFail($test->id);
+            $this->ensureTestIsMutable($locked);
+            unset($data['company_id'], $data['max_score']);
+            $this->testScorePolicyService->synchronizeMaxScore($locked);
+            if (array_key_exists('passing_score', $data)) {
+                $this->testScorePolicyService->validatePassingScore($locked, $data['passing_score'], useProvided: true);
+            }
+            $previousPassing = $locked->passing_score;
+            $locked->update($data);
+
+            if (array_key_exists('passing_score', $data) && $previousPassing !== $locked->passing_score) {
+                $this->auditLogService->record(
+                    'test.passing_score_updated',
+                    $actor,
+                    Test::class,
+                    $locked->id,
+                    ['passing_score' => $previousPassing],
+                    ['passing_score' => $locked->passing_score],
+                    ['test_id' => $locked->id, 'max_score' => $locked->max_score, 'actor_id' => $actor->id],
+                );
+            }
+        });
 
         return $test->refresh()->load(['company', 'questions.options']);
     }
@@ -102,7 +128,7 @@ class TestService
                 ->lockForUpdate()
                 ->findOrFail($application->id);
 
-            $test = Test::query()->findOrFail($testId);
+            $test = Test::query()->lockForUpdate()->findOrFail($testId);
 
             if ($test->company_id !== $jobApplication->jobPosting->company_id) {
                 throw ValidationException::withMessages([
@@ -115,6 +141,8 @@ class TestService
                     'test_id' => ['Only active tests can be assigned.'],
                 ]);
             }
+
+            $this->testScorePolicyService->assertAssignable($test);
 
             $duplicateAssignmentExists = ApplicationTestAssignment::query()
                 ->where('job_application_id', $jobApplication->id)
@@ -318,6 +346,10 @@ class TestService
                 throw new ConflictHttpException('This test attempt has already been submitted and can no longer be modified.');
             }
 
+            $lockedTest = Test::query()->lockForUpdate()->findOrFail($lockedAssignment->test_id);
+            $this->testScorePolicyService->assertScoreConfigurationValid($lockedTest, requireScoreable: true);
+            $lockedAssignment->setRelation('test', $lockedTest->load('questions'));
+
             $this->testAssignmentDeadlineService->assertCanSubmit($lockedAssignment);
 
             if ($answers !== null) {
@@ -444,7 +476,11 @@ class TestService
     public function ensureTestIsMutable(Test $test): void
     {
         if ($test->applicationTestAssignments()->exists()) {
-            throw new ConflictHttpException('This test can no longer be modified because it has already been assigned.');
+            throw new TestScorePolicyException(
+                'This test score configuration can no longer be modified because the test has already been assigned.',
+                'TEST_SCORE_CONFIGURATION_IMMUTABLE',
+                409,
+            );
         }
     }
 

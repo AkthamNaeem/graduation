@@ -423,6 +423,13 @@ class TestDeadlineModuleTest extends TestCase
             'passing_score' => 5,
             'is_active' => true,
         ]);
+        $test->questions()->create([
+            'question_text' => 'Deadline scoreable question',
+            'question_type' => 'short_text',
+            'order_index' => 999,
+            'points' => 10,
+            'is_required' => false,
+        ]);
 
         return [$employer, $candidate->load('jobSeekerProfile'), $application, $test];
     }

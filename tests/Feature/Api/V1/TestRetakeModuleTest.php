@@ -40,7 +40,7 @@ class TestRetakeModuleTest extends TestCase
         parent::tearDown();
     }
 
-    public function testTestAssignmentInitialRetakePolicyHasBoundedLegacySafeDefaults(): void
+    public function test_test_assignment_initial_retake_policy_has_bounded_legacy_safe_defaults(): void
     {
         [$employer, , $application, $test] = $this->baseScenario('initial');
         $default = $this->assign($employer, $application, $test);
@@ -345,6 +345,13 @@ class TestRetakeModuleTest extends TestCase
             'max_score' => 10,
             'passing_score' => 5,
             'is_active' => true,
+        ]);
+        $test->questions()->create([
+            'question_text' => 'Retake scoreable question',
+            'question_type' => 'short_text',
+            'order_index' => 999,
+            'points' => 10,
+            'is_required' => false,
         ]);
 
         return [$employer, $candidate, $application, $test];

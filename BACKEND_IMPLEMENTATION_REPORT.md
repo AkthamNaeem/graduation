@@ -28,7 +28,7 @@ The implementation follows a service-oriented Laravel structure using Form Reque
 | 3 | CV Upload & Parsing | CV upload for PDF/DOCX, queued parsing job, raw text extraction, parsed JSON storage, confirm flow to append profile data | Partially Implemented (MVP/basic parsing) |
 | 4 | Job Posting | Employer job CRUD, public open-job listing, filters, skills attachment, publish and close workflows | Implemented |
 | 5 | Job Applications Workflow | Job applications, duplicate prevention, application statuses, transition validation, terminal states, role-safe status-history resources | Implemented with candidate-safe response boundaries |
-| 6 | Testing Module | Company-owned immutable tests, structured questions/options, normalized answers, grading/results, deadlines, retake series, and attempt-scoped candidate content | Advanced / Partially Implemented (duration enforcement and a formal score invariant remain) |
+| 6 | Testing Module | Company-owned immutable tests, canonical question-point scoring, normalized answers, grading/results, deadlines, retake series, and attempt-scoped candidate content | Advanced / Implemented for current MVP scope |
 | 7 | Interview Module | Interview scheduling, completion and evaluation with candidate-safe and employer-management response boundaries | Implemented with remaining mode/attendance/status refinements |
 | 8 | AI Matching | Deterministic TF-IDF matching, cosine similarity, recommendations for job seekers, ranked candidates for employers, score breakdowns | Partially Implemented (IR-based matching, not deep AI) |
 | 9 | Notifications + Admin APIs | In-app notification table, workflow event/listener dispatch, notification endpoints, admin APIs for users, companies, skills, and tests | Implemented |
@@ -461,7 +461,7 @@ Public listing always returns only jobs with `status = open`; draft and closed j
 | Method | URL | Auth | Role | Purpose | Main request fields | Main response summary |
 | --- | --- | --- | --- | --- | --- | --- |
 | GET | `/api/v1/tests` | Required | Employer, admin, job seeker | List test catalog entries; job seekers only see active tests | Optional `per_page` from 1 to 100 | Paginated `TestResource` collection |
-| POST | `/api/v1/tests` | Required | Employer or admin | Create test catalog entry | `title`, `duration_minutes`, `max_score`, optional `description`, `instructions`, `passing_score`, `is_active` | Created `TestResource` |
+| POST | `/api/v1/tests` | Required | Employer or admin | Create test catalog draft | `title`, `duration_minutes`, optional `description`, `instructions`, `passing_score`, `is_active`; `max_score` is system-managed | Created `TestResource` |
 | GET | `/api/v1/tests/{test}` | Required | Employer, admin | View an authorized test catalog entry; candidates use attempt-scoped content APIs | None | `TestResource` |
 | PUT/PATCH | `/api/v1/tests/{test}` | Required | Employer or admin | Update test catalog entry | Same fields as create, optional | Updated `TestResource` |
 | DELETE | `/api/v1/tests/{test}` | Required | Employer or admin | Delete test catalog entry | None | Success message |
@@ -592,7 +592,7 @@ Important logic: builds sectioned text for `skills`, `experience`, `core`, and `
 - Test attempts are limited to one per assignment.
 - Tests must be started before submission and submitted before evaluation.
 - Test attempts cannot be re-submitted or re-evaluated.
-- Test score cannot exceed `tests.max_score`.
+- A completed attempt score cannot exceed its snapshotted `test_attempts.max_score`, which must match the canonical question-points total at submission.
 - Interview creation is blocked for terminal applications.
 - Only one unfinished interview is allowed per application.
 - Completed or evaluated interviews cannot be updated or deleted.
@@ -846,7 +846,7 @@ Main Form Request classes:
 - `MyJobApplicationIndexRequest` / `IndexJobApplicationsForJobRequest`: validate application list pagination.
 - `ChangeApplicationStatusRequest`: validates target status slug exists and optional note.
 - `WithdrawJobApplicationRequest`: validates optional note.
-- `IndexTestCatalogRequest` / `ShowTestCatalogRequest` / `StoreTestCatalogRequest` / `UpdateTestCatalogRequest` / `DeleteTestCatalogRequest`: validate test catalog access and fields, including positive duration/max score and `passing_score <= max_score`.
+- `IndexTestCatalogRequest` / `ShowTestCatalogRequest` / `StoreTestCatalogRequest` / `UpdateTestCatalogRequest` / `DeleteTestCatalogRequest`: validate test catalog access and fields, prohibit client writes to system-managed `max_score`, and validate the nullable absolute-points `passing_score` against the canonical question total in the service transaction.
 - `ListMyTestsRequest`: validates assigned test list pagination.
 - `AssignTestRequest`: validates active `test_id` and optional note.
 - `SubmitTestAttemptRequest`: prefers `confirm: true`; temporarily accepts a structured `answers` array that is normalized through `TestAnswerService` and never written to legacy JSON.
@@ -1621,10 +1621,22 @@ This increment closes the previously documented test-catalog secrecy gap without
 ### Remaining Outside This Increment
 
 - Test attempt duration enforcement is implemented in section 32 below.
-- Establishing and enforcing the formal test-score invariant.
+- The formal test-score invariant is implemented in section 33 below.
 - Cleaning up pre-existing duplicate event-listener registration.
 - Conditional interview validation, attendance, and explicit interview cancellation/status redesign.
 - Primary-CV selection and any general application internal-notes feature.
+
+## 33. Canonical Test Score Invariant
+
+`SUM(test_questions.points)` is now the canonical maximum score. `tests.max_score` remains a stored derived value for display and querying, but Create/Update reject client writes with `422 TEST_MAX_SCORE_IS_SYSTEM_MANAGED`. Tests begin as drafts with `max_score=0`; question create/update/delete locks the Test, mutates atomically, synchronizes the derived maximum using fixed two-decimal minor units, and rolls back with `TEST_PASSING_SCORE_EXCEEDS_MAX_SCORE` if the existing absolute-points threshold would become invalid.
+
+`passing_score` is nullable and always means absolute points. It may be changed only before the first assignment, must be between zero and the canonical maximum, and exposes a calculated display-only `passing_score_percentage`. A zero-score or questionless draft cannot be assigned. Assignment repairs stored max-score drift transactionally, while invalid thresholds fail without assignment, workflow history, status transition, or notification. Submit repeats the score-configuration check before `submitted_at` or grading and rolls back corrupt configurations with `TEST_SCORE_CONFIGURATION_INVALID`.
+
+Automatic and manual grading calculate objective/manual maxima from every question, including optional unanswered questions, using fixed decimal minor units. Their sum must equal both `test_attempts.max_score` and the canonical Test maximum. Passing indicators are returned only for complete, non-zero results and compare `total_score >= passing_score`; they never drive application status, acceptance, rejection, or retake behavior.
+
+The data migration normalizes every stored Test maximum from its questions, clears an invalid legacy passing threshold instead of guessing a replacement, and leaves all historical attempts, percentages, and grading rows unchanged. Employer/admin resources expose the canonical maximum, absolute threshold, display percentage, question count, and configuration-valid flag. Candidate invitation secrecy remains unchanged.
+
+Question point changes and passing-threshold changes write safe audit metadata without question text, correct options, or candidate data. Web Postman documents the intentional breaking max-score contract and the draft → questions → passing-score flow; Mobile result examples continue to expose result totals and the passing indicator without revealing the threshold in invitations.
 
 ## 32. Effective Test Attempt Deadline
 
