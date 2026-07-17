@@ -28,7 +28,7 @@ The implementation follows a service-oriented Laravel structure using Form Reque
 | 3 | CV Upload & Parsing | CV upload for PDF/DOCX, queued parsing job, raw text extraction, parsed JSON storage, confirm flow to append profile data | Partially Implemented (MVP/basic parsing) |
 | 4 | Job Posting | Employer job CRUD, public open-job listing, filters, skills attachment, publish and close workflows | Implemented |
 | 5 | Job Applications Workflow | Job applications, duplicate prevention, application statuses, transition validation, terminal states, role-safe status-history resources | Implemented with candidate-safe response boundaries |
-| 6 | Testing Module | Company-owned immutable tests, structured questions/options, normalized answers, grading/results, deadlines, and retake series | Advanced / Partially Implemented (duration enforcement and catalog secrecy remain) |
+| 6 | Testing Module | Company-owned immutable tests, structured questions/options, normalized answers, grading/results, deadlines, retake series, and attempt-scoped candidate content | Advanced / Partially Implemented (duration enforcement and a formal score invariant remain) |
 | 7 | Interview Module | Interview scheduling, completion and evaluation with candidate-safe and employer-management response boundaries | Implemented with remaining mode/attendance/status refinements |
 | 8 | AI Matching | Deterministic TF-IDF matching, cosine similarity, recommendations for job seekers, ranked candidates for employers, score breakdowns | Partially Implemented (IR-based matching, not deep AI) |
 | 9 | Notifications + Admin APIs | In-app notification table, workflow event/listener dispatch, notification endpoints, admin APIs for users, companies, skills, and tests | Implemented |
@@ -462,7 +462,7 @@ Public listing always returns only jobs with `status = open`; draft and closed j
 | --- | --- | --- | --- | --- | --- | --- |
 | GET | `/api/v1/tests` | Required | Employer, admin, job seeker | List test catalog entries; job seekers only see active tests | Optional `per_page` from 1 to 100 | Paginated `TestResource` collection |
 | POST | `/api/v1/tests` | Required | Employer or admin | Create test catalog entry | `title`, `duration_minutes`, `max_score`, optional `description`, `instructions`, `passing_score`, `is_active` | Created `TestResource` |
-| GET | `/api/v1/tests/{test}` | Required | Employer, admin, job seeker | View test catalog entry; job seekers can view active tests only | None | `TestResource` |
+| GET | `/api/v1/tests/{test}` | Required | Employer, admin | View an authorized test catalog entry; candidates use attempt-scoped content APIs | None | `TestResource` |
 | PUT/PATCH | `/api/v1/tests/{test}` | Required | Employer or admin | Update test catalog entry | Same fields as create, optional | Updated `TestResource` |
 | DELETE | `/api/v1/tests/{test}` | Required | Employer or admin | Delete test catalog entry | None | Success message |
 | POST | `/api/v1/applications/{jobApplication}/assign-test` | Required | Owning employer | Assign active test to application | `test_id`, optional `note` | `ApplicationTestAssignmentResource`; application moves to `test_pending` |
@@ -1498,7 +1498,7 @@ The intentional breaking behavior is that previously usable tokens for suspended
 
 ### Remaining Outside This Increment
 
-- Test catalog secrecy, test duration enforcement, and a formal test-score invariant.
+- Test duration enforcement and a formal test-score invariant.
 - Duplicate event-listener cleanup.
 - Application information-request workflow.
 - Conditional interview validation, attendance, and explicit cancellation/status policy.
@@ -1592,4 +1592,36 @@ The Web collection adds employer request creation, listing, viewing, update/dead
 - Test catalog secrecy, test duration enforcement, and a formal test-score invariant.
 - Existing duplicate event-listener registration cleanup.
 - Conditional interview-mode validation, attendance, and explicit interview cancellation/status redesign.
+- Primary-CV selection and any general application internal-notes feature.
+
+## 31. Secure Test Catalog and Attempt-Scoped Candidate Content
+
+This increment closes the previously documented test-catalog secrecy gap without changing test definitions, assignment deadlines, retakes, grading, scoring, workflow transitions, or database schema.
+
+### Access Matrix and Candidate Contract
+
+- `GET /api/v1/tests` and `GET /api/v1/tests/{test}` are management catalog APIs for employers and administrators only. A job seeker receives `403 TEST_CATALOG_FORBIDDEN`, including after assignment or attempt start.
+- Employers retain full catalog/question/option management for tests owned by their company. Administrators retain the existing global catalog behavior. Existing cross-company policy checks remain authoritative.
+- `GET /api/v1/my/tests` now uses candidate-only resources. Each invitation exposes assignment/application/test IDs, attempt policy and deadline flags, a safe test summary (`id`, title, description, instructions, duration, and `question_count`), and minimal attempt state. It does not embed the application, questions, options, maximum/passing scores, answer keys, grading details, internal assignment actors, or retake reasons.
+- The candidate contract is intentionally breaking for clients that previously fetched `/tests/{test_id}`. Mobile clients must start the assignment, retain the returned `test_attempt_id`, then fetch `/test-attempts/{testAttempt}/questions`.
+
+### Attempt Questions, Privacy, and Lifecycle
+
+- `GET /api/v1/test-attempts/{testAttempt}/questions` is available only to the job seeker who owns the attempt. It requires an actually started attempt, rejects another candidate/employer and an active superseded retake, and preserves safe historical reads for a submitted attempt.
+- Questions are ordered and expose only ID, text, type, order, required flag, and safe ordered options. Options expose only ID, text, and order. The query explicitly selects this allowlist, so `points`, `is_correct`, timestamps, test ownership columns beyond the relation key, passing score, correct-option summaries, reviewer notes, and grading details are never loaded into this candidate path.
+- The endpoint reads the immutable assigned test definition; it does not snapshot or copy questions into an attempt. Answer save, submit, result, deadline, retake, and company-state rules continue through their existing services and policies.
+
+### Query Shape, Postman, and Verification Coverage
+
+- Candidate invitations use `withCount('questions')`, constrained eager loading, and one grouped attempt-series lookup. Resources do not issue queries during serialization and options are not loaded for invitation summaries.
+- Attempt questions use one constrained eager load for all options rather than per-question/per-option lookups. Employer catalog pagination and full management resources are unchanged.
+- Mobile Postman now uses the attempt-scoped questions endpoint, checks for the absence of `is_correct`, `correct_options`, `passing_score`, `reviewer_note`, and `points`, and includes a candidate-catalog-forbidden example. Web Postman retains company catalog/structure examples and adds cross-company structure denial.
+- Feature coverage verifies guest/candidate catalog denial, employer company scope, admin compatibility, summary-only invitations, query-level secret exclusion, pre-start/ownership/IDOR behavior, safe post-submit reads, and a complete start → fetch IDs → answer → submit → result flow.
+
+### Remaining Outside This Increment
+
+- Enforcing `duration_minutes` against attempt start time and the earlier assignment deadline.
+- Establishing and enforcing the formal test-score invariant.
+- Cleaning up pre-existing duplicate event-listener registration.
+- Conditional interview validation, attendance, and explicit interview cancellation/status redesign.
 - Primary-CV selection and any general application internal-notes feature.

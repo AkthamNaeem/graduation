@@ -1,11 +1,12 @@
 <?php
 
+use App\Exceptions\ApplicationInformationRequestException;
+use App\Exceptions\JobPostingOperationException;
+use App\Exceptions\RecruitmentAccessException;
+use App\Exceptions\TestContentAccessException;
 use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\EnsureCompanyApproved;
 use App\Http\Middleware\EnsureUserIsActive;
-use App\Exceptions\RecruitmentAccessException;
-use App\Exceptions\JobPostingOperationException;
-use App\Exceptions\ApplicationInformationRequestException;
 use App\Support\ApiResponse;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
@@ -33,8 +34,24 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (TestContentAccessException $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return ApiResponse::error(
+                message: $exception->getMessage(),
+                errors: $exception->errors,
+                status: $exception->status,
+                code: $exception->errorCode,
+            );
+        });
+
         $exceptions->render(function (ApplicationInformationRequestException $exception, Request $request) {
-            if (! $request->is('api/*')) return null;
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
             return ApiResponse::error($exception->getMessage(), $exception->errors, $exception->status, $exception->errorCode);
         });
         $exceptions->render(function (JobPostingOperationException $exception, Request $request) {

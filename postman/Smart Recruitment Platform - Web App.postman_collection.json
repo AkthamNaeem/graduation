@@ -1077,7 +1077,7 @@
                                       "name": "Test Catalog",
                                       "item": [
                                   {
-                                      "name":  "List Tests",
+                                      "name":  "List Company Tests",
                                       "request":  {
                                                       "auth":  {
                                                                    "type":  "bearer",
@@ -1090,7 +1090,7 @@
                                                                               ]
                                                                },
                                                       "method":  "GET",
-                                                      "description":  "Web App / Employer Dashboard: list test catalog entries available to employer.",
+                                                      "description":  "Web App / Employer Dashboard: list only test catalog entries owned by the employer's company, with the full management resource.",
                                                       "url":  "{{base_url}}/tests"
                                                   },
                                       "event":  [
@@ -1123,8 +1123,13 @@
                                       "name": "Test Questions",
                                       "item": [
                                   {
-                                      "name": "List Test Questions",
+                                      "name": "View Test Structure",
                                       "request": {"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"GET","header":[{"key":"Accept","value":"application/json"}],"description":"Lists ordered questions and options for an own-company test.","url":"{{base_url}}/tests/{{test_id}}/questions"}
+                                  },
+                                  {
+                                      "name": "Cross-company Test Structure Forbidden",
+                                      "request": {"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{other_employer_token}}","type":"string"}]},"method":"GET","header":[{"key":"Accept","value":"application/json"}],"description":"Use a test_id owned by a different company; the expected response is 403 and no question/option content is returned.","url":"{{base_url}}/tests/{{test_id}}/questions"},
+                                      "event": [{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('cross-company structure is forbidden', () => pm.response.to.have.status(403));"]}}]
                                   },
                                   {
                                       "name": "Create Test Question",

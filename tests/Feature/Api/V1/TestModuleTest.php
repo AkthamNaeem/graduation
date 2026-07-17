@@ -150,7 +150,7 @@ class TestModuleTest extends TestCase
         ]);
     }
 
-    public function test_job_seeker_can_only_read_active_test_catalog_entries(): void
+    public function test_job_seeker_cannot_read_test_catalog_entries(): void
     {
         $jobSeeker = $this->jobSeeker();
         $activeTest = $this->test_catalog_entry('Active Assessment');
@@ -159,20 +159,18 @@ class TestModuleTest extends TestCase
 
         $this->withToken($this->tokenFor($jobSeeker))
             ->getJson('/api/v1/tests')
-            ->assertOk()
-            ->assertJsonCount(1, 'data.data')
-            ->assertJsonPath('data.data.0.id', $activeTest->id)
-            ->assertJsonMissing(['title' => 'Inactive Assessment']);
+            ->assertForbidden()
+            ->assertJsonPath('code', 'TEST_CATALOG_FORBIDDEN');
 
         $this->withToken($this->tokenFor($jobSeeker))
             ->getJson("/api/v1/tests/{$activeTest->id}")
-            ->assertOk()
-            ->assertJsonPath('data.title', 'Active Assessment');
+            ->assertForbidden()
+            ->assertJsonPath('code', 'TEST_CATALOG_FORBIDDEN');
 
         $this->withToken($this->tokenFor($jobSeeker))
             ->getJson("/api/v1/tests/{$inactiveTest->id}")
-            ->assertStatus(403)
-            ->assertJsonPath('success', false);
+            ->assertForbidden()
+            ->assertJsonPath('code', 'TEST_CATALOG_FORBIDDEN');
 
         $this->withToken($this->tokenFor($jobSeeker))
             ->postJson('/api/v1/tests', [
@@ -275,7 +273,10 @@ class TestModuleTest extends TestCase
             ->assertJsonCount(1, 'data.data')
             ->assertJsonPath('data.data.0.id', $firstAssignment->id)
             ->assertJsonPath('data.data.0.test.title', 'Backend Assessment')
-            ->assertJsonPath('data.data.0.job_application.id', $firstApplication->id)
+            ->assertJsonPath('data.data.0.job_application_id', $firstApplication->id)
+            ->assertJsonPath('data.data.0.test.question_count', 0)
+            ->assertJsonMissingPath('data.data.0.test.questions')
+            ->assertJsonMissingPath('data.data.0.test.passing_score')
             ->assertJsonPath('data.meta.current_page', 1);
     }
 

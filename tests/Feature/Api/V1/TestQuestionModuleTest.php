@@ -258,7 +258,8 @@ class TestQuestionModuleTest extends TestCase
 
         $this->withToken($this->tokenFor($seeker))->getJson("/api/v1/tests/{$test->id}/questions")->assertForbidden();
         $this->withToken($this->tokenFor($seeker))->getJson("/api/v1/tests/{$test->id}")
-            ->assertOk()->assertJsonMissing(['is_correct' => true]);
+            ->assertForbidden()
+            ->assertJsonPath('code', 'TEST_CATALOG_FORBIDDEN');
         $this->assertNotNull($question);
     }
 

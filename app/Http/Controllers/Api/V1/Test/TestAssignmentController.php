@@ -7,6 +7,7 @@ use App\Http\Requests\Api\V1\Test\AssignTestRequest;
 use App\Http\Requests\Api\V1\Test\ListApplicationTestsRequest;
 use App\Http\Requests\Api\V1\Test\ListMyTestsRequest;
 use App\Http\Resources\Api\V1\ApplicationTestAssignmentResource;
+use App\Http\Resources\Api\V1\CandidateApplicationTestAssignmentResource;
 use App\Models\JobApplication;
 use App\Models\User;
 use App\Services\TestService;
@@ -19,8 +20,7 @@ class TestAssignmentController extends Controller
 {
     public function __construct(
         private readonly TestService $testService,
-    ) {
-    }
+    ) {}
 
     public function assign(AssignTestRequest $request, JobApplication $jobApplication): JsonResponse
     {
@@ -53,7 +53,7 @@ class TestAssignmentController extends Controller
     public function my(ListMyTestsRequest $request): JsonResponse
     {
         return ApiResponse::success(
-            data: ApplicationTestAssignmentResource::collection(
+            data: CandidateApplicationTestAssignmentResource::collection(
                 $this->testService->getMyAssignments(
                     $this->authenticatedUser($request),
                     $request->integer('per_page', 15),

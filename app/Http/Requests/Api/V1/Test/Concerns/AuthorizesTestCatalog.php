@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Api\V1\Test\Concerns;
 
 use App\Enums\UserRole;
+use App\Exceptions\TestContentAccessException;
 use App\Models\Test;
 use App\Models\User;
 use Laravel\Sanctum\PersonalAccessToken;
@@ -20,14 +21,27 @@ trait AuthorizesTestCatalog
         $accessToken = PersonalAccessToken::findToken($token);
         $tokenable = $accessToken?->tokenable;
 
-        return $tokenable instanceof User
-            ? $tokenable->withAccessToken($accessToken)
-            : null;
+        if (! $tokenable instanceof User) {
+            return null;
+        }
+
+        $user = $tokenable->withAccessToken($accessToken);
+        $this->setUserResolver(static fn (?string $guard = null): User => $user);
+
+        return $user;
     }
 
     protected function canReadTestCatalog(): bool
     {
         $user = $this->authenticatedUser();
+
+        if ($user?->role === UserRole::JOB_SEEKER) {
+            throw new TestContentAccessException(
+                'Test catalog access is not available for job seekers.',
+                'TEST_CATALOG_FORBIDDEN',
+                403,
+            );
+        }
 
         return $user instanceof User && $user->can('viewAny', Test::class);
     }

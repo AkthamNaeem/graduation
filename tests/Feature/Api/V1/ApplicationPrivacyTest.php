@@ -106,10 +106,10 @@ class ApplicationPrivacyTest extends TestCase
         $response = $this->withToken($this->tokenFor($candidate))
             ->getJson('/api/v1/my/tests')
             ->assertOk()
-            ->assertJsonPath('data.data.0.job_application.id', $application->id);
+            ->assertJsonPath('data.data.0.job_application_id', $application->id);
 
-        $this->assertSafeApplication($response, 'data.data.0.job_application');
         $response
+            ->assertJsonMissingPath('data.data.0.job_application')
             ->assertJsonMissingPath('data.data.0.assigned_by_user_id')
             ->assertJsonMissingPath('data.data.0.retake_reason')
             ->assertJsonMissingPath('data.data.0.retake_granted_by_user_id');

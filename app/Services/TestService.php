@@ -199,13 +199,43 @@ class TestService
      */
     public function getMyAssignments(User $user, int $perPage = 15): LengthAwarePaginator
     {
-        return ApplicationTestAssignment::query()
-            ->with($this->assignmentRelations(includeApplicationContext: true, candidateSafe: true))
+        $paginator = ApplicationTestAssignment::query()
+            ->with([
+                'test' => fn ($query) => $query
+                    ->select(['id', 'title', 'description', 'instructions', 'duration_minutes'])
+                    ->withCount('questions'),
+                'testAttempt' => fn ($query) => $query->select([
+                    'id',
+                    'application_test_assignment_id',
+                    'started_at',
+                    'submitted_at',
+                    'grading_status',
+                ]),
+            ])
             ->whereHas('jobApplication.jobSeekerProfile', function ($query) use ($user): void {
                 $query->where('user_id', $user->id);
             })
             ->latest()
             ->paginate($perPage);
+
+        $assignments = $paginator->getCollection();
+        $rootIds = $assignments->map(fn (ApplicationTestAssignment $assignment): int => $assignment->seriesRootId())->unique()->values();
+        $series = ApplicationTestAssignment::query()
+            ->select(['id', 'series_root_assignment_id', 'attempt_number'])
+            ->where(function ($query) use ($rootIds): void {
+                $query->whereIn('id', $rootIds)->orWhereIn('series_root_assignment_id', $rootIds);
+            })
+            ->get()
+            ->groupBy(fn (ApplicationTestAssignment $assignment): int => $assignment->seriesRootId());
+
+        $assignments->each(function (ApplicationTestAssignment $assignment) use ($series): void {
+            $items = $series->get($assignment->seriesRootId(), collect());
+            $latestId = $items->sortByDesc('attempt_number')->first()?->id;
+            $assignment->setAttribute('candidate_series_count', $items->count());
+            $assignment->setAttribute('candidate_is_latest', $assignment->id === $latestId);
+        });
+
+        return $paginator;
     }
 
     public function startAttempt(User $actor, ApplicationTestAssignment $assignment): TestAttempt
@@ -446,6 +476,14 @@ class TestService
      */
     private function attemptRelations(bool $candidateSafe = false): array
     {
+        if ($candidateSafe) {
+            return [
+                'testAnswers.question',
+                'testAnswers.selectedOptions',
+                'applicationTestAssignment',
+            ];
+        }
+
         $relations = [
             'testAnswers.question',
             'testAnswers.selectedOptions',
@@ -458,14 +496,12 @@ class TestService
             'applicationTestAssignment.jobApplication.statusHistory.toStatus',
         ];
 
-        if (! $candidateSafe) {
-            $relations[] = 'evaluatedBy';
-            $relations[] = 'testAnswers.grading';
-            $relations[] = 'applicationTestAssignment.assignedBy';
-            $relations[] = 'applicationTestAssignment.jobApplication.jobSeekerProfile.user';
-            $relations[] = 'applicationTestAssignment.jobApplication.jobSeekerProfile.skills';
-            $relations[] = 'applicationTestAssignment.jobApplication.statusHistory.changedBy';
-        }
+        $relations[] = 'evaluatedBy';
+        $relations[] = 'testAnswers.grading';
+        $relations[] = 'applicationTestAssignment.assignedBy';
+        $relations[] = 'applicationTestAssignment.jobApplication.jobSeekerProfile.user';
+        $relations[] = 'applicationTestAssignment.jobApplication.jobSeekerProfile.skills';
+        $relations[] = 'applicationTestAssignment.jobApplication.statusHistory.changedBy';
 
         return $relations;
     }

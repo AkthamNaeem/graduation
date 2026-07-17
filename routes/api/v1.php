@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\V1\Test\TestAnswerController;
 use App\Http\Controllers\Api\V1\Test\TestAssignmentController;
 use App\Http\Controllers\Api\V1\Test\TestAssignmentDeadlineController;
 use App\Http\Controllers\Api\V1\Test\TestAttemptController;
+use App\Http\Controllers\Api\V1\Test\TestAttemptQuestionController;
 use App\Http\Controllers\Api\V1\Test\TestCatalogController;
 use App\Http\Controllers\Api\V1\Test\TestManualGradingController;
 use App\Http\Controllers\Api\V1\Test\TestQuestionController;
@@ -186,6 +187,7 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function (): void {
         Route::post('tests/{applicationTestAssignment}/start', [TestAttemptController::class, 'start'])->name('tests.start');
         Route::post('tests/{applicationTestAssignment}/submit', [TestAttemptController::class, 'submit'])->name('tests.submit');
         Route::get('test-attempts/{testAttempt}/answers', [TestAnswerController::class, 'index'])->name('test-attempts.answers.index');
+        Route::get('test-attempts/{testAttempt}/questions', [TestAttemptQuestionController::class, 'index'])->name('test-attempts.questions.index');
         Route::get('test-attempts/{testAttempt}/result', [TestAttemptController::class, 'result'])->name('test-attempts.result');
         Route::post('test-attempts/{testAttempt}/gradings/bulk', [TestManualGradingController::class, 'bulk'])->name('test-attempts.gradings.bulk');
         Route::put('test-attempts/{testAttempt}/answers/{question}/grading', [TestManualGradingController::class, 'upsert'])->name('test-attempts.answers.grading.update');

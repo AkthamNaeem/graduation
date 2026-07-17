@@ -1134,6 +1134,16 @@
           ]
         },
         {
+          "name": "Candidate Test Catalog Forbidden",
+          "request": {
+            "method": "GET",
+            "description": "Candidates must use My Test Invitations and the attempt-scoped questions endpoint; the management catalog is forbidden even after assignment/start.",
+            "url": "{{base_url}}/tests/{{test_id}}"
+          },
+          "event": [{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('catalog is forbidden to candidates', () => { pm.response.to.have.status(403); pm.expect(pm.response.json().code).to.eql('TEST_CATALOG_FORBIDDEN'); });"]}}],
+          "response": [{"name":"Candidate catalog forbidden","status":"Forbidden","code":403,"_postman_previewlanguage":"json","header":[{"key":"Content-Type","value":"application/json"}],"body":"{\n  \"success\": false,\n  \"message\": \"Test catalog access is not available for job seekers.\",\n  \"errors\": [],\n  \"code\": \"TEST_CATALOG_FORBIDDEN\"\n}"}]
+        },
+        {
           "name": "Start Attempt",
           "request": {
             "method": "POST",
@@ -1156,7 +1166,7 @@
             {"name":"403 company recruitment unavailable","status":"Forbidden","code":403,"_postman_previewlanguage":"json","header":[{"key":"Content-Type","value":"application/json"}],"body":"{\n  \"success\": false,\n  \"message\": \"Recruitment activity for this company is currently unavailable.\",\n  \"errors\": {},\n  \"code\": \"COMPANY_RECRUITMENT_UNAVAILABLE\"\n}"}
           ]
         },
-        {"name":"Get Attempt Questions","request":{"method":"GET","description":"Candidate-safe test structure; use the assignment/attempt deadline flags to disable expired actions. Correct-answer flags are omitted.","url":"{{base_url}}/tests/{{test_id}}"}},
+        {"name":"Get Attempt Questions","request":{"method":"GET","description":"The only candidate content endpoint. Requires ownership and a started attempt; remains safe to read after submission. It never returns points, correct-answer flags, passing score, reviewer notes, or catalog internals.","url":"{{base_url}}/test-attempts/{{test_attempt_id}}/questions"},"event":[{"listen":"test","script":{"type":"text/javascript","exec":["pm.test('candidate question boundary', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404, 409]));","if (pm.response.code === 200) { const raw = JSON.stringify(pm.response.json()); ['is_correct', 'correct_options', 'passing_score', 'reviewer_note', 'points'].forEach(key => pm.expect(raw).not.to.include(key)); }"]}}],"response":[{"name":"Safe started-attempt questions","status":"OK","code":200,"_postman_previewlanguage":"json","header":[{"key":"Content-Type","value":"application/json"}],"body":"{\n  \"data\": [\n    {\n      \"id\": 11,\n      \"question_text\": \"Which method is idempotent?\",\n      \"question_type\": \"single_choice\",\n      \"order_index\": 1,\n      \"is_required\": true,\n      \"options\": [\n        {\"id\": 101, \"option_text\": \"PUT\", \"order_index\": 1}\n      ]\n    }\n  ]\n}"},{"name":"Attempt not started","status":"Conflict","code":409,"_postman_previewlanguage":"json","header":[{"key":"Content-Type","value":"application/json"}],"body":"{\n  \"success\": false,\n  \"message\": \"This test attempt has not been started.\",\n  \"code\": \"TEST_ATTEMPT_NOT_STARTED\"\n}"}]},
         {"name":"Get Saved Answers","request":{"method":"GET","description":"Lists the authenticated candidate's normalized saved answers.","url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers"}},
         {"name":"Save Single Choice Answer","request":{"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/{{test_question_id}}","body":{"mode":"raw","raw":"{\n  \"selected_option_ids\": [{{test_option_id}}]\n}","options":{"raw":{"language":"json"}}}}},
         {"name":"Save Multiple Choice Answer","request":{"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/{{test_question_id}}","body":{"mode":"raw","raw":"{\n  \"selected_option_ids\": [{{test_option_id}}, 2]\n}","options":{"raw":{"language":"json"}}}}},

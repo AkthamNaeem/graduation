@@ -10,17 +10,13 @@ class TestPolicy
 {
     public function viewAny(User $user): bool
     {
-        return true;
+        return $user->role === UserRole::EMPLOYER || $user->role === UserRole::ADMIN;
     }
 
     public function view(User $user, Test $test): bool
     {
         if ($user->role === UserRole::ADMIN) {
             return true;
-        }
-
-        if ($user->role === UserRole::JOB_SEEKER) {
-            return $test->is_active;
         }
 
         return $user->role === UserRole::EMPLOYER

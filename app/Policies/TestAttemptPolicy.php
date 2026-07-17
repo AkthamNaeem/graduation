@@ -8,6 +8,13 @@ use App\Models\User;
 
 class TestAttemptPolicy
 {
+    public function viewQuestions(User $user, TestAttempt $testAttempt): bool
+    {
+        return $user->role === UserRole::JOB_SEEKER
+            && (int) ($user->jobSeekerProfile?->id ?? 0)
+                === (int) $testAttempt->applicationTestAssignment->jobApplication->job_seeker_profile_id;
+    }
+
     public function viewAnswers(User $user, TestAttempt $testAttempt): bool
     {
         if ($user->role === UserRole::ADMIN) {
