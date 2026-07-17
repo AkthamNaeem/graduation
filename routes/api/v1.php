@@ -22,6 +22,7 @@ use App\Http\Controllers\Api\V1\Profile\ProfileSkillController;
 use App\Http\Controllers\Api\V1\Profile\ProfileSuggestionController;
 use App\Http\Controllers\Api\V1\Skill\SkillController;
 use App\Http\Controllers\Api\V1\Test\TestAssignmentController;
+use App\Http\Controllers\Api\V1\Test\TestAssignmentDeadlineController;
 use App\Http\Controllers\Api\V1\Test\TestAnswerController;
 use App\Http\Controllers\Api\V1\Test\TestAttemptController;
 use App\Http\Controllers\Api\V1\Test\TestCatalogController;
@@ -166,6 +167,8 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('tests', [TestCatalogController::class, 'index'])->name('tests.index');
     Route::get('tests/{test}', [TestCatalogController::class, 'show'])->name('tests.show');
     Route::get('my/tests', [TestAssignmentController::class, 'my'])->name('tests.my');
+    Route::patch('test-assignments/{applicationTestAssignment}/deadline', [TestAssignmentDeadlineController::class, 'update'])->name('test-assignments.deadline.update');
+    Route::get('test-assignments/{applicationTestAssignment}/deadline-history', [TestAssignmentDeadlineController::class, 'history'])->name('test-assignments.deadline-history');
     Route::post('tests/{applicationTestAssignment}/start', [TestAttemptController::class, 'start'])->name('tests.start');
     Route::post('tests/{applicationTestAssignment}/submit', [TestAttemptController::class, 'submit'])->name('tests.submit');
     Route::get('test-attempts/{testAttempt}/answers', [TestAnswerController::class, 'index'])->name('test-attempts.answers.index');

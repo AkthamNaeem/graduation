@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Carbon;
 
 class ApplicationTestAssignment extends Model
 {
@@ -18,6 +19,7 @@ class ApplicationTestAssignment extends Model
         'assigned_by_user_id',
         'note',
         'assigned_at',
+        'deadline_at',
     ];
 
     /**
@@ -27,6 +29,7 @@ class ApplicationTestAssignment extends Model
     {
         return [
             'assigned_at' => 'datetime',
+            'deadline_at' => 'datetime',
         ];
     }
 
@@ -53,5 +56,43 @@ class ApplicationTestAssignment extends Model
     public function testAttempts(): HasMany
     {
         return $this->hasMany(TestAttempt::class);
+    }
+
+    public function deadlineChanges(): HasMany
+    {
+        return $this->hasMany(ApplicationTestAssignmentDeadlineChange::class);
+    }
+
+    public function hasDeadline(): bool
+    {
+        return $this->deadline_at !== null;
+    }
+
+    public function isExpired(?Carbon $at = null): bool
+    {
+        if (! $this->hasDeadline()) {
+            return false;
+        }
+
+        $attempt = $this->relationLoaded('testAttempt')
+            ? $this->getRelation('testAttempt')
+            : $this->testAttempt()->first();
+
+        return $attempt?->submitted_at === null
+            && ($at ?? now())->greaterThan($this->deadline_at);
+    }
+
+    public function isAvailable(?Carbon $at = null): bool
+    {
+        return ! $this->isExpired($at);
+    }
+
+    public function remainingSeconds(?Carbon $at = null): ?int
+    {
+        if (! $this->hasDeadline()) {
+            return null;
+        }
+
+        return max(0, (int) ($at ?? now())->diffInSeconds($this->deadline_at, false));
     }
 }

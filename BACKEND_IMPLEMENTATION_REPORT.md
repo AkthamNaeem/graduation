@@ -1269,7 +1269,6 @@ Implemented on 2026-07-17 on top of the company-owned immutable test structure.
 ### Remaining Testing Module Work
 
 - Answer-level manual grading.
-- Assignment deadline enforcement.
 - Final result completion after subjective grading and reviewer notes.
 - Snapshot/versioning only if strict test immutability is relaxed later.
 
@@ -1312,7 +1311,7 @@ Implemented as a submit-time extension of normalized `TestAnswer` persistence. T
 
 ### Remaining Work
 
-- Assignment deadlines, a retake policy if required, and any future explicit partial-credit policy.
+- A retake policy if required and any future explicit partial-credit policy.
 
 ## 24. Answer-Level Manual Grading and Final Mixed Results
 
@@ -1347,8 +1346,48 @@ Implemented on 2026-07-17 on top of normalized answers and objective auto-gradin
 
 ### Deliberately Remaining Outside This Increment
 
-- Assignment deadline enforcement.
 - An explicit result-ready notification policy.
 - Result decision automation; no automatic application acceptance/rejection is performed.
 - Retake policy and partial-credit policy if later required.
+- Snapshot/versioning only if strict test-definition immutability is relaxed.
+
+## 25. Test Assignment Deadlines, Expiration, and Extensions
+
+Implemented on 2026-07-17 without changing application decision workflow, submitted attempts, or automatic/manual grading.
+
+### Schema, UTC, and Boundary Semantics
+
+- `application_test_assignments.deadline_at` is a nullable indexed UTC timestamp. Null means that the assignment has no deadline.
+- `application_test_assignment_deadline_changes` records every later deadline assignment/extension with the previous and new UTC values, actor, optional internal reason, and timestamps. The initial deadline is stored on the assignment and audited but does not create an extension-history row.
+- API timestamps use ISO 8601 UTC. Laravel's application timezone remains UTC.
+- Start, draft mutation, and submit are allowed while `current_time <= deadline_at` and rejected only when `current_time > deadline_at`.
+- An unsubmitted assignment is computed as expired after its deadline. A submitted attempt remains submitted and is never reopened or functionally marked expired.
+
+### Central Enforcement and Resources
+
+- `TestAssignmentDeadlineService` owns deadline normalization, expiry guards, extension validation, history creation, audit metadata, and the single clock policy.
+- The existing start and submit transactions lock the assignment and check the deadline before creating an attempt, setting `submitted_at`, grading, workflow history, or notifications.
+- Every answer upsert, bulk update, delete, and file replacement checks expiry before mutation and rechecks inside its transaction. A file stored before a race failure is removed by the existing cleanup path.
+- Assignment, attempt, and result resources expose the current deadline and safe computed availability flags. Employer/admin assignment views additionally expose extension count/latest timestamp. Candidate resources never expose internal reasons or extension actors.
+
+### Extension APIs, Ownership, and Privacy
+
+- `PATCH /api/v1/test-assignments/{applicationTestAssignment}/deadline` lets the owning employer or an administrator set a previously null deadline or move the current deadline later.
+- `GET /api/v1/test-assignments/{applicationTestAssignment}/deadline-history` is restricted to the owning employer and administrators.
+- A new deadline must be future, non-null, and later than the current value. Shortening/removal, cross-company access, candidate access, submitted attempts, and accepted/rejected/withdrawn applications are rejected.
+- An expired but unsubmitted assignment can be extended and becomes usable again for start, answer mutation, and submit before the new deadline.
+
+### Transactions, Audit, and Notification
+
+- Extensions lock the assignment, persist its new deadline and domain history, and write safe audit metadata in one transaction. Consecutive extensions therefore preserve the actual previous value.
+- Audit actions are `test_assignment.deadline_set` and `test_assignment.deadline_extended`. Audit metadata excludes answer content, results, reviewer notes, files, and the internal reason text.
+- After a successful extension commit, one `test.deadline_extended` notification is sent to the candidate with only `assignment_id` and `new_deadline_at`. The existing assignment notification now includes `deadline_at` when present.
+- Expiration alone does not change the application from `test_pending`, reject/withdraw the candidate, delete the assignment, or schedule reminder jobs.
+
+### Deliberately Remaining Outside This Increment
+
+- Retake and reassignment policy.
+- Scheduled deadline reminders and advanced expiration reports.
+- Result-ready notification policy.
+- An explicit objective partial-credit policy if later required.
 - Snapshot/versioning only if strict test-definition immutability is relaxed.

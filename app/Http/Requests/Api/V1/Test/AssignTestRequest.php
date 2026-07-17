@@ -40,6 +40,7 @@ class AssignTestRequest extends FormRequest
                     ->where('company_id', $companyId)),
             ],
             'note' => ['sometimes', 'nullable', 'string'],
+            'deadline_at' => ['sometimes', 'nullable', 'date'],
         ];
     }
 }

@@ -17,10 +17,16 @@ class TestAttemptResource extends JsonResource
     {
         $token = $request->bearerToken();
         $role = $token ? PersonalAccessToken::findToken($token)?->tokenable?->role : null;
+        $assignment = $this->applicationTestAssignment;
+        $expired = $assignment?->isExpired() ?? false;
 
         return [
             'id' => $this->id,
             'application_test_assignment_id' => $this->application_test_assignment_id,
+            'deadline_at' => $assignment?->deadline_at?->toISOString(),
+            'is_expired' => $expired,
+            'can_edit_answers' => $this->submitted_at === null && ! $expired,
+            'can_submit' => $this->submitted_at === null && ! $expired,
             'answers' => TestAnswerResource::collection($this->whenLoaded('testAnswers')),
             'grading_status' => $this->grading_status?->value,
             'objective_score' => $this->objective_score,

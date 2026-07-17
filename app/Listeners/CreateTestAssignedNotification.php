@@ -37,6 +37,7 @@ class CreateTestAssignedNotification
                 'test_assignment_id' => $assignment->id,
                 'test_id' => $assignment->test_id,
                 'status' => 'test_pending',
+                'deadline_at' => $assignment->deadline_at?->toISOString(),
             ],
         );
     }

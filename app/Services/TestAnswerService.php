@@ -18,6 +18,10 @@ class TestAnswerService
 {
     private const FILE_DISK = 'local';
 
+    public function __construct(
+        private readonly TestAssignmentDeadlineService $testAssignmentDeadlineService,
+    ) {}
+
     /** @return Collection<int, TestAnswer> */
     public function listAnswers(TestAttempt $attempt): Collection
     {
@@ -55,6 +59,7 @@ class TestAnswerService
 
         try {
             $answer = DB::transaction(function () use ($attempt, $question, $normalized, $file, $newPath): TestAnswer {
+                $this->ensureAttemptMutable($attempt);
                 $attributes = ['answer_text' => $normalized['answer_text']];
 
                 if ($file !== null) {
@@ -113,6 +118,7 @@ class TestAnswerService
         }
 
         DB::transaction(function () use ($attempt, $normalized): void {
+            $this->ensureAttemptMutable($attempt);
             foreach ($normalized as [$question, $payload]) {
                 $answer = TestAnswer::query()->updateOrCreate([
                     'test_attempt_id' => $attempt->id,
@@ -137,7 +143,10 @@ class TestAnswerService
         $disk = $answer->file_disk;
         $path = $answer->file_path;
 
-        DB::transaction(fn () => $answer->delete());
+        DB::transaction(function () use ($attempt, $answer): void {
+            $this->ensureAttemptMutable($attempt);
+            $answer->delete();
+        });
 
         if ($path !== null) {
             Storage::disk($disk ?: self::FILE_DISK)->delete($path);
@@ -170,6 +179,7 @@ class TestAnswerService
         if ($attempt->started_at === null) {
             throw new ConflictHttpException('This test attempt has not been started yet.');
         }
+        $this->testAssignmentDeadlineService->assertCanMutateAnswers($attempt);
     }
 
     public function ensureQuestionBelongsToAttempt(TestAttempt $attempt, TestQuestion $question): void

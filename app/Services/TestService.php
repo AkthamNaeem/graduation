@@ -30,6 +30,7 @@ class TestService
         private readonly AuditLogService $auditLogService,
         private readonly TestAnswerService $testAnswerService,
         private readonly TestGradingService $testGradingService,
+        private readonly TestAssignmentDeadlineService $testAssignmentDeadlineService,
     ) {}
 
     /**
@@ -90,9 +91,9 @@ class TestService
         $test->delete();
     }
 
-    public function assignTest(User $actor, JobApplication $application, int $testId, ?string $note): ApplicationTestAssignment
+    public function assignTest(User $actor, JobApplication $application, int $testId, ?string $note, ?string $deadlineAt = null): ApplicationTestAssignment
     {
-        return DB::transaction(function () use ($actor, $application, $testId, $note): ApplicationTestAssignment {
+        return DB::transaction(function () use ($actor, $application, $testId, $note, $deadlineAt): ApplicationTestAssignment {
             $jobApplication = JobApplication::query()
                 ->with('applicationStatus')
                 ->lockForUpdate()
@@ -123,12 +124,15 @@ class TestService
                 ]);
             }
 
+            $deadline = $this->testAssignmentDeadlineService->normalizeInitialDeadline($deadlineAt);
+
             $assignment = ApplicationTestAssignment::create([
                 'job_application_id' => $jobApplication->id,
                 'test_id' => $test->id,
                 'assigned_by_user_id' => $actor->id,
                 'note' => $note,
                 'assigned_at' => now(),
+                'deadline_at' => $deadline,
             ]);
 
             $this->auditLogService->record(
@@ -140,6 +144,24 @@ class TestService
                 $assignment->only(['job_application_id', 'test_id', 'assigned_by_user_id', 'assigned_at']),
                 ['note' => $note],
             );
+
+            if ($deadline !== null) {
+                $this->auditLogService->record(
+                    'test_assignment.deadline_set',
+                    $actor,
+                    ApplicationTestAssignment::class,
+                    $assignment->id,
+                    ['deadline_at' => null],
+                    ['deadline_at' => $deadline->toISOString()],
+                    [
+                        'assignment_id' => $assignment->id,
+                        'application_id' => $assignment->job_application_id,
+                        'test_id' => $assignment->test_id,
+                        'actor_id' => $actor->id,
+                        'reason_present' => false,
+                    ],
+                );
+            }
 
             if ($jobApplication->applicationStatus?->slug !== self::STATUS_TEST_PENDING) {
                 $this->applicationWorkflowService->changeStatus(
@@ -186,9 +208,11 @@ class TestService
     {
         return DB::transaction(function () use ($assignment): TestAttempt {
             $lockedAssignment = ApplicationTestAssignment::query()
-                ->with('testAttempt')
+                ->with(['testAttempt', 'jobApplication.applicationStatus'])
                 ->lockForUpdate()
                 ->findOrFail($assignment->id);
+
+            $this->testAssignmentDeadlineService->assertCanStart($lockedAssignment);
 
             if ($lockedAssignment->testAttempt instanceof TestAttempt) {
                 throw ValidationException::withMessages([
@@ -231,6 +255,8 @@ class TestService
             if ($attempt->submitted_at !== null) {
                 throw new ConflictHttpException('This test attempt has already been submitted and can no longer be modified.');
             }
+
+            $this->testAssignmentDeadlineService->assertCanSubmit($lockedAssignment);
 
             if ($answers !== null) {
                 $this->testAnswerService->importLegacyPayload($attempt, $answers);
@@ -377,6 +403,7 @@ class TestService
             'testAttempt.testAnswers.question',
             'testAttempt.testAnswers.selectedOptions',
             'testAttempt.testAnswers.grading',
+            'deadlineChanges.changedBy',
         ];
 
         if ($includeApplicationContext) {

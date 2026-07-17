@@ -16,9 +16,12 @@ class TestAttemptResultResource extends JsonResource
     {
         $role = $this->role($request);
         $detailed = $role === UserRole::EMPLOYER || $role === UserRole::ADMIN;
+        $assignment = $this->applicationTestAssignment;
 
         return [
             'attempt_id' => $this->id,
+            'deadline_at' => $assignment?->deadline_at?->toISOString(),
+            'is_expired' => $assignment?->isExpired() ?? false,
             'grading_status' => $this->grading_status?->value,
             'objective_score' => $this->objective_score,
             'objective_max_score' => $this->objective_max_score,

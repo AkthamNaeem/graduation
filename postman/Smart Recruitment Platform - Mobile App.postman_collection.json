@@ -1091,7 +1091,7 @@
           "name": "My Assigned Tests",
           "request": {
             "method": "GET",
-            "description": "Mobile App / Job Seeker: list assigned tests.",
+            "description": "Mobile App / Job Seeker: list invitations with UTC deadline, expiry, and action flags. Internal extension reasons and actors are omitted.",
             "url": "{{base_url}}/my/tests"
           },
           "event": [
@@ -1104,13 +1104,18 @@
                 ]
               }
             }
+          ],
+          "response": [
+            {"name":"Active assignment","status":"OK","code":200,"_postman_previewlanguage":"json","header":[{"key":"Content-Type","value":"application/json"}],"body":"{\n  \"data\": {\n    \"deadline_at\": \"2030-12-31T18:00:00.000000Z\",\n    \"is_expired\": false,\n    \"can_start\": true,\n    \"can_edit_answers\": false,\n    \"can_submit\": false\n  }\n}"},
+            {"name":"Expired assignment","status":"OK","code":200,"_postman_previewlanguage":"json","header":[{"key":"Content-Type","value":"application/json"}],"body":"{\n  \"data\": {\n    \"deadline_at\": \"2026-01-01T18:00:00.000000Z\",\n    \"is_expired\": true,\n    \"can_start\": false,\n    \"can_edit_answers\": false,\n    \"can_submit\": false\n  }\n}"},
+            {"name":"Extended assignment","status":"OK","code":200,"_postman_previewlanguage":"json","header":[{"key":"Content-Type","value":"application/json"}],"body":"{\n  \"data\": {\n    \"deadline_at\": \"2031-01-02T18:00:00.000000Z\",\n    \"is_expired\": false,\n    \"can_start\": true\n  }\n}"}
           ]
         },
         {
           "name": "Start Attempt",
           "request": {
             "method": "POST",
-            "description": "Mobile App / Job Seeker: start an assigned test attempt.",
+            "description": "Mobile App / Job Seeker: start before or exactly at the deadline; an expired assignment returns 409.",
             "url": "{{base_url}}/tests/{{assignment_id}}/start"
           },
           "event": [
@@ -1119,17 +1124,20 @@
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test('start response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404, 422]));"
+                  "pm.test('start response', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 401, 403, 404, 409, 422]));"
                 ]
               }
             }
+          ],
+          "response": [
+            {"name":"409 start expired","status":"Conflict","code":409,"_postman_previewlanguage":"json","header":[{"key":"Content-Type","value":"application/json"}],"body":"{\n  \"success\": false,\n  \"message\": \"This test assignment has expired and can no longer be started.\"\n}"}
           ]
         },
-        {"name":"Get Attempt Questions","request":{"method":"GET","description":"Candidate-safe test structure; correct-answer flags are omitted.","url":"{{base_url}}/tests/{{test_id}}"}},
+        {"name":"Get Attempt Questions","request":{"method":"GET","description":"Candidate-safe test structure; use the assignment/attempt deadline flags to disable expired actions. Correct-answer flags are omitted.","url":"{{base_url}}/tests/{{test_id}}"}},
         {"name":"Get Saved Answers","request":{"method":"GET","description":"Lists the authenticated candidate's normalized saved answers.","url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers"}},
         {"name":"Save Single Choice Answer","request":{"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/{{test_question_id}}","body":{"mode":"raw","raw":"{\n  \"selected_option_ids\": [{{test_option_id}}]\n}","options":{"raw":{"language":"json"}}}}},
         {"name":"Save Multiple Choice Answer","request":{"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/{{test_question_id}}","body":{"mode":"raw","raw":"{\n  \"selected_option_ids\": [{{test_option_id}}, 2]\n}","options":{"raw":{"language":"json"}}}}},
-        {"name":"Save Text Answer","request":{"method":"PATCH","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/{{test_question_id}}","body":{"mode":"raw","raw":"{\n  \"answer_text\": \"Dependency injection reduces coupling.\"\n}","options":{"raw":{"language":"json"}}}}},
+        {"name":"Save Text Answer","request":{"method":"PATCH","header":[{"key":"Content-Type","value":"application/json"}],"description":"Draft save is rejected with 409 after assignment expiry.","url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/{{test_question_id}}","body":{"mode":"raw","raw":"{\n  \"answer_text\": \"Dependency injection reduces coupling.\"\n}","options":{"raw":{"language":"json"}}}}},
         {"name":"Upload File Answer","request":{"method":"POST","description":"Private multipart file answer, maximum 10 MB.","url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/{{test_question_id}}/file","body":{"mode":"formdata","formdata":[{"key":"answer_file","type":"file","src":[]}]}}},
         {"name":"Delete Draft Answer","request":{"method":"DELETE","url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/{{test_question_id}}"}},
         {"name":"Bulk Save Answers","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"description":"Atomic upsert; file questions are excluded.","url":"{{base_url}}/test-attempts/{{test_attempt_id}}/answers/bulk","body":{"mode":"raw","raw":"{\n  \"answers\": [\n    {\"question_id\": {{test_question_id}}, \"answer_text\": \"Saved draft\"}\n  ]\n}","options":{"raw":{"language":"json"}}}}},
@@ -1144,7 +1152,7 @@
                 "value": "application/json"
               }
             ],
-            "description": "Mobile App / Job Seeker: submit answers for an assigned test.",
+            "description": "Mobile App / Job Seeker: submit before or exactly at the deadline; an expired assignment returns 409 without grading or workflow changes.",
             "url": "{{base_url}}/tests/{{assignment_id}}/submit",
             "body": {
               "mode": "raw",
@@ -1166,6 +1174,9 @@
                 ]
               }
             }
+          ],
+          "response": [
+            {"name":"409 submit expired","status":"Conflict","code":409,"_postman_previewlanguage":"json","header":[{"key":"Content-Type","value":"application/json"}],"body":"{\n  \"success\": false,\n  \"message\": \"This test assignment has expired and can no longer be submitted.\"\n}"}
           ]
         },
         {

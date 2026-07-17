@@ -31,6 +31,7 @@ class TestAssignmentController extends Controller
                     $jobApplication,
                     (int) $request->validated('test_id'),
                     $request->validated('note'),
+                    $request->validated('deadline_at'),
                 ),
             ),
             message: 'Test assigned successfully.',
