@@ -174,7 +174,7 @@ class MatchingServiceTest extends TestCase
 
     private function company(): Company
     {
-        return Company::create(['name' => 'Acme Matching Co.']);
+        return Company::create(['name' => 'Acme Matching Co.', 'approval_status' => 'approved']);
     }
 
     private function profileWithUser(): JobSeekerProfile

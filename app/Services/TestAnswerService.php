@@ -20,6 +20,7 @@ class TestAnswerService
 
     public function __construct(
         private readonly TestAssignmentDeadlineService $testAssignmentDeadlineService,
+        private readonly CompanyRecruitmentAccessService $companyAccessService,
     ) {}
 
     /** @return Collection<int, TestAnswer> */
@@ -34,6 +35,7 @@ class TestAnswerService
         array $payload,
         ?UploadedFile $file = null,
     ): TestAnswer {
+        $this->companyAccessService->assertRecruitmentAvailable($attempt);
         $this->ensureAttemptMutable($attempt);
         $this->ensureQuestionBelongsToAttempt($attempt, $question);
         $normalized = $this->validatePayload($question, $payload, $file);
@@ -98,6 +100,7 @@ class TestAnswerService
     /** @return Collection<int, TestAnswer> */
     public function bulkUpsert(TestAttempt $attempt, array $answers): Collection
     {
+        $this->companyAccessService->assertRecruitmentAvailable($attempt);
         $this->ensureAttemptMutable($attempt);
 
         $questionIds = array_map(fn (array $answer): int => (int) $answer['question_id'], $answers);
@@ -133,6 +136,7 @@ class TestAnswerService
 
     public function deleteAnswer(TestAttempt $attempt, TestQuestion $question): void
     {
+        $this->companyAccessService->assertRecruitmentAvailable($attempt);
         $this->ensureAttemptMutable($attempt);
         $this->ensureQuestionBelongsToAttempt($attempt, $question);
 

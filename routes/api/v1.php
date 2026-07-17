@@ -42,7 +42,7 @@ Route::prefix('auth')
         Route::post('forgot-password', [AuthController::class, 'forgotPassword'])->name('forgot-password');
         Route::post('reset-password', [AuthController::class, 'resetPassword'])->name('reset-password');
 
-        Route::middleware('auth:sanctum')->group(function (): void {
+        Route::middleware(['auth:sanctum', 'user.active'])->group(function (): void {
             Route::get('me', [AuthController::class, 'me'])->name('me');
             Route::post('change-password', [AuthController::class, 'changePassword'])->name('change-password');
             Route::post('logout', [AuthController::class, 'logout'])->name('logout');
@@ -50,7 +50,7 @@ Route::prefix('auth')
         });
     });
 
-Route::middleware('auth:sanctum')->group(function (): void {
+Route::middleware(['auth:sanctum', 'user.active'])->group(function (): void {
     Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
     Route::patch('notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
@@ -156,7 +156,8 @@ Route::middleware('auth:sanctum')->group(function (): void {
         Route::delete('tests/{test}/questions/{question}/options/{option}', [TestQuestionController::class, 'destroyOption'])->name('tests.questions.options.destroy');
         Route::post('tests/{testAttempt}/evaluate', [TestAttemptController::class, 'evaluate'])->name('tests.evaluate');
     });
-    Route::get('jobs/recommended', [JobPostingController::class, 'recommended'])->name('jobs.recommended');
+    Route::middleware('company.approved')->group(function (): void {
+        Route::get('jobs/recommended', [JobPostingController::class, 'recommended'])->name('jobs.recommended');
 
     Route::post('jobs/{jobPosting}/applications', [JobApplicationController::class, 'store'])->name('jobs.applications.store');
     Route::post('applications/{jobPosting}', [JobApplicationController::class, 'store'])->name('applications.store');
@@ -186,7 +187,8 @@ Route::middleware('auth:sanctum')->group(function (): void {
     Route::get('test-attempts/{testAttempt}/answers/{question}/file', [TestAnswerController::class, 'download'])->name('test-attempts.answers.download');
     Route::put('test-attempts/{testAttempt}/answers/{question}', [TestAnswerController::class, 'upsert'])->name('test-attempts.answers.update');
     Route::patch('test-attempts/{testAttempt}/answers/{question}', [TestAnswerController::class, 'upsert'])->name('test-attempts.answers.patch');
-    Route::delete('test-attempts/{testAttempt}/answers/{question}', [TestAnswerController::class, 'destroy'])->name('test-attempts.answers.destroy');
+        Route::delete('test-attempts/{testAttempt}/answers/{question}', [TestAnswerController::class, 'destroy'])->name('test-attempts.answers.destroy');
+    });
 });
 
 Route::get('skills', [SkillController::class, 'index'])->name('skills.index');

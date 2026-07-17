@@ -37,6 +37,7 @@ class AuthController extends Controller
                 message: 'Your account is not active. Please contact support.',
                 errors: ['status' => ['Only active users can login.']],
                 status: 403,
+                code: 'USER_SUSPENDED',
             );
         }
 

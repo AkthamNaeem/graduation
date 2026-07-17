@@ -8,15 +8,16 @@ use App\Http\Requests\Api\V1\Admin\IndexAdminUserRequest;
 use App\Http\Requests\Api\V1\Admin\UpdateUserRoleRequest;
 use App\Http\Requests\Api\V1\Admin\UpdateUserStatusRequest;
 use App\Http\Resources\Api\V1\UserResource;
+use App\Enums\UserStatus;
 use App\Models\User;
-use App\Services\AuditLogService;
+use App\Services\AdminUserStatusService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 
 class AdminUserController extends Controller
 {
     public function __construct(
-        private readonly AuditLogService $auditLogService,
+        private readonly AdminUserStatusService $adminUserStatusService,
     ) {}
 
     public function index(IndexAdminUserRequest $request): JsonResponse
@@ -67,40 +68,25 @@ class AdminUserController extends Controller
 
     public function updateStatus(UpdateUserStatusRequest $request, User $user): JsonResponse
     {
-        return $this->setStatus($request, $user, (string) $request->validated('status'), 'User status updated successfully.');
+        return $this->setStatus($request, $user, UserStatus::from((string) $request->validated('status')), 'User status updated successfully.');
     }
 
     public function activate(AdminUserStatusActionRequest $request, User $user): JsonResponse
     {
-        return $this->setStatus($request, $user, 'active', 'User activated successfully.');
+        return $this->setStatus($request, $user, UserStatus::ACTIVE, 'User activated successfully.');
     }
 
     public function suspend(AdminUserStatusActionRequest $request, User $user): JsonResponse
     {
-        return $this->setStatus($request, $user, 'suspended', 'User suspended successfully.', true);
+        return $this->setStatus($request, $user, UserStatus::SUSPENDED, 'User suspended successfully.');
     }
 
-    private function setStatus(UpdateUserStatusRequest|AdminUserStatusActionRequest $request, User $user, string $status, string $message, bool $revokeTokens = false): JsonResponse
+    private function setStatus(UpdateUserStatusRequest|AdminUserStatusActionRequest $request, User $user, UserStatus $status, string $message): JsonResponse
     {
-        $before = $user->only(['status']);
-
-        $user->forceFill(['status' => $status])->save();
-
-        if ($revokeTokens) {
-            $user->tokens()->delete();
-        }
-
-        $this->auditLogService->record(
-            $status === 'active' ? 'user.activated' : 'user.suspended',
-            $request->user('sanctum'),
-            User::class,
-            $user->id,
-            $before,
-            $user->only(['status']),
-        );
+        $user = $this->adminUserStatusService->transition($request->user('sanctum'), $user, $status);
 
         return ApiResponse::success(
-            data: new UserResource($user->refresh()->load(['jobSeekerProfile.skills', 'employerProfile.company'])),
+            data: new UserResource($user->load(['jobSeekerProfile.skills', 'employerProfile.company'])),
             message: $message,
         );
     }

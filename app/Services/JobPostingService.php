@@ -37,7 +37,8 @@ class JobPostingService
         $query = $this->applyFilters(
             JobPosting::query()
                 ->with(['company', 'skills'])
-                ->where('status', 'open'),
+                ->where('status', 'open')
+                ->whereHas('company', fn (Builder $query) => $query->where('approval_status', 'approved')),
             $filters,
         );
 
@@ -64,6 +65,10 @@ class JobPostingService
 
     public function getVisibleJobPosting(JobPosting $jobPosting): JobPosting
     {
+        if ($jobPosting->status === 'open' && $jobPosting->company()->where('approval_status', 'approved')->doesntExist()) {
+            abort(404);
+        }
+
         return $jobPosting->loadMissing(['company', 'skills']);
     }
 

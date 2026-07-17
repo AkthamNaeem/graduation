@@ -32,6 +32,7 @@ class TestService
         private readonly TestGradingService $testGradingService,
         private readonly TestAssignmentDeadlineService $testAssignmentDeadlineService,
         private readonly TestRetakeService $testRetakeService,
+        private readonly CompanyRecruitmentAccessService $companyAccessService,
     ) {}
 
     /**
@@ -215,6 +216,8 @@ class TestService
                 ->lockForUpdate()
                 ->findOrFail($assignment->id);
 
+            $this->companyAccessService->assertRecruitmentAvailable($lockedAssignment);
+
             $this->testRetakeService->assertLatestCanStart($lockedAssignment);
             $this->testAssignmentDeadlineService->assertCanStart($lockedAssignment);
 
@@ -247,6 +250,8 @@ class TestService
                 ])
                 ->lockForUpdate()
                 ->findOrFail($assignment->id);
+
+            $this->companyAccessService->assertRecruitmentAvailable($lockedAssignment);
 
             $attempt = $lockedAssignment->testAttempt;
 

@@ -27,12 +27,19 @@ class ApiResponse
         string $message = 'Request failed.',
         array $errors = [],
         int $status = 400,
+        ?string $code = null,
     ): JsonResponse {
-        return response()->json([
+        $payload = [
             'success' => false,
             'message' => $message,
             'errors' => $errors,
-        ], $status);
+        ];
+
+        if ($code !== null) {
+            $payload['code'] = $code;
+        }
+
+        return response()->json($payload, $status);
     }
 
     private static function resolveData(mixed $data): mixed

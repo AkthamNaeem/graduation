@@ -1459,8 +1459,47 @@ The affected candidate endpoints are `GET /api/v1/applications/my`, `GET /api/v1
 
 ### Remaining Outside This Increment
 
-- Suspended-user token enforcement and comprehensive approved-company enforcement.
 - Test catalog secrecy and test duration enforcement.
 - Job work mode, application deadline, and required/optional skill fields.
 - Request-more-information messaging.
 - Conditional interview-mode validation, attendance, and explicit interview cancellation/status redesign.
+
+## 28. Global User and Company Recruitment-State Enforcement
+
+This security increment centralizes account and company-state enforcement without changing schema, deleting historical recruitment data, mutating job/application statuses, or revoking employer tokens merely because a company is non-approved.
+
+### Active Users and Token Revocation
+
+- Every `auth:sanctum` API route now runs through `EnsureUserIsActive` after authentication. A technically valid token belonging to a suspended user receives `403 USER_SUSPENDED`, including candidate, employer, notification, profile, and admin routes.
+- Login continues to reject suspended users and now exposes the same stable error code. The middleware remains an independent defense when status is changed directly in the database.
+- Specialized activate/suspend endpoints and the generic user-status endpoint all use `AdminUserStatusService`. Every transition to suspended deletes all Sanctum tokens transactionally and audits the previous/new status, actor, and revoked-token count. Reactivation creates no token; a fresh login is required.
+- Existing self-suspension behavior for administrators was preserved to avoid introducing a new admin-governance policy in this increment. A suspended admin is nevertheless blocked globally like every other user.
+
+### Company Access Matrix and Route Coverage
+
+- `CompanyApprovalStatus` defines the existing `pending`, `approved`, `rejected`, and `suspended` values. `CompanyRecruitmentAccessService` resolves companies consistently from employers, jobs, applications, assignments, attempts, and interviews.
+- Active employers may use authentication, notifications, their employer/company profile reads, and current profile-update endpoints regardless of company approval. Profile edits never approve or resubmit the company automatically.
+- Employer recruitment management requires an approved company across jobs, applications, test catalog/questions, assignments, grading, deadlines, retakes, results management, and interviews. Admin users bypass the company check only where their existing role/policy already authorizes the endpoint and never require an employer profile.
+- State errors are `COMPANY_PENDING`, `COMPANY_REJECTED`, `COMPANY_SUSPENDED`, and `COMPANY_PROFILE_MISSING`. Candidate mutations tied to a company use `COMPANY_RECRUITMENT_UNAVAILABLE`. All use HTTP 403 and the standard API error envelope.
+- Company approval transitions use `AdminCompanyStatusService` and preserve audit history. They do not delete jobs, applications, tests, attempts, answers, interviews, or notifications; change recruitment/workflow status; or revoke employer tokens.
+
+### Public Jobs and Candidate Historical Access
+
+- Public lists, filtered searches, details, and candidate recommendations include only open jobs whose company is approved. A non-approved company's open job is hidden without changing its database status; reapproval restores visibility automatically.
+- Application creation rechecks company approval in the workflow service, preventing stale-page races and avoiding application/history/notification side effects on rejection.
+- Candidate start, answer upsert/bulk/file replacement/delete, and submit operations recheck company approval inside the domain services. Suspension therefore cannot be bypassed through candidate routes.
+- Candidates retain read access to existing applications, safe history, interviews, assignments, saved answers, private answer downloads, and submitted results. Existing workflow-permitted withdrawal remains available. No test attempt, answer, deadline, or interview is deleted or extended automatically.
+
+### Verification and Breaking Behavior
+
+`AccountStateTest` verifies login, old-token rejection, both admin suspension paths, all-token revocation, reactivation, suspended-admin denial, audit metadata, and active-user middleware coverage for every Sanctum route. `CompanyStateTest` verifies all company states, stable codes, profile access, employer-token retention, public visibility/reapproval, candidate mutation freezing, no apply side effects, admin bypass, missing profiles, and representative route coverage.
+
+The intentional breaking behavior is that previously usable tokens for suspended accounts now receive 403, employer recruitment endpoints consistently reject non-approved companies, and open jobs belonging to non-approved companies disappear from public/recommended responses.
+
+### Remaining Outside This Increment
+
+- Test catalog secrecy, test duration enforcement, and a formal test-score invariant.
+- Duplicate event-listener cleanup.
+- Job work mode, application deadline, and required/optional skill fields.
+- Application information-request workflow.
+- Conditional interview validation, attendance, and explicit cancellation/status policy.

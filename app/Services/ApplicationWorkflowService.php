@@ -53,6 +53,7 @@ class ApplicationWorkflowService
 
     public function __construct(
         private readonly AuditLogService $auditLogService,
+        private readonly CompanyRecruitmentAccessService $companyAccessService,
     ) {}
 
     /**
@@ -71,6 +72,8 @@ class ApplicationWorkflowService
                 'job_posting_id' => ['Applications are only allowed for open jobs.'],
             ]);
         }
+
+        $this->companyAccessService->assertRecruitmentAvailable($jobPosting);
 
         $profile = $user->jobSeekerProfile;
 

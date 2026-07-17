@@ -2066,7 +2066,19 @@
                               ]
                  },
                  {
-                     "name":  "14 Admin - Skills",
+                     "name":  "14 Admin - Security and Account State",
+                     "description":  "Central account/company state controls. Suspended users receive USER_SUSPENDED and all their tokens are revoked. Employer recruitment APIs return COMPANY_PENDING, COMPANY_REJECTED, or COMPANY_SUSPENDED while identity/profile access remains available.",
+                     "item":  [
+                                  {"name":"Suspend User","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_token}}","type":"string"}]},"method":"PATCH","description":"Suspends the user and revokes every Sanctum token. Future protected requests return 403 USER_SUSPENDED.","url":"{{base_url}}/admin/users/{{user_id}}/suspend"}},
+                                  {"name":"Activate User","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_token}}","type":"string"}]},"method":"PATCH","description":"Reactivates the account without recreating revoked tokens; the user must log in again.","url":"{{base_url}}/admin/users/{{user_id}}/activate"}},
+                                  {"name":"Change User Status","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_token}}","type":"string"}]},"method":"PATCH","header":[{"key":"Content-Type","value":"application/json"}],"description":"Generic status transition. Setting suspended uses the same all-token revocation path as Suspend User.","url":"{{base_url}}/admin/users/{{user_id}}/status","body":{"mode":"raw","raw":"{\n  \"status\": \"suspended\"\n}","options":{"raw":{"language":"json"}}}}},
+                                  {"name":"Suspend Company","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_token}}","type":"string"}]},"method":"PATCH","description":"Freezes recruitment operations without deleting jobs, applications, interviews, tests, or employer tokens. Employer operations return COMPANY_SUSPENDED.","url":"{{base_url}}/admin/companies/{{company_id}}/suspend"}},
+                                  {"name":"Approve Company","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{admin_token}}","type":"string"}]},"method":"PATCH","description":"Enables recruitment operations again. Existing open jobs return to public visibility without status mutation.","url":"{{base_url}}/admin/companies/{{company_id}}/approve"}},
+                                  {"name":"Employer Recruitment Guard Example","request":{"auth":{"type":"bearer","bearer":[{"key":"token","value":"{{employer_token}}","type":"string"}]},"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"description":"Representative guarded endpoint. Pending/rejected/suspended companies return 403 with COMPANY_PENDING, COMPANY_REJECTED, or COMPANY_SUSPENDED.","url":"{{base_url}}/jobs","body":{"mode":"raw","raw":"{\n  \"title\": \"State Guard Example\",\n  \"description\": \"Blocked unless the company is approved.\",\n  \"employment_type\": \"full-time\",\n  \"experience_level\": \"mid-level\"\n}","options":{"raw":{"language":"json"}}}},"response":[{"name":"403 suspended company","status":"Forbidden","code":403,"_postman_previewlanguage":"json","header":[{"key":"Content-Type","value":"application/json"}],"body":"{\n  \"success\": false,\n  \"message\": \"Your company has been suspended.\",\n  \"errors\": {\"company_approval_status\": [\"suspended\"]},\n  \"code\": \"COMPANY_SUSPENDED\"\n}"}]}
+                              ]
+                 },
+                 {
+                     "name":  "15 Admin - Skills",
                      "item":  [
                                   {
                                       "name":  "List Skills",
@@ -2219,7 +2231,7 @@
                               ]
                  },
                  {
-                     "name":  "15 Admin - Tests",
+                     "name":  "16 Admin - Tests",
                      "item":  [
                                   {
                                       "name":  "List Tests",
@@ -2370,7 +2382,7 @@
                               ]
                  },
                  {
-                     "name":  "16 Admin - Audit / Reports",
+                     "name":  "17 Admin - Audit / Reports",
                      "item":  [
                                   {
                                       "name":  "List Audit Logs",

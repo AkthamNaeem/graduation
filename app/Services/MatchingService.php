@@ -187,6 +187,7 @@ class MatchingService
         $jobs = JobPosting::query()
             ->with(['company', 'skills'])
             ->where('status', 'open')
+            ->whereHas('company', fn ($query) => $query->where('approval_status', 'approved'))
             ->whereDoesntHave('jobApplications', function ($query) use ($profile): void {
                 $query->where('job_seeker_profile_id', $profile->id);
             })

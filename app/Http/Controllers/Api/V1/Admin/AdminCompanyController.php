@@ -2,19 +2,20 @@
 
 namespace App\Http\Controllers\Api\V1\Admin;
 
+use App\Enums\CompanyApprovalStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Admin\CompanyApprovalRequest;
 use App\Http\Requests\Api\V1\Admin\IndexAdminCompanyRequest;
 use App\Http\Resources\Api\V1\CompanyResource;
 use App\Models\Company;
-use App\Services\AuditLogService;
+use App\Services\AdminCompanyStatusService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 
 class AdminCompanyController extends Controller
 {
     public function __construct(
-        private readonly AuditLogService $auditLogService,
+        private readonly AdminCompanyStatusService $adminCompanyStatusService,
     ) {}
 
     public function index(IndexAdminCompanyRequest $request): JsonResponse
@@ -63,41 +64,29 @@ class AdminCompanyController extends Controller
 
     public function approve(CompanyApprovalRequest $request, Company $company): JsonResponse
     {
-        return $this->setApprovalStatus($request, $company, 'approved', 'company.approved', 'Company approved successfully.');
+        return $this->setApprovalStatus($request, $company, CompanyApprovalStatus::APPROVED, 'Company approved successfully.');
     }
 
     public function reject(CompanyApprovalRequest $request, Company $company): JsonResponse
     {
-        return $this->setApprovalStatus($request, $company, 'rejected', 'company.rejected', 'Company rejected successfully.');
+        return $this->setApprovalStatus($request, $company, CompanyApprovalStatus::REJECTED, 'Company rejected successfully.');
     }
 
     public function suspend(CompanyApprovalRequest $request, Company $company): JsonResponse
     {
-        return $this->setApprovalStatus($request, $company, 'suspended', 'company.suspended', 'Company suspended successfully.');
+        return $this->setApprovalStatus($request, $company, CompanyApprovalStatus::SUSPENDED, 'Company suspended successfully.');
     }
 
     private function setApprovalStatus(
         CompanyApprovalRequest $request,
         Company $company,
-        string $status,
-        string $action,
+        CompanyApprovalStatus $status,
         string $message,
     ): JsonResponse {
-        $before = $company->only(['approval_status']);
-
-        $company->forceFill(['approval_status' => $status])->save();
-
-        $this->auditLogService->record(
-            $action,
-            $request->user('sanctum'),
-            Company::class,
-            $company->id,
-            $before,
-            $company->only(['approval_status']),
-        );
+        $company = $this->adminCompanyStatusService->transition($request->user('sanctum'), $company, $status);
 
         return ApiResponse::success(
-            data: new CompanyResource($company->refresh()->load('employerProfiles.user')),
+            data: new CompanyResource($company->load('employerProfiles.user')),
             message: $message,
         );
     }
