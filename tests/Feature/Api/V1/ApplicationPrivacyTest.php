@@ -15,6 +15,7 @@ use App\Models\Test as RecruitmentTest;
 use App\Models\User;
 use Database\Seeders\ApplicationStatusSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -26,6 +27,7 @@ class ApplicationPrivacyTest extends TestCase
     {
         parent::setUp();
 
+        Storage::fake('local');
         $this->seed(ApplicationStatusSeeder::class);
     }
 
@@ -81,6 +83,18 @@ class ApplicationPrivacyTest extends TestCase
         $this->withToken($this->tokenFor($otherEmployer))
             ->getJson("/api/v1/applications/{$application->id}")
             ->assertForbidden();
+    }
+
+    public function test_application_cv_download_is_limited_to_candidate_and_owning_company(): void
+    {
+        [$employer, $candidate, $application] = $this->scenario();
+        $otherEmployer = $this->employer('download-idor@example.com');
+        $application->selectedCvFile->update(['archived_at' => now()]);
+        $url = "/api/v1/applications/{$application->id}/cv/download";
+
+        $this->withToken($this->tokenFor($candidate))->get($url)->assertOk()->assertHeader('x-content-type-options', 'nosniff');
+        $this->withToken($this->tokenFor($employer))->get($url)->assertOk();
+        $this->withToken($this->tokenFor($otherEmployer))->get($url)->assertForbidden();
     }
 
     public function test_candidate_nested_application_inside_test_assignment_keeps_safe_boundary(): void
@@ -154,6 +168,7 @@ class ApplicationPrivacyTest extends TestCase
             'size_bytes' => 1234,
             'status' => 'parsed',
         ]);
+        Storage::disk('local')->put($cv->stored_path, 'private cv');
         $application = JobApplication::create([
             'job_posting_id' => $job->id,
             'job_seeker_profile_id' => $candidate->jobSeekerProfile->id,

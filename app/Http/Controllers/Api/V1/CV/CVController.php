@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Api\V1\CV;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\CV\ConfirmCVRequest;
+use App\Http\Requests\Api\V1\CV\ArchiveCVRequest;
+use App\Http\Requests\Api\V1\CV\CVLifecycleRequest;
 use App\Http\Requests\Api\V1\CV\CVIndexRequest;
 use App\Http\Requests\Api\V1\CV\ShowCVRequest;
 use App\Http\Requests\Api\V1\CV\ShowParsedCVRequest;
 use App\Http\Requests\Api\V1\CV\UploadCVRequest;
+use App\Http\Requests\Api\V1\CV\UpdateCVMetadataRequest;
 use App\Http\Resources\Api\V1\CVFileResource;
 use App\Http\Resources\Api\V1\CVParsingResultResource;
 use App\Http\Resources\Api\V1\JobSeekerProfileResource;
@@ -16,6 +19,8 @@ use App\Models\CVFile;
 use App\Services\CVService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CVController extends Controller
 {
@@ -35,10 +40,45 @@ class CVController extends Controller
     public function upload(UploadCVRequest $request): JsonResponse
     {
         return ApiResponse::success(
-            data: new CVFileResource($this->cvService->upload($request->user(), $request->file('file'))),
+            data: new CVFileResource($this->cvService->upload(
+                $request->user(),
+                $request->file('file'),
+                $request->validated('version_label'),
+                $request->boolean('make_primary'),
+            )),
             message: 'CV uploaded successfully. Parsing has been queued.',
             status: 201,
         );
+    }
+
+    public function update(UpdateCVMetadataRequest $request, CVFile $cvFile): JsonResponse
+    {
+        return ApiResponse::success(new CVFileResource($this->cvService->updateLabel($request->user(), $cvFile, $request->validated('version_label'))), 'CV metadata updated successfully.');
+    }
+
+    public function makePrimary(CVLifecycleRequest $request, CVFile $cvFile): JsonResponse
+    {
+        return ApiResponse::success(new CVFileResource($this->cvService->makePrimary($request->user(), $cvFile)), 'Primary CV updated successfully.');
+    }
+
+    public function archive(ArchiveCVRequest $request, CVFile $cvFile): JsonResponse
+    {
+        return ApiResponse::success(new CVFileResource($this->cvService->archive($request->user(), $cvFile, $request->validated('replacement_cv_file_id'))), 'CV archived successfully.');
+    }
+
+    public function restore(CVLifecycleRequest $request, CVFile $cvFile): JsonResponse
+    {
+        return ApiResponse::success(new CVFileResource($this->cvService->restore($request->user(), $cvFile)), 'CV restored successfully.');
+    }
+
+    public function download(CVLifecycleRequest $request, CVFile $cvFile): StreamedResponse
+    {
+        $cvFile = $this->cvService->downloadable($request->user(), $cvFile);
+
+        return Storage::disk($cvFile->disk)->download($cvFile->stored_path, basename($cvFile->original_name), [
+            'Content-Type' => $cvFile->mime_type,
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     public function show(ShowCVRequest $request, CVFile $cvFile): JsonResponse

@@ -1,6 +1,7 @@
 <?php
 
 use App\Exceptions\ApplicationInformationRequestException;
+use App\Exceptions\CVLifecycleException;
 use App\Exceptions\InterviewLifecycleException;
 use App\Exceptions\JobPostingOperationException;
 use App\Exceptions\RecruitmentAccessException;
@@ -37,6 +38,13 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (CVLifecycleException $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return ApiResponse::error($exception->getMessage(), $exception->errors, $exception->status, $exception->errorCode);
+        });
         $exceptions->render(function (InterviewLifecycleException $exception, Request $request) {
             if (! $request->is('api/*')) {
                 return null;

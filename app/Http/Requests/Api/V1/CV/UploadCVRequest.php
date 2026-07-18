@@ -27,6 +27,18 @@ class UploadCVRequest extends FormRequest
                 'mimes:pdf,docx',
                 'mimetypes:application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/zip',
             ],
+            'version_label' => ['nullable', 'string', 'max:150'],
+            'make_primary' => ['sometimes', 'boolean'],
         ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        if (is_string($this->input('make_primary'))) {
+            $value = filter_var($this->input('make_primary'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if ($value !== null) {
+                $this->merge(['make_primary' => $value]);
+            }
+        }
     }
 }

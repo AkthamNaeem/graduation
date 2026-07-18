@@ -31,6 +31,7 @@ use App\Models\User;
 use Database\Seeders\ApplicationStatusSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -42,6 +43,7 @@ class NotificationTest extends TestCase
     {
         parent::setUp();
 
+        Storage::fake('local');
         $this->seed(ApplicationStatusSeeder::class);
     }
 
@@ -591,7 +593,7 @@ class NotificationTest extends TestCase
 
     private function cvFor(User $jobSeeker): CVFile
     {
-        return CVFile::create([
+        $cvFile = CVFile::create([
             'user_id' => $jobSeeker->id,
             'original_name' => 'backend-developer-cv.pdf',
             'stored_path' => 'cv-files/backend-developer-cv.pdf',
@@ -601,6 +603,9 @@ class NotificationTest extends TestCase
             'size_bytes' => 128000,
             'status' => 'parsed',
         ]);
+        Storage::disk('local')->put($cvFile->stored_path, 'cv');
+
+        return $cvFile;
     }
 
     private function test_catalog_entry(?Company $company = null): RecruitmentTest

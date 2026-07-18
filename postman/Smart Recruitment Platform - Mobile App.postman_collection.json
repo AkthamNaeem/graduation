@@ -705,6 +705,13 @@
     {
       "name": "05 CV Upload & Parsing",
       "item": [
+        {"name":"List CV History","request":{"method":"GET","description":"Lists active and archived CV versions. Responses must not expose disk or stored_path.","url":"{{base_url}}/cv?include_archived=true"}},
+        {"name":"Update CV Version Label","request":{"method":"PATCH","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/cv/{{cv_file_id}}","body":{"mode":"raw","raw":"{\n  \"version_label\": \"Backend CV — July 2026\"\n}","options":{"raw":{"language":"json"}}}}},
+        {"name":"Make CV Primary","request":{"method":"POST","description":"Idempotently sets an owned, active, available CV as primary.","url":"{{base_url}}/cv/{{secondary_cv_file_id}}/make-primary"}},
+        {"name":"Archive Secondary CV","request":{"method":"POST","url":"{{base_url}}/cv/{{secondary_cv_file_id}}/archive"}},
+        {"name":"Archive Primary With Replacement","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/cv/{{primary_cv_file_id}}/archive","body":{"mode":"raw","raw":"{\n  \"replacement_cv_file_id\": {{secondary_cv_file_id}}\n}","options":{"raw":{"language":"json"}}}}},
+        {"name":"Restore CV","request":{"method":"POST","url":"{{base_url}}/cv/{{archived_cv_file_id}}/restore"}},
+        {"name":"Download Own CV Version","request":{"method":"GET","url":"{{base_url}}/cv/{{cv_file_id}}/download"}},
         {
           "name": "List CV Files",
           "request": {
@@ -960,6 +967,8 @@
     {
       "name": "07 Applications",
       "item": [
+        {"name":"Apply Using Primary CV","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"description":"Omits a CV id and resolves the current primary CV atomically.","url":"{{base_url}}/jobs/{{job_id}}/applications","body":{"mode":"raw","raw":"{\n  \"consent_to_share_profile\": true\n}","options":{"raw":{"language":"json"}}}}},
+        {"name":"Apply Without Primary Error","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"description":"Expected 422 PRIMARY_CV_REQUIRED when no explicit or primary CV exists.","url":"{{base_url}}/jobs/{{job_id}}/applications","body":{"mode":"raw","raw":"{\n  \"consent_to_share_profile\": true\n}","options":{"raw":{"language":"json"}}}}},
         {"name":"Apply Before Deadline","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"description":"Creates an application when the job is open, its company is approved, and now is at or before the deadline.","url":"{{base_url}}/jobs/{{job_id}}/applications","body":{"mode":"raw","raw":"{\n  \"selected_cv_file_id\": {{cv_file_id}},\n  \"consent_to_share_profile\": true\n}","options":{"raw":{"language":"json"}}}}},
         {"name":"Apply After Deadline Error","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"description":"Use an open job whose deadline has passed. No application, history, or notification is created.","url":"{{base_url}}/jobs/{{job_id}}/applications","body":{"mode":"raw","raw":"{\n  \"selected_cv_file_id\": {{cv_file_id}},\n  \"consent_to_share_profile\": true\n}","options":{"raw":{"language":"json"}}}},"response":[{"name":"409 deadline passed","status":"Conflict","code":409,"_postman_previewlanguage":"json","header":[{"key":"Content-Type","value":"application/json"}],"body":"{\n  \"success\": false,\n  \"message\": \"The application deadline for this job has passed.\",\n  \"errors\": {},\n  \"code\": \"JOB_APPLICATION_DEADLINE_PASSED\"\n}"}]},
         {

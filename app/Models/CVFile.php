@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Support\Facades\Storage;
 
 class CVFile extends Model
 {
@@ -17,6 +18,7 @@ class CVFile extends Model
     protected $fillable = [
         'user_id',
         'original_name',
+        'version_label',
         'stored_path',
         'disk',
         'mime_type',
@@ -25,6 +27,7 @@ class CVFile extends Model
         'status',
         'error_message',
         'confirmed_at',
+        'archived_at',
     ];
 
     /**
@@ -34,6 +37,7 @@ class CVFile extends Model
     {
         return [
             'confirmed_at' => 'datetime',
+            'archived_at' => 'datetime',
         ];
     }
 
@@ -50,5 +54,17 @@ class CVFile extends Model
     public function profileChangeSuggestions(): HasMany
     {
         return $this->hasMany(ProfileChangeSuggestion::class, 'cv_file_id');
+    }
+
+    public function selectedByApplications(): HasMany
+    {
+        return $this->hasMany(JobApplication::class, 'selected_cv_file_id');
+    }
+
+    public function isUsableForApplication(): bool
+    {
+        return $this->archived_at === null
+            && in_array($this->status, ['uploaded', 'processing', 'parsed', 'failed'], true)
+            && Storage::disk($this->disk)->exists($this->stored_path);
     }
 }

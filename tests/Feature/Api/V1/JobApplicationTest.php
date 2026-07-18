@@ -13,6 +13,7 @@ use App\Models\JobSeekerProfile;
 use App\Models\User;
 use Database\Seeders\ApplicationStatusSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -24,6 +25,7 @@ class JobApplicationTest extends TestCase
     {
         parent::setUp();
 
+        Storage::fake('local');
         $this->seed(ApplicationStatusSeeder::class);
     }
 
@@ -54,7 +56,7 @@ class JobApplicationTest extends TestCase
         ]);
     }
 
-    public function test_apply_requires_selected_cv_and_consent(): void
+    public function test_apply_requires_primary_or_selected_cv_and_consent(): void
     {
         $company = Company::create(['name' => 'Acme Hiring Co.', 'approval_status' => 'approved']);
         $jobSeeker = $this->jobSeeker();
@@ -63,7 +65,7 @@ class JobApplicationTest extends TestCase
         $this->withToken($this->tokenFor($jobSeeker))
             ->postJson("/api/v1/applications/{$jobPosting->id}", ['consent_to_share_profile' => true])
             ->assertStatus(422)
-            ->assertJsonValidationErrors(['selected_cv_file_id']);
+            ->assertJsonPath('code', 'PRIMARY_CV_REQUIRED');
 
         $this->withToken($this->tokenFor($jobSeeker))
             ->postJson("/api/v1/applications/{$jobPosting->id}", [
@@ -86,8 +88,8 @@ class JobApplicationTest extends TestCase
                 'selected_cv_file_id' => $this->cvFor($otherSeeker)->id,
                 'consent_to_share_profile' => true,
             ])
-            ->assertStatus(422)
-            ->assertJsonValidationErrors(['selected_cv_file_id']);
+            ->assertStatus(403)
+            ->assertJsonPath('code', 'CV_NOT_OWNED');
 
         $this->assertDatabaseCount('job_applications', 0);
     }
@@ -207,7 +209,7 @@ class JobApplicationTest extends TestCase
 
     private function cvFor(User $jobSeeker): CVFile
     {
-        return CVFile::create([
+        $cvFile = CVFile::create([
             'user_id' => $jobSeeker->id,
             'original_name' => 'backend-developer-cv.pdf',
             'stored_path' => 'cv-files/backend-developer-cv.pdf',
@@ -217,6 +219,9 @@ class JobApplicationTest extends TestCase
             'size_bytes' => 128000,
             'status' => 'parsed',
         ]);
+        Storage::disk('local')->put($cvFile->stored_path, 'cv content');
+
+        return $cvFile;
     }
 
     private function tokenFor(User $user): string

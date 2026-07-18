@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\CVLifecycleException;
 use App\Models\CVFile;
 use App\Models\CVParsingResult;
 use App\Models\Education;
@@ -30,12 +31,14 @@ class ProfileSyncService
     public function generateSuggestionsFromParsedCV(User $user, CVFile $cvFile): Collection
     {
         $cvFile = $this->ownedCVFile($user, $cvFile)->load('parsingResult');
+        $this->assertCVMutable($cvFile);
 
         if (! $cvFile->parsingResult instanceof CVParsingResult) {
             abort(404);
         }
 
         $existing = $cvFile->profileChangeSuggestions()
+            ->with('cvFile')
             ->where('user_id', $user->id)
             ->latest()
             ->get();
@@ -54,6 +57,7 @@ class ProfileSyncService
             $this->suggestSkills($user, $profile, $cvFile, $parsed['skills'] ?? []);
 
             return $cvFile->profileChangeSuggestions()
+                ->with('cvFile')
                 ->where('user_id', $user->id)
                 ->latest()
                 ->get();
@@ -79,6 +83,7 @@ class ProfileSyncService
         $cvFile = $this->ownedCVFile($user, $cvFile);
 
         return $cvFile->profileChangeSuggestions()
+            ->with('cvFile')
             ->where('user_id', $user->id)
             ->latest()
             ->get();
@@ -87,6 +92,7 @@ class ProfileSyncService
     public function accept(User $user, ProfileChangeSuggestion $suggestion, ?array $editedValue = null): ProfileChangeSuggestion
     {
         $suggestion = $this->ownedSuggestion($user, $suggestion);
+        $this->assertSuggestionMutable($suggestion);
 
         if ($suggestion->status !== ProfileChangeSuggestion::STATUS_PENDING) {
             throw ValidationException::withMessages([
@@ -121,6 +127,7 @@ class ProfileSyncService
     public function reject(User $user, ProfileChangeSuggestion $suggestion, ?string $reason = null): ProfileChangeSuggestion
     {
         $suggestion = $this->ownedSuggestion($user, $suggestion);
+        $this->assertSuggestionMutable($suggestion);
 
         if (! in_array($suggestion->status, [ProfileChangeSuggestion::STATUS_PENDING, ProfileChangeSuggestion::STATUS_ACCEPTED], true)) {
             throw ValidationException::withMessages([
@@ -167,6 +174,7 @@ class ProfileSyncService
 
         foreach ($suggestions as $suggestion) {
             $this->ownedSuggestion($user, $suggestion);
+            $this->assertSuggestionMutable($suggestion);
         }
 
         $appliedSuggestions = DB::transaction(function () use ($suggestions): Collection {
@@ -606,6 +614,21 @@ class ProfileSyncService
         return $suggestion;
     }
 
+    private function assertSuggestionMutable(ProfileChangeSuggestion $suggestion): void
+    {
+        $cvFile = $suggestion->cvFile()->first();
+        if ($cvFile instanceof CVFile) {
+            $this->assertCVMutable($cvFile);
+        }
+    }
+
+    private function assertCVMutable(CVFile $cvFile): void
+    {
+        if ($cvFile->archived_at !== null) {
+            throw new CVLifecycleException('Archived CV data is read-only.', 'CV_ARCHIVED_READ_ONLY');
+        }
+    }
+
     private function jobSeekerProfile(User $user): JobSeekerProfile
     {
         return $user->jobSeekerProfile()->firstOrFail();
@@ -622,8 +645,14 @@ class ProfileSyncService
             ->whereIn('status', [ProfileChangeSuggestion::STATUS_PENDING, ProfileChangeSuggestion::STATUS_ACCEPTED])
             ->exists();
 
-        if (! $hasPendingOrAccepted) {
-            $suggestion->cvFile?->forceFill(['confirmed_at' => now()])->save();
+        if (! $hasPendingOrAccepted && $suggestion->cvFile?->confirmed_at === null) {
+            $suggestion->cvFile->forceFill(['confirmed_at' => now()])->save();
+            $this->auditLogService->record('cv.parsed_data_confirmed', $suggestion->user, CVFile::class, $suggestion->cv_file_id, null, null, [
+                'cv_file_id' => $suggestion->cv_file_id,
+                'user_id' => $suggestion->user_id,
+                'actor_id' => $suggestion->user_id,
+                'parsing_status' => $suggestion->cvFile->status,
+            ]);
         }
     }
 }

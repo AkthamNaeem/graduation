@@ -7,6 +7,7 @@ use App\Enums\UserRole;
 use App\Events\ApplicationStatusChanged;
 use App\Events\ApplicationSubmitted;
 use App\Exceptions\ApplicationInformationRequestException;
+use App\Exceptions\CVLifecycleException;
 use App\Exceptions\JobPostingOperationException;
 use App\Models\ApplicationInformationRequest;
 use App\Models\ApplicationStatus;
@@ -18,6 +19,7 @@ use App\Models\JobSeekerProfile;
 use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class ApplicationWorkflowService
@@ -95,10 +97,9 @@ class ApplicationWorkflowService
             ]);
         }
 
-        $selectedCvFileId = (int) ($applicationData['selected_cv_file_id'] ?? 0);
-        $this->ensureSelectedCvBelongsToUser($selectedCvFileId, $user);
-
-        return DB::transaction(function () use ($jobPosting, $profile, $user, $applicationData, $selectedCvFileId): JobApplication {
+        return DB::transaction(function () use ($jobPosting, $profile, $user, $applicationData): JobApplication {
+            $lockedProfile = JobSeekerProfile::query()->lockForUpdate()->findOrFail($profile->id);
+            $selectedCvFileId = $this->resolveApplicationCV($user, $lockedProfile, $applicationData['selected_cv_file_id'] ?? null)->id;
             $this->checkDuplicateApplication($jobPosting, $profile);
 
             $submittedStatus = $this->statusBySlug(self::STATUS_SUBMITTED);
@@ -361,18 +362,28 @@ class ApplicationWorkflowService
         );
     }
 
-    private function ensureSelectedCvBelongsToUser(int $selectedCvFileId, User $user): void
+    private function resolveApplicationCV(User $user, JobSeekerProfile $profile, mixed $requestedId): CVFile
     {
-        $exists = CVFile::query()
-            ->whereKey($selectedCvFileId)
-            ->where('user_id', $user->id)
-            ->exists();
-
-        if (! $exists) {
-            throw ValidationException::withMessages([
-                'selected_cv_file_id' => ['The selected CV file must belong to the authenticated job seeker.'],
-            ]);
+        $cvId = $requestedId === null ? $profile->primary_cv_file_id : (int) $requestedId;
+        if ($cvId === null) {
+            throw new CVLifecycleException('Select a CV or set a primary CV before applying.', 'PRIMARY_CV_REQUIRED', 422);
         }
+
+        $cvFile = CVFile::query()->lockForUpdate()->find($cvId);
+        if (! $cvFile instanceof CVFile || $cvFile->user_id !== $user->id) {
+            throw new CVLifecycleException('The selected CV does not belong to the authenticated job seeker.', 'CV_NOT_OWNED', 403);
+        }
+        if ($cvFile->archived_at !== null) {
+            throw new CVLifecycleException('Archived CVs cannot be used for new applications.', 'CV_ARCHIVED');
+        }
+        if (! Storage::disk($cvFile->disk)->exists($cvFile->stored_path)) {
+            throw new CVLifecycleException('The selected CV file is unavailable.', 'CV_FILE_UNAVAILABLE', 404);
+        }
+        if (! $cvFile->isUsableForApplication()) {
+            throw new CVLifecycleException('The selected CV cannot be used for an application.', 'CV_NOT_USABLE_FOR_APPLICATION');
+        }
+
+        return $cvFile;
     }
 
     private function statusBySlug(string $slug): ApplicationStatus

@@ -27,6 +27,8 @@ class ProfileChangeSuggestionResource extends JsonResource
             'user_edited_value' => $this->user_edited_value,
             'confidence_score' => $this->confidence_score,
             'reason' => $this->reason,
+            'can_apply' => $this->status === \App\Models\ProfileChangeSuggestion::STATUS_ACCEPTED
+                && $this->cvFile?->archived_at === null,
             'applied_at' => $this->applied_at?->toISOString(),
             'decided_at' => $this->decided_at?->toISOString(),
             'created_at' => $this->created_at?->toISOString(),

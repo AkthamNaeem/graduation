@@ -54,6 +54,7 @@ Route::prefix('auth')
 
 Route::middleware(['auth:sanctum', 'user.active'])->group(function (): void {
     Route::get('applications/{jobApplication}/information-requests', [ApplicationInformationRequestController::class, 'index'])->name('applications.information-requests.index');
+    Route::get('applications/{jobApplication}/cv/download', [JobApplicationController::class, 'downloadCV'])->name('applications.cv.download');
     Route::post('applications/{jobApplication}/information-requests', [ApplicationInformationRequestController::class, 'store'])->name('applications.information-requests.store');
     Route::get('information-requests/{informationRequest}', [ApplicationInformationRequestController::class, 'show'])->name('information-requests.show');
     Route::patch('information-requests/{informationRequest}', [ApplicationInformationRequestController::class, 'update'])->name('information-requests.update');
@@ -114,6 +115,11 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function (): void {
     Route::get('cv', [CVController::class, 'index'])->name('cv.index');
     Route::post('cv/upload', [CVController::class, 'upload'])->name('cv.upload');
     Route::get('cv/{cvFile}', [CVController::class, 'show'])->name('cv.show');
+    Route::patch('cv/{cvFile}', [CVController::class, 'update'])->name('cv.update');
+    Route::post('cv/{cvFile}/make-primary', [CVController::class, 'makePrimary'])->name('cv.make-primary');
+    Route::post('cv/{cvFile}/archive', [CVController::class, 'archive'])->name('cv.archive');
+    Route::post('cv/{cvFile}/restore', [CVController::class, 'restore'])->name('cv.restore');
+    Route::get('cv/{cvFile}/download', [CVController::class, 'download'])->name('cv.download');
     Route::get('cv/{cvFile}/parsed', [CVController::class, 'parsed'])->name('cv.parsed');
     Route::post('cv/{cvFile}/confirm', [CVController::class, 'confirm'])->name('cv.confirm');
     Route::get('cv/{cvFile}/suggestions', [ProfileSuggestionController::class, 'index'])->name('cv.suggestions.index');

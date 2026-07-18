@@ -13,6 +13,7 @@ use App\Models\User;
 use Database\Seeders\ApplicationStatusSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -23,6 +24,7 @@ class JobDeadlineTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        Storage::fake('local');
         $this->seed(ApplicationStatusSeeder::class);
         Carbon::setTestNow('2026-08-01T12:00:00Z');
     }
@@ -174,6 +176,7 @@ class JobDeadlineTest extends TestCase
             'size_bytes' => 1000,
             'status' => 'parsed',
         ]);
+        Storage::disk('local')->put($cv->stored_path, 'cv');
 
         return ['selected_cv_file_id' => $cv->id, 'consent_to_share_profile' => true];
     }

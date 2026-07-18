@@ -15,6 +15,9 @@ use App\Models\JobPosting;
 use App\Services\ApplicationWorkflowService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
+use App\Exceptions\CVLifecycleException;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class JobApplicationController extends Controller
 {
@@ -55,6 +58,19 @@ class JobApplicationController extends Controller
             ),
             message: 'Job application retrieved successfully.',
         );
+    }
+
+    public function downloadCV(ShowJobApplicationRequest $request, JobApplication $jobApplication): StreamedResponse
+    {
+        $cvFile = $jobApplication->selectedCvFile()->first();
+        if ($cvFile === null || ! Storage::disk($cvFile->disk)->exists($cvFile->stored_path)) {
+            throw new CVLifecycleException('The selected CV file is unavailable.', 'CV_FILE_UNAVAILABLE', 404);
+        }
+
+        return Storage::disk($cvFile->disk)->download($cvFile->stored_path, basename($cvFile->original_name), [
+            'Content-Type' => $cvFile->mime_type,
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     public function withdraw(WithdrawJobApplicationRequest $request, JobApplication $jobApplication): JsonResponse
