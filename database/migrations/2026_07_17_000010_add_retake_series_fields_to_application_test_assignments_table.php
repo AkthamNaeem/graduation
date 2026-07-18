@@ -8,8 +8,16 @@ return new class extends Migration
 {
     private const OLD_UNIQUE = 'application_test_assignments_job_application_id_test_id_unique';
 
+    private const JOB_APPLICATION_FOREIGN_INDEX = 'test_assignments_job_application_fk_idx';
+
     public function up(): void
     {
+        Schema::table('application_test_assignments', function (Blueprint $table): void {
+            // MySQL may use the old composite unique index to support this
+            // column's foreign key, so provide a stable backing index first.
+            $table->index('job_application_id', self::JOB_APPLICATION_FOREIGN_INDEX);
+        });
+
         Schema::table('application_test_assignments', function (Blueprint $table): void {
             $table->dropUnique(self::OLD_UNIQUE);
 
@@ -55,6 +63,10 @@ return new class extends Migration
             ]);
 
             $table->unique(['job_application_id', 'test_id'], self::OLD_UNIQUE);
+        });
+
+        Schema::table('application_test_assignments', function (Blueprint $table): void {
+            $table->dropIndex(self::JOB_APPLICATION_FOREIGN_INDEX);
         });
     }
 };
