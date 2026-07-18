@@ -2,6 +2,8 @@
 
 namespace App\Services\CV;
 
+use DateTimeImmutable;
+
 class CVParsedDataNormalizer
 {
     /**
@@ -11,6 +13,7 @@ class CVParsedDataNormalizer
     public function normalize(array $data, string $rawText): array
     {
         $data = $this->trimRecursively($data);
+        $data['birth_date'] = $this->normalizeBirthDate($data['birth_date'] ?? null);
         $data['skills'] = $this->normalizeSkills($data['skills'] ?? []);
         $data['experience'] = $this->normalizeExperiences($data['experience'] ?? [], $rawText);
         $data['education'] = $this->normalizeEducation($data['education'] ?? [], $rawText);
@@ -142,6 +145,26 @@ class CVParsedDataNormalizer
         $value = preg_replace('/[\p{Z}\s]+/u', ' ', $value) ?? $value;
 
         return mb_strtolower(trim($value), 'UTF-8');
+    }
+
+    private function normalizeBirthDate(mixed $value): ?string
+    {
+        if (! is_string($value) || $value === '') {
+            return null;
+        }
+
+        foreach (['Y-m-d', 'j F Y', 'F j, Y'] as $format) {
+            $date = DateTimeImmutable::createFromFormat('!'.$format, $value);
+            $errors = DateTimeImmutable::getLastErrors();
+
+            if ($date instanceof DateTimeImmutable
+                && ($errors === false || ($errors['warning_count'] === 0 && $errors['error_count'] === 0))
+                && $date->format($format) === $value) {
+                return $date->format('Y-m-d');
+            }
+        }
+
+        return null;
     }
 
     private function isDateOnly(string $value): bool

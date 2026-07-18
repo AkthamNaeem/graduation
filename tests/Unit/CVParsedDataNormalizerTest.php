@@ -74,4 +74,17 @@ TEXT;
         $this->assertCount(1, $normalized['experience']);
         $this->assertCount(1, $normalized['education']);
     }
+
+    public function test_birth_date_normalization_is_deterministic_and_rejects_partial_or_invalid_dates(): void
+    {
+        $normalizer = new CVParsedDataNormalizer;
+        $base = ['skills' => [], 'experience' => [], 'education' => []];
+
+        $this->assertSame('2002-04-21', $normalizer->normalize($base + ['birth_date' => '2002-04-21'], '')['birth_date']);
+        $this->assertSame('2002-04-21', $normalizer->normalize($base + ['birth_date' => '21 April 2002'], '')['birth_date']);
+        $this->assertSame('2002-04-21', $normalizer->normalize($base + ['birth_date' => 'April 21, 2002'], '')['birth_date']);
+        $this->assertNull($normalizer->normalize($base + ['birth_date' => '2002-04'], '')['birth_date']);
+        $this->assertNull($normalizer->normalize($base + ['birth_date' => '31 April 2002'], '')['birth_date']);
+        $this->assertNull($normalizer->normalize($base + ['birth_date' => 'next Tuesday'], '')['birth_date']);
+    }
 }

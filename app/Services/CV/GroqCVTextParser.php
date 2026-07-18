@@ -7,6 +7,7 @@ use App\Exceptions\CVParserException;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use JsonException;
 
 class GroqCVTextParser implements CVTextParser
@@ -17,7 +18,9 @@ class GroqCVTextParser implements CVTextParser
         'GROQ_RATE_LIMITED',
         'GROQ_TIMEOUT',
         'GROQ_UNAVAILABLE',
-        'GROQ_INVALID_RESPONSE',
+        'GROQ_EMPTY_CONTENT',
+        'GROQ_INVALID_JSON',
+        'GROQ_CONTRACT_MISMATCH',
     ];
 
     public function __construct(
@@ -61,22 +64,25 @@ class GroqCVTextParser implements CVTextParser
         $response = $this->sendWithLimitedRetry($apiKey, $rawText);
         $this->assertSuccessfulResponse($response);
         $payload = $response->json();
+        $message = is_array($payload) ? ($payload['choices'][0]['message'] ?? null) : null;
 
-        if (! is_array($payload)
-            || isset($payload['choices'][0]['message']['refusal'])
-            || ! is_string($payload['choices'][0]['message']['content'] ?? null)
-            || trim($payload['choices'][0]['message']['content']) === '') {
-            throw new CVParserException('GROQ_INVALID_RESPONSE');
+        if (is_array($message) && array_key_exists('refusal', $message)) {
+            throw new CVParserException('GROQ_REFUSAL');
+        }
+
+        $content = is_array($message) ? ($message['content'] ?? null) : null;
+        if (! is_string($content) || trim($content) === '') {
+            throw new CVParserException('GROQ_EMPTY_CONTENT');
         }
 
         try {
-            $parsed = json_decode($payload['choices'][0]['message']['content'], true, 512, JSON_THROW_ON_ERROR);
+            $parsed = json_decode($content, true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException) {
-            throw new CVParserException('GROQ_INVALID_RESPONSE');
+            throw new CVParserException('GROQ_INVALID_JSON');
         }
 
         if (! is_array($parsed) || ! $this->schema->matches($parsed)) {
-            throw new CVParserException('GROQ_INVALID_RESPONSE');
+            throw new CVParserException('GROQ_CONTRACT_MISMATCH');
         }
 
         $parsed['_meta'] = [
@@ -123,9 +129,25 @@ class GroqCVTextParser implements CVTextParser
         if ($response->serverError()) {
             throw new CVParserException('GROQ_UNAVAILABLE');
         }
-        if (! $response->successful()) {
-            throw new CVParserException('GROQ_INVALID_RESPONSE');
+        if ($response->status() === 400) {
+            Log::warning('Groq CV parser request was rejected.', [
+                'http_status' => 400,
+                'error_type' => $this->safeErrorIdentifier($response->json('error.type')),
+                'error_code' => $this->safeErrorIdentifier($response->json('error.code')),
+            ]);
+
+            throw new CVParserException('GROQ_BAD_REQUEST');
         }
+        if (! $response->successful()) {
+            throw new CVParserException('GROQ_BAD_REQUEST');
+        }
+    }
+
+    private function safeErrorIdentifier(mixed $value): ?string
+    {
+        return is_string($value) && preg_match('/^[a-zA-Z0-9_.-]{1,100}$/D', $value) === 1
+            ? $value
+            : null;
     }
 
     /** @return array<string, mixed> */

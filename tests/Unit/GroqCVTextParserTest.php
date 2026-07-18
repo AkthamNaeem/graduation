@@ -10,6 +10,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
@@ -41,9 +42,13 @@ class GroqCVTextParserTest extends TestCase
                 && $request->hasHeader('Accept', 'application/json')
                 && $request->hasHeader('Content-Type', 'application/json')
                 && $request['model'] === 'configured-groq-model'
+                && str_contains($request['messages'][0]['content'], 'When day, month, and year are explicitly available, return YYYY-MM-DD.')
+                && str_contains($request['messages'][0]['content'], 'Return YYYY-MM when month and year are available.')
                 && $request['messages'][1]['content'] === 'Laravel Developer at FutureX'
                 && $request['response_format']['type'] === 'json_schema'
                 && $request['response_format']['json_schema']['strict'] === true
+                && $request['response_format']['json_schema']['schema']['properties']['birth_date']['description'] === 'Complete birth date in YYYY-MM-DD format, or null when incomplete.'
+                && ! array_key_exists('pattern', $request['response_format']['json_schema']['schema']['properties']['birth_date'])
                 && $request['response_format']['json_schema']['schema']['additionalProperties'] === false;
         });
     }
@@ -139,21 +144,34 @@ TEXT;
     }
 
     #[DataProvider('invalidResponseProvider')]
-    public function test_invalid_responses_are_rejected(array $payload): void
+    public function test_invalid_responses_are_rejected_with_diagnostic_codes(array $payload, string $reasonCode): void
     {
         Http::fake(['api.groq.com/*' => Http::response($payload, 200)]);
 
-        $this->expectExceptionObject(new CVParserException('GROQ_INVALID_RESPONSE'));
+        $this->expectExceptionObject(new CVParserException($reasonCode));
         $this->parser()->parse('CV');
     }
 
     public static function invalidResponseProvider(): array
     {
         return [
-            'invalid json' => [['choices' => [['message' => ['content' => '{bad']]]]],
-            'missing choices' => [[]],
-            'invalid schema' => [['choices' => [['message' => ['content' => '{}']]]]],
-            'refusal' => [['choices' => [['message' => ['content' => '{}', 'refusal' => 'No']]]]],
+            'invalid json' => [
+                ['choices' => [['message' => ['content' => '{bad']]]],
+                'GROQ_INVALID_JSON',
+            ],
+            'missing choices' => [[], 'GROQ_EMPTY_CONTENT'],
+            'empty content' => [
+                ['choices' => [['message' => ['content' => '  ']]]],
+                'GROQ_EMPTY_CONTENT',
+            ],
+            'invalid schema' => [
+                ['choices' => [['message' => ['content' => '{}']]]],
+                'GROQ_CONTRACT_MISMATCH',
+            ],
+            'refusal' => [
+                ['choices' => [['message' => ['content' => '{}', 'refusal' => 'No']]]],
+                'GROQ_REFUSAL',
+            ],
         ];
     }
 
@@ -178,7 +196,82 @@ TEXT;
         return [
             'rate limited' => ['GROQ_RATE_LIMITED', 429],
             'unavailable' => ['GROQ_UNAVAILABLE', 500],
-            'invalid response' => ['GROQ_INVALID_RESPONSE', 200],
+        ];
+    }
+
+    public function test_contract_mismatch_can_fallback_to_rules(): void
+    {
+        Skill::create(['name' => 'Laravel', 'slug' => 'laravel']);
+        config()->set('cv.parser.fallback_to_rules', true);
+        Http::fake(['api.groq.com/*' => Http::response($this->responsePayload([]), 200)]);
+
+        $parsed = $this->parser()->parse("Skills\nLaravel");
+
+        $this->assertSame(['Laravel'], $parsed['skills']);
+        $this->assertSame('GROQ_CONTRACT_MISMATCH', $parsed['_meta']['fallback_reason']);
+    }
+
+    public function test_bad_request_exposes_only_a_safe_code_and_logs_safe_identifiers(): void
+    {
+        $rawText = 'Birth Date: 21 April 2002 PRIVATE_CV_MARKER';
+        Log::spy();
+        Http::fake(['api.groq.com/*' => Http::response([
+            'error' => [
+                'message' => 'Invalid schema PRIVATE_PROVIDER_BODY',
+                'type' => 'invalid_request_error',
+                'code' => 'json_schema_invalid',
+            ],
+        ], 400)]);
+
+        try {
+            $this->parser()->parse($rawText);
+            $this->fail('Expected bad request failure.');
+        } catch (CVParserException $exception) {
+            $this->assertSame('GROQ_BAD_REQUEST', $exception->reasonCode);
+            $this->assertSame('GROQ_BAD_REQUEST', $exception->getMessage());
+            $this->assertStringNotContainsString('PRIVATE_CV_MARKER', $exception->getMessage());
+            $this->assertStringNotContainsString('PRIVATE_PROVIDER_BODY', $exception->getMessage());
+            $this->assertStringNotContainsString('groq-test-key', $exception->getMessage());
+        }
+
+        Log::shouldHaveReceived('warning')->once()->with(
+            'Groq CV parser request was rejected.',
+            [
+                'http_status' => 400,
+                'error_type' => 'invalid_request_error',
+                'error_code' => 'json_schema_invalid',
+            ],
+        );
+    }
+
+    #[DataProvider('productionBirthDateProvider')]
+    public function test_production_cv_birth_date_is_normalized_without_rejecting_the_cv(?string $providerDate, ?string $expected): void
+    {
+        $rawText = <<<'TEXT'
+PERSONAL INFORMATION
+Birth Date: 21 April 2002
+
+EXPERIENCE
+January 2026 - Present
+Laravel Developer
+FutureX | Jordan (remote)
+TEXT;
+        $data = $this->validParsed();
+        $data['birth_date'] = $providerDate;
+        Http::fake(['api.groq.com/*' => Http::response($this->responsePayload($data), 200)]);
+
+        $parsed = (new CVParsedDataNormalizer)->normalize($this->parser()->parse($rawText), $rawText);
+
+        $this->assertSame($expected, $parsed['birth_date']);
+        $this->assertSame('groq', $parsed['_meta']['parser_driver']);
+    }
+
+    public static function productionBirthDateProvider(): array
+    {
+        return [
+            'ISO date' => ['2002-04-21', '2002-04-21'],
+            'day month year' => ['21 April 2002', '2002-04-21'],
+            'partial date' => ['2002-04', null],
         ];
     }
 

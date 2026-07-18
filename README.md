@@ -94,11 +94,11 @@ GROQ_CV_CONNECT_TIMEOUT=10
 QUEUE_CONNECTION=sync
 ```
 
-The only valid drivers are `rules`, `openai`, and `groq`; an unknown value fails during service resolution. Fallback is allowed only for timeout, rate-limit, availability, and invalid-response failures, and stores a safe provider-specific reason code in `_meta`. Missing credentials and HTTP 401/403 always fail with `OPENAI_AUTHENTICATION_FAILED` or `GROQ_AUTHENTICATION_FAILED`; they never fall back to rules because that would hide a deployment configuration error. Raw provider responses, request bodies, API keys, CV text, and parsed personal data are not logged.
+The only valid drivers are `rules`, `openai`, and `groq`; an unknown value fails during service resolution. Fallback is allowed only for timeout, rate-limit, availability, and eligible malformed-content failures, and stores a safe provider-specific reason code in `_meta`. Missing credentials and HTTP 401/403 always fail with `OPENAI_AUTHENTICATION_FAILED` or `GROQ_AUTHENTICATION_FAILED`; they never fall back to rules because that would hide a deployment configuration error. Groq distinguishes bad requests, refusals, empty content, invalid JSON, and contract mismatches without exposing provider bodies. Raw provider responses, request bodies, API keys, CV text, and parsed personal data are not logged.
 
 With the synchronous queue driver, the CV row and private file are committed before parsing is dispatched. A later parsing failure keeps both, marks the CV as `failed`, and preserves a safe error code; storage compensation remains limited to failures before the database transaction commits.
 
-The JSON contract contains `full_name`, `email`, `phone`, `location`, `birth_date`, `summary`, `experience`, `education`, `skills`, and `languages`. Experience and education entries include source evidence and confidence. After parsing, deterministic normalization trims strings, deduplicates skills, rejects date-only/prose experiences, enforces date order, removes education without an institution, and removes AI entries whose evidence is absent from the source text.
+The JSON contract contains `full_name`, `email`, `phone`, `location`, `birth_date`, `summary`, `experience`, `education`, `skills`, and `languages`. A complete birth date is normalized deterministically to `YYYY-MM-DD`; partial or invalid birth dates become `null`. Experience and education entries include source evidence and confidence. After parsing, deterministic normalization trims strings, deduplicates skills, rejects date-only/prose experiences, enforces date order, removes education without an institution, and removes AI entries whose evidence is absent from the source text.
 
 Local verification never calls the real provider:
 

@@ -18,11 +18,17 @@ Rules:
 6. Bullet-point responsibilities are not separate work experiences.
 7. Group adjacent lines belonging to the same experience or education entry.
 8. Preserve employer and job-title wording from the CV when possible.
-9. Normalize dates to YYYY-MM when the month is available and YYYY when only the year is available.
-10. Use null as end_date and is_current=true for current positions.
-11. Include short evidence copied from the CV for each extracted experience and education item.
-12. Do not treat generic prose as a skill unless it is explicitly present in a skills section or clearly used as a technology.
-13. Return data only through the supplied JSON schema.
+9. For birth_date:
+   - When day, month, and year are explicitly available, return YYYY-MM-DD.
+   - If a complete birth date is unavailable, return null.
+   - Never return a partial birth date.
+10. For experience dates:
+   - Return YYYY-MM when month and year are available.
+   - Return YYYY when only the year is available.
+11. Use null as end_date and is_current=true for current positions.
+12. Include short evidence copied from the CV for each extracted experience and education item.
+13. Do not treat generic prose as a skill unless it is explicitly present in a skills section or clearly used as a technology.
+14. Return data only through the supplied JSON schema.
 PROMPT;
     }
 }

@@ -20,7 +20,10 @@ class CVParsingSchema
                 'email' => $nullableString,
                 'phone' => $nullableString,
                 'location' => $nullableString,
-                'birth_date' => $nullableString,
+                'birth_date' => [
+                    'type' => ['string', 'null'],
+                    'description' => 'Complete birth date in YYYY-MM-DD format, or null when incomplete.',
+                ],
                 'summary' => $nullableString,
                 'experience' => [
                     'type' => 'array',
@@ -88,7 +91,7 @@ class CVParsingSchema
             'email' => ['present', 'nullable', 'string'],
             'phone' => ['present', 'nullable', 'string'],
             'location' => ['present', 'nullable', 'string'],
-            'birth_date' => ['present', 'nullable', 'date_format:Y-m-d'],
+            'birth_date' => ['present', 'nullable', 'string'],
             'summary' => ['present', 'nullable', 'string'],
             'experience' => ['present', 'array'],
             'experience.*' => ['array:title,company_name,location,work_mode,start_date,end_date,is_current,description,responsibilities,evidence,confidence_score'],
