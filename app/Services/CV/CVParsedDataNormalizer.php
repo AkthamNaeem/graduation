@@ -127,12 +127,21 @@ class CVParsedDataNormalizer
             return false;
         }
 
-        return str_contains($this->normalizeWhitespace($rawText), $this->normalizeWhitespace($item['evidence']));
+        return str_contains($this->canonicalizeEvidence($rawText), $this->canonicalizeEvidence($item['evidence']));
     }
 
-    private function normalizeWhitespace(string $value): string
+    private function canonicalizeEvidence(string $value): string
     {
-        return mb_strtolower(trim(preg_replace('/\s+/u', ' ', $value) ?? $value));
+        $value = str_replace(
+            ["\u{2013}", "\u{2014}", "\u{2018}", "\u{2019}", "\u{201A}", "\u{201B}", "\u{201C}", "\u{201D}", "\u{201E}", "\u{201F}"],
+            ['-', '-', "'", "'", "'", "'", '"', '"', '"', '"'],
+            $value,
+        );
+        $value = preg_replace('/[\x{2022}\x{2023}\x{2043}\x{2219}\x{25AA}\x{25CF}\x{25E6}]/u', ' ', $value) ?? $value;
+        $value = preg_replace('/\s*-\s*/u', ' - ', $value) ?? $value;
+        $value = preg_replace('/[\p{Z}\s]+/u', ' ', $value) ?? $value;
+
+        return mb_strtolower(trim($value), 'UTF-8');
     }
 
     private function isDateOnly(string $value): bool

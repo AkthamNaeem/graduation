@@ -18,6 +18,7 @@ use App\Policies\JobApplicationPolicy;
 use App\Policies\JobPostingPolicy;
 use App\Policies\TestAttemptPolicy;
 use App\Policies\TestPolicy;
+use App\Services\CV\GroqCVTextParser;
 use App\Services\CV\OpenAICVTextParser;
 use App\Services\CV\RuleBasedCVTextParser;
 use Illuminate\Auth\Notifications\ResetPassword;
@@ -36,9 +37,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(CVTextParser::class, function ($app): CVTextParser {
             return match (config('cv.parser.driver', 'rules')) {
                 'openai' => $app->make(OpenAICVTextParser::class),
+                'groq' => $app->make(GroqCVTextParser::class),
                 'rules' => $app->make(RuleBasedCVTextParser::class),
                 default => throw new InvalidArgumentException(
-                    'Invalid CV parser driver. Supported drivers: openai, rules.'
+                    'Invalid CV parser driver. Supported drivers: openai, groq, rules.'
                 ),
             };
         });

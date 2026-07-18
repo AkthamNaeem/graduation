@@ -63,8 +63,6 @@ class CVService
                     $this->recordPrimaryChange($user, $cvFile, $previousPrimary, $profile->primary_cv_file_id);
                 }
 
-                DB::afterCommit(fn () => ParseCVFileJob::dispatch($cvFile));
-
                 return $cvFile;
             });
         } catch (Throwable $exception) {
@@ -75,6 +73,8 @@ class CVService
             }
             throw $exception;
         }
+
+        ParseCVFileJob::dispatch($cvFile);
 
         return $cvFile->refresh();
     }

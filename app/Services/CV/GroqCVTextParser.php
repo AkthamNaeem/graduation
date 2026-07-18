@@ -9,15 +9,15 @@ use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use JsonException;
 
-class OpenAICVTextParser implements CVTextParser
+class GroqCVTextParser implements CVTextParser
 {
-    private const ENDPOINT = 'https://api.openai.com/v1/responses';
+    private const ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
 
     private const FALLBACK_REASON_CODES = [
-        'OPENAI_TIMEOUT',
-        'OPENAI_RATE_LIMITED',
-        'OPENAI_UNAVAILABLE',
-        'OPENAI_INVALID_RESPONSE',
+        'GROQ_RATE_LIMITED',
+        'GROQ_TIMEOUT',
+        'GROQ_UNAVAILABLE',
+        'GROQ_INVALID_RESPONSE',
     ];
 
     public function __construct(
@@ -30,7 +30,7 @@ class OpenAICVTextParser implements CVTextParser
     public function parse(string $rawText): array
     {
         try {
-            return $this->parseWithOpenAI($rawText);
+            return $this->parseWithGroq($rawText);
         } catch (CVParserException $exception) {
             if (! config('cv.parser.fallback_to_rules', true)
                 || ! in_array($exception->reasonCode, self::FALLBACK_REASON_CODES, true)) {
@@ -40,7 +40,7 @@ class OpenAICVTextParser implements CVTextParser
             $fallback = $this->rulesParser->parse($rawText);
             $fallback['_meta'] = [
                 'parser_driver' => 'rules',
-                'requested_driver' => 'openai',
+                'requested_driver' => 'groq',
                 'fallback_used' => true,
                 'fallback_reason' => $exception->reasonCode,
                 'schema_version' => '1.0',
@@ -51,58 +51,37 @@ class OpenAICVTextParser implements CVTextParser
     }
 
     /** @return array<string, mixed> */
-    private function parseWithOpenAI(string $rawText): array
+    private function parseWithGroq(string $rawText): array
     {
-        $apiKey = trim((string) config('cv.openai.api_key'));
+        $apiKey = trim((string) config('cv.groq.api_key'));
         if ($apiKey === '') {
-            throw new CVParserException('OPENAI_AUTHENTICATION_FAILED');
+            throw new CVParserException('GROQ_AUTHENTICATION_FAILED');
         }
 
         $response = $this->sendWithLimitedRetry($apiKey, $rawText);
         $this->assertSuccessfulResponse($response);
         $payload = $response->json();
 
-        if (! is_array($payload)) {
-            throw new CVParserException('OPENAI_INVALID_RESPONSE');
-        }
-
-        $outputTexts = [];
-        foreach ($payload['output'] ?? [] as $output) {
-            if (! is_array($output)) {
-                continue;
-            }
-            foreach ($output['content'] ?? [] as $content) {
-                if (! is_array($content)) {
-                    continue;
-                }
-                if (($content['type'] ?? null) === 'refusal') {
-                    throw new CVParserException('OPENAI_INVALID_RESPONSE');
-                }
-                if (($content['type'] ?? null) === 'output_text' && is_string($content['text'] ?? null)) {
-                    $outputTexts[] = $content['text'];
-                }
-            }
-        }
-
-        $outputText = implode('', $outputTexts);
-
-        if (trim($outputText) === '') {
-            throw new CVParserException('OPENAI_INVALID_RESPONSE');
+        if (! is_array($payload)
+            || isset($payload['choices'][0]['message']['refusal'])
+            || ! is_string($payload['choices'][0]['message']['content'] ?? null)
+            || trim($payload['choices'][0]['message']['content']) === '') {
+            throw new CVParserException('GROQ_INVALID_RESPONSE');
         }
 
         try {
-            $parsed = json_decode($outputText, true, 512, JSON_THROW_ON_ERROR);
+            $parsed = json_decode($payload['choices'][0]['message']['content'], true, 512, JSON_THROW_ON_ERROR);
         } catch (JsonException) {
-            throw new CVParserException('OPENAI_INVALID_RESPONSE');
+            throw new CVParserException('GROQ_INVALID_RESPONSE');
         }
 
         if (! is_array($parsed) || ! $this->schema->matches($parsed)) {
-            throw new CVParserException('OPENAI_INVALID_RESPONSE');
+            throw new CVParserException('GROQ_INVALID_RESPONSE');
         }
 
         $parsed['_meta'] = [
-            'parser_driver' => 'openai',
-            'model' => (string) config('cv.openai.model'),
+            'parser_driver' => 'groq',
+            'model' => (string) config('cv.groq.model'),
             'fallback_used' => false,
             'schema_version' => '1.0',
         ];
@@ -118,11 +97,11 @@ class OpenAICVTextParser implements CVTextParser
             try {
                 $response = Http::acceptJson()
                     ->withToken($apiKey)
-                    ->connectTimeout((int) config('cv.openai.connect_timeout', 10))
-                    ->timeout((int) config('cv.openai.timeout', 60))
+                    ->connectTimeout((int) config('cv.groq.connect_timeout', 10))
+                    ->timeout((int) config('cv.groq.timeout', 60))
                     ->post(self::ENDPOINT, $this->requestBody($rawText));
             } catch (ConnectionException) {
-                throw new CVParserException('OPENAI_TIMEOUT');
+                throw new CVParserException('GROQ_TIMEOUT');
             }
 
             if (! ($response->status() === 429 || $response->serverError()) || $attempts >= 3) {
@@ -136,16 +115,16 @@ class OpenAICVTextParser implements CVTextParser
     private function assertSuccessfulResponse(Response $response): void
     {
         if (in_array($response->status(), [401, 403], true)) {
-            throw new CVParserException('OPENAI_AUTHENTICATION_FAILED');
+            throw new CVParserException('GROQ_AUTHENTICATION_FAILED');
         }
         if ($response->status() === 429) {
-            throw new CVParserException('OPENAI_RATE_LIMITED');
+            throw new CVParserException('GROQ_RATE_LIMITED');
         }
         if ($response->serverError()) {
-            throw new CVParserException('OPENAI_UNAVAILABLE');
+            throw new CVParserException('GROQ_UNAVAILABLE');
         }
         if (! $response->successful()) {
-            throw new CVParserException('OPENAI_INVALID_RESPONSE');
+            throw new CVParserException('GROQ_INVALID_RESPONSE');
         }
     }
 
@@ -153,18 +132,19 @@ class OpenAICVTextParser implements CVTextParser
     private function requestBody(string $rawText): array
     {
         return [
-            'model' => (string) config('cv.openai.model', 'gpt-5-mini'),
-            'store' => false,
-            'input' => [
-                ['role' => 'system', 'content' => [['type' => 'input_text', 'text' => $this->prompt->text()]]],
-                ['role' => 'user', 'content' => [['type' => 'input_text', 'text' => $rawText]]],
+            'model' => (string) config('cv.groq.model', 'openai/gpt-oss-20b'),
+            'messages' => [
+                ['role' => 'system', 'content' => $this->prompt->text()],
+                ['role' => 'user', 'content' => $rawText],
             ],
-            'text' => ['format' => [
+            'response_format' => [
                 'type' => 'json_schema',
-                'name' => 'cv_parsing_result',
-                'strict' => true,
-                'schema' => $this->schema->definition(),
-            ]],
+                'json_schema' => [
+                    'name' => 'cv_parsing_result',
+                    'strict' => true,
+                    'schema' => $this->schema->definition(),
+                ],
+            ],
         ];
     }
 }

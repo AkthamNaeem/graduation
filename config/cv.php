@@ -12,4 +12,11 @@ return [
         'timeout' => (int) env('OPENAI_CV_TIMEOUT', 60),
         'connect_timeout' => (int) env('OPENAI_CV_CONNECT_TIMEOUT', 10),
     ],
+
+    'groq' => [
+        'api_key' => env('GROQ_API_KEY'),
+        'model' => env('GROQ_CV_MODEL', 'openai/gpt-oss-20b'),
+        'timeout' => (int) env('GROQ_CV_TIMEOUT', 60),
+        'connect_timeout' => (int) env('GROQ_CV_CONNECT_TIMEOUT', 10),
+    ],
 ];

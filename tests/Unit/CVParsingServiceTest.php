@@ -4,6 +4,9 @@ namespace Tests\Unit;
 
 use App\Contracts\CV\CVTextParser;
 use App\Models\Skill;
+use App\Services\CV\GroqCVTextParser;
+use App\Services\CV\OpenAICVTextParser;
+use App\Services\CV\RuleBasedCVTextParser;
 use App\Services\CVParsingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use InvalidArgumentException;
@@ -51,8 +54,21 @@ TEXT;
         config()->set('cv.parser.driver', 'unknown');
 
         $this->expectException(InvalidArgumentException::class);
-        $this->expectExceptionMessage('Invalid CV parser driver. Supported drivers: openai, rules.');
+        $this->expectExceptionMessage('Invalid CV parser driver. Supported drivers: openai, groq, rules.');
 
         $this->app->make(CVTextParser::class);
+    }
+
+    public function test_all_supported_drivers_resolve_independently(): void
+    {
+        foreach ([
+            'rules' => RuleBasedCVTextParser::class,
+            'openai' => OpenAICVTextParser::class,
+            'groq' => GroqCVTextParser::class,
+        ] as $driver => $parserClass) {
+            config()->set('cv.parser.driver', $driver);
+
+            $this->assertInstanceOf($parserClass, $this->app->make(CVTextParser::class));
+        }
     }
 }

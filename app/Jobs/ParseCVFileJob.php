@@ -98,7 +98,7 @@ class ParseCVFileJob implements ShouldQueue
                 'status' => 'failed',
                 'error_message' => $exception instanceof CVParserException
                     ? $exception->reasonCode
-                    : $exception->getMessage(),
+                    : 'CV_PARSING_FAILED',
             ])->save();
             $auditLogService->record('cv.parsing_failed', $this->cvFile->user, CVFile::class, $this->cvFile->id, null, null, [
                 'cv_file_id' => $this->cvFile->id, 'user_id' => $this->cvFile->user_id,

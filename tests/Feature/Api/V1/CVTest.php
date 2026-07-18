@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api\V1;
 
 use App\Enums\UserRole;
+use App\Exceptions\CVParserException;
 use App\Jobs\ParseCVFileJob;
 use App\Models\Company;
 use App\Models\CVFile;
@@ -67,6 +68,36 @@ class CVTest extends TestCase
                 'message',
                 'errors' => ['file'],
             ]);
+    }
+
+    public function test_sync_parser_failure_preserves_committed_cv_file_and_primary_pointer(): void
+    {
+        Storage::fake('local');
+        config([
+            'filesystems.private_disk' => 'local',
+            'queue.default' => 'sync',
+        ]);
+        $user = $this->jobSeeker();
+        $parser = Mockery::mock(CVParsingService::class);
+        $parser->shouldReceive('extractText')->once()->andReturn('Candidate CV');
+        $parser->shouldReceive('parseText')->once()->andThrow(new CVParserException('OPENAI_AUTHENTICATION_FAILED'));
+        $this->app->instance(CVParsingService::class, $parser);
+
+        $this->withToken($this->tokenFor($user))
+            ->post('/api/v1/cv/upload', [
+                'file' => UploadedFile::fake()->createWithContent('resume.pdf', 'fake pdf content'),
+            ], ['Accept' => 'application/json'])
+            ->assertStatus(500);
+
+        $cvFile = CVFile::query()->sole();
+        $profile = $user->jobSeekerProfile()->firstOrFail();
+
+        Storage::disk('local')->assertExists($cvFile->stored_path);
+        $this->assertSame('failed', $cvFile->status);
+        $this->assertSame('OPENAI_AUTHENTICATION_FAILED', $cvFile->error_message);
+        $this->assertSame($cvFile->id, $profile->primary_cv_file_id);
+        $this->assertDatabaseCount('cv_parsing_results', 0);
+        $this->assertDatabaseHas('cv_files', ['id' => $cvFile->id]);
     }
 
     public function test_employer_cannot_access_cv_endpoints(): void

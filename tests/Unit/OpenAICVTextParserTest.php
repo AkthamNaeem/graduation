@@ -6,7 +6,6 @@ use App\Exceptions\CVParserException;
 use App\Models\Skill;
 use App\Services\CV\CVParsedDataNormalizer;
 use App\Services\CV\OpenAICVTextParser;
-use App\Services\CV\RuleBasedCVTextParser;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
@@ -107,6 +106,35 @@ class OpenAICVTextParserTest extends TestCase
         $this->parser()->parse('CV');
     }
 
+    #[DataProvider('authenticationFailureProvider')]
+    public function test_authentication_failures_never_fallback_to_rules(?int $status): void
+    {
+        Skill::create(['name' => 'Laravel', 'slug' => 'laravel']);
+        config()->set('cv.parser.fallback_to_rules', true);
+        if ($status === null) {
+            config()->set('cv.openai.api_key', '');
+            Http::fake();
+        } else {
+            Http::fake(['api.openai.com/*' => Http::response([], $status)]);
+        }
+
+        try {
+            $this->parser()->parse("Skills\nLaravel");
+            $this->fail('Authentication failure must not return a rules result.');
+        } catch (CVParserException $exception) {
+            $this->assertSame('OPENAI_AUTHENTICATION_FAILED', $exception->reasonCode);
+        }
+    }
+
+    public static function authenticationFailureProvider(): array
+    {
+        return [
+            'missing key' => [null],
+            'unauthorized' => [401],
+            'forbidden' => [403],
+        ];
+    }
+
     public function test_connection_failure_is_a_safe_timeout(): void
     {
         Http::fake(fn () => throw new ConnectionException('secret transport details'));
@@ -148,9 +176,41 @@ class OpenAICVTextParserTest extends TestCase
         $this->assertSame('OPENAI_UNAVAILABLE', $parsed['_meta']['fallback_reason']);
     }
 
+    public function test_it_concatenates_all_output_text_parts_in_order(): void
+    {
+        $json = json_encode($this->validParsed(), JSON_THROW_ON_ERROR);
+        $middle = intdiv(strlen($json), 2);
+        Http::fake(['api.openai.com/*' => Http::response([
+            'output' => [
+                ['content' => [['type' => 'output_text', 'text' => substr($json, 0, $middle)]]],
+                ['content' => [['type' => 'output_text', 'text' => substr($json, $middle)]]],
+            ],
+        ], 200)]);
+
+        $parsed = $this->parser()->parse('CV');
+
+        $this->assertSame('openai', $parsed['_meta']['parser_driver']);
+        $this->assertSame([], $parsed['experience']);
+    }
+
+    public function test_refusal_anywhere_rejects_response_even_with_output_text(): void
+    {
+        Http::fake(['api.openai.com/*' => Http::response([
+            'output' => [[
+                'content' => [
+                    ['type' => 'output_text', 'text' => json_encode($this->validParsed(), JSON_THROW_ON_ERROR)],
+                    ['type' => 'refusal', 'refusal' => 'No'],
+                ],
+            ]],
+        ], 200)]);
+
+        $this->expectExceptionObject(new CVParserException('OPENAI_INVALID_RESPONSE'));
+        $this->parser()->parse('CV');
+    }
+
     private function parser(): OpenAICVTextParser
     {
-        return new OpenAICVTextParser(new RuleBasedCVTextParser);
+        return $this->app->make(OpenAICVTextParser::class);
     }
 
     private function responsePayload(array $data): array

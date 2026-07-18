@@ -74,7 +74,7 @@ Standard tests use fake local/S3 disks and require no credentials. Optional real
 
 ## AI-assisted CV parsing
 
-CV file extraction remains local: PDF/DOCX text is extracted first, and only that text is passed to the configured parser. `CV_PARSER_DRIVER=rules` uses the deterministic legacy parser. `CV_PARSER_DRIVER=openai` sends the extracted text to the synchronous OpenAI Responses API with `store=false`, a strict JSON Schema, bounded timeouts, and no background polling or file upload.
+CV file extraction remains local: PDF/DOCX text is extracted first, and only that text is passed to the configured parser. `CV_PARSER_DRIVER=rules` uses the deterministic legacy parser. `openai` uses the synchronous OpenAI Responses API, while `groq` uses Groq Chat Completions. Both AI drivers use the same strict extraction prompt, JSON Schema, validation, normalization, and bounded timeouts; neither uploads the CV file.
 
 Parsed data is stored as a draft in `cv_parsing_results`. It never writes directly to a profile. The existing confirm, suggestion, accept/reject, and bulk-apply workflow remains the only route into profile data, so manual profile values keep priority.
 
@@ -87,10 +87,16 @@ OPENAI_API_KEY=replace_me
 OPENAI_CV_MODEL=gpt-5-mini
 OPENAI_CV_TIMEOUT=60
 OPENAI_CV_CONNECT_TIMEOUT=10
+GROQ_API_KEY=
+GROQ_CV_MODEL=openai/gpt-oss-20b
+GROQ_CV_TIMEOUT=60
+GROQ_CV_CONNECT_TIMEOUT=10
 QUEUE_CONNECTION=sync
 ```
 
-The only valid drivers are `openai` and `rules`; an unknown value fails during service resolution. When OpenAI fails with an authentication, rate-limit, availability, timeout, or invalid-response condition, fallback uses the rule parser only if enabled and stores a safe reason code in `_meta`. Raw provider responses, request bodies, API keys, CV text, and parsed personal data are not logged.
+The only valid drivers are `rules`, `openai`, and `groq`; an unknown value fails during service resolution. Fallback is allowed only for timeout, rate-limit, availability, and invalid-response failures, and stores a safe provider-specific reason code in `_meta`. Missing credentials and HTTP 401/403 always fail with `OPENAI_AUTHENTICATION_FAILED` or `GROQ_AUTHENTICATION_FAILED`; they never fall back to rules because that would hide a deployment configuration error. Raw provider responses, request bodies, API keys, CV text, and parsed personal data are not logged.
+
+With the synchronous queue driver, the CV row and private file are committed before parsing is dispatched. A later parsing failure keeps both, marks the CV as `failed`, and preserves a safe error code; storage compensation remains limited to failures before the database transaction commits.
 
 The JSON contract contains `full_name`, `email`, `phone`, `location`, `birth_date`, `summary`, `experience`, `education`, `skills`, and `languages`. Experience and education entries include source evidence and confidence. After parsing, deterministic normalization trims strings, deduplicates skills, rejects date-only/prose experiences, enforces date order, removes education without an institution, and removes AI entries whose evidence is absent from the source text.
 

@@ -19,6 +19,7 @@ use Illuminate\Validation\ValidationException;
 class ProfileSyncService
 {
     private const SOURCE_CV_CONFIRMED = 'cv_confirmed';
+
     private const SOURCE_CV_MERGED = 'cv_merged';
 
     public function __construct(
@@ -291,6 +292,8 @@ class ProfileSyncService
                 continue;
             }
 
+            $description = $this->cleanString($item['description'] ?? null)
+                ?? $this->responsibilitiesDescription($item['responsibilities'] ?? null);
             $value = array_filter([
                 'title' => $this->cleanString($item['title'] ?? null),
                 'company_name' => $this->cleanString($item['company_name'] ?? null),
@@ -298,7 +301,7 @@ class ProfileSyncService
                 'start_date' => $this->cleanString($item['start_date'] ?? null),
                 'end_date' => $this->cleanString($item['end_date'] ?? null),
                 'is_current' => is_bool($item['is_current'] ?? null) ? $item['is_current'] : null,
-                'description' => $this->cleanString($item['description'] ?? null),
+                'description' => $description,
             ], fn (mixed $value): bool => $value !== null);
 
             if (! isset($value['title'], $value['company_name'])) {
@@ -314,7 +317,10 @@ class ProfileSyncService
                     : ProfileChangeSuggestion::TYPE_ADD,
                 'old_value' => $duplicate?->only(['id', 'title', 'company_name', 'location', 'start_date', 'end_date', 'is_current', 'description']),
                 'new_value' => $value,
-                'confidence_score' => $duplicate instanceof Experience ? 0.92 : 0.78,
+                'confidence_score' => $this->boundedConfidence(
+                    $item['confidence_score'] ?? null,
+                    $duplicate instanceof Experience ? 0.92 : 0.78,
+                ),
                 'reason' => $duplicate instanceof Experience
                     ? 'Matched by normalized title and company, so it will not be blindly duplicated.'
                     : 'New experience found in parsed CV.',
@@ -356,7 +362,10 @@ class ProfileSyncService
                     : ProfileChangeSuggestion::TYPE_ADD,
                 'old_value' => $duplicate?->only(['id', 'institution', 'degree', 'field_of_study', 'start_date', 'end_date', 'description']),
                 'new_value' => $value,
-                'confidence_score' => $duplicate instanceof Education ? 0.90 : 0.76,
+                'confidence_score' => $this->boundedConfidence(
+                    $item['confidence_score'] ?? null,
+                    $duplicate instanceof Education ? 0.90 : 0.76,
+                ),
                 'reason' => $duplicate instanceof Education
                     ? 'Matched by normalized institution and degree, so it will not be blindly duplicated.'
                     : 'New education entry found in parsed CV.',
@@ -532,6 +541,32 @@ class ProfileSyncService
     private function educationYearDate(mixed $year): ?string
     {
         return is_int($year) && $year >= 1900 && $year <= 2200 ? $year.'-01-01' : null;
+    }
+
+    private function responsibilitiesDescription(mixed $responsibilities): ?string
+    {
+        if (! is_array($responsibilities)) {
+            return null;
+        }
+
+        $lines = collect($responsibilities)
+            ->filter(fn (mixed $responsibility): bool => is_string($responsibility))
+            ->map(fn (string $responsibility): string => trim($responsibility))
+            ->filter()
+            ->map(fn (string $responsibility): string => '- '.$responsibility)
+            ->values()
+            ->all();
+
+        return $lines === [] ? null : implode(PHP_EOL, $lines);
+    }
+
+    private function boundedConfidence(mixed $confidence, float $fallback): float
+    {
+        if (! is_numeric($confidence)) {
+            return $fallback;
+        }
+
+        return max(0.0, min(1.0, (float) $confidence));
     }
 
     /**

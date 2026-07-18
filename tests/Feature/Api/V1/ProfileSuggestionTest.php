@@ -57,6 +57,82 @@ class ProfileSuggestionTest extends TestCase
         $this->assertNull($cvFile->refresh()->confirmed_at);
     }
 
+    public function test_suggestions_map_responsibilities_and_bounded_ai_confidence(): void
+    {
+        $user = $this->jobSeeker();
+        $cvFile = $this->parsedCVFor($user);
+        $parsed = $cvFile->parsingResult->parsed_json;
+        $parsed['experience'][0]['description'] = null;
+        $parsed['experience'][0]['responsibilities'] = [' Build APIs ', '', null, 123, 'Review code'];
+        $parsed['experience'][0]['confidence_score'] = 1.4;
+        $parsed['experience'][0]['evidence'] = 'must not be stored in model value';
+        $parsed['experience'][0]['work_mode'] = 'remote';
+        $parsed['education'][0]['confidence_score'] = -0.4;
+        $parsed['education'][0]['evidence'] = 'must not be stored in model value';
+        $cvFile->parsingResult->update(['parsed_json' => $parsed]);
+
+        $this->withToken($this->tokenFor($user))
+            ->postJson("/api/v1/cv/{$cvFile->id}/suggestions/generate")
+            ->assertCreated();
+
+        $experience = ProfileChangeSuggestion::query()->where('entity_type', 'experience')->firstOrFail();
+        $education = ProfileChangeSuggestion::query()->where('entity_type', 'education')->firstOrFail();
+
+        $this->assertSame('- Build APIs'.PHP_EOL.'- Review code', $experience->new_value['description']);
+        $this->assertSame(1.0, $experience->confidence_score);
+        $this->assertArrayNotHasKey('responsibilities', $experience->new_value);
+        $this->assertArrayNotHasKey('evidence', $experience->new_value);
+        $this->assertArrayNotHasKey('work_mode', $experience->new_value);
+        $this->assertSame(0.0, $education->confidence_score);
+        $this->assertArrayNotHasKey('evidence', $education->new_value);
+    }
+
+    public function test_ai_confidence_uses_valid_values_and_falls_back_for_invalid_or_missing_values(): void
+    {
+        $user = $this->jobSeeker();
+        $cvFile = $this->parsedCVFor($user);
+        $parsed = $cvFile->parsingResult->parsed_json;
+
+        $experienceTemplate = $parsed['experience'][0];
+        $parsed['experience'] = [
+            array_merge($experienceTemplate, ['title' => 'Valid Confidence', 'confidence_score' => 0.63]),
+            array_merge($experienceTemplate, ['title' => 'Invalid Confidence', 'confidence_score' => 'not-numeric']),
+            array_diff_key(array_merge($experienceTemplate, ['title' => 'Missing Confidence']), ['confidence_score' => true]),
+        ];
+
+        $educationTemplate = $parsed['education'][0];
+        $parsed['education'] = [
+            array_merge($educationTemplate, ['institution' => 'Valid University', 'confidence_score' => 0.64]),
+            array_merge($educationTemplate, ['institution' => 'Invalid University', 'confidence_score' => 'not-numeric']),
+            array_diff_key(array_merge($educationTemplate, ['institution' => 'Missing University']), ['confidence_score' => true]),
+        ];
+        $cvFile->parsingResult->update(['parsed_json' => $parsed]);
+
+        $this->withToken($this->tokenFor($user))
+            ->postJson("/api/v1/cv/{$cvFile->id}/suggestions/generate")
+            ->assertCreated();
+
+        $experienceConfidence = ProfileChangeSuggestion::query()
+            ->where('entity_type', 'experience')
+            ->get()
+            ->mapWithKeys(fn (ProfileChangeSuggestion $suggestion): array => [
+                $suggestion->new_value['title'] => $suggestion->confidence_score,
+            ]);
+        $educationConfidence = ProfileChangeSuggestion::query()
+            ->where('entity_type', 'education')
+            ->get()
+            ->mapWithKeys(fn (ProfileChangeSuggestion $suggestion): array => [
+                $suggestion->new_value['institution'] => $suggestion->confidence_score,
+            ]);
+
+        $this->assertSame(0.63, $experienceConfidence['Valid Confidence']);
+        $this->assertSame(0.78, $experienceConfidence['Invalid Confidence']);
+        $this->assertSame(0.78, $experienceConfidence['Missing Confidence']);
+        $this->assertSame(0.64, $educationConfidence['Valid University']);
+        $this->assertSame(0.76, $educationConfidence['Invalid University']);
+        $this->assertSame(0.76, $educationConfidence['Missing University']);
+    }
+
     public function test_accepting_one_suggestion_applies_only_that_suggestion(): void
     {
         $user = $this->jobSeeker();
@@ -113,6 +189,47 @@ class ProfileSuggestionTest extends TestCase
             ->assertJsonPath('data.reason', 'Not relevant.');
 
         $this->assertDatabaseCount('experiences', 0);
+    }
+
+    public function test_bulk_apply_keeps_cv_suggestions_working(): void
+    {
+        $user = $this->jobSeeker();
+        $cvFile = $this->parsedCVFor($user);
+        $base = [
+            'user_id' => $user->id,
+            'cv_file_id' => $cvFile->id,
+            'job_seeker_profile_id' => $user->jobSeekerProfile->id,
+            'suggestion_type' => ProfileChangeSuggestion::TYPE_ADD,
+            'status' => ProfileChangeSuggestion::STATUS_ACCEPTED,
+            'source' => ProfileChangeSuggestion::SOURCE_CV_PARSED,
+        ];
+        $experience = ProfileChangeSuggestion::create(array_merge($base, [
+            'entity_type' => ProfileChangeSuggestion::ENTITY_EXPERIENCE,
+            'new_value' => ['title' => 'API Developer', 'company_name' => 'Northwind'],
+        ]));
+        $education = ProfileChangeSuggestion::create(array_merge($base, [
+            'entity_type' => ProfileChangeSuggestion::ENTITY_EDUCATION,
+            'new_value' => ['institution' => 'State University', 'degree' => 'BSc'],
+        ]));
+
+        $this->withToken($this->tokenFor($user))
+            ->postJson('/api/v1/profile/suggestions/apply-bulk', [
+                'suggestion_ids' => [$experience->id, $education->id],
+            ])
+            ->assertOk();
+
+        $this->assertDatabaseHas('experiences', [
+            'job_seeker_profile_id' => $user->jobSeekerProfile->id,
+            'title' => 'API Developer',
+            'company_name' => 'Northwind',
+        ]);
+        $this->assertDatabaseHas('education', [
+            'job_seeker_profile_id' => $user->jobSeekerProfile->id,
+            'institution' => 'State University',
+            'degree' => 'BSc',
+        ]);
+        $this->assertSame(ProfileChangeSuggestion::STATUS_APPLIED, $experience->refresh()->status);
+        $this->assertSame(ProfileChangeSuggestion::STATUS_APPLIED, $education->refresh()->status);
     }
 
     public function test_duplicate_experience_is_not_blindly_duplicated(): void

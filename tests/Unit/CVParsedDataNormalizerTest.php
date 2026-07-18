@@ -45,4 +45,33 @@ class CVParsedDataNormalizerTest extends TestCase
 
         $this->assertSame([], $normalized['experience']);
     }
+
+    public function test_evidence_matching_canonicalizes_dashes_quotes_and_bullets(): void
+    {
+        $rawText = <<<'TEXT'
+October 2024 – December 2025
+Bachelor’s degree
+• Laravel Developer
+● Platform Engineer
+▪ API Developer
+◦ “Team Lead”
+TEXT;
+        $data = [
+            'skills' => [],
+            'experience' => [[
+                'title' => 'Laravel Developer',
+                'company_name' => 'FutureX',
+                'evidence' => "October 2024-December 2025\nBachelor's degree\nLaravel Developer\nPlatform Engineer\nAPI Developer\n\"Team Lead\"",
+            ]],
+            'education' => [[
+                'institution' => 'Damascus University',
+                'evidence' => "Bachelor's degree",
+            ]],
+        ];
+
+        $normalized = (new CVParsedDataNormalizer)->normalize($data, $rawText);
+
+        $this->assertCount(1, $normalized['experience']);
+        $this->assertCount(1, $normalized['education']);
+    }
 }
