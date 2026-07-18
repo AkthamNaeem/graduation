@@ -3,12 +3,14 @@
 namespace App\Providers;
 
 use App\Enums\UserRole;
+use App\Models\ApplicationInternalNote;
 use App\Models\ApplicationTestAssignment;
 use App\Models\Interview;
 use App\Models\JobApplication;
 use App\Models\JobPosting;
 use App\Models\Test;
 use App\Models\TestAttempt;
+use App\Policies\ApplicationInternalNotePolicy;
 use App\Policies\ApplicationTestAssignmentPolicy;
 use App\Policies\InterviewPolicy;
 use App\Policies\JobApplicationPolicy;
@@ -38,6 +40,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(JobPosting::class, JobPostingPolicy::class);
         Gate::policy(JobApplication::class, JobApplicationPolicy::class);
         Gate::policy(ApplicationTestAssignment::class, ApplicationTestAssignmentPolicy::class);
+        Gate::policy(ApplicationInternalNote::class, ApplicationInternalNotePolicy::class);
         Gate::policy(Interview::class, InterviewPolicy::class);
         Gate::policy(TestAttempt::class, TestAttemptPolicy::class);
         Gate::policy(Test::class, TestPolicy::class);

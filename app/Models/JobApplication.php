@@ -71,4 +71,9 @@ class JobApplication extends Model
     {
         return $this->hasOne(ApplicationInformationRequest::class)->latestOfMany();
     }
+
+    public function internalNotes(): HasMany
+    {
+        return $this->hasMany(ApplicationInternalNote::class);
+    }
 }

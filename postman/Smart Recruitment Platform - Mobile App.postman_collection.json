@@ -1056,7 +1056,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('my applications response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403]));",
-                  "if (pm.response.code === 200) { const item = pm.response.json().data.data[0] || {}; const history = (item.status_history || [])[0] || {}; pm.test('candidate application timeline excludes internal fields', () => { pm.expect(history).not.to.have.property('note'); pm.expect(history).not.to.have.property('changed_by_user_id'); pm.expect(history).not.to.have.property('changed_by'); }); }"
+                  "if (pm.response.code === 200) { const item = pm.response.json().data.data[0] || {}; const history = (item.status_history || [])[0] || {}; pm.test('candidate application timeline excludes internal fields', () => { pm.expect(history).not.to.have.property('note'); pm.expect(history).not.to.have.property('changed_by_user_id'); pm.expect(history).not.to.have.property('changed_by'); pm.expect(item).not.to.have.property('internal_notes'); pm.expect(item).not.to.have.property('internal_notes_count'); pm.expect(item).not.to.have.property('latest_internal_note_at'); }); }"
                 ]
               }
             }
@@ -1076,7 +1076,7 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('show response', () => pm.expect(pm.response.code).to.be.oneOf([200, 401, 403, 404]));",
-                  "if (pm.response.code === 200) { const data = pm.response.json().data; pm.test('application details exclude private hiring data', () => { pm.expect(data).not.to.have.property('job_seeker_profile'); pm.expect(data).not.to.have.property('evaluation'); (data.status_history || []).forEach(item => { pm.expect(item).not.to.have.property('note'); pm.expect(item).not.to.have.property('changed_by'); }); }); }"
+                  "if (pm.response.code === 200) { const data = pm.response.json().data; pm.test('application details exclude private hiring data', () => { pm.expect(data).not.to.have.property('job_seeker_profile'); pm.expect(data).not.to.have.property('evaluation'); pm.expect(data).not.to.have.property('internal_notes'); pm.expect(data).not.to.have.property('internal_notes_count'); pm.expect(data).not.to.have.property('latest_internal_note_at'); (data.status_history || []).forEach(item => { pm.expect(item).not.to.have.property('note'); pm.expect(item).not.to.have.property('changed_by'); }); }); }"
                 ]
               }
             }

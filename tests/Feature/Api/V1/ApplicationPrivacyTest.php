@@ -144,6 +144,12 @@ class ApplicationPrivacyTest extends TestCase
             'interviews',
             'evaluation',
             'internal_score',
+            'internal_notes',
+            'internal_notes_count',
+            'latest_internal_note',
+            'latest_internal_note_at',
+            'note_author',
+            'note_revisions',
         ] as $path) {
             $response->assertJsonMissingPath("{$prefix}.{$path}");
         }

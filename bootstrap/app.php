@@ -1,6 +1,7 @@
 <?php
 
 use App\Exceptions\ApplicationInformationRequestException;
+use App\Exceptions\ApplicationInternalNoteException;
 use App\Exceptions\CVLifecycleException;
 use App\Exceptions\InterviewLifecycleException;
 use App\Exceptions\JobPostingOperationException;
@@ -38,6 +39,13 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (ApplicationInternalNoteException $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return ApiResponse::error($exception->getMessage(), $exception->errors, $exception->status, $exception->errorCode);
+        });
         $exceptions->render(function (CVLifecycleException $exception, Request $request) {
             if (! $request->is('api/*')) {
                 return null;

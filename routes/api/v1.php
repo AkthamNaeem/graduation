@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\V1\Admin\AdminTestController;
 use App\Http\Controllers\Api\V1\Admin\AdminUserController;
 use App\Http\Controllers\Api\V1\Admin\AuditLogController;
 use App\Http\Controllers\Api\V1\Application\ApplicationInformationRequestController;
+use App\Http\Controllers\Api\V1\Application\ApplicationInternalNoteController;
 use App\Http\Controllers\Api\V1\Application\JobApplicationController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Auth\RegistrationController;
@@ -53,6 +54,12 @@ Route::prefix('auth')
     });
 
 Route::middleware(['auth:sanctum', 'user.active'])->group(function (): void {
+    Route::get('applications/{jobApplication}/internal-notes', [ApplicationInternalNoteController::class, 'index'])->name('applications.internal-notes.index');
+    Route::post('applications/{jobApplication}/internal-notes', [ApplicationInternalNoteController::class, 'store'])->name('applications.internal-notes.store');
+    Route::get('application-internal-notes/{note}', [ApplicationInternalNoteController::class, 'show'])->withTrashed()->name('application-internal-notes.show');
+    Route::patch('application-internal-notes/{note}', [ApplicationInternalNoteController::class, 'update'])->withTrashed()->name('application-internal-notes.update');
+    Route::delete('application-internal-notes/{note}', [ApplicationInternalNoteController::class, 'destroy'])->withTrashed()->name('application-internal-notes.destroy');
+    Route::get('application-internal-notes/{note}/revisions', [ApplicationInternalNoteController::class, 'revisions'])->withTrashed()->name('application-internal-notes.revisions.index');
     Route::get('applications/{jobApplication}/information-requests', [ApplicationInformationRequestController::class, 'index'])->name('applications.information-requests.index');
     Route::get('applications/{jobApplication}/cv/download', [JobApplicationController::class, 'downloadCV'])->name('applications.cv.download');
     Route::post('applications/{jobApplication}/information-requests', [ApplicationInformationRequestController::class, 'store'])->name('applications.information-requests.store');
