@@ -26,7 +26,9 @@ return new class extends Migration
 
         Schema::create('application_internal_note_revisions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('application_internal_note_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('application_internal_note_id')
+                ->constrained(indexName: 'ainr_note_fk')
+                ->cascadeOnDelete();
             $table->unsignedInteger('version');
             $table->text('body');
             $table->foreignId('edited_by_user_id')->constrained('users')->restrictOnDelete();

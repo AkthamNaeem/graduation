@@ -10,10 +10,14 @@ return new class extends Migration
     {
         Schema::create('application_test_assignment_deadline_changes', function (Blueprint $table): void {
             $table->id();
-            $table->foreignId('application_test_assignment_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('application_test_assignment_id')
+                ->constrained(indexName: 'atadc_assignment_fk')
+                ->cascadeOnDelete();
             $table->timestamp('previous_deadline_at')->nullable();
             $table->timestamp('new_deadline_at');
-            $table->foreignId('changed_by_user_id')->constrained('users')->restrictOnDelete();
+            $table->foreignId('changed_by_user_id')
+                ->constrained('users', indexName: 'atadc_changed_by_fk')
+                ->restrictOnDelete();
             $table->text('reason')->nullable();
             $table->timestamps();
 
