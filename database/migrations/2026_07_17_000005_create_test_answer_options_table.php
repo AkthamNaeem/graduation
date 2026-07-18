@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId('test_option_id')->constrained()->restrictOnDelete();
             $table->timestamps();
 
-            $table->unique(['test_answer_id', 'test_option_id']);
+            $table->primary(['test_answer_id', 'test_option_id']);
         });
     }
 
