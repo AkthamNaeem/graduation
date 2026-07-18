@@ -297,6 +297,7 @@ class ProfileSyncService
                 'location' => $this->cleanString($item['location'] ?? null),
                 'start_date' => $this->cleanString($item['start_date'] ?? null),
                 'end_date' => $this->cleanString($item['end_date'] ?? null),
+                'is_current' => is_bool($item['is_current'] ?? null) ? $item['is_current'] : null,
                 'description' => $this->cleanString($item['description'] ?? null),
             ], fn (mixed $value): bool => $value !== null);
 
@@ -335,8 +336,10 @@ class ProfileSyncService
                 'institution' => $this->cleanString($item['institution'] ?? null),
                 'degree' => $this->cleanString($item['degree'] ?? null),
                 'field_of_study' => $this->cleanString($item['field_of_study'] ?? null),
-                'start_date' => $this->cleanString($item['start_date'] ?? null),
-                'end_date' => $this->cleanString($item['end_date'] ?? null),
+                'start_date' => $this->educationYearDate($item['start_year'] ?? null)
+                    ?? $this->cleanString($item['start_date'] ?? null),
+                'end_date' => $this->educationYearDate($item['graduation_year'] ?? null)
+                    ?? $this->cleanString($item['end_date'] ?? null),
                 'description' => $this->cleanString($item['description'] ?? null),
             ], fn (mixed $value): bool => $value !== null);
 
@@ -511,7 +514,7 @@ class ProfileSyncService
     private function experiencePayload(array $value): array
     {
         return collect($value)
-            ->only(['title', 'company_name', 'location', 'start_date', 'end_date', 'description'])
+            ->only(['title', 'company_name', 'location', 'start_date', 'end_date', 'is_current', 'description'])
             ->all();
     }
 
@@ -524,6 +527,11 @@ class ProfileSyncService
         return collect($value)
             ->only(['institution', 'degree', 'field_of_study', 'start_date', 'end_date', 'description'])
             ->all();
+    }
+
+    private function educationYearDate(mixed $year): ?string
+    {
+        return is_int($year) && $year >= 1900 && $year <= 2200 ? $year.'-01-01' : null;
     }
 
     /**

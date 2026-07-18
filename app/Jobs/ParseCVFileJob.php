@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Exceptions\CVParserException;
 use App\Models\CVFile;
 use App\Models\CVParsingResult;
 use App\Services\AuditLogService;
@@ -87,11 +88,17 @@ class ParseCVFileJob implements ShouldQueue
             $auditLogService->record('cv.parsing_completed', $this->cvFile->user, CVFile::class, $this->cvFile->id, null, null, [
                 'cv_file_id' => $this->cvFile->id, 'user_id' => $this->cvFile->user_id,
                 'parsing_status' => 'parsed', 'actor_id' => $this->cvFile->user_id,
+                'parser_driver' => $parsedJson['_meta']['parser_driver'] ?? 'rules',
+                'model' => $parsedJson['_meta']['model'] ?? null,
+                'fallback_used' => $parsedJson['_meta']['fallback_used'] ?? false,
+                'schema_version' => $parsedJson['_meta']['schema_version'] ?? '1.0',
             ]);
         } catch (Throwable $exception) {
             $this->cvFile->forceFill([
                 'status' => 'failed',
-                'error_message' => $exception->getMessage(),
+                'error_message' => $exception instanceof CVParserException
+                    ? $exception->reasonCode
+                    : $exception->getMessage(),
             ])->save();
             $auditLogService->record('cv.parsing_failed', $this->cvFile->user, CVFile::class, $this->cvFile->id, null, null, [
                 'cv_file_id' => $this->cvFile->id, 'user_id' => $this->cvFile->user_id,

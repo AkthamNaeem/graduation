@@ -2,9 +2,11 @@
 
 namespace Tests\Unit;
 
+use App\Contracts\CV\CVTextParser;
 use App\Models\Skill;
 use App\Services\CVParsingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use InvalidArgumentException;
 use Tests\TestCase;
 
 class CVParsingServiceTest extends TestCase
@@ -32,7 +34,7 @@ Education
 Bachelor of Science in Computer Science, State University
 TEXT;
 
-        $parsed = (new CVParsingService())->parseText($text);
+        $parsed = $this->app->make(CVParsingService::class)->parseText($text);
 
         $this->assertSame('jane.applicant@example.com', $parsed['email']);
         $this->assertSame('+1 555 0100', $parsed['phone']);
@@ -42,5 +44,15 @@ TEXT;
         $this->assertSame('State University', $parsed['education'][0]['institution']);
         $this->assertSame('Bachelor of Science', $parsed['education'][0]['degree']);
         $this->assertSame('Computer Science', $parsed['education'][0]['field_of_study']);
+    }
+
+    public function test_unknown_driver_fails_with_clear_configuration_error(): void
+    {
+        config()->set('cv.parser.driver', 'unknown');
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Invalid CV parser driver. Supported drivers: openai, rules.');
+
+        $this->app->make(CVTextParser::class);
     }
 }

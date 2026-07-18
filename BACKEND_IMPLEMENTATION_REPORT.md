@@ -2,9 +2,9 @@
 
 ## 1. Executive Summary
 
-The backend implements a Laravel 12 REST API for a smart recruitment platform. The current scope covers account registration and authentication, job seeker and employer profiles, CV upload and basic parsing, employer job posting management, job applications with status history, test assignments and attempts, interview scheduling and evaluation, deterministic matching/ranking based on TF-IDF and cosine similarity, user-facing in-app notifications, and platform-level admin APIs.
+The backend implements a Laravel 12 REST API for a smart recruitment platform. The current scope covers account registration and authentication, job seeker and employer profiles, CV upload and structured parsing, employer job posting management, job applications with status history, test assignments and attempts, interview scheduling and evaluation, deterministic matching/ranking based on TF-IDF and cosine similarity, user-facing in-app notifications, and platform-level admin APIs.
 
-The implementation follows a service-oriented Laravel structure using Form Requests for validation and authorization, API Resources for response shaping, Policies and gates for ownership and role checks, seeders for initial data, and feature/unit tests for the implemented modules. API routes are versioned under `/api/v1`. The backend is functionally broad for an MVP, but it does not yet include deep AI/LLM matching, production-grade CV parsing, email notification delivery, or a UI-facing dashboard.
+The implementation follows a service-oriented Laravel structure using Form Requests for validation and authorization, API Resources for response shaping, Policies and gates for ownership and role checks, seeders for initial data, and feature/unit tests for the implemented modules. API routes are versioned under `/api/v1`. The backend is functionally broad for an MVP, but it does not yet include deep AI/LLM matching, email notification delivery, or a UI-facing dashboard.
 
 ## 2. Technology Stack
 
@@ -1731,3 +1731,16 @@ Operator commands:
 Setup, cutover, rollback, restart verification, migration, and recovery procedures are documented in `docs/RENDER_OBJECT_STORAGE_SETUP.md`, `docs/PRIVATE_STORAGE_MIGRATION_RUNBOOK.md`, and `docs/PRIVATE_STORAGE_RECOVERY_RUNBOOK.md`.
 
 Real S3 integration and Render restart durability were not executed in this implementation environment. The storage blocker is closed in code only; operational closure requires production environment configuration, existing-file inventory/preservation, successful dedicated-bucket integration tests, staging restart durability, and a restore drill. Queue worker deployment remains a separate finding.
+# AI-Assisted Structured CV Parsing
+
+The CV pipeline now separates local PDF/DOCX text extraction from structured text parsing through `App\Contracts\CV\CVTextParser`. The application container selects either `RuleBasedCVTextParser` or `OpenAICVTextParser` using `CV_PARSER_DRIVER`; controllers and jobs contain no driver switch.
+
+The OpenAI driver performs a synchronous `POST /v1/responses` using Laravel's HTTP client. It sends only extracted text, sets `store=false`, and requests strict Structured Outputs named `cv_parsing_result`. Every object disallows additional properties, all strict-schema fields are required, unavailable scalar values are nullable, and confidence scores are bounded from zero to one. Response handling reads only `output[*].content[*]` items of type `output_text`, rejects refusals/missing text/invalid JSON/invalid structures, and never stores the provider response.
+
+`CVParsedDataNormalizer` applies deterministic safety checks after either parser: recursive trimming, empty-string normalization, case-insensitive skill deduplication, invalid experience rejection, current-date normalization, date-order validation, institution enforcement, and source-evidence verification. AI experience or education without evidence found in `raw_text` is removed, preventing it from becoming a profile suggestion.
+
+OpenAI failures use safe codes (`OPENAI_UNAVAILABLE`, `OPENAI_TIMEOUT`, `OPENAI_RATE_LIMITED`, `OPENAI_INVALID_RESPONSE`, or `OPENAI_AUTHENTICATION_FAILED`). If `CV_PARSER_FALLBACK_TO_RULES=true`, the legacy parser supplies the draft and `_meta` records the requested driver, actual driver, fallback flag, schema version, and safe reason. If disabled, the existing job failure lifecycle marks the CV failed. Audit events remain `cv.parsing_started`, `cv.parsing_completed`, and `cv.parsing_failed`; successful audit metadata contains only safe parser/model/fallback/schema values.
+
+No parsed value is applied automatically. The stored result remains a draft until the user confirms it and explicitly accepts suggestions. Existing phone, experience, education, and string-skill contracts remain supported, including mapping structured education years to profile date fields.
+
+For Render Free synchronous parsing, configure `QUEUE_CONNECTION=sync` plus the CV/OpenAI variables documented in `.env.example`. Keep timeouts bounded and do not add a worker, background response, polling, or OpenAI file upload for this flow. Automated tests use `Http::fake()` and require no provider credentials.

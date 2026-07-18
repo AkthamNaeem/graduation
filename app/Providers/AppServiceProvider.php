@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Contracts\CV\CVTextParser;
 use App\Enums\UserRole;
 use App\Models\ApplicationInternalNote;
 use App\Models\ApplicationTestAssignment;
@@ -17,10 +18,13 @@ use App\Policies\JobApplicationPolicy;
 use App\Policies\JobPostingPolicy;
 use App\Policies\TestAttemptPolicy;
 use App\Policies\TestPolicy;
+use App\Services\CV\OpenAICVTextParser;
+use App\Services\CV\RuleBasedCVTextParser;
 use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use InvalidArgumentException;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -29,7 +33,15 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(CVTextParser::class, function ($app): CVTextParser {
+            return match (config('cv.parser.driver', 'rules')) {
+                'openai' => $app->make(OpenAICVTextParser::class),
+                'rules' => $app->make(RuleBasedCVTextParser::class),
+                default => throw new InvalidArgumentException(
+                    'Invalid CV parser driver. Supported drivers: openai, rules.'
+                ),
+            };
+        });
     }
 
     /**

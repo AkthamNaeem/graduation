@@ -72,6 +72,36 @@ The repository Dockerfile starts the web process only. The worker topology remai
 
 Standard tests use fake local/S3 disks and require no credentials. Optional real-provider tests are skipped unless `RUN_S3_INTEGRATION_TESTS=true` and dedicated `S3_TEST_*` credentials are supplied. Never use the production bucket for integration tests.
 
+## AI-assisted CV parsing
+
+CV file extraction remains local: PDF/DOCX text is extracted first, and only that text is passed to the configured parser. `CV_PARSER_DRIVER=rules` uses the deterministic legacy parser. `CV_PARSER_DRIVER=openai` sends the extracted text to the synchronous OpenAI Responses API with `store=false`, a strict JSON Schema, bounded timeouts, and no background polling or file upload.
+
+Parsed data is stored as a draft in `cv_parsing_results`. It never writes directly to a profile. The existing confirm, suggestion, accept/reject, and bulk-apply workflow remains the only route into profile data, so manual profile values keep priority.
+
+Required configuration:
+
+```env
+CV_PARSER_DRIVER=openai
+CV_PARSER_FALLBACK_TO_RULES=true
+OPENAI_API_KEY=replace_me
+OPENAI_CV_MODEL=gpt-5-mini
+OPENAI_CV_TIMEOUT=60
+OPENAI_CV_CONNECT_TIMEOUT=10
+QUEUE_CONNECTION=sync
+```
+
+The only valid drivers are `openai` and `rules`; an unknown value fails during service resolution. When OpenAI fails with an authentication, rate-limit, availability, timeout, or invalid-response condition, fallback uses the rule parser only if enabled and stores a safe reason code in `_meta`. Raw provider responses, request bodies, API keys, CV text, and parsed personal data are not logged.
+
+The JSON contract contains `full_name`, `email`, `phone`, `location`, `birth_date`, `summary`, `experience`, `education`, `skills`, and `languages`. Experience and education entries include source evidence and confidence. After parsing, deterministic normalization trims strings, deduplicates skills, rejects date-only/prose experiences, enforces date order, removes education without an institution, and removes AI entries whose evidence is absent from the source text.
+
+Local verification never calls the real provider:
+
+```bash
+php artisan optimize:clear
+php artisan test
+./vendor/bin/pint --test
+```
+
 ## Security
 
 - Do not commit `.env`, access keys, bucket names intended to be secret, provider responses, CV contents, or object paths from production.
