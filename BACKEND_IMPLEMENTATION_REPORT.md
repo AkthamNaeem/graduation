@@ -1711,3 +1711,23 @@ Six employer-only endpoints cover list, create, show, update, delete, and pagina
 Create, material update, and delete write `application.internal_note_created`, `application.internal_note_updated`, and `application.internal_note_deleted` audit records. Metadata contains only application/note/actor IDs, versions, body length, and deletion state; note and revision bodies are never audited. No event or notification is emitted, and note operations never modify application status, status history, matching, tests, interviews, or information-request workflows.
 
 Feature coverage verifies body validation and trimming, ownership and candidate denial, company-state behavior, pagination/filtering/order, tombstones, author-only mutations, exact edit boundary, no-op behavior, revisions, stale versions, soft-delete history, all three final states, audit privacy, no notifications/workflow side effects, and candidate resource privacy. Web Postman documents the full management lifecycle and representative conflicts; Mobile assertions enforce absence from candidate responses. Advanced parsing accuracy, external object storage, external calendar/email/SMS/push delivery, attachments, mentions, AI summaries, and frontend work remain outside scope.
+
+## 38. Production-Safe Private Object Storage
+
+Durable private storage is implemented for CV files, test-answer files, and application-information response attachments. New writes use `filesystems.private_disk`, selected by `PRIVATE_FILESYSTEM_DISK` (`local` for development/testing and `s3` for production). Reads always use the disk and relative path stored on each record, preserving access to legacy local objects during a gradual migration.
+
+`PrivateFileStorageService` centralizes UUID object keys, streaming writes/reads/downloads, size verification, checksums, idempotent deletion, cross-disk copy, safe provider exceptions, and structured failure logging. Object keys contain stable domain prefixes and no original filenames or user identifiers. API resources do not expose disk, object path, provider URL, bucket, or credentials. Authorized download endpoints retain their routes and response contract while adding `Cache-Control: private, no-store` and `X-Content-Type-Options: nosniff`.
+
+Uploads are written and verified before database metadata is committed. Database failure triggers best-effort new-object compensation without hiding the original exception. Test-answer replacement commits new metadata before old-object cleanup; cleanup failure is logged as an orphan warning. Multi-attachment information responses remove all newly uploaded objects if any upload or database transaction fails.
+
+`ParseCVFileJob` reads the record's disk through a stream, copies to a unique temporary local file only for parsers that require a filesystem path, and removes the temporary file in `finally`. Parsing results remain idempotent through `updateOrCreate`.
+
+Operator commands:
+
+- `storage:verify-private`: write/read/content/delete verification with non-zero failure exit.
+- `storage:inventory-private-files`: read-only totals and safe hashed details, with JSON/CSV/table output and strict mode.
+- `storage:migrate-private-files`: dry-run by default, stream/checksum verification, locked row recheck, resumable deterministic UUID targets, optional post-commit source deletion, reverse source/target support, and safe reports.
+
+Setup, cutover, rollback, restart verification, migration, and recovery procedures are documented in `docs/RENDER_OBJECT_STORAGE_SETUP.md`, `docs/PRIVATE_STORAGE_MIGRATION_RUNBOOK.md`, and `docs/PRIVATE_STORAGE_RECOVERY_RUNBOOK.md`.
+
+Real S3 integration and Render restart durability were not executed in this implementation environment. The storage blocker is closed in code only; operational closure requires production environment configuration, existing-file inventory/preservation, successful dedicated-bucket integration tests, staging restart durability, and a restore drill. Queue worker deployment remains a separate finding.

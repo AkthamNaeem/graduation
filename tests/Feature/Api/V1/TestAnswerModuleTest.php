@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api\V1;
 
 use App\Enums\UserRole;
+use App\Exceptions\PrivateFileStorageException;
 use App\Models\ApplicationStatus;
 use App\Models\ApplicationTestAssignment;
 use App\Models\Company;
@@ -15,11 +16,14 @@ use App\Models\TestAnswer;
 use App\Models\TestAttempt;
 use App\Models\TestQuestion;
 use App\Models\User;
+use App\Services\PrivateFileStorageService;
+use App\Services\TestAnswerService;
 use Database\Seeders\ApplicationStatusSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Mockery;
 use Tests\TestCase;
 
 class TestAnswerModuleTest extends TestCase
@@ -157,7 +161,8 @@ class TestAnswerModuleTest extends TestCase
 
     public function test_file_answer_upload_replace_delete_and_download_are_private_and_authorized(): void
     {
-        Storage::fake('local');
+        Storage::fake('s3');
+        config(['filesystems.private_disk' => 's3']);
         $scenario = $this->scenario();
         $fileQuestion = $this->question($scenario['test'], 'file_upload', 1);
         $attempt = $this->assignAndStart($scenario)['attempt'];
@@ -173,12 +178,13 @@ class TestAnswerModuleTest extends TestCase
             ->assertOk()->assertJsonPath('data.file.original_name', 'solution.pdf')
             ->assertJsonMissing(['file_path', 'file_disk']);
         $first = TestAnswer::firstOrFail();
-        Storage::disk('local')->assertExists($first->file_path);
+        $this->assertSame('s3', $first->file_disk);
+        Storage::disk('s3')->assertExists($first->file_path);
 
         $this->withToken($token)->post($url, ['answer_file' => UploadedFile::fake()->create('replacement.pdf', 30, 'application/pdf')])->assertOk();
         $replacement = TestAnswer::firstOrFail();
-        Storage::disk('local')->assertMissing($first->file_path);
-        Storage::disk('local')->assertExists($replacement->file_path);
+        Storage::disk('s3')->assertMissing($first->file_path);
+        Storage::disk('s3')->assertExists($replacement->file_path);
 
         $this->withToken($token)->get($url)->assertOk()->assertHeader('x-content-type-options', 'nosniff');
         $this->withToken($this->tokenFor($scenario['employer']))->get($url)->assertOk();
@@ -188,7 +194,37 @@ class TestAnswerModuleTest extends TestCase
         $this->withToken($this->tokenFor($foreignEmployer))->get($url)->assertForbidden();
 
         $this->withToken($token)->deleteJson($this->answerUrl($attempt, $fileQuestion))->assertOk();
-        Storage::disk('local')->assertMissing($replacement->file_path);
+        Storage::disk('s3')->assertMissing($replacement->file_path);
+    }
+
+    public function test_file_replacement_storage_failure_preserves_previous_file_and_metadata(): void
+    {
+        Storage::fake('s3');
+        config(['filesystems.private_disk' => 's3']);
+        $scenario = $this->scenario('replacement-failure');
+        $question = $this->question($scenario['test'], 'file_upload', 1);
+        $attempt = $this->assignAndStart($scenario)['attempt'];
+        $token = $this->tokenFor($scenario['candidate']);
+        $url = "/api/v1/test-attempts/{$attempt->id}/answers/{$question->id}/file";
+
+        $this->withToken($token)->post($url, ['answer_file' => UploadedFile::fake()->createWithContent('first.pdf', 'first')])->assertOk();
+        $answer = TestAnswer::query()->firstOrFail();
+        $oldPath = $answer->file_path;
+        $storage = Mockery::mock(PrivateFileStorageService::class)->makePartial();
+        $storage->shouldReceive('storeUploadedFile')->once()->andThrow(new PrivateFileStorageException('Private file storage is unavailable.', 'PRIVATE_FILE_WRITE_FAILED'));
+        $this->app->instance(PrivateFileStorageService::class, $storage);
+
+        try {
+            app(TestAnswerService::class)->upsertAnswer($attempt, $question, [], UploadedFile::fake()->createWithContent('replacement.pdf', 'replacement'));
+            $this->fail('The storage failure should have been propagated.');
+        } catch (PrivateFileStorageException $exception) {
+            $this->assertSame('PRIVATE_FILE_WRITE_FAILED', $exception->errorCode);
+        }
+
+        $answer->refresh();
+        $this->assertSame($oldPath, $answer->file_path);
+        $this->assertSame('first.pdf', $answer->file_original_name);
+        Storage::disk('s3')->assertExists($oldPath);
     }
 
     public function test_submit_requires_complete_required_answers_and_updates_workflow_once(): void

@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api\V1;
 
 use App\Enums\UserRole;
+use App\Exceptions\PrivateFileStorageException;
 use App\Models\ApplicationInformationRequest;
 use App\Models\ApplicationStatus;
 use App\Models\Company;
@@ -12,11 +13,14 @@ use App\Models\JobApplication;
 use App\Models\JobPosting;
 use App\Models\JobSeekerProfile;
 use App\Models\User;
+use App\Services\PrivateFileStorageService;
+use App\Support\StoredPrivateFile;
 use Database\Seeders\ApplicationStatusSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Mockery;
 use Tests\TestCase;
 
 class ApplicationInformationResponseTest extends TestCase
@@ -62,6 +66,43 @@ class ApplicationInformationResponseTest extends TestCase
         $this->withToken($this->token($candidate))->postJson("/api/v1/information-requests/{$request->id}/respond", ['message' => 'blocked'])->assertForbidden()->assertJsonPath('code', 'APPLICATION_INFORMATION_REQUEST_COMPANY_UNAVAILABLE');
         $this->withToken($this->token($candidate))->getJson("/api/v1/information-requests/{$request->id}")->assertOk();
         $this->withToken($this->token($employer))->getJson("/api/v1/information-requests/{$request->id}")->assertOk();
+    }
+
+    public function test_partial_multi_file_provider_failure_removes_uploaded_objects_and_preserves_workflow(): void
+    {
+        Storage::fake('s3');
+        config(['filesystems.private_disk' => 's3']);
+        [, $candidate, $request] = $this->context('partial-storage-failure');
+        $path = 'application-information-files/2026/07/00000000-0000-4000-8000-000000000001.pdf';
+        Storage::disk('s3')->put($path, 'one');
+        $storage = Mockery::mock(PrivateFileStorageService::class)->makePartial();
+        $uploadCalls = 0;
+        $storage->shouldReceive('storeUploadedFile')->twice()->andReturnUsing(function () use (&$uploadCalls, $path): StoredPrivateFile {
+            $uploadCalls++;
+            if ($uploadCalls === 1) {
+                return new StoredPrivateFile('s3', $path, 3, 'application/pdf', 'pdf');
+            }
+
+            throw new PrivateFileStorageException('Private file storage is unavailable.', 'PRIVATE_FILE_WRITE_FAILED');
+        });
+        $storage->shouldReceive('delete')->once()->with('s3', $path)->andReturnUsing(function (string $disk, string $storedPath): void {
+            Storage::disk($disk)->delete($storedPath);
+        });
+        $this->app->instance(PrivateFileStorageService::class, $storage);
+
+        $this->withToken($this->token($candidate))->post("/api/v1/information-requests/{$request->id}/respond", [
+            'attachments' => [
+                UploadedFile::fake()->createWithContent('one.pdf', 'one'),
+                UploadedFile::fake()->createWithContent('two.pdf', 'two'),
+            ],
+        ], ['Accept' => 'application/json'])
+            ->assertStatus(503)
+            ->assertJsonPath('code', 'PRIVATE_FILE_WRITE_FAILED');
+
+        $this->assertDatabaseCount('application_information_responses', 0);
+        $this->assertDatabaseCount('application_information_response_attachments', 0);
+        $this->assertSame('pending', $request->refresh()->status->value);
+        Storage::disk('s3')->assertMissing($path);
     }
 
     private function context(string $suffix = 'main'): array

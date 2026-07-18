@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\Application;
 
+use App\Exceptions\CVLifecycleException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Application\ChangeApplicationStatusRequest;
 use App\Http\Requests\Api\V1\Application\IndexJobApplicationsForJobRequest;
@@ -13,18 +14,17 @@ use App\Http\Resources\Api\V1\JobApplicationResource;
 use App\Models\JobApplication;
 use App\Models\JobPosting;
 use App\Services\ApplicationWorkflowService;
+use App\Services\PrivateFileStorageService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
-use App\Exceptions\CVLifecycleException;
-use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class JobApplicationController extends Controller
 {
     public function __construct(
         private readonly ApplicationWorkflowService $applicationWorkflowService,
-    ) {
-    }
+        private readonly PrivateFileStorageService $privateStorage,
+    ) {}
 
     public function store(StoreJobApplicationRequest $request, JobPosting $jobPosting): JsonResponse
     {
@@ -63,14 +63,11 @@ class JobApplicationController extends Controller
     public function downloadCV(ShowJobApplicationRequest $request, JobApplication $jobApplication): StreamedResponse
     {
         $cvFile = $jobApplication->selectedCvFile()->first();
-        if ($cvFile === null || ! Storage::disk($cvFile->disk)->exists($cvFile->stored_path)) {
+        if ($cvFile === null || ! $this->privateStorage->exists($cvFile->disk, $cvFile->stored_path)) {
             throw new CVLifecycleException('The selected CV file is unavailable.', 'CV_FILE_UNAVAILABLE', 404);
         }
 
-        return Storage::disk($cvFile->disk)->download($cvFile->stored_path, basename($cvFile->original_name), [
-            'Content-Type' => $cvFile->mime_type,
-            'X-Content-Type-Options' => 'nosniff',
-        ]);
+        return $this->privateStorage->downloadResponse($cvFile->disk, $cvFile->stored_path, $cvFile->original_name, $cvFile->mime_type);
     }
 
     public function withdraw(WithdrawJobApplicationRequest $request, JobApplication $jobApplication): JsonResponse

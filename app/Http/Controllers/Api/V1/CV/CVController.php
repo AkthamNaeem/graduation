@@ -3,31 +3,31 @@
 namespace App\Http\Controllers\Api\V1\CV;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Api\V1\CV\ConfirmCVRequest;
 use App\Http\Requests\Api\V1\CV\ArchiveCVRequest;
-use App\Http\Requests\Api\V1\CV\CVLifecycleRequest;
+use App\Http\Requests\Api\V1\CV\ConfirmCVRequest;
 use App\Http\Requests\Api\V1\CV\CVIndexRequest;
+use App\Http\Requests\Api\V1\CV\CVLifecycleRequest;
 use App\Http\Requests\Api\V1\CV\ShowCVRequest;
 use App\Http\Requests\Api\V1\CV\ShowParsedCVRequest;
-use App\Http\Requests\Api\V1\CV\UploadCVRequest;
 use App\Http\Requests\Api\V1\CV\UpdateCVMetadataRequest;
+use App\Http\Requests\Api\V1\CV\UploadCVRequest;
 use App\Http\Resources\Api\V1\CVFileResource;
 use App\Http\Resources\Api\V1\CVParsingResultResource;
 use App\Http\Resources\Api\V1\JobSeekerProfileResource;
 use App\Http\Resources\Api\V1\ProfileChangeSuggestionResource;
 use App\Models\CVFile;
 use App\Services\CVService;
+use App\Services\PrivateFileStorageService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CVController extends Controller
 {
     public function __construct(
         private readonly CVService $cvService,
-    ) {
-    }
+        private readonly PrivateFileStorageService $privateStorage,
+    ) {}
 
     public function index(CVIndexRequest $request): JsonResponse
     {
@@ -75,10 +75,7 @@ class CVController extends Controller
     {
         $cvFile = $this->cvService->downloadable($request->user(), $cvFile);
 
-        return Storage::disk($cvFile->disk)->download($cvFile->stored_path, basename($cvFile->original_name), [
-            'Content-Type' => $cvFile->mime_type,
-            'X-Content-Type-Options' => 'nosniff',
-        ]);
+        return $this->privateStorage->downloadResponse($cvFile->disk, $cvFile->stored_path, $cvFile->original_name, $cvFile->mime_type);
     }
 
     public function show(ShowCVRequest $request, CVFile $cvFile): JsonResponse

@@ -11,15 +11,18 @@ use App\Http\Requests\Api\V1\Test\UpsertTestAnswerRequest;
 use App\Http\Resources\Api\V1\TestAnswerResource;
 use App\Models\TestAttempt;
 use App\Models\TestQuestion;
+use App\Services\PrivateFileStorageService;
 use App\Services\TestAnswerService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TestAnswerController extends Controller
 {
-    public function __construct(private readonly TestAnswerService $service) {}
+    public function __construct(
+        private readonly TestAnswerService $service,
+        private readonly PrivateFileStorageService $privateStorage,
+    ) {}
 
     public function index(IndexTestAnswerRequest $request, TestAttempt $testAttempt): JsonResponse
     {
@@ -52,9 +55,6 @@ class TestAnswerController extends Controller
     {
         $answer = $this->service->fileAnswer($testAttempt, $question);
 
-        return Storage::disk($answer->file_disk)->download($answer->file_path, $answer->file_original_name, [
-            'Content-Type' => $answer->file_mime_type,
-            'X-Content-Type-Options' => 'nosniff',
-        ]);
+        return $this->privateStorage->downloadResponse($answer->file_disk, $answer->file_path, $answer->file_original_name, $answer->file_mime_type);
     }
 }

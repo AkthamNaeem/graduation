@@ -5,6 +5,7 @@ use App\Exceptions\ApplicationInternalNoteException;
 use App\Exceptions\CVLifecycleException;
 use App\Exceptions\InterviewLifecycleException;
 use App\Exceptions\JobPostingOperationException;
+use App\Exceptions\PrivateFileStorageException;
 use App\Exceptions\RecruitmentAccessException;
 use App\Exceptions\TestAttemptTimingException;
 use App\Exceptions\TestContentAccessException;
@@ -39,6 +40,17 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (PrivateFileStorageException $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return ApiResponse::error(
+                message: $exception->getMessage(),
+                status: $exception->status,
+                code: $exception->errorCode,
+            );
+        });
         $exceptions->render(function (ApplicationInternalNoteException $exception, Request $request) {
             if (! $request->is('api/*')) {
                 return null;

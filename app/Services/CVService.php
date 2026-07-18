@@ -10,28 +10,26 @@ use App\Models\JobSeekerProfile;
 use App\Models\ProfileChangeSuggestion;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use Throwable;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class CVService
 {
     public function __construct(
         private readonly ProfileSyncService $profileSyncService,
         private readonly AuditLogService $auditLogService,
-    ) {
-    }
+        private readonly PrivateFileStorageService $privateStorage,
+    ) {}
 
     public function upload(User $user, UploadedFile $file, ?string $versionLabel = null, bool $makePrimary = false): CVFile
     {
-        $disk = 'local';
-        $storedPath = $file->store("cv-files/{$user->id}", $disk);
+        $stored = $this->privateStorage->storeUploadedFile($file, 'cv-files');
 
         try {
-            $cvFile = DB::transaction(function () use ($user, $file, $versionLabel, $makePrimary, $disk, $storedPath): CVFile {
+            $cvFile = DB::transaction(function () use ($user, $file, $versionLabel, $makePrimary, $stored): CVFile {
                 $profile = JobSeekerProfile::query()
                     ->where('user_id', $user->id)
                     ->lockForUpdate()
@@ -41,11 +39,11 @@ class CVService
                     'user_id' => $user->id,
                     'original_name' => basename($file->getClientOriginalName()),
                     'version_label' => $this->cleanLabel($versionLabel),
-                    'stored_path' => $storedPath,
-                    'disk' => $disk,
-                    'mime_type' => $file->getClientMimeType(),
-                    'extension' => strtolower($file->getClientOriginalExtension()),
-                    'size_bytes' => $file->getSize(),
+                    'stored_path' => $stored->path,
+                    'disk' => $stored->disk,
+                    'mime_type' => $stored->mimeType,
+                    'extension' => $stored->extension,
+                    'size_bytes' => $stored->sizeBytes,
                     'status' => 'uploaded',
                 ]);
 
@@ -70,7 +68,11 @@ class CVService
                 return $cvFile;
             });
         } catch (Throwable $exception) {
-            Storage::disk($disk)->delete($storedPath);
+            try {
+                $this->privateStorage->delete($stored->disk, $stored->path);
+            } catch (Throwable $cleanupException) {
+                $this->privateStorage->logCleanupFailure('cv_upload_compensation', $stored->disk, $stored->path, $cleanupException, CVFile::class);
+            }
             throw $exception;
         }
 
@@ -277,7 +279,7 @@ class CVService
 
     private function assertFileExists(CVFile $cvFile): void
     {
-        if (! Storage::disk($cvFile->disk)->exists($cvFile->stored_path)) {
+        if (! $this->privateStorage->exists($cvFile->disk, $cvFile->stored_path)) {
             throw new CVLifecycleException('The CV file is unavailable.', 'CV_FILE_UNAVAILABLE', 404);
         }
     }
@@ -285,6 +287,7 @@ class CVService
     private function cleanLabel(?string $label): ?string
     {
         $label = $label === null ? null : trim($label);
+
         return $label === '' ? null : $label;
     }
 
@@ -305,5 +308,4 @@ class CVService
 
         return $cvFile;
     }
-
 }

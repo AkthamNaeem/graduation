@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Support\Facades\Storage;
 
 class CVFile extends Model
 {
@@ -65,6 +64,7 @@ class CVFile extends Model
     {
         return $this->archived_at === null
             && in_array($this->status, ['uploaded', 'processing', 'parsed', 'failed'], true)
-            && Storage::disk($this->disk)->exists($this->stored_path);
+            && filled($this->disk)
+            && filled($this->stored_path);
     }
 }

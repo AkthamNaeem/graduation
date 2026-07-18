@@ -15,14 +15,17 @@ use App\Models\ApplicationInformationRequest;
 use App\Models\ApplicationInformationResponseAttachment;
 use App\Models\JobApplication;
 use App\Services\ApplicationInformationRequestService;
+use App\Services\PrivateFileStorageService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Storage;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ApplicationInformationRequestController extends Controller
 {
-    public function __construct(private readonly ApplicationInformationRequestService $service) {}
+    public function __construct(
+        private readonly ApplicationInformationRequestService $service,
+        private readonly PrivateFileStorageService $privateStorage,
+    ) {}
 
     public function index(IndexApplicationInformationRequestRequest $request, JobApplication $jobApplication): JsonResponse
     {
@@ -58,6 +61,6 @@ class ApplicationInformationRequestController extends Controller
     {
         $attachment = $this->service->downloadableAttachment($attachment);
 
-        return Storage::disk($attachment->disk)->download($attachment->stored_path, basename($attachment->original_name), ['Content-Type' => $attachment->mime_type, 'X-Content-Type-Options' => 'nosniff']);
+        return $this->privateStorage->downloadResponse($attachment->disk, $attachment->stored_path, $attachment->original_name, $attachment->mime_type);
     }
 }

@@ -19,7 +19,6 @@ use App\Models\JobSeekerProfile;
 use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 class ApplicationWorkflowService
@@ -60,6 +59,7 @@ class ApplicationWorkflowService
     public function __construct(
         private readonly AuditLogService $auditLogService,
         private readonly CompanyRecruitmentAccessService $companyAccessService,
+        private readonly PrivateFileStorageService $privateStorage,
     ) {}
 
     /**
@@ -376,7 +376,7 @@ class ApplicationWorkflowService
         if ($cvFile->archived_at !== null) {
             throw new CVLifecycleException('Archived CVs cannot be used for new applications.', 'CV_ARCHIVED');
         }
-        if (! Storage::disk($cvFile->disk)->exists($cvFile->stored_path)) {
+        if (! $this->privateStorage->exists($cvFile->disk, $cvFile->stored_path)) {
             throw new CVLifecycleException('The selected CV file is unavailable.', 'CV_FILE_UNAVAILABLE', 404);
         }
         if (! $cvFile->isUsableForApplication()) {

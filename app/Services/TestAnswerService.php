@@ -9,18 +9,15 @@ use App\Models\TestQuestion;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class TestAnswerService
 {
-    private const FILE_DISK = 'local';
-
     public function __construct(
         private readonly TestAssignmentDeadlineService $testAssignmentDeadlineService,
         private readonly CompanyRecruitmentAccessService $companyAccessService,
+        private readonly PrivateFileStorageService $privateStorage,
     ) {}
 
     /** @return Collection<int, TestAnswer> */
@@ -40,37 +37,29 @@ class TestAnswerService
         $this->ensureQuestionBelongsToAttempt($attempt, $question);
         $normalized = $this->validatePayload($question, $payload, $file);
 
-        $newPath = null;
+        $newFile = null;
         $oldFile = TestAnswer::query()
             ->where('test_attempt_id', $attempt->id)
             ->where('test_question_id', $question->id)
             ->first();
 
         if ($file !== null) {
-            $extension = strtolower($file->getClientOriginalExtension());
-            $newPath = $file->storeAs(
-                "test-answers/{$attempt->id}",
-                Str::uuid().'.'.$extension,
-                self::FILE_DISK,
-            );
-
-            if (! is_string($newPath)) {
-                throw ValidationException::withMessages(['answer_file' => ['The answer file could not be stored.']]);
-            }
+            $newFile = $this->privateStorage->storeUploadedFile($file, 'test-answer-files');
         }
 
         try {
-            $answer = DB::transaction(function () use ($attempt, $question, $normalized, $file, $newPath): TestAnswer {
-                $this->ensureAttemptMutable($attempt);
+            $answer = DB::transaction(function () use ($attempt, $question, $normalized, $file, $newFile): TestAnswer {
+                $lockedAttempt = TestAttempt::query()->lockForUpdate()->findOrFail($attempt->id);
+                $this->ensureAttemptMutable($lockedAttempt);
                 $attributes = ['answer_text' => $normalized['answer_text']];
 
                 if ($file !== null) {
                     $attributes += [
-                        'file_path' => $newPath,
-                        'file_disk' => self::FILE_DISK,
+                        'file_path' => $newFile->path,
+                        'file_disk' => $newFile->disk,
                         'file_original_name' => basename($file->getClientOriginalName()),
-                        'file_mime_type' => $file->getMimeType(),
-                        'file_size' => $file->getSize(),
+                        'file_mime_type' => $newFile->mimeType,
+                        'file_size' => $newFile->sizeBytes,
                     ];
                 }
 
@@ -83,15 +72,23 @@ class TestAnswerService
                 return $this->loadAnswer($answer);
             });
         } catch (\Throwable $exception) {
-            if ($newPath !== null) {
-                Storage::disk(self::FILE_DISK)->delete($newPath);
+            if ($newFile !== null) {
+                try {
+                    $this->privateStorage->delete($newFile->disk, $newFile->path);
+                } catch (\Throwable $cleanupException) {
+                    $this->privateStorage->logCleanupFailure('test_answer_upload_compensation', $newFile->disk, $newFile->path, $cleanupException, TestAnswer::class);
+                }
             }
 
             throw $exception;
         }
 
-        if ($newPath !== null && $oldFile?->file_path !== null && $oldFile->file_path !== $newPath) {
-            Storage::disk($oldFile->file_disk ?: self::FILE_DISK)->delete($oldFile->file_path);
+        if ($newFile !== null && $oldFile?->file_path !== null && $oldFile->file_path !== $newFile->path) {
+            try {
+                $this->privateStorage->delete($oldFile->file_disk ?: 'local', $oldFile->file_path);
+            } catch (\Throwable $cleanupException) {
+                $this->privateStorage->logCleanupFailure('test_answer_replacement_cleanup', $oldFile->file_disk ?: 'local', $oldFile->file_path, $cleanupException, TestAnswer::class, $answer->id);
+            }
         }
 
         return $answer;
@@ -153,7 +150,11 @@ class TestAnswerService
         });
 
         if ($path !== null) {
-            Storage::disk($disk ?: self::FILE_DISK)->delete($path);
+            try {
+                $this->privateStorage->delete($disk ?: 'local', $path);
+            } catch (\Throwable $cleanupException) {
+                $this->privateStorage->logCleanupFailure('test_answer_delete_cleanup', $disk ?: 'local', $path, $cleanupException, TestAnswer::class, $answer->id);
+            }
         }
     }
 
@@ -167,7 +168,7 @@ class TestAnswerService
             ->whereNotNull('file_path')
             ->firstOrFail();
 
-        if (! Storage::disk($answer->file_disk ?: self::FILE_DISK)->exists($answer->file_path)) {
+        if (! $this->privateStorage->exists($answer->file_disk ?: 'local', $answer->file_path)) {
             abort(404);
         }
 
@@ -335,7 +336,7 @@ class TestAnswerService
             && $answer->file_original_name !== null
             && $answer->file_mime_type !== null
             && $answer->file_size !== null
-            && Storage::disk($answer->file_disk ?: self::FILE_DISK)->exists($answer->file_path);
+            && $this->privateStorage->exists($answer->file_disk ?: 'local', $answer->file_path);
     }
 
     private function loadAnswer(TestAnswer $answer): TestAnswer

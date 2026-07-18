@@ -1,59 +1,82 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Smart Recruitment Platform Backend
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel 12 REST API for candidate profiles and CVs, companies and jobs, applications, information requests, private internal notes, tests and grading, interviews, notifications, matching, audit logs, and administration.
 
-## About Laravel
+## Local setup
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+1. Copy `.env.example` to `.env` and generate `APP_KEY`.
+2. Configure an isolated local database.
+3. Run `composer install`.
+4. Run `php artisan migrate --seed` only in local or test environments. The default seeder contains sample accounts and must not be used in production.
+5. Start the web process and a database queue worker because CV parsing is asynchronous.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Useful checks:
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+```bash
+php artisan test
+php artisan route:list --path=api/v1
+php artisan storage:verify-private --disk=local
+php artisan storage:inventory-private-files
+```
 
-## Learning Laravel
+## Private file storage
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+CV files, test-answer attachments, and application-information response attachments are private. New uploads use `PRIVATE_FILESYSTEM_DISK`; existing records always use their stored per-record disk and path.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Local/test default:
 
-## Laravel Sponsors
+```text
+PRIVATE_FILESYSTEM_DISK=local
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Production:
 
-### Premium Partners
+```text
+PRIVATE_FILESYSTEM_DISK=s3
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+The S3-compatible disk supports AWS or another compatible provider through the standard `AWS_*` variables. Objects are not public, original filenames are not used as object keys, and downloads remain authorized backend streams.
 
-## Contributing
+Never switch production storage before preserving existing instance-local files. Follow:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- [Render object-storage setup](docs/RENDER_OBJECT_STORAGE_SETUP.md)
+- [Private-storage migration runbook](docs/PRIVATE_STORAGE_MIGRATION_RUNBOOK.md)
+- [Private-storage recovery runbook](docs/PRIVATE_STORAGE_RECOVERY_RUNBOOK.md)
 
-## Code of Conduct
+## Safe migration commands
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Inventory is read-only:
 
-## Security Vulnerabilities
+```bash
+php artisan storage:inventory-private-files --disk=local --strict
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Migration is a dry run unless `--execute` is provided:
 
-## License
+```bash
+php artisan storage:migrate-private-files --source=local --target=s3 --domain=all
+php artisan storage:migrate-private-files --source=local --target=s3 --domain=all --execute --report=storage-migration.csv
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Do not use `--delete-source` during the first migration pass. Verify counts, sizes, checksums, downloads, parsing, restart durability, and recovery first.
+
+## Production processes
+
+- Web: serves the API.
+- Worker: runs `php artisan queue:work` and must share the same database and object-storage environment.
+- Scheduler: currently no application tasks are defined.
+
+The repository Dockerfile starts the web process only. The worker topology remains a separate production deployment task.
+
+## Tests
+
+Standard tests use fake local/S3 disks and require no credentials. Optional real-provider tests are skipped unless `RUN_S3_INTEGRATION_TESTS=true` and dedicated `S3_TEST_*` credentials are supplied. Never use the production bucket for integration tests.
+
+## Security
+
+- Do not commit `.env`, access keys, bucket names intended to be secret, provider responses, CV contents, or object paths from production.
+- Keep the bucket private and grant only required object operations.
+- Do not expose `Storage::url()` or raw object metadata through API resources.
+- Production must set `APP_DEBUG=false`.
+
+The production-readiness audit and remaining findings are in `reports/`.

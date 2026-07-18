@@ -19,18 +19,15 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class ApplicationInformationRequestService
 {
-    private const FILE_DISK = 'local';
-
     public function __construct(
         private readonly ApplicationWorkflowService $workflow,
         private readonly CompanyRecruitmentAccessService $companyAccess,
         private readonly AuditLogService $audit,
+        private readonly PrivateFileStorageService $privateStorage,
     ) {}
 
     /** @return Collection<int, ApplicationInformationRequest> */
@@ -153,7 +150,11 @@ class ApplicationInformationRequestService
             });
         } catch (\Throwable $exception) {
             foreach ($stored as $file) {
-                Storage::disk($file['disk'])->delete($file['stored_path']);
+                try {
+                    $this->privateStorage->delete($file['disk'], $file['stored_path']);
+                } catch (\Throwable $cleanupException) {
+                    $this->privateStorage->logCleanupFailure('information_response_compensation', $file['disk'], $file['stored_path'], $cleanupException, ApplicationInformationResponseAttachment::class);
+                }
             }
             throw $exception;
         }
@@ -190,7 +191,7 @@ class ApplicationInformationRequestService
 
     public function downloadableAttachment(ApplicationInformationResponseAttachment $attachment): ApplicationInformationResponseAttachment
     {
-        if (! Storage::disk($attachment->disk)->exists($attachment->stored_path)) {
+        if (! $this->privateStorage->exists($attachment->disk, $attachment->stored_path)) {
             abort(404);
         }
 
@@ -265,16 +266,23 @@ class ApplicationInformationRequestService
         $stored = [];
         try {
             foreach ($files as $file) {
-                $extension = strtolower($file->getClientOriginalExtension());
-                $path = $file->storeAs("application-information-responses/{$request->id}", Str::uuid().'.'.$extension, self::FILE_DISK);
-                if (! is_string($path)) {
-                    throw ValidationException::withMessages(['attachments' => ['An attachment could not be stored.']]);
-                }
-                $stored[] = ['original_name' => basename($file->getClientOriginalName()), 'stored_path' => $path, 'disk' => self::FILE_DISK, 'mime_type' => $file->getMimeType() ?: 'application/octet-stream', 'extension' => $extension ?: null, 'size_bytes' => $file->getSize()];
+                $privateFile = $this->privateStorage->storeUploadedFile($file, 'application-information-files');
+                $stored[] = [
+                    'original_name' => basename($file->getClientOriginalName()),
+                    'stored_path' => $privateFile->path,
+                    'disk' => $privateFile->disk,
+                    'mime_type' => $privateFile->mimeType,
+                    'extension' => $privateFile->extension,
+                    'size_bytes' => $privateFile->sizeBytes,
+                ];
             }
         } catch (\Throwable $exception) {
             foreach ($stored as $item) {
-                Storage::disk($item['disk'])->delete($item['stored_path']);
+                try {
+                    $this->privateStorage->delete($item['disk'], $item['stored_path']);
+                } catch (\Throwable $cleanupException) {
+                    $this->privateStorage->logCleanupFailure('information_response_partial_upload_cleanup', $item['disk'], $item['stored_path'], $cleanupException, ApplicationInformationResponseAttachment::class);
+                }
             }
             throw $exception;
         }

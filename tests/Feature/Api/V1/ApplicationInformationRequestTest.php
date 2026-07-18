@@ -78,7 +78,8 @@ class ApplicationInformationRequestTest extends TestCase
 
     public function test_candidate_submits_message_and_private_file_once_and_application_returns_under_review(): void
     {
-        Storage::fake('local');
+        Storage::fake('s3');
+        config(['filesystems.private_disk' => 's3']);
         [, $employer,$candidate,$application] = $this->context('shortlisted');
         $request = $this->createRequest($employer, $application);
         $file = UploadedFile::fake()->create('certificate.pdf', 100, 'application/pdf');
@@ -87,7 +88,8 @@ class ApplicationInformationRequestTest extends TestCase
         $response->assertCreated()->assertJsonPath('data.status', 'responded')->assertJsonPath('data.response.message', 'Attached as requested.')->assertJsonMissingPath('data.response.attachments.0.stored_path')->assertJsonMissingPath('data.response.attachments.0.disk');
         $attachmentId = $response->json('data.response.attachments.0.id');
         $attachment = ApplicationInformationResponseAttachment::findOrFail($attachmentId);
-        Storage::disk('local')->assertExists($attachment->stored_path);
+        $this->assertSame('s3', $attachment->disk);
+        Storage::disk('s3')->assertExists($attachment->stored_path);
         $this->assertDatabaseHas('job_applications', ['id' => $application->id, 'application_status_id' => $this->statusId('under_review')]);
         $this->assertDatabaseHas('notifications', ['user_id' => $employer->id, 'type' => 'application.information_submitted']);
         event(new ApplicationInformationResponded($request->id));
