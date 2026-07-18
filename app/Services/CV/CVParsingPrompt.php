@@ -32,9 +32,15 @@ Rules:
 PROMPT;
     }
 
-    public function jsonObjectFallbackText(): string
+    public function jsonObjectText(): string
     {
         return <<<'PROMPT'
+You extract structured facts from CV text.
+
+Use only facts explicitly supported by the supplied CV text. Never invent personal information, employers, job titles, dates, education, skills, or languages.
+For birth_date, return YYYY-MM-DD only when day, month, and year are explicit; otherwise return null.
+For experience dates, return YYYY-MM when month and year are available and YYYY when only the year is available. Use null as end_date for current positions.
+
 Return one valid JSON object only.
 Return exactly these top-level keys:
 full_name, email, phone, location, birth_date, summary, experience, education, skills, languages.
@@ -50,6 +56,17 @@ Language fields: name, level.
 
 An empty result is:
 {"full_name":null,"email":null,"phone":null,"location":null,"birth_date":null,"summary":null,"experience":[],"education":[],"skills":[],"languages":[]}
+
+- At most 20 responsibilities per experience.
+- Each evidence string must be at most 300 characters.
+- Each description must be concise.
+- Keep every valid experience supported by the CV; do not omit it merely to shorten the output.
+
+Return one complete JSON object only.
+Do not output markdown or code fences.
+Do not output explanations before or after the JSON.
+Keep evidence concise.
+Keep each description and responsibility concise.
 PROMPT;
     }
 }

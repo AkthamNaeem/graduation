@@ -45,6 +45,12 @@ class GroqCVTextParserTest extends TestCase
                 && $request->hasHeader('Accept', 'application/json')
                 && $request->hasHeader('Content-Type', 'application/json')
                 && $request['model'] === 'configured-groq-model'
+                && $request['max_completion_tokens'] === 8192
+                && $request['reasoning_effort'] === 'low'
+                && $request['include_reasoning'] === false
+                && $request['temperature'] === 0.5
+                && $request['stream'] === false
+                && ! isset($request['reasoning_format'])
                 && str_contains($request['messages'][0]['content'], 'When day, month, and year are explicitly available, return YYYY-MM-DD.')
                 && str_contains($request['messages'][0]['content'], 'Return YYYY-MM when month and year are available.')
                 && $request['messages'][1]['content'] === 'Laravel Developer at FutureX'
@@ -125,9 +131,17 @@ TEXT;
         $this->assertSame('json_schema', $requests[0]['response_format']['type']);
         $this->assertSame(['type' => 'json_object'], $requests[1]['response_format']);
         $this->assertSame('configured-groq-model', $requests[1]['model']);
+        $this->assertSame(8192, $requests[1]['max_completion_tokens']);
+        $this->assertSame('low', $requests[1]['reasoning_effort']);
+        $this->assertFalse($requests[1]['include_reasoning']);
+        $this->assertSame(0.5, $requests[1]['temperature']);
+        $this->assertFalse($requests[1]['stream']);
         $this->assertSame($rawText, $requests[1]['messages'][1]['content']);
         $this->assertStringContainsString('Return one valid JSON object only.', $requests[1]['messages'][0]['content']);
         $this->assertStringContainsString('Every experience and education item must include all contract fields.', $requests[1]['messages'][0]['content']);
+        $this->assertStringNotContainsString('supplied JSON schema', $requests[1]['messages'][0]['content']);
+        $this->assertStringContainsString('Do not output markdown or code fences.', $requests[1]['messages'][0]['content']);
+        $this->assertStringEndsWith('Keep each description and responsibility concise.', $requests[1]['messages'][0]['content']);
 
         Log::shouldHaveReceived('warning')->once()->with(
             'Groq strict structured output failed; trying JSON object fallback.',
@@ -135,8 +149,89 @@ TEXT;
                 'http_status' => 400,
                 'error_type' => 'invalid_request_error',
                 'error_code' => 'json_validate_failed',
+                'structured_output_mode' => 'json_schema_strict',
+                'max_completion_tokens' => 8192,
+                'reasoning_effort' => 'low',
             ],
         );
+    }
+
+    public function test_custom_generation_settings_are_sent_to_groq(): void
+    {
+        config()->set('cv.groq.max_completion_tokens', 12000);
+        config()->set('cv.groq.reasoning_effort', 'high');
+        config()->set('cv.groq.temperature', 1.25);
+        Http::fake(['api.groq.com/*' => Http::response($this->responsePayload($this->validParsed()), 200)]);
+
+        $this->parser()->parse('CV');
+
+        Http::assertSent(fn (Request $request): bool => $request['max_completion_tokens'] === 12000
+            && $request['reasoning_effort'] === 'high'
+            && $request['temperature'] === 1.25
+            && $request['include_reasoning'] === false
+            && $request['stream'] === false);
+    }
+
+    public function test_invalid_generation_settings_use_safe_defaults(): void
+    {
+        config()->set('cv.groq.max_completion_tokens', 1000);
+        config()->set('cv.groq.reasoning_effort', 'extreme');
+        config()->set('cv.groq.temperature', 2.1);
+        Http::fake(['api.groq.com/*' => Http::response($this->responsePayload($this->validParsed()), 200)]);
+
+        $this->parser()->parse('CV');
+
+        Http::assertSent(fn (Request $request): bool => $request['max_completion_tokens'] === 8192
+            && $request['reasoning_effort'] === 'low'
+            && $request['temperature'] === 0.5);
+    }
+
+    public function test_json_object_json_validate_failed_has_a_specific_code_and_no_third_request(): void
+    {
+        $rawText = 'PRIVATE_CV_MARKER';
+        Log::spy();
+        Http::fakeSequence()
+            ->push($this->jsonValidationFailure(), 400)
+            ->push($this->jsonValidationFailure(), 400);
+
+        try {
+            $this->parser()->parse($rawText);
+            $this->fail('Expected JSON generation failure.');
+        } catch (CVParserException $exception) {
+            $this->assertSame('GROQ_JSON_GENERATION_FAILED', $exception->reasonCode);
+            $this->assertStringNotContainsString($rawText, $exception->getMessage());
+            $this->assertStringNotContainsString('groq-test-key', $exception->getMessage());
+        }
+
+        Http::assertSentCount(2);
+        Log::shouldHaveReceived('warning')->with(
+            'Groq CV parser request was rejected.',
+            [
+                'http_status' => 400,
+                'error_type' => 'invalid_request_error',
+                'error_code' => 'json_validate_failed',
+                'structured_output_mode' => 'json_object_fallback',
+                'max_completion_tokens' => 8192,
+                'reasoning_effort' => 'low',
+            ],
+        );
+    }
+
+    public function test_json_generation_failure_uses_rules_only_when_rules_fallback_is_enabled(): void
+    {
+        Skill::create(['name' => 'Laravel', 'slug' => 'laravel']);
+        config()->set('cv.parser.fallback_to_rules', true);
+        Http::fakeSequence()
+            ->push($this->jsonValidationFailure(), 400)
+            ->push($this->jsonValidationFailure(), 400);
+
+        $parsed = $this->parser()->parse("Skills\nLaravel");
+
+        $this->assertSame(['Laravel'], $parsed['skills']);
+        $this->assertSame('rules', $parsed['_meta']['parser_driver']);
+        $this->assertSame('groq', $parsed['_meta']['requested_driver']);
+        $this->assertSame('GROQ_JSON_GENERATION_FAILED', $parsed['_meta']['fallback_reason']);
+        Http::assertSentCount(2);
     }
 
     #[DataProvider('jsonObjectFailureProvider')]
@@ -314,6 +409,9 @@ TEXT;
                 'http_status' => 400,
                 'error_type' => 'invalid_request_error',
                 'error_code' => 'json_schema_invalid',
+                'structured_output_mode' => 'json_schema_strict',
+                'max_completion_tokens' => 8192,
+                'reasoning_effort' => 'low',
             ],
         );
         Http::assertSentCount(1);

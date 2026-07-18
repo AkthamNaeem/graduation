@@ -25,6 +25,7 @@ class GroqCVTextParser implements CVTextParser
         'GROQ_EMPTY_CONTENT',
         'GROQ_INVALID_JSON',
         'GROQ_CONTRACT_MISMATCH',
+        'GROQ_JSON_GENERATION_FAILED',
     ];
 
     public function __construct(
@@ -65,7 +66,8 @@ class GroqCVTextParser implements CVTextParser
             throw new CVParserException('GROQ_AUTHENTICATION_FAILED');
         }
 
-        $response = $this->sendWithLimitedRetry($apiKey, $rawText, self::JSON_SCHEMA_STRICT, 3);
+        $requestOptions = $this->requestOptions();
+        $response = $this->sendWithLimitedRetry($apiKey, $rawText, self::JSON_SCHEMA_STRICT, 3, $requestOptions);
         $structuredOutputMode = self::JSON_SCHEMA_STRICT;
         $structuredOutputFallbackReason = null;
 
@@ -74,14 +76,23 @@ class GroqCVTextParser implements CVTextParser
                 'http_status' => 400,
                 'error_type' => $this->safeErrorIdentifier($response->json('error.type')),
                 'error_code' => 'json_validate_failed',
+                'structured_output_mode' => self::JSON_SCHEMA_STRICT,
+                'max_completion_tokens' => $requestOptions['max_completion_tokens'],
+                'reasoning_effort' => $requestOptions['reasoning_effort'],
             ]);
 
-            $response = $this->sendWithLimitedRetry($apiKey, $rawText, self::JSON_OBJECT_FALLBACK, 1);
+            $response = $this->sendWithLimitedRetry($apiKey, $rawText, self::JSON_OBJECT_FALLBACK, 1, $requestOptions);
             $structuredOutputMode = self::JSON_OBJECT_FALLBACK;
             $structuredOutputFallbackReason = 'json_validate_failed';
+
+            if ($this->isJsonValidationFailure($response)) {
+                $this->logBadRequest($response, $structuredOutputMode, $requestOptions);
+
+                throw new CVParserException('GROQ_JSON_GENERATION_FAILED');
+            }
         }
 
-        $this->assertSuccessfulResponse($response);
+        $this->assertSuccessfulResponse($response, $structuredOutputMode, $requestOptions);
         $parsed = $this->parseResponse($response);
 
         $parsed['_meta'] = [
@@ -98,7 +109,8 @@ class GroqCVTextParser implements CVTextParser
         return $parsed;
     }
 
-    private function sendWithLimitedRetry(string $apiKey, string $rawText, string $mode, int $maximumAttempts): Response
+    /** @param array{max_completion_tokens: int, reasoning_effort: string, temperature: float} $requestOptions */
+    private function sendWithLimitedRetry(string $apiKey, string $rawText, string $mode, int $maximumAttempts, array $requestOptions): Response
     {
         $attempts = 0;
         do {
@@ -108,7 +120,7 @@ class GroqCVTextParser implements CVTextParser
                     ->withToken($apiKey)
                     ->connectTimeout((int) config('cv.groq.connect_timeout', 10))
                     ->timeout((int) config('cv.groq.timeout', 60))
-                    ->post(self::ENDPOINT, $this->requestBody($rawText, $mode));
+                    ->post(self::ENDPOINT, $this->requestBody($rawText, $mode, $requestOptions));
             } catch (ConnectionException) {
                 throw new CVParserException('GROQ_TIMEOUT');
             }
@@ -155,7 +167,8 @@ class GroqCVTextParser implements CVTextParser
             && $this->safeErrorIdentifier($response->json('error.code')) === 'json_validate_failed';
     }
 
-    private function assertSuccessfulResponse(Response $response): void
+    /** @param array{max_completion_tokens: int, reasoning_effort: string, temperature: float} $requestOptions */
+    private function assertSuccessfulResponse(Response $response, string $mode, array $requestOptions): void
     {
         if (in_array($response->status(), [401, 403], true)) {
             throw new CVParserException('GROQ_AUTHENTICATION_FAILED');
@@ -167,11 +180,7 @@ class GroqCVTextParser implements CVTextParser
             throw new CVParserException('GROQ_UNAVAILABLE');
         }
         if ($response->status() === 400) {
-            Log::warning('Groq CV parser request was rejected.', [
-                'http_status' => 400,
-                'error_type' => $this->safeErrorIdentifier($response->json('error.type')),
-                'error_code' => $this->safeErrorIdentifier($response->json('error.code')),
-            ]);
+            $this->logBadRequest($response, $mode, $requestOptions);
 
             throw new CVParserException('GROQ_BAD_REQUEST');
         }
@@ -187,11 +196,33 @@ class GroqCVTextParser implements CVTextParser
             : null;
     }
 
+    /** @param array{max_completion_tokens: int, reasoning_effort: string, temperature: float} $requestOptions */
+    private function logBadRequest(Response $response, string $mode, array $requestOptions): void
+    {
+        Log::warning('Groq CV parser request was rejected.', [
+            'http_status' => 400,
+            'error_type' => $this->safeErrorIdentifier($response->json('error.type')),
+            'error_code' => $this->safeErrorIdentifier($response->json('error.code')),
+            'structured_output_mode' => $mode,
+            'max_completion_tokens' => $requestOptions['max_completion_tokens'],
+            'reasoning_effort' => $requestOptions['reasoning_effort'],
+        ]);
+    }
+
     /** @return array<string, mixed> */
-    private function requestBody(string $rawText, string $mode): array
+    /**
+     * @param  array{max_completion_tokens: int, reasoning_effort: string, temperature: float}  $requestOptions
+     * @return array<string, mixed>
+     */
+    private function requestBody(string $rawText, string $mode, array $requestOptions): array
     {
         $body = [
             'model' => (string) config('cv.groq.model', 'openai/gpt-oss-20b'),
+            'max_completion_tokens' => $requestOptions['max_completion_tokens'],
+            'reasoning_effort' => $requestOptions['reasoning_effort'],
+            'include_reasoning' => false,
+            'temperature' => $requestOptions['temperature'],
+            'stream' => false,
             'messages' => [
                 ['role' => 'system', 'content' => $this->systemPrompt($mode)],
                 ['role' => 'user', 'content' => $rawText],
@@ -218,6 +249,33 @@ class GroqCVTextParser implements CVTextParser
             return $this->prompt->text();
         }
 
-        return $this->prompt->text()."\n\n".$this->prompt->jsonObjectFallbackText();
+        return $this->prompt->jsonObjectText();
+    }
+
+    /** @return array{max_completion_tokens: int, reasoning_effort: string, temperature: float} */
+    private function requestOptions(): array
+    {
+        $maxCompletionTokens = config('cv.groq.max_completion_tokens', 8192);
+        if (! is_numeric($maxCompletionTokens)
+            || (int) $maxCompletionTokens < 1024
+            || (int) $maxCompletionTokens > 16384) {
+            $maxCompletionTokens = 8192;
+        }
+
+        $reasoningEffort = config('cv.groq.reasoning_effort', 'low');
+        if (! is_string($reasoningEffort) || ! in_array($reasoningEffort, ['low', 'medium', 'high'], true)) {
+            $reasoningEffort = 'low';
+        }
+
+        $temperature = config('cv.groq.temperature', 0.5);
+        if (! is_numeric($temperature) || (float) $temperature < 0 || (float) $temperature > 2) {
+            $temperature = 0.5;
+        }
+
+        return [
+            'max_completion_tokens' => (int) $maxCompletionTokens,
+            'reasoning_effort' => $reasoningEffort,
+            'temperature' => (float) $temperature,
+        ];
     }
 }

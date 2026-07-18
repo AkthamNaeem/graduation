@@ -1747,6 +1747,8 @@ Groq uses safe diagnostic codes including `GROQ_AUTHENTICATION_FAILED`, `GROQ_RA
 
 When Groq strict JSON Schema mode specifically returns HTTP 400 with `error.code=json_validate_failed`, the driver performs one provider-level retry using `response_format.type=json_object` and a compact contract prompt. A successful provider fallback remains `parser_driver=groq` and `fallback_used=false`, with `structured_output_mode=json_object_fallback`; it is distinct from the optional legacy rules fallback. No third structured-output attempt is made, and other HTTP 400 codes remain terminal `GROQ_BAD_REQUEST` failures.
 
+Both Groq structured-output modes use a validated completion budget (default `8192`, allowed `1024..16384`), validated `low|medium|high` reasoning effort, hidden reasoning output, bounded temperature, and non-streaming responses. Invalid configuration falls back to safe defaults. A repeated `json_validate_failed` in JSON Object Mode becomes `GROQ_JSON_GENERATION_FAILED`; it reaches rules only when that code is explicitly allowlisted and rules fallback is enabled.
+
 Birth dates are distinct from experience dates in the shared prompt and schema description. Provider validation accepts a nullable birth-date string structurally; deterministic normalization accepts only `YYYY-MM-DD`, `D Month YYYY`, or `Month D, YYYY`, converts complete dates to `YYYY-MM-DD`, and maps partial or invalid dates to `null` without rejecting the remaining CV payload.
 
 No parsed value is applied automatically. The stored result remains a draft until the user confirms it and explicitly accepts suggestions. Existing phone, experience, education, and string-skill contracts remain supported, including mapping structured education years to profile date fields.
