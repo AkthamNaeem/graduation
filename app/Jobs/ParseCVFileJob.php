@@ -91,6 +91,8 @@ class ParseCVFileJob implements ShouldQueue
                 'parser_driver' => $parsedJson['_meta']['parser_driver'] ?? 'rules',
                 'model' => $parsedJson['_meta']['model'] ?? null,
                 'fallback_used' => $parsedJson['_meta']['fallback_used'] ?? false,
+                'structured_output_mode' => $parsedJson['_meta']['structured_output_mode'] ?? null,
+                'structured_output_fallback_reason' => $parsedJson['_meta']['structured_output_fallback_reason'] ?? null,
                 'schema_version' => $parsedJson['_meta']['schema_version'] ?? '1.0',
             ]);
         } catch (Throwable $exception) {

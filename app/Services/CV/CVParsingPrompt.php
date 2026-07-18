@@ -31,4 +31,25 @@ Rules:
 14. Return data only through the supplied JSON schema.
 PROMPT;
     }
+
+    public function jsonObjectFallbackText(): string
+    {
+        return <<<'PROMPT'
+Return one valid JSON object only.
+Return exactly these top-level keys:
+full_name, email, phone, location, birth_date, summary, experience, education, skills, languages.
+
+Use null for unavailable nullable scalar values.
+Use empty arrays when no experience, education, skills, or languages exist.
+Do not add keys outside the requested contract.
+Every experience and education item must include all contract fields.
+
+Experience fields: title, company_name, location, work_mode, start_date, end_date, is_current, description, responsibilities, evidence, confidence_score.
+Education fields: degree, field_of_study, institution, start_year, graduation_year, is_expected, description, evidence, confidence_score.
+Language fields: name, level.
+
+An empty result is:
+{"full_name":null,"email":null,"phone":null,"location":null,"birth_date":null,"summary":null,"experience":[],"education":[],"skills":[],"languages":[]}
+PROMPT;
+    }
 }

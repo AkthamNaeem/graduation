@@ -35,7 +35,10 @@ class GroqCVTextParserTest extends TestCase
         $this->assertSame('groq', $parsed['_meta']['parser_driver']);
         $this->assertSame('configured-groq-model', $parsed['_meta']['model']);
         $this->assertFalse($parsed['_meta']['fallback_used']);
+        $this->assertSame('json_schema_strict', $parsed['_meta']['structured_output_mode']);
+        $this->assertArrayNotHasKey('structured_output_fallback_reason', $parsed['_meta']);
         $this->assertSame('1.0', $parsed['_meta']['schema_version']);
+        Http::assertSentCount(1);
         Http::assertSent(function (Request $request): bool {
             return $request->url() === 'https://api.groq.com/openai/v1/chat/completions'
                 && $request->hasHeader('Authorization', 'Bearer groq-test-key')
@@ -56,6 +59,9 @@ class GroqCVTextParserTest extends TestCase
     public function test_regression_fixture_produces_safe_experience_education_and_skills(): void
     {
         $rawText = <<<'TEXT'
+PERSONAL INFORMATION
+Birth Date: 21 April 2002
+
 EXPERIENCE
 October 2024 - December 2025
 Software Developer
@@ -71,6 +77,7 @@ Laravel
 MySQL
 TEXT;
         $data = $this->validParsed();
+        $data['birth_date'] = '21 April 2002';
         $data['experience'] = [[
             'title' => 'Software Developer', 'company_name' => 'Opti Tech', 'location' => 'UAE',
             'work_mode' => 'remote', 'start_date' => '2024-10', 'end_date' => '2025-12',
@@ -90,11 +97,74 @@ TEXT;
 
         $parsed = (new CVParsedDataNormalizer)->normalize($this->parser()->parse($rawText), $rawText);
 
+        $this->assertSame('2002-04-21', $parsed['birth_date']);
         $this->assertSame('Software Developer', $parsed['experience'][0]['title']);
         $this->assertSame('Opti Tech', $parsed['experience'][0]['company_name']);
         $this->assertSame("Bachelor's degree", $parsed['education'][0]['degree']);
         $this->assertSame('Information Technology', $parsed['education'][0]['field_of_study']);
         $this->assertSame(['Laravel', 'MySQL'], $parsed['skills']);
+    }
+
+    public function test_json_validate_failed_retries_once_with_json_object_mode(): void
+    {
+        $rawText = 'PRIVATE_CV_MARKER Birth Date: 21 April 2002';
+        Log::spy();
+        Http::fakeSequence()
+            ->push($this->jsonValidationFailure(), 400)
+            ->push($this->responsePayload($this->validParsed()), 200);
+
+        $parsed = $this->parser()->parse($rawText);
+
+        $this->assertSame('groq', $parsed['_meta']['parser_driver']);
+        $this->assertFalse($parsed['_meta']['fallback_used']);
+        $this->assertSame('json_object_fallback', $parsed['_meta']['structured_output_mode']);
+        $this->assertSame('json_validate_failed', $parsed['_meta']['structured_output_fallback_reason']);
+        Http::assertSentCount(2);
+
+        $requests = Http::recorded()->map(fn (array $record): Request => $record[0])->values();
+        $this->assertSame('json_schema', $requests[0]['response_format']['type']);
+        $this->assertSame(['type' => 'json_object'], $requests[1]['response_format']);
+        $this->assertSame('configured-groq-model', $requests[1]['model']);
+        $this->assertSame($rawText, $requests[1]['messages'][1]['content']);
+        $this->assertStringContainsString('Return one valid JSON object only.', $requests[1]['messages'][0]['content']);
+        $this->assertStringContainsString('Every experience and education item must include all contract fields.', $requests[1]['messages'][0]['content']);
+
+        Log::shouldHaveReceived('warning')->once()->with(
+            'Groq strict structured output failed; trying JSON object fallback.',
+            [
+                'http_status' => 400,
+                'error_type' => 'invalid_request_error',
+                'error_code' => 'json_validate_failed',
+            ],
+        );
+    }
+
+    #[DataProvider('jsonObjectFailureProvider')]
+    public function test_json_object_fallback_failures_are_diagnostic_and_never_make_a_third_request(string $content, string $reasonCode): void
+    {
+        Http::fakeSequence()
+            ->push($this->jsonValidationFailure(), 400)
+            ->push(['choices' => [['message' => ['content' => $content]]]], 200);
+
+        try {
+            $this->parser()->parse('PRIVATE_CV_MARKER');
+            $this->fail('Expected JSON object fallback failure.');
+        } catch (CVParserException $exception) {
+            $this->assertSame($reasonCode, $exception->reasonCode);
+            $this->assertStringNotContainsString('PRIVATE_CV_MARKER', $exception->getMessage());
+            $this->assertStringNotContainsString('groq-test-key', $exception->getMessage());
+        }
+
+        Http::assertSentCount(2);
+    }
+
+    public static function jsonObjectFailureProvider(): array
+    {
+        return [
+            'empty content' => ['  ', 'GROQ_EMPTY_CONTENT'],
+            'invalid JSON' => ['{bad', 'GROQ_INVALID_JSON'],
+            'contract mismatch' => ['{}', 'GROQ_CONTRACT_MISMATCH'],
+        ];
     }
 
     public function test_missing_key_fails_without_request(): void
@@ -203,12 +273,16 @@ TEXT;
     {
         Skill::create(['name' => 'Laravel', 'slug' => 'laravel']);
         config()->set('cv.parser.fallback_to_rules', true);
-        Http::fake(['api.groq.com/*' => Http::response($this->responsePayload([]), 200)]);
+        Http::fakeSequence()
+            ->push($this->jsonValidationFailure(), 400)
+            ->push($this->responsePayload([]), 200);
 
         $parsed = $this->parser()->parse("Skills\nLaravel");
 
         $this->assertSame(['Laravel'], $parsed['skills']);
         $this->assertSame('GROQ_CONTRACT_MISMATCH', $parsed['_meta']['fallback_reason']);
+        $this->assertSame('groq', $parsed['_meta']['requested_driver']);
+        Http::assertSentCount(2);
     }
 
     public function test_bad_request_exposes_only_a_safe_code_and_logs_safe_identifiers(): void
@@ -242,6 +316,7 @@ TEXT;
                 'error_code' => 'json_schema_invalid',
             ],
         );
+        Http::assertSentCount(1);
     }
 
     #[DataProvider('productionBirthDateProvider')]
@@ -320,6 +395,17 @@ TEXT;
     private function responsePayload(array $data): array
     {
         return ['choices' => [['message' => ['content' => json_encode($data, JSON_THROW_ON_ERROR)]]]];
+    }
+
+    private function jsonValidationFailure(): array
+    {
+        return [
+            'error' => [
+                'message' => 'Provider body must not be logged.',
+                'type' => 'invalid_request_error',
+                'code' => 'json_validate_failed',
+            ],
+        ];
     }
 
     private function validParsed(): array

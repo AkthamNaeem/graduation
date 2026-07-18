@@ -14,6 +14,10 @@ class GroqCVTextParser implements CVTextParser
 {
     private const ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions';
 
+    private const JSON_SCHEMA_STRICT = 'json_schema_strict';
+
+    private const JSON_OBJECT_FALLBACK = 'json_object_fallback';
+
     private const FALLBACK_REASON_CODES = [
         'GROQ_RATE_LIMITED',
         'GROQ_TIMEOUT',
@@ -61,8 +65,65 @@ class GroqCVTextParser implements CVTextParser
             throw new CVParserException('GROQ_AUTHENTICATION_FAILED');
         }
 
-        $response = $this->sendWithLimitedRetry($apiKey, $rawText);
+        $response = $this->sendWithLimitedRetry($apiKey, $rawText, self::JSON_SCHEMA_STRICT, 3);
+        $structuredOutputMode = self::JSON_SCHEMA_STRICT;
+        $structuredOutputFallbackReason = null;
+
+        if ($this->isJsonValidationFailure($response)) {
+            Log::warning('Groq strict structured output failed; trying JSON object fallback.', [
+                'http_status' => 400,
+                'error_type' => $this->safeErrorIdentifier($response->json('error.type')),
+                'error_code' => 'json_validate_failed',
+            ]);
+
+            $response = $this->sendWithLimitedRetry($apiKey, $rawText, self::JSON_OBJECT_FALLBACK, 1);
+            $structuredOutputMode = self::JSON_OBJECT_FALLBACK;
+            $structuredOutputFallbackReason = 'json_validate_failed';
+        }
+
         $this->assertSuccessfulResponse($response);
+        $parsed = $this->parseResponse($response);
+
+        $parsed['_meta'] = [
+            'parser_driver' => 'groq',
+            'model' => (string) config('cv.groq.model'),
+            'fallback_used' => false,
+            'structured_output_mode' => $structuredOutputMode,
+            'schema_version' => '1.0',
+        ];
+        if ($structuredOutputFallbackReason !== null) {
+            $parsed['_meta']['structured_output_fallback_reason'] = $structuredOutputFallbackReason;
+        }
+
+        return $parsed;
+    }
+
+    private function sendWithLimitedRetry(string $apiKey, string $rawText, string $mode, int $maximumAttempts): Response
+    {
+        $attempts = 0;
+        do {
+            $attempts++;
+            try {
+                $response = Http::acceptJson()
+                    ->withToken($apiKey)
+                    ->connectTimeout((int) config('cv.groq.connect_timeout', 10))
+                    ->timeout((int) config('cv.groq.timeout', 60))
+                    ->post(self::ENDPOINT, $this->requestBody($rawText, $mode));
+            } catch (ConnectionException) {
+                throw new CVParserException('GROQ_TIMEOUT');
+            }
+
+            if (! ($response->status() === 429 || $response->serverError()) || $attempts >= $maximumAttempts) {
+                return $response;
+            }
+
+            usleep(100000 * $attempts);
+        } while (true);
+    }
+
+    /** @return array<string, mixed> */
+    private function parseResponse(Response $response): array
+    {
         $payload = $response->json();
         $message = is_array($payload) ? ($payload['choices'][0]['message'] ?? null) : null;
 
@@ -85,37 +146,13 @@ class GroqCVTextParser implements CVTextParser
             throw new CVParserException('GROQ_CONTRACT_MISMATCH');
         }
 
-        $parsed['_meta'] = [
-            'parser_driver' => 'groq',
-            'model' => (string) config('cv.groq.model'),
-            'fallback_used' => false,
-            'schema_version' => '1.0',
-        ];
-
         return $parsed;
     }
 
-    private function sendWithLimitedRetry(string $apiKey, string $rawText): Response
+    private function isJsonValidationFailure(Response $response): bool
     {
-        $attempts = 0;
-        do {
-            $attempts++;
-            try {
-                $response = Http::acceptJson()
-                    ->withToken($apiKey)
-                    ->connectTimeout((int) config('cv.groq.connect_timeout', 10))
-                    ->timeout((int) config('cv.groq.timeout', 60))
-                    ->post(self::ENDPOINT, $this->requestBody($rawText));
-            } catch (ConnectionException) {
-                throw new CVParserException('GROQ_TIMEOUT');
-            }
-
-            if (! ($response->status() === 429 || $response->serverError()) || $attempts >= 3) {
-                return $response;
-            }
-
-            usleep(100000 * $attempts);
-        } while (true);
+        return $response->status() === 400
+            && $this->safeErrorIdentifier($response->json('error.code')) === 'json_validate_failed';
     }
 
     private function assertSuccessfulResponse(Response $response): void
@@ -151,22 +188,36 @@ class GroqCVTextParser implements CVTextParser
     }
 
     /** @return array<string, mixed> */
-    private function requestBody(string $rawText): array
+    private function requestBody(string $rawText, string $mode): array
     {
-        return [
+        $body = [
             'model' => (string) config('cv.groq.model', 'openai/gpt-oss-20b'),
             'messages' => [
-                ['role' => 'system', 'content' => $this->prompt->text()],
+                ['role' => 'system', 'content' => $this->systemPrompt($mode)],
                 ['role' => 'user', 'content' => $rawText],
             ],
-            'response_format' => [
+        ];
+
+        $body['response_format'] = $mode === self::JSON_OBJECT_FALLBACK
+            ? ['type' => 'json_object']
+            : [
                 'type' => 'json_schema',
                 'json_schema' => [
                     'name' => 'cv_parsing_result',
                     'strict' => true,
                     'schema' => $this->schema->definition(),
                 ],
-            ],
-        ];
+            ];
+
+        return $body;
+    }
+
+    private function systemPrompt(string $mode): string
+    {
+        if ($mode !== self::JSON_OBJECT_FALLBACK) {
+            return $this->prompt->text();
+        }
+
+        return $this->prompt->text()."\n\n".$this->prompt->jsonObjectFallbackText();
     }
 }
