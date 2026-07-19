@@ -53,6 +53,10 @@ class GroqCVTextParserTest extends TestCase
                 && ! isset($request['reasoning_format'])
                 && str_contains($request['messages'][0]['content'], 'When day, month, and year are explicitly available, return YYYY-MM-DD.')
                 && str_contains($request['messages'][0]['content'], 'Return YYYY-MM when month and year are available.')
+                && str_contains($request['messages'][0]['content'], 'Extract every distinct experience entry')
+                && str_contains($request['messages'][0]['content'], 'Concurrent or overlapping jobs are valid')
+                && str_contains($request['messages'][0]['content'], 'Freelance is a valid company_name')
+                && str_contains($request['messages'][0]['content'], 'Extract every education entry')
                 && $request['messages'][1]['content'] === 'Laravel Developer at FutureX'
                 && $request['response_format']['type'] === 'json_schema'
                 && $request['response_format']['json_schema']['strict'] === true
@@ -111,6 +115,71 @@ TEXT;
         $this->assertSame(['Laravel', 'MySQL'], $parsed['skills']);
     }
 
+    public function test_synthetic_full_cv_keeps_three_overlapping_experiences_and_education_after_normalization(): void
+    {
+        $rawText = <<<'TEXT'
+PERSONAL INFORMATION
+Birth Date: 21 April 2002
+
+EXPERIENCE
+January 2026 - Present
+Laravel Developer
+Nova Systems
+- Build APIs
+
+October 2024 - December 2025
+Software Developer
+Orbit Labs
+- Maintain services
+
+January 2025 - Present
+Web Developer
+Freelance
+- CMS customization & plugin development
+
+EDUCATION
+Bachelor's degree
+Information Technology
+Riverside University
+2020-2026 Expected
+
+SKILLS
+React, React Native, Expo
+react
+
+LANGUAGES
+Arabic: Native
+English: Intermediate
+TEXT;
+        $data = $this->validParsed();
+        $data['birth_date'] = '21 April 2002';
+        $data['experience'] = [
+            $this->experience('Laravel Developer', 'Nova Systems', '2026-01', null, true, 'Build APIs'),
+            $this->experience('Software Developer', 'Orbit Labs', '2024-10', '2025-12', false, 'Maintain services'),
+            $this->experience('Web Developer', 'Freelance', '2025-01', null, true, 'CMS customization & plugin development'),
+        ];
+        $data['education'] = [[
+            'degree' => "Bachelor's degree", 'field_of_study' => 'Information Technology',
+            'institution' => 'Riverside University', 'start_year' => 2020, 'graduation_year' => 2026,
+            'is_expected' => true, 'description' => null,
+            'evidence' => "Bachelor's degree Information Technology Riverside University 2020-2026 Expected",
+            'confidence_score' => 1,
+        ]];
+        $data['skills'] = ['React, React Native, Expo', 'react'];
+        $data['languages'] = [['name' => 'Arabic', 'level' => 'Native'], ['name' => 'English', 'level' => 'Intermediate']];
+        Http::fake(['api.groq.com/*' => Http::response($this->responsePayload($data), 200)]);
+
+        $parsed = (new CVParsedDataNormalizer)->normalize($this->parser()->parse($rawText), $rawText);
+
+        $this->assertSame('2002-04-21', $parsed['birth_date']);
+        $this->assertSame(['Nova Systems', 'Orbit Labs', 'Freelance'], array_column($parsed['experience'], 'company_name'));
+        $this->assertCount(1, $parsed['education']);
+        $this->assertCount(2, $parsed['languages']);
+        $this->assertSame(['React', 'React Native', 'Expo'], $parsed['skills']);
+        $this->assertSame(3, $parsed['_meta']['normalization']['output_counts']['experience']);
+        $this->assertSame(1, $parsed['_meta']['normalization']['output_counts']['education']);
+    }
+
     public function test_json_validate_failed_retries_once_with_json_object_mode(): void
     {
         $rawText = 'PRIVATE_CV_MARKER Birth Date: 21 April 2002';
@@ -139,6 +208,10 @@ TEXT;
         $this->assertSame($rawText, $requests[1]['messages'][1]['content']);
         $this->assertStringContainsString('Return one valid JSON object only.', $requests[1]['messages'][0]['content']);
         $this->assertStringContainsString('Every experience and education item must include all contract fields.', $requests[1]['messages'][0]['content']);
+        $this->assertStringContainsString('Extract every distinct experience entry', $requests[1]['messages'][0]['content']);
+        $this->assertStringContainsString('Concurrent or overlapping jobs are valid', $requests[1]['messages'][0]['content']);
+        $this->assertStringContainsString('Freelance is a valid company_name', $requests[1]['messages'][0]['content']);
+        $this->assertStringContainsString('Extract every education entry', $requests[1]['messages'][0]['content']);
         $this->assertStringNotContainsString('supplied JSON schema', $requests[1]['messages'][0]['content']);
         $this->assertStringContainsString('Do not output markdown or code fences.', $requests[1]['messages'][0]['content']);
         $this->assertStringEndsWith('Keep each description and responsibility concise.', $requests[1]['messages'][0]['content']);
@@ -512,6 +585,16 @@ TEXT;
             'full_name' => null, 'email' => null, 'phone' => null, 'location' => null,
             'birth_date' => null, 'summary' => null, 'experience' => [], 'education' => [],
             'skills' => [], 'languages' => [],
+        ];
+    }
+
+    private function experience(string $title, string $company, string $startDate, ?string $endDate, bool $current, string $responsibility): array
+    {
+        return [
+            'title' => $title, 'company_name' => $company, 'location' => null, 'work_mode' => null,
+            'start_date' => $startDate, 'end_date' => $endDate, 'is_current' => $current,
+            'description' => null, 'responsibilities' => [$responsibility],
+            'evidence' => "{$title}\n{$company}\n{$responsibility}", 'confidence_score' => 1,
         ];
     }
 }

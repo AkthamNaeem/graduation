@@ -101,7 +101,7 @@ The only valid drivers are `rules`, `openai`, and `groq`; an unknown value fails
 
 With the synchronous queue driver, the CV row and private file are committed before parsing is dispatched. A later parsing failure keeps both, marks the CV as `failed`, and preserves a safe error code; storage compensation remains limited to failures before the database transaction commits.
 
-The JSON contract contains `full_name`, `email`, `phone`, `location`, `birth_date`, `summary`, `experience`, `education`, `skills`, and `languages`. A complete birth date is normalized deterministically to `YYYY-MM-DD`; partial or invalid birth dates become `null`. Experience and education entries include source evidence and confidence. After parsing, deterministic normalization trims strings, deduplicates skills, rejects date-only/prose experiences, enforces date order, removes education without an institution, and removes AI entries whose evidence is absent from the source text.
+The JSON contract contains `full_name`, `email`, `phone`, `location`, `birth_date`, `summary`, `experience`, `education`, `skills`, and `languages`. Extracted PDF/DOCX text is normalized before storage and provider use, including HTML entity decoding; PDFs may recover a missing labeled email only from a validated `mailto:` annotation. A complete birth date is normalized deterministically to `YYYY-MM-DD`; partial or invalid birth dates become `null`. Experience and education use layered source anchors rather than one contiguous evidence substring, while safe count-only diagnostics explain normalization drops. Grouped skills split only on commas outside parentheses.
 
 Local verification never calls the real provider:
 

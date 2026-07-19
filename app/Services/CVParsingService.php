@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Contracts\CV\CVTextParser;
 use App\Services\CV\CVParsedDataNormalizer;
+use App\Services\CV\ExtractedTextNormalizer;
+use App\Services\CV\PDFEmailRecoveryService;
 use InvalidArgumentException;
 use PhpOffice\PhpWord\Element\AbstractContainer;
 use PhpOffice\PhpWord\Element\Text;
@@ -16,17 +18,21 @@ class CVParsingService
     public function __construct(
         private readonly CVTextParser $textParser,
         private readonly CVParsedDataNormalizer $normalizer,
+        private readonly ExtractedTextNormalizer $textNormalizer,
+        private readonly PDFEmailRecoveryService $pdfEmailRecovery,
     ) {}
 
     public function extractText(string $filePath): string
     {
         $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
 
-        return match ($extension) {
+        $text = match ($extension) {
             'pdf' => $this->extractPdfText($filePath),
             'docx' => $this->extractDocxText($filePath),
             default => throw new InvalidArgumentException('Unsupported CV file type.'),
         };
+
+        return $this->textNormalizer->normalize($text);
     }
 
     /** @return array<string, mixed> */
@@ -37,7 +43,11 @@ class CVParsingService
 
     private function extractPdfText(string $filePath): string
     {
-        return (new PdfParser)->parseFile($filePath)->getText();
+        $document = (new PdfParser)->parseFile($filePath);
+        $text = $this->textNormalizer->normalize($document->getText());
+        $email = $this->pdfEmailRecovery->recover($text, $document);
+
+        return $email === null ? $text : $this->pdfEmailRecovery->insertAfterEmptyLabel($text, $email);
     }
 
     private function extractDocxText(string $filePath): string

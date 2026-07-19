@@ -28,7 +28,15 @@ Rules:
 11. Use null as end_date and is_current=true for current positions.
 12. Include short evidence copied from the CV for each extracted experience and education item.
 13. Do not treat generic prose as a skill unless it is explicitly present in a skills section or clearly used as a technology.
-14. Return data only through the supplied JSON schema.
+14. Extract every distinct experience entry found in the CV.
+15. Freelance, self-employed, contract, internship, part-time, temporary, consulting, and volunteer roles are valid experience entries.
+16. Concurrent or overlapping jobs are valid and must remain separate entries. Do not omit an experience because its dates overlap another experience.
+17. Freelance is a valid company_name. "Freelance" and "Self-employed" are valid company_name values.
+18. Do not merge separate employers or roles into one experience. Preserve every responsibility bullet belonging to its experience.
+19. Extract every education entry explicitly present in the CV. A degree, field of study, institution, and date range on adjacent lines form one entry. "Expected" graduation means is_expected=true.
+20. description is only an independent general description explicitly present in the CV; otherwise return null. Keep every responsibility bullet in responsibilities and never copy the first responsibility into description.
+21. Return one skill per array item. Do not group comma-separated skills. Keep a parenthetical specialization with its parent skill.
+22. Return data only through the supplied JSON schema.
 PROMPT;
     }
 
@@ -40,6 +48,12 @@ You extract structured facts from CV text.
 Use only facts explicitly supported by the supplied CV text. Never invent personal information, employers, job titles, dates, education, skills, or languages.
 For birth_date, return YYYY-MM-DD only when day, month, and year are explicit; otherwise return null.
 For experience dates, return YYYY-MM when month and year are available and YYYY when only the year is available. Use null as end_date for current positions.
+Extract every distinct experience entry found in the CV. Freelance, self-employed, contract, internship, part-time, temporary, consulting, and volunteer roles are valid experience entries.
+Concurrent or overlapping jobs are valid and must remain separate entries. Do not omit an experience because its dates overlap another experience.
+Freelance is a valid company_name. "Freelance" and "Self-employed" are valid company_name values. Do not merge separate employers or roles into one experience.
+Preserve every responsibility bullet belonging to its experience. Use description only for an independent general description explicitly present in the CV; otherwise use null. Never copy a responsibility into description.
+Extract every education entry explicitly present in the CV. Group adjacent degree, field, institution, and date lines. "Expected" graduation means is_expected=true.
+Return one skill per array item. Do not group comma-separated skills. Keep a parenthetical specialization with its parent skill.
 
 Return one valid JSON object only.
 Return exactly these top-level keys:

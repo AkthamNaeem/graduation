@@ -94,6 +94,7 @@ class ParseCVFileJob implements ShouldQueue
                 'structured_output_mode' => $parsedJson['_meta']['structured_output_mode'] ?? null,
                 'structured_output_fallback_reason' => $parsedJson['_meta']['structured_output_fallback_reason'] ?? null,
                 'schema_version' => $parsedJson['_meta']['schema_version'] ?? '1.0',
+                'normalization' => $parsedJson['_meta']['normalization'] ?? null,
             ]);
         } catch (Throwable $exception) {
             $this->cvFile->forceFill([
