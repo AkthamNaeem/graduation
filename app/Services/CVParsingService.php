@@ -4,12 +4,13 @@ namespace App\Services;
 
 use App\Contracts\CV\CVTextParser;
 use App\Services\CV\CVParsedDataNormalizer;
+use App\Services\CV\EmailAddressExtractor;
 use App\Services\CV\ExtractedTextNormalizer;
 use App\Services\CV\PDFEmailRecoveryService;
 use InvalidArgumentException;
 use PhpOffice\PhpWord\Element\AbstractContainer;
+use PhpOffice\PhpWord\Element\Link;
 use PhpOffice\PhpWord\Element\Text;
-use PhpOffice\PhpWord\Element\TextRun;
 use PhpOffice\PhpWord\IOFactory;
 use Smalot\PdfParser\Parser as PdfParser;
 
@@ -20,6 +21,7 @@ class CVParsingService
         private readonly CVParsedDataNormalizer $normalizer,
         private readonly ExtractedTextNormalizer $textNormalizer,
         private readonly PDFEmailRecoveryService $pdfEmailRecovery,
+        private readonly EmailAddressExtractor $emailExtractor,
     ) {}
 
     public function extractText(string $filePath): string
@@ -61,42 +63,89 @@ class CVParsingService
             }
         }
 
-        return implode(PHP_EOL, array_filter($lines));
+        return implode(PHP_EOL, array_filter($lines, fn (string $line): bool => trim($line) !== ''));
     }
 
     /** @param array<int, string> $lines */
     private function appendElementText(mixed $element, array &$lines): void
     {
-        if ($element instanceof Text) {
-            $lines[] = $element->getText();
-
-            return;
-        }
-
-        if ($element instanceof TextRun || $element instanceof AbstractContainer) {
-            $textParts = [];
-            foreach ($element->getElements() as $child) {
-                if ($child instanceof Text) {
-                    $textParts[] = $child->getText();
-                } else {
-                    $this->appendElementText($child, $lines);
-                }
-            }
-            if ($textParts !== []) {
-                $lines[] = implode('', $textParts);
-            }
-
-            return;
-        }
-
         if (method_exists($element, 'getRows')) {
             foreach ($element->getRows() as $row) {
                 foreach ($row->getCells() as $cell) {
-                    foreach ($cell->getElements() as $child) {
-                        $this->appendElementText($child, $lines);
+                    $text = $this->extractInlineText($cell);
+                    if (trim($text) !== '') {
+                        $lines[] = $text;
                     }
                 }
             }
+
+            return;
         }
+
+        $text = $this->extractInlineText($element);
+        if (trim($text) !== '') {
+            $lines[] = $text;
+        }
+    }
+
+    private function extractInlineText(mixed $element): string
+    {
+        if ($element instanceof Text) {
+            return (string) $element->getText();
+        }
+
+        if ($element instanceof Link) {
+            $displayText = trim((string) $element->getText());
+            if ($displayText !== '') {
+                return $displayText;
+            }
+
+            $source = trim((string) $element->getSource());
+            $email = $this->emailExtractor->extractFromMailto($source);
+            if ($email !== null) {
+                return $email;
+            }
+
+            return $this->isSafeUrl($source) ? $source : '';
+        }
+
+        if ($element instanceof AbstractContainer) {
+            $text = '';
+            foreach ($element->getElements() as $child) {
+                $text = $this->appendInlinePart($text, $this->extractInlineText($child));
+            }
+
+            return $text;
+        }
+
+        return '';
+    }
+
+    private function appendInlinePart(string $text, string $part): string
+    {
+        if ($part === '') {
+            return $text;
+        }
+
+        $partEmail = $this->emailExtractor->extractFromText($part);
+        if ($partEmail === null) {
+            return $text.$part;
+        }
+
+        if (str_ends_with(strtolower(rtrim($text)), strtolower($partEmail))
+            && preg_match('/^\h*'.preg_quote($partEmail, '/').'/iu', $part) === 1) {
+            $part = preg_replace('/^\h*'.preg_quote($partEmail, '/').'/iu', '', $part, 1) ?? $part;
+        }
+
+        return $text.$part;
+    }
+
+    private function isSafeUrl(string $value): bool
+    {
+        if (filter_var($value, FILTER_VALIDATE_URL) === false) {
+            return false;
+        }
+
+        return in_array(strtolower((string) parse_url($value, PHP_URL_SCHEME)), ['http', 'https'], true);
     }
 }

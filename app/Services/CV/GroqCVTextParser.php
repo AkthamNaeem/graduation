@@ -26,6 +26,7 @@ class GroqCVTextParser implements CVTextParser
         'GROQ_INVALID_JSON',
         'GROQ_CONTRACT_MISMATCH',
         'GROQ_JSON_GENERATION_FAILED',
+        'GROQ_REQUEST_TOO_LARGE',
     ];
 
     public function __construct(
@@ -173,6 +174,18 @@ class GroqCVTextParser implements CVTextParser
         if (in_array($response->status(), [401, 403], true)) {
             throw new CVParserException('GROQ_AUTHENTICATION_FAILED');
         }
+        if ($response->status() === 413) {
+            Log::warning('Groq CV parser request exceeded provider token capacity.', [
+                'http_status' => 413,
+                'error_type' => $this->safeErrorIdentifier($response->json('error.type')),
+                'error_code' => $this->safeErrorIdentifier($response->json('error.code')),
+                'structured_output_mode' => $mode,
+                'max_completion_tokens' => $requestOptions['max_completion_tokens'],
+                'reasoning_effort' => $requestOptions['reasoning_effort'],
+            ]);
+
+            throw new CVParserException('GROQ_REQUEST_TOO_LARGE');
+        }
         if ($response->status() === 429) {
             throw new CVParserException('GROQ_RATE_LIMITED');
         }
@@ -255,11 +268,11 @@ class GroqCVTextParser implements CVTextParser
     /** @return array{max_completion_tokens: int, reasoning_effort: string, temperature: float} */
     private function requestOptions(): array
     {
-        $maxCompletionTokens = config('cv.groq.max_completion_tokens', 8192);
+        $maxCompletionTokens = config('cv.groq.max_completion_tokens', 4096);
         if (! is_numeric($maxCompletionTokens)
             || (int) $maxCompletionTokens < 1024
             || (int) $maxCompletionTokens > 16384) {
-            $maxCompletionTokens = 8192;
+            $maxCompletionTokens = 4096;
         }
 
         $reasoningEffort = config('cv.groq.reasoning_effort', 'low');

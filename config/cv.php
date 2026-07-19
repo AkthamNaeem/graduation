@@ -18,7 +18,7 @@ return [
         'model' => env('GROQ_CV_MODEL', 'openai/gpt-oss-20b'),
         'timeout' => (int) env('GROQ_CV_TIMEOUT', 60),
         'connect_timeout' => (int) env('GROQ_CV_CONNECT_TIMEOUT', 10),
-        'max_completion_tokens' => (int) env('GROQ_CV_MAX_COMPLETION_TOKENS', 8192),
+        'max_completion_tokens' => (int) env('GROQ_CV_MAX_COMPLETION_TOKENS', 4096),
         'reasoning_effort' => env('GROQ_CV_REASONING_EFFORT', 'low'),
         'temperature' => (float) env('GROQ_CV_TEMPERATURE', 0.5),
     ],

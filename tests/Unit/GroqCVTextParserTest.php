@@ -45,7 +45,7 @@ class GroqCVTextParserTest extends TestCase
                 && $request->hasHeader('Accept', 'application/json')
                 && $request->hasHeader('Content-Type', 'application/json')
                 && $request['model'] === 'configured-groq-model'
-                && $request['max_completion_tokens'] === 8192
+                && $request['max_completion_tokens'] === 4096
                 && $request['reasoning_effort'] === 'low'
                 && $request['include_reasoning'] === false
                 && $request['temperature'] === 0.5
@@ -178,6 +178,7 @@ TEXT;
         $this->assertSame(['React', 'React Native', 'Expo'], $parsed['skills']);
         $this->assertSame(3, $parsed['_meta']['normalization']['output_counts']['experience']);
         $this->assertSame(1, $parsed['_meta']['normalization']['output_counts']['education']);
+        $this->assertSame(0, array_sum($parsed['_meta']['normalization']['dropped_counts']));
     }
 
     public function test_json_validate_failed_retries_once_with_json_object_mode(): void
@@ -200,7 +201,7 @@ TEXT;
         $this->assertSame('json_schema', $requests[0]['response_format']['type']);
         $this->assertSame(['type' => 'json_object'], $requests[1]['response_format']);
         $this->assertSame('configured-groq-model', $requests[1]['model']);
-        $this->assertSame(8192, $requests[1]['max_completion_tokens']);
+        $this->assertSame(4096, $requests[1]['max_completion_tokens']);
         $this->assertSame('low', $requests[1]['reasoning_effort']);
         $this->assertFalse($requests[1]['include_reasoning']);
         $this->assertSame(0.5, $requests[1]['temperature']);
@@ -223,7 +224,7 @@ TEXT;
                 'error_type' => 'invalid_request_error',
                 'error_code' => 'json_validate_failed',
                 'structured_output_mode' => 'json_schema_strict',
-                'max_completion_tokens' => 8192,
+                'max_completion_tokens' => 4096,
                 'reasoning_effort' => 'low',
             ],
         );
@@ -254,7 +255,7 @@ TEXT;
 
         $this->parser()->parse('CV');
 
-        Http::assertSent(fn (Request $request): bool => $request['max_completion_tokens'] === 8192
+        Http::assertSent(fn (Request $request): bool => $request['max_completion_tokens'] === 4096
             && $request['reasoning_effort'] === 'low'
             && $request['temperature'] === 0.5);
     }
@@ -284,7 +285,7 @@ TEXT;
                 'error_type' => 'invalid_request_error',
                 'error_code' => 'json_validate_failed',
                 'structured_output_mode' => 'json_object_fallback',
-                'max_completion_tokens' => 8192,
+                'max_completion_tokens' => 4096,
                 'reasoning_effort' => 'low',
             ],
         );
@@ -347,6 +348,56 @@ TEXT;
             $this->assertSame('GROQ_AUTHENTICATION_FAILED', $exception->reasonCode);
             Http::assertNothingSent();
         }
+    }
+
+    public function test_request_too_large_has_a_safe_code_log_and_is_not_retried(): void
+    {
+        $rawText = 'PRIVATE_CV_MARKER';
+        Log::spy();
+        Http::fake(['api.groq.com/*' => Http::response([
+            'error' => [
+                'message' => 'PRIVATE_PROVIDER_BODY',
+                'type' => 'rate_limit_exceeded',
+                'code' => 'request_too_large',
+            ],
+        ], 413)]);
+
+        try {
+            $this->parser()->parse($rawText);
+            $this->fail('Expected request-too-large failure.');
+        } catch (CVParserException $exception) {
+            $this->assertSame('GROQ_REQUEST_TOO_LARGE', $exception->reasonCode);
+            $this->assertNotSame('GROQ_BAD_REQUEST', $exception->reasonCode);
+            $this->assertStringNotContainsString($rawText, $exception->getMessage());
+            $this->assertStringNotContainsString('groq-test-key', $exception->getMessage());
+        }
+
+        Http::assertSentCount(1);
+        Log::shouldHaveReceived('warning')->once()->with(
+            'Groq CV parser request exceeded provider token capacity.',
+            [
+                'http_status' => 413,
+                'error_type' => 'rate_limit_exceeded',
+                'error_code' => 'request_too_large',
+                'structured_output_mode' => 'json_schema_strict',
+                'max_completion_tokens' => 4096,
+                'reasoning_effort' => 'low',
+            ],
+        );
+    }
+
+    public function test_request_too_large_uses_rules_only_when_fallback_is_enabled(): void
+    {
+        Skill::create(['name' => 'Laravel', 'slug' => 'laravel']);
+        config()->set('cv.parser.fallback_to_rules', true);
+        Http::fake(['api.groq.com/*' => Http::response([], 413)]);
+
+        $parsed = $this->parser()->parse("Skills\nLaravel");
+
+        $this->assertSame(['Laravel'], $parsed['skills']);
+        $this->assertSame('rules', $parsed['_meta']['parser_driver']);
+        $this->assertSame('GROQ_REQUEST_TOO_LARGE', $parsed['_meta']['fallback_reason']);
+        Http::assertSentCount(1);
     }
 
     #[DataProvider('terminalFailureProvider')]
@@ -483,7 +534,7 @@ TEXT;
                 'error_type' => 'invalid_request_error',
                 'error_code' => 'json_schema_invalid',
                 'structured_output_mode' => 'json_schema_strict',
-                'max_completion_tokens' => 8192,
+                'max_completion_tokens' => 4096,
                 'reasoning_effort' => 'low',
             ],
         );

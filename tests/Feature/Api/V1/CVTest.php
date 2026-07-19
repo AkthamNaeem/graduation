@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Mockery;
+use Tests\Support\SyntheticDocx;
 use Tests\Support\SyntheticPdf;
 use Tests\TestCase;
 
@@ -149,6 +150,38 @@ class CVTest extends TestCase
         Http::assertSent(fn ($request): bool => str_contains($request['messages'][1]['content'], 'linked.candidate@example.com')
             && str_contains($request['messages'][1]['content'], "Bachelor's degree")
             && ! str_contains($request['messages'][1]['content'], '&#039;'));
+    }
+
+    public function test_synthetic_docx_upload_extracts_a_word_email_link_and_stores_the_groq_draft(): void
+    {
+        Storage::fake('local');
+        config([
+            'filesystems.private_disk' => 'local',
+            'queue.default' => 'sync',
+            'cv.parser.driver' => 'groq',
+            'cv.parser.fallback_to_rules' => false,
+            'cv.groq.api_key' => 'fake-test-key',
+        ]);
+        $providerResult = $this->syntheticGroqResult();
+        $providerResult['email'] = 'synthetic@example.com';
+        Http::fake(['api.groq.com/*' => Http::response([
+            'choices' => [['message' => ['content' => json_encode($providerResult, JSON_THROW_ON_ERROR)]]],
+        ], 200)]);
+        $user = $this->jobSeeker('synthetic.docx.owner@example.com');
+
+        $response = $this->withToken($this->tokenFor($user))
+            ->post('/api/v1/cv/upload', [
+                'file' => UploadedFile::fake()->createWithContent('synthetic-resume.docx', SyntheticDocx::make()),
+            ], ['Accept' => 'application/json'])
+            ->assertCreated()
+            ->assertJsonPath('data.status', 'parsed');
+
+        $cvFile = CVFile::query()->findOrFail($response->json('data.id'));
+        $result = $cvFile->parsingResult()->firstOrFail();
+
+        $this->assertStringContainsString('Email: synthetic@example.com', $result->raw_text);
+        $this->assertSame('synthetic@example.com', $result->parsed_json['email']);
+        Http::assertSent(fn ($request): bool => str_contains($request['messages'][1]['content'], 'Email: synthetic@example.com'));
     }
 
     public function test_employer_cannot_access_cv_endpoints(): void

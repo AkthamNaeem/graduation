@@ -239,10 +239,10 @@ class OpenAICVTextParserTest extends TestCase
     private function regressionCv(): string
     {
         return <<<'TEXT'
-AKTHAM MAHMOUD NAEEM
-Phone: +963-933-170-163
-Email: engakthamnaeem@gmail.com
-Address: Swaida, Syria
+Synthetic Candidate
+Phone: +000000000
+Email: synthetic.candidate@example.com
+Address: Example City
 
 EXPERIENCE
 

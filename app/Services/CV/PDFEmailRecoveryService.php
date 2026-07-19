@@ -7,9 +7,11 @@ use Throwable;
 
 class PDFEmailRecoveryService
 {
+    public function __construct(private readonly EmailAddressExtractor $emailExtractor) {}
+
     public function recover(string $text, Document $document): ?string
     {
-        $email = $this->emailFromString($text);
+        $email = $this->emailExtractor->extractFromText($text);
         if ($email !== null) {
             return $email;
         }
@@ -38,7 +40,7 @@ class PDFEmailRecoveryService
 
     public function insertAfterEmptyLabel(string $text, string $email): string
     {
-        if (! $this->isValidEmail($email) || $this->emailFromString($text) !== null) {
+        if (! $this->emailExtractor->isValid($email) || $this->emailExtractor->extractFromText($text) !== null) {
             return $text;
         }
 
@@ -72,26 +74,10 @@ class PDFEmailRecoveryService
         }
 
         $value = html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8');
-        if (preg_match('/mailto:([^?\s<>()]+)/iu', $value, $matches) !== 1) {
+        if (preg_match('/mailto:[^\s<>()]+/iu', $value, $matches) !== 1) {
             return null;
         }
 
-        $candidate = rawurldecode($matches[1]);
-
-        return $this->isValidEmail($candidate) ? $candidate : null;
-    }
-
-    private function emailFromString(string $value): ?string
-    {
-        if (preg_match('/[a-z0-9.!#$%&\'*+\/=?^_`{|}~-]+@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+/iu', $value, $matches) !== 1) {
-            return null;
-        }
-
-        return $this->isValidEmail($matches[0]) ? $matches[0] : null;
-    }
-
-    private function isValidEmail(string $value): bool
-    {
-        return filter_var($value, FILTER_VALIDATE_EMAIL) !== false;
+        return $this->emailExtractor->extractFromMailto($matches[0]);
     }
 }
