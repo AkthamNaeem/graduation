@@ -164,6 +164,18 @@ class CVTest extends TestCase
         ]);
         $providerResult = $this->syntheticGroqResult();
         $providerResult['email'] = 'synthetic@example.com';
+        $providerResult['birth_date'] = null;
+        $providerResult['nationality'] = 'Example Nationality';
+        $providerResult['marital_status'] = 'Single';
+        $providerResult['experience'] = [];
+        $providerResult['education'] = [];
+        $providerResult['skills'] = [];
+        $providerResult['languages'] = [];
+        $providerResult['certifications'] = [[
+            'name' => 'First Aid', 'issuer' => null, 'issue_year' => 2024,
+            'expiration_year' => null, 'description' => null, 'evidence' => '2024 First Aid',
+            'confidence_score' => 1,
+        ]];
         Http::fake(['api.groq.com/*' => Http::response([
             'choices' => [['message' => ['content' => json_encode($providerResult, JSON_THROW_ON_ERROR)]]],
         ], 200)]);
@@ -181,6 +193,27 @@ class CVTest extends TestCase
 
         $this->assertStringContainsString('Email: synthetic@example.com', $result->raw_text);
         $this->assertSame('synthetic@example.com', $result->parsed_json['email']);
+        $this->assertSame('Example Nationality', $result->parsed_json['nationality']);
+        $this->assertSame('Single', $result->parsed_json['marital_status']);
+        $this->assertCount(1, $result->parsed_json['certifications']);
+        $this->assertSame('First Aid', $result->parsed_json['certifications'][0]['name']);
+        $this->assertSame(2024, $result->parsed_json['certifications'][0]['issue_year']);
+        $this->assertSame(0, array_sum($result->parsed_json['_meta']['normalization']['dropped_counts']));
+
+        $this->withToken($this->tokenFor($user))
+            ->getJson("/api/v1/cv/{$cvFile->id}/parsed")
+            ->assertOk()
+            ->assertJsonPath('data.parsed_json.nationality', 'Example Nationality')
+            ->assertJsonPath('data.parsed_json.marital_status', 'Single')
+            ->assertJsonPath('data.parsed_json.certifications.0.name', 'First Aid')
+            ->assertJsonPath('data.parsed_json.certifications.0.issue_year', 2024);
+
+        $this->withToken($this->tokenFor($user))
+            ->postJson("/api/v1/cv/{$cvFile->id}/confirm")
+            ->assertOk();
+        $this->assertDatabaseCount('profile_change_suggestions', 0);
+        $this->assertDatabaseCount('experiences', 0);
+        $this->assertDatabaseCount('education', 0);
         Http::assertSent(fn ($request): bool => str_contains($request['messages'][1]['content'], 'Email: synthetic@example.com'));
     }
 
@@ -400,6 +433,8 @@ class CVTest extends TestCase
             'EDUCATION', 'Bachelor&#039;s degree', 'Information Technology', 'Riverside University', '2020-2026 Expected',
             'SKILLS', 'React, React Native, Expo', 'react',
             'LANGUAGES', 'Arabic: Native', 'English: Intermediate',
+            'CERTIFICATIONS', '2024', 'First Aid',
+            'PERSONAL INFORMATION', 'Nationality: Example Nationality', 'Marital Status: Single',
         ];
     }
 
@@ -415,7 +450,8 @@ class CVTest extends TestCase
 
         return [
             'full_name' => 'Synthetic Candidate', 'email' => 'linked.candidate@example.com',
-            'phone' => null, 'location' => null, 'birth_date' => '21 April 2002', 'summary' => null,
+            'phone' => null, 'location' => null, 'birth_date' => '21 April 2002',
+            'nationality' => 'Example Nationality', 'marital_status' => 'Single', 'summary' => null,
             'experience' => [
                 $experience('Laravel Developer', 'Nova Systems', '2026-01', null, true, 'Build APIs'),
                 $experience('Software Developer', 'Orbit Labs', '2024-10', '2025-12', false, 'Maintain services'),
@@ -426,6 +462,11 @@ class CVTest extends TestCase
                 'institution' => 'Riverside University', 'start_year' => 2020, 'graduation_year' => 2026,
                 'is_expected' => true, 'description' => null,
                 'evidence' => "Bachelor's degree Information Technology Riverside University 2020-2026 Expected",
+                'confidence_score' => 1,
+            ]],
+            'certifications' => [[
+                'name' => 'First Aid', 'issuer' => null, 'issue_year' => 2024,
+                'expiration_year' => null, 'description' => null, 'evidence' => '2024 First Aid',
                 'confidence_score' => 1,
             ]],
             'skills' => ['React, React Native, Expo', 'react'],

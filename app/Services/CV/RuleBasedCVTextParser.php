@@ -16,11 +16,19 @@ class RuleBasedCVTextParser implements CVTextParser
         $text = $this->normalizeText($rawText);
 
         return [
+            'full_name' => null,
             'email' => $this->extractEmail($text),
             'phone' => $this->extractPhone($text),
+            'location' => null,
+            'birth_date' => null,
+            'nationality' => $this->extractLabeledValue($text, ['nationality']),
+            'marital_status' => $this->extractLabeledValue($text, ['marital status', 'civil status']),
+            'summary' => null,
             'skills' => $this->extractSkills($text),
             'experience' => $this->extractExperience($text),
             'education' => $this->extractEducation($text),
+            'certifications' => $this->extractCertifications($text),
+            'languages' => [],
             '_meta' => [
                 'parser_driver' => 'rules',
                 'fallback_used' => false,
@@ -51,6 +59,55 @@ class RuleBasedCVTextParser implements CVTextParser
         return isset($matches[0])
             ? trim(preg_replace('/\s+/', ' ', $matches[0]) ?? $matches[0])
             : null;
+    }
+
+    /** @param array<int, string> $labels */
+    private function extractLabeledValue(string $text, array $labels): ?string
+    {
+        foreach ($labels as $label) {
+            if (preg_match('/^'.preg_quote($label, '/').'\s*:\s*(?<value>[^\n]+)$/imu', $text, $matches) === 1) {
+                return trim($matches['value']);
+            }
+        }
+
+        return null;
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private function extractCertifications(string $text): array
+    {
+        $lines = $this->sectionLines(
+            $text,
+            ['certifications', 'certificates', 'licenses', 'courses', 'training', 'professional training'],
+            ['experience', 'work experience', 'education', 'skills', 'projects', 'languages', 'personal information'],
+        );
+        $result = [];
+        $pendingYear = null;
+
+        foreach ($lines as $line) {
+            $line = trim($line, "- \t");
+            if (preg_match('/^(19|20)\d{2}$/D', $line) === 1) {
+                $pendingYear = (int) $line;
+
+                continue;
+            }
+            if ($line === '') {
+                continue;
+            }
+
+            $result[] = [
+                'name' => $line,
+                'issuer' => null,
+                'issue_year' => $pendingYear,
+                'expiration_year' => null,
+                'description' => null,
+                'evidence' => $pendingYear === null ? $line : $pendingYear.' '.$line,
+                'confidence_score' => 0.75,
+            ];
+            $pendingYear = null;
+        }
+
+        return $result;
     }
 
     /** @return array<int, string> */

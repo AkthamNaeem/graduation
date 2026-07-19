@@ -27,6 +27,12 @@ class SyntheticDocx
             $section->addText('Backend Developer');
             $section->addText('Example Company');
             $section->addText('2024 - Present');
+            $section->addText('CERTIFICATIONS');
+            $section->addText('2024');
+            $section->addText('First Aid');
+            $section->addText('PERSONAL INFORMATION');
+            $section->addText('Nationality: Example Nationality');
+            $section->addText('Marital Status: Single');
         }
 
         $temporary = tempnam(sys_get_temp_dir(), 'synthetic-docx-');

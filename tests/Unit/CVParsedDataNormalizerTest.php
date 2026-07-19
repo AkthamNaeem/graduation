@@ -153,8 +153,8 @@ TEXT;
         $this->assertSame(1, $diagnostics['dropped_counts']['experience_invalid_evidence']);
         $this->assertSame(1, $diagnostics['dropped_counts']['education_missing_institution']);
         $this->assertSame(1, $diagnostics['dropped_counts']['education_invalid_evidence']);
-        $this->assertSame(['experience' => 2, 'education' => 2, 'skills' => 1], $diagnostics['input_counts']);
-        $this->assertSame(['experience' => 0, 'education' => 0, 'skills' => 1], $diagnostics['output_counts']);
+        $this->assertSame(['experience' => 2, 'education' => 2, 'certifications' => 0, 'skills' => 1], $diagnostics['input_counts']);
+        $this->assertSame(['experience' => 0, 'education' => 0, 'certifications' => 0, 'skills' => 1], $diagnostics['output_counts']);
         $this->assertStringNotContainsString('Imaginary', json_encode($diagnostics, JSON_THROW_ON_ERROR));
     }
 
@@ -211,5 +211,72 @@ TEXT;
         $this->assertNull($normalizer->normalize($base + ['birth_date' => '2002-04'], '')['birth_date']);
         $this->assertNull($normalizer->normalize($base + ['birth_date' => '31 April 2002'], '')['birth_date']);
         $this->assertNull($normalizer->normalize($base + ['birth_date' => 'next Tuesday'], '')['birth_date']);
+    }
+
+    public function test_certifications_are_evidence_bounded_normalized_deduplicated_and_diagnosed(): void
+    {
+        $rawText = <<<'TEXT'
+CERTIFICATIONS
+2024
+First Aid
+Example Institute
+Advanced Safety &amp; Response — 2023
+2025 First Aid
+PERSONAL INFORMATION
+Nationality: Example Nationality
+Marital Status: Single
+TEXT;
+        $base = ['skills' => [], 'experience' => [], 'education' => []];
+        $certification = fn (array $overrides): array => array_replace([
+            'name' => 'First Aid', 'issuer' => null, 'issue_year' => 2024,
+            'expiration_year' => null, 'description' => null, 'evidence' => '2024 First Aid',
+            'confidence_score' => 1,
+        ], $overrides);
+        $data = $base + [
+            'nationality' => ' Example Nationality ',
+            'marital_status' => ' Single ',
+            'certifications' => [
+                $certification([]),
+                $certification([]),
+                $certification(['issue_year' => 2025, 'evidence' => '2025 First Aid']),
+                $certification([
+                    'name' => 'Advanced Safety & Response', 'issuer' => 'Example Institute',
+                    'issue_year' => 2023, 'evidence' => 'Advanced Safety & Response — 2023',
+                ]),
+                $certification(['name' => '', 'evidence' => '']),
+                $certification(['name' => 'Imaginary Certificate', 'evidence' => 'Imaginary Certificate 2024']),
+                $certification(['expiration_year' => 2022]),
+            ],
+        ];
+
+        $normalized = (new CVParsedDataNormalizer)->normalize($data, $rawText);
+        $diagnostics = $normalized['_meta']['normalization'];
+
+        $this->assertSame('Example Nationality', $normalized['nationality']);
+        $this->assertSame('Single', $normalized['marital_status']);
+        $this->assertCount(3, $normalized['certifications']);
+        $this->assertNull($normalized['certifications'][0]['issuer']);
+        $this->assertSame([2024, 2025, 2023], array_column($normalized['certifications'], 'issue_year'));
+        $this->assertSame('Advanced Safety & Response', $normalized['certifications'][2]['name']);
+        $this->assertSame(7, $diagnostics['input_counts']['certifications']);
+        $this->assertSame(3, $diagnostics['output_counts']['certifications']);
+        $this->assertSame(1, $diagnostics['dropped_counts']['certification_missing_name']);
+        $this->assertSame(1, $diagnostics['dropped_counts']['certification_invalid_evidence']);
+        $this->assertSame(1, $diagnostics['dropped_counts']['certification_reversed_years']);
+        $this->assertSame(1, $diagnostics['dropped_counts']['certification_duplicate']);
+        $this->assertStringNotContainsString('First Aid', json_encode($diagnostics, JSON_THROW_ON_ERROR));
+        $this->assertStringNotContainsString('Example Nationality', json_encode($diagnostics, JSON_THROW_ON_ERROR));
+    }
+
+    public function test_missing_sensitive_values_remain_null_and_are_not_inferred_from_location_or_age(): void
+    {
+        $normalized = (new CVParsedDataNormalizer)->normalize([
+            'location' => 'Example Country', 'birth_date' => '2000-01-01',
+            'nationality' => null, 'marital_status' => null,
+            'skills' => [], 'experience' => [], 'education' => [], 'certifications' => [],
+        ], 'Lives in Example Country and is 26 years old');
+
+        $this->assertNull($normalized['nationality']);
+        $this->assertNull($normalized['marital_status']);
     }
 }

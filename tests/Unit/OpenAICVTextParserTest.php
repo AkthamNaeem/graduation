@@ -40,6 +40,10 @@ class OpenAICVTextParserTest extends TestCase
                 && $request['store'] === false
                 && $request['text']['format']['type'] === 'json_schema'
                 && $request['text']['format']['strict'] === true
+                && in_array('nationality', $request['text']['format']['schema']['required'], true)
+                && in_array('marital_status', $request['text']['format']['schema']['required'], true)
+                && in_array('certifications', $request['text']['format']['schema']['required'], true)
+                && str_contains($request['input'][0]['content'][0]['text'], 'Never infer nationality')
                 && $request['input'][1]['content'][0]['text'] === 'Laravel Developer at FutureX';
         });
     }
@@ -222,8 +226,8 @@ class OpenAICVTextParserTest extends TestCase
     {
         return [
             'full_name' => null, 'email' => null, 'phone' => null, 'location' => null,
-            'birth_date' => null, 'summary' => null,
-            'experience' => [], 'education' => [], 'skills' => [], 'languages' => [],
+            'birth_date' => null, 'nationality' => null, 'marital_status' => null, 'summary' => null,
+            'experience' => [], 'education' => [], 'certifications' => [], 'skills' => [], 'languages' => [],
         ];
     }
 

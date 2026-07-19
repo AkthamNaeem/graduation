@@ -22,6 +22,7 @@ class CVParsedDataNormalizer
         $inputCounts = [
             'experience' => is_array($data['experience'] ?? null) ? count($data['experience']) : 0,
             'education' => is_array($data['education'] ?? null) ? count($data['education']) : 0,
+            'certifications' => is_array($data['certifications'] ?? null) ? count($data['certifications']) : 0,
             'skills' => is_array($data['skills'] ?? null) ? count($data['skills']) : 0,
         ];
         $droppedCounts = [
@@ -30,26 +31,63 @@ class CVParsedDataNormalizer
             'experience_reversed_dates' => 0,
             'education_missing_institution' => 0,
             'education_invalid_evidence' => 0,
+            'certification_missing_name' => 0,
+            'certification_invalid_evidence' => 0,
+            'certification_reversed_years' => 0,
+            'certification_duplicate' => 0,
         ];
 
         $rawText = $this->textNormalizer->normalize($rawText);
         $data = $this->trimRecursively($data);
         $data['birth_date'] = $this->normalizeBirthDate($data['birth_date'] ?? null);
+        $data['nationality'] = $this->normalizeExplicitLabeledValue($data['nationality'] ?? null, $rawText, ['nationality']);
+        $data['marital_status'] = $this->normalizeExplicitLabeledValue($data['marital_status'] ?? null, $rawText, ['marital status', 'civil status']);
         $data['skills'] = $this->normalizeSkills($data['skills'] ?? []);
         $data['experience'] = $this->normalizeExperiences($data['experience'] ?? [], $rawText, $droppedCounts);
         $data['education'] = $this->normalizeEducation($data['education'] ?? [], $rawText, $droppedCounts);
+        $data['certifications'] = $this->normalizeCertifications($data['certifications'] ?? [], $rawText, $droppedCounts);
         $data['_meta'] = is_array($data['_meta'] ?? null) ? $data['_meta'] : [];
         $data['_meta']['normalization'] = [
             'input_counts' => $inputCounts,
             'output_counts' => [
                 'experience' => count($data['experience']),
                 'education' => count($data['education']),
+                'certifications' => count($data['certifications']),
                 'skills' => count($data['skills']),
             ],
             'dropped_counts' => $droppedCounts,
         ];
 
         return $data;
+    }
+
+    private function normalizeNullableString(mixed $value): ?string
+    {
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $value = $this->textNormalizer->normalize($value);
+
+        return $value === '' ? null : $value;
+    }
+
+    /** @param array<int, string> $labels */
+    private function normalizeExplicitLabeledValue(mixed $value, string $rawText, array $labels): ?string
+    {
+        $value = $this->normalizeNullableString($value);
+        if ($value === null) {
+            return null;
+        }
+
+        foreach ($labels as $label) {
+            if (preg_match('/^\s*'.preg_quote($label, '/').'\s*:\s*(?<value>[^\n]+)$/imu', $rawText, $matches) === 1
+                && $this->canonicalizeEvidence($matches['value']) === $this->canonicalizeEvidence($value)) {
+                return $value;
+            }
+        }
+
+        return null;
     }
 
     private function trimRecursively(mixed $value): mixed
@@ -214,6 +252,97 @@ class CVParsedDataNormalizer
         }
 
         return $result;
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private function normalizeCertifications(mixed $items, string $rawText, array &$droppedCounts): array
+    {
+        if (! is_array($items)) {
+            return [];
+        }
+
+        $result = [];
+        $seen = [];
+        foreach ($items as $item) {
+            if (! is_array($item) || ! is_string($item['name'] ?? null)) {
+                $droppedCounts['certification_missing_name']++;
+
+                continue;
+            }
+
+            $name = $this->normalizeNullableString($item['name']);
+            if ($name === null) {
+                $droppedCounts['certification_missing_name']++;
+
+                continue;
+            }
+
+            $issuer = $this->normalizeNullableString($item['issuer'] ?? null);
+            $description = $this->normalizeNullableString($item['description'] ?? null);
+            $evidence = $this->normalizeNullableString($item['evidence'] ?? null);
+            $issueYear = $this->normalizeYear($item['issue_year'] ?? null);
+            $expirationYear = $this->normalizeYear($item['expiration_year'] ?? null);
+
+            if ($issueYear !== null && $expirationYear !== null && $expirationYear < $issueYear) {
+                $droppedCounts['certification_reversed_years']++;
+
+                continue;
+            }
+
+            $nameMatched = $this->matchesAnchor($rawText, $name);
+            $issuerMatched = $issuer !== null && $this->matchesAnchor($rawText, $issuer);
+            $issueYearMatched = $this->yearMatches($rawText, $issueYear);
+            $expirationYearMatched = $this->yearMatches($rawText, $expirationYear);
+            $evidenceMatched = $evidence !== null && $this->evidenceMatches($rawText, $evidence);
+            if (! $nameMatched || ! $evidenceMatched) {
+                $droppedCounts['certification_invalid_evidence']++;
+
+                continue;
+            }
+
+            $issuer = $issuerMatched ? $issuer : null;
+            $issueYear = $issueYearMatched ? $issueYear : null;
+            $expirationYear = $expirationYearMatched ? $expirationYear : null;
+            $description = $description !== null && $this->matchesAnchor($rawText, $description) ? $description : null;
+
+            $duplicateKey = implode('|', [
+                $this->canonicalizeEvidence($name),
+                $issuer === null ? '' : $this->canonicalizeEvidence($issuer),
+                (string) ($issueYear ?? ''),
+            ]);
+            if (isset($seen[$duplicateKey])) {
+                $droppedCounts['certification_duplicate']++;
+
+                continue;
+            }
+            $seen[$duplicateKey] = true;
+
+            $derivedConfidence = 0.40
+                + ($issuerMatched ? 0.20 : 0.0)
+                + ($issueYearMatched ? 0.15 : 0.0)
+                + ($expirationYearMatched ? 0.10 : 0.0)
+                + ($evidenceMatched ? 0.15 : 0.0);
+            $result[] = [
+                'name' => $name,
+                'issuer' => $issuer,
+                'issue_year' => $issueYear,
+                'expiration_year' => $expirationYear,
+                'description' => $description,
+                'evidence' => $evidence,
+                'confidence_score' => $this->boundedByEvidence($item['confidence_score'] ?? null, $derivedConfidence),
+            ];
+        }
+
+        return $result;
+    }
+
+    private function normalizeYear(mixed $value): ?int
+    {
+        if (is_int($value)) {
+            return $value;
+        }
+
+        return is_string($value) && preg_match('/^\d{4}$/D', $value) === 1 ? (int) $value : null;
     }
 
     private function canonicalizeEvidence(string $value): string

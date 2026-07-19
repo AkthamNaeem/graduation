@@ -36,7 +36,13 @@ Rules:
 19. Extract every education entry explicitly present in the CV. A degree, field of study, institution, and date range on adjacent lines form one entry. "Expected" graduation means is_expected=true.
 20. description is only an independent general description explicitly present in the CV; otherwise return null. Keep every responsibility bullet in responsibilities and never copy the first responsibility into description.
 21. Return one skill per array item. Do not group comma-separated skills. Keep a parenthetical specialization with its parent skill.
-22. Return data only through the supplied JSON schema.
+22. Extract every explicitly listed certification, certificate, professional course, license, or formal training entry. Certification names and years may appear on adjacent lines.
+23. Recognize section headings such as CERTIFICATIONS, CERTIFICATES, LICENSES, COURSES, TRAINING, and PROFESSIONAL TRAINING, including minor spelling mistakes when the section context is clear.
+24. Do not classify education as certification. Do not classify a university degree as a certification.
+25. Do not classify a normal skill as a certification unless it appears under a certification, certificate, license, course, or training section.
+26. Certification issuer and expiration_year must be null when not explicitly present. Return an empty certifications array when none are present.
+27. Extract nationality and marital status only when explicitly written. Never infer nationality from location, phone number, language, name, employer, country, or address. Never infer marital status. Return null for missing nationality or marital status.
+28. Return data only through the supplied JSON schema.
 PROMPT;
     }
 
@@ -54,22 +60,27 @@ Freelance is a valid company_name. "Freelance" and "Self-employed" are valid com
 Preserve every responsibility bullet belonging to its experience. Use description only for an independent general description explicitly present in the CV; otherwise use null. Never copy a responsibility into description.
 Extract every education entry explicitly present in the CV. Group adjacent degree, field, institution, and date lines. "Expected" graduation means is_expected=true.
 Return one skill per array item. Do not group comma-separated skills. Keep a parenthetical specialization with its parent skill.
+Extract every explicitly listed certification, certificate, professional course, license, or formal training entry. Certification names and years may be on adjacent lines. Recognize CERTIFICATIONS, CERTIFICATES, LICENSES, COURSES, TRAINING, and PROFESSIONAL TRAINING headings, including minor spelling mistakes in clear section context.
+Do not classify education as certification or treat a university degree as a certification. Do not classify a normal skill as a certification unless it is listed in a certification, certificate, license, course, or training section.
+Certification issuer and expiration_year must be null when not explicitly present. Return an empty certifications array when missing.
+Extract nationality and marital status only when explicitly written. Never infer nationality from location, phone number, language, name, employer, country, or address. Never infer marital status. Return null for missing nationality or marital status.
 
 Return one valid JSON object only.
 Return exactly these top-level keys:
-full_name, email, phone, location, birth_date, summary, experience, education, skills, languages.
+full_name, email, phone, location, birth_date, nationality, marital_status, summary, experience, education, certifications, skills, languages.
 
 Use null for unavailable nullable scalar values.
-Use empty arrays when no experience, education, skills, or languages exist.
+Use empty arrays when no experience, education, certifications, skills, or languages exist.
 Do not add keys outside the requested contract.
 Every experience and education item must include all contract fields.
 
 Experience fields: title, company_name, location, work_mode, start_date, end_date, is_current, description, responsibilities, evidence, confidence_score.
 Education fields: degree, field_of_study, institution, start_year, graduation_year, is_expected, description, evidence, confidence_score.
 Language fields: name, level.
+Certification fields: name, issuer, issue_year, expiration_year, description, evidence, confidence_score.
 
 An empty result is:
-{"full_name":null,"email":null,"phone":null,"location":null,"birth_date":null,"summary":null,"experience":[],"education":[],"skills":[],"languages":[]}
+{"full_name":null,"email":null,"phone":null,"location":null,"birth_date":null,"nationality":null,"marital_status":null,"summary":null,"experience":[],"education":[],"certifications":[],"skills":[],"languages":[]}
 
 - At most 20 responsibilities per experience.
 - Each evidence string must be at most 300 characters.

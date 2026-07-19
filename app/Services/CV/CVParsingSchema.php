@@ -14,7 +14,7 @@ class CVParsingSchema
         return [
             'type' => 'object',
             'additionalProperties' => false,
-            'required' => ['full_name', 'email', 'phone', 'location', 'birth_date', 'summary', 'experience', 'education', 'skills', 'languages'],
+            'required' => ['full_name', 'email', 'phone', 'location', 'birth_date', 'nationality', 'marital_status', 'summary', 'experience', 'education', 'certifications', 'skills', 'languages'],
             'properties' => [
                 'full_name' => $nullableString,
                 'email' => $nullableString,
@@ -24,6 +24,8 @@ class CVParsingSchema
                     'type' => ['string', 'null'],
                     'description' => 'Complete birth date in YYYY-MM-DD format, or null when incomplete.',
                 ],
+                'nationality' => $nullableString,
+                'marital_status' => $nullableString,
                 'summary' => $nullableString,
                 'experience' => [
                     'type' => 'array',
@@ -65,6 +67,23 @@ class CVParsingSchema
                         ],
                     ],
                 ],
+                'certifications' => [
+                    'type' => 'array',
+                    'items' => [
+                        'type' => 'object',
+                        'additionalProperties' => false,
+                        'required' => ['name', 'issuer', 'issue_year', 'expiration_year', 'description', 'evidence', 'confidence_score'],
+                        'properties' => [
+                            'name' => ['type' => 'string'],
+                            'issuer' => $nullableString,
+                            'issue_year' => ['type' => ['integer', 'null']],
+                            'expiration_year' => ['type' => ['integer', 'null']],
+                            'description' => $nullableString,
+                            'evidence' => ['type' => 'string'],
+                            'confidence_score' => ['type' => 'number', 'minimum' => 0, 'maximum' => 1],
+                        ],
+                    ],
+                ],
                 'skills' => ['type' => 'array', 'items' => ['type' => 'string']],
                 'languages' => [
                     'type' => 'array',
@@ -82,16 +101,18 @@ class CVParsingSchema
     /** @param array<string, mixed> $parsed */
     public function matches(array $parsed): bool
     {
-        if (array_diff(array_keys($parsed), ['full_name', 'email', 'phone', 'location', 'birth_date', 'summary', 'experience', 'education', 'skills', 'languages']) !== []) {
+        if (array_diff(array_keys($parsed), ['full_name', 'email', 'phone', 'location', 'birth_date', 'nationality', 'marital_status', 'summary', 'experience', 'education', 'certifications', 'skills', 'languages']) !== []) {
             return false;
         }
 
-        return ! Validator::make($parsed, [
+        $validator = Validator::make($parsed, [
             'full_name' => ['present', 'nullable', 'string'],
             'email' => ['present', 'nullable', 'string'],
             'phone' => ['present', 'nullable', 'string'],
             'location' => ['present', 'nullable', 'string'],
             'birth_date' => ['present', 'nullable', 'string'],
+            'nationality' => ['present', 'nullable', 'string'],
+            'marital_status' => ['present', 'nullable', 'string'],
             'summary' => ['present', 'nullable', 'string'],
             'experience' => ['present', 'array'],
             'experience.*' => ['array:title,company_name,location,work_mode,start_date,end_date,is_current,description,responsibilities,evidence,confidence_score'],
@@ -118,12 +139,35 @@ class CVParsingSchema
             'education.*.description' => ['present', 'nullable', 'string'],
             'education.*.evidence' => ['required', 'string'],
             'education.*.confidence_score' => ['required', 'numeric', 'between:0,1'],
+            'certifications' => ['present', 'array'],
+            'certifications.*' => ['array:name,issuer,issue_year,expiration_year,description,evidence,confidence_score'],
+            'certifications.*.name' => ['required', 'string'],
+            'certifications.*.issuer' => ['present', 'nullable', 'string'],
+            'certifications.*.issue_year' => ['present', 'nullable', 'integer'],
+            'certifications.*.expiration_year' => ['present', 'nullable', 'integer'],
+            'certifications.*.description' => ['present', 'nullable', 'string'],
+            'certifications.*.evidence' => ['required', 'string'],
+            'certifications.*.confidence_score' => ['required', 'numeric', 'between:0,1'],
             'skills' => ['present', 'array'],
             'skills.*' => ['string'],
             'languages' => ['present', 'array'],
             'languages.*' => ['array:name,level'],
             'languages.*.name' => ['required', 'string'],
             'languages.*.level' => ['present', 'nullable', 'string'],
-        ])->fails();
+        ]);
+
+        if ($validator->fails()) {
+            return false;
+        }
+
+        foreach ($parsed['certifications'] as $certification) {
+            if ($certification['issue_year'] !== null
+                && $certification['expiration_year'] !== null
+                && $certification['expiration_year'] < $certification['issue_year']) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }

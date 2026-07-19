@@ -57,12 +57,16 @@ class GroqCVTextParserTest extends TestCase
                 && str_contains($request['messages'][0]['content'], 'Concurrent or overlapping jobs are valid')
                 && str_contains($request['messages'][0]['content'], 'Freelance is a valid company_name')
                 && str_contains($request['messages'][0]['content'], 'Extract every education entry')
+                && str_contains($request['messages'][0]['content'], 'Extract every explicitly listed certification')
+                && str_contains($request['messages'][0]['content'], 'Never infer nationality')
+                && str_contains($request['messages'][0]['content'], 'Never infer marital status')
                 && $request['messages'][1]['content'] === 'Laravel Developer at FutureX'
                 && $request['response_format']['type'] === 'json_schema'
                 && $request['response_format']['json_schema']['strict'] === true
                 && $request['response_format']['json_schema']['schema']['properties']['birth_date']['description'] === 'Complete birth date in YYYY-MM-DD format, or null when incomplete.'
                 && ! array_key_exists('pattern', $request['response_format']['json_schema']['schema']['properties']['birth_date'])
-                && $request['response_format']['json_schema']['schema']['additionalProperties'] === false;
+                && $request['response_format']['json_schema']['schema']['additionalProperties'] === false
+                && in_array('certifications', $request['response_format']['json_schema']['schema']['required'], true);
         });
     }
 
@@ -609,6 +613,62 @@ TEXT;
         return ['missing key' => [null], 'unauthorized' => [401], 'forbidden' => [403]];
     }
 
+    public function test_synthetic_response_keeps_certification_sensitive_fields_and_existing_collections(): void
+    {
+        $rawText = <<<'TEXT'
+EXPERIENCE
+2022 - 2023
+Backend Developer
+Example Systems
+Build APIs
+2024 - Present
+Platform Engineer
+Sample Labs
+Operate services
+EDUCATION
+Bachelor of Computing
+Example University
+2020 - 2024
+SKILLS
+PHP, Laravel, MySQL, Redis, Docker, Git, Linux, Testing
+CERTIFICATIONS
+2024
+First Aid
+PERSONAL INFORMATION
+Nationality: Example Nationality
+Marital Status: Single
+TEXT;
+        $data = $this->validParsed();
+        $data['nationality'] = 'Example Nationality';
+        $data['marital_status'] = 'Single';
+        $data['experience'] = [
+            $this->experience('Backend Developer', 'Example Systems', '2022', '2023', false, 'Build APIs'),
+            $this->experience('Platform Engineer', 'Sample Labs', '2024', null, true, 'Operate services'),
+        ];
+        $data['education'] = [[
+            'degree' => 'Bachelor of Computing', 'field_of_study' => null,
+            'institution' => 'Example University', 'start_year' => 2020, 'graduation_year' => 2024,
+            'is_expected' => false, 'description' => null,
+            'evidence' => 'Bachelor of Computing Example University 2020 - 2024', 'confidence_score' => 1,
+        ]];
+        $data['skills'] = ['PHP', 'Laravel', 'MySQL', 'Redis', 'Docker', 'Git', 'Linux', 'Testing'];
+        $data['certifications'] = [[
+            'name' => 'First Aid', 'issuer' => null, 'issue_year' => 2024,
+            'expiration_year' => null, 'description' => null, 'evidence' => '2024 First Aid',
+            'confidence_score' => 1,
+        ]];
+        Http::fake(['api.groq.com/*' => Http::response($this->responsePayload($data), 200)]);
+
+        $parsed = (new CVParsedDataNormalizer)->normalize($this->parser()->parse($rawText), $rawText);
+
+        $this->assertCount(2, $parsed['experience']);
+        $this->assertCount(1, $parsed['education']);
+        $this->assertCount(8, $parsed['skills']);
+        $this->assertCount(1, $parsed['certifications']);
+        $this->assertSame('Example Nationality', $parsed['nationality']);
+        $this->assertSame('Single', $parsed['marital_status']);
+    }
+
     private function parser(): GroqCVTextParser
     {
         return $this->app->make(GroqCVTextParser::class);
@@ -634,8 +694,8 @@ TEXT;
     {
         return [
             'full_name' => null, 'email' => null, 'phone' => null, 'location' => null,
-            'birth_date' => null, 'summary' => null, 'experience' => [], 'education' => [],
-            'skills' => [], 'languages' => [],
+            'birth_date' => null, 'nationality' => null, 'marital_status' => null, 'summary' => null,
+            'experience' => [], 'education' => [], 'certifications' => [], 'skills' => [], 'languages' => [],
         ];
     }
 
