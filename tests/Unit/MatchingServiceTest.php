@@ -20,7 +20,7 @@ class MatchingServiceTest extends TestCase
 
     public function test_profile_and_job_text_builders_collect_expected_fields(): void
     {
-        $service = new MatchingService();
+        $service = new MatchingService;
         $profile = $this->profileWithUser();
         $laravel = Skill::create(['name' => 'Laravel', 'slug' => 'laravel']);
         $mysql = Skill::create(['name' => 'MySQL', 'slug' => 'mysql']);
@@ -61,18 +61,20 @@ class MatchingServiceTest extends TestCase
 
         $this->assertStringContainsString('Laravel Backend Developer', $profileText['core']);
         $this->assertStringContainsString('Laravel MySQL', $profileText['skills']);
-        $this->assertStringContainsString('Backend Developer Northwind Remote', $profileText['experience']);
+        $this->assertStringContainsString('Backend Developer Built Laravel APIs', $profileText['experience']);
+        $this->assertStringNotContainsString('Northwind', $profileText['experience']);
+        $this->assertStringNotContainsString('Remote', $profileText['experience']);
         $this->assertStringContainsString('State University Bachelor of Science Computer Science', $profileText['education']);
 
         $this->assertStringContainsString('Senior Laravel Engineer', $jobText['core']);
         $this->assertStringContainsString('Laravel MySQL', $jobText['skills']);
-        $this->assertStringContainsString('senior Senior Laravel Engineer Lead API delivery with Laravel and MySQL.', $jobText['experience']);
+        $this->assertSame('senior', $jobText['experience']);
         $this->assertSame('', $jobText['education']);
     }
 
     public function test_compute_tfidf_is_deterministic_for_known_documents(): void
     {
-        $service = new MatchingService();
+        $service = new MatchingService;
         $documents = [
             'doc1' => 'laravel laravel mysql',
             'doc2' => 'laravel php',
@@ -89,7 +91,7 @@ class MatchingServiceTest extends TestCase
 
     public function test_cosine_similarity_handles_identical_disjoint_and_zero_vectors(): void
     {
-        $service = new MatchingService();
+        $service = new MatchingService;
 
         $this->assertEqualsWithDelta(
             1.0,
@@ -103,7 +105,7 @@ class MatchingServiceTest extends TestCase
 
     public function test_weighted_scoring_honors_section_weights(): void
     {
-        $service = new MatchingService();
+        $service = new MatchingService;
         $company = $this->company();
         $user = $this->user('weighted@example.com');
         $profile = JobSeekerProfile::create([
@@ -128,16 +130,18 @@ class MatchingServiceTest extends TestCase
         $recommendedJobs = $service->recommendJobsForUser($user);
 
         $this->assertCount(1, $recommendedJobs);
-        $this->assertSame(0.5, $recommendedJobs->first()['score']);
+        $this->assertSame(68.66, $recommendedJobs->first()['score']);
         $this->assertSame(1.0, $recommendedJobs->first()['breakdown']['skills']);
-        $this->assertSame(0.0, $recommendedJobs->first()['breakdown']['experience']);
-        $this->assertSame(0.0, $recommendedJobs->first()['breakdown']['core']);
-        $this->assertSame(0.0, $recommendedJobs->first()['breakdown']['education']);
+        $this->assertSame(0.0, $recommendedJobs->first()['breakdown']['experience']['score']);
+        $this->assertSame(0.24, $recommendedJobs->first()['breakdown']['core']);
+        $this->assertSame(3.66, $recommendedJobs->first()['breakdown']['text_similarity']['score']);
+        $this->assertSame(10.0, $recommendedJobs->first()['breakdown']['education']['score']);
+        $this->assertSame('2.0', $recommendedJobs->first()['matching_score_version']);
     }
 
     public function test_empty_sections_do_not_crash_and_produce_zero_scores(): void
     {
-        $service = new MatchingService();
+        $service = new MatchingService;
         $company = $this->company();
         $user = $this->user('empty@example.com');
 
@@ -161,13 +165,13 @@ class MatchingServiceTest extends TestCase
         $recommendedJobs = $service->recommendJobsForUser($user);
 
         $this->assertCount(1, $recommendedJobs);
-        $this->assertSame(0.0, $recommendedJobs->first()['score']);
-        $this->assertSame([
-            'skills' => 0.0,
-            'experience' => 0.0,
-            'core' => 0.0,
-            'education' => 0.0,
-        ], $recommendedJobs->first()['breakdown']);
+        $this->assertSame(40.0, $recommendedJobs->first()['score']);
+        $this->assertSame(0.0, $recommendedJobs->first()['breakdown']['required_skills']['score']);
+        $this->assertSame(10.0, $recommendedJobs->first()['breakdown']['nice_to_have_skills']['score']);
+        $this->assertTrue($recommendedJobs->first()['breakdown']['nice_to_have_skills']['not_applicable']);
+        $this->assertSame(20.0, $recommendedJobs->first()['breakdown']['experience']['score']);
+        $this->assertSame(10.0, $recommendedJobs->first()['breakdown']['education']['score']);
+        $this->assertSame(0.0, $recommendedJobs->first()['breakdown']['text_similarity']['score']);
         $this->assertSame([], $recommendedJobs->first()['matched_skills']);
         $this->assertSame($job->id, $recommendedJobs->first()['job']->id);
     }

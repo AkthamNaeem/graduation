@@ -455,10 +455,26 @@ class JobPostingTest extends TestCase
         $this->seed(SampleUserSeeder::class);
 
         $this->assertDatabaseCount('job_postings', 3);
-        $this->assertDatabaseCount('job_posting_skills', 9);
+        $this->assertDatabaseCount('job_posting_skills', 12);
         $this->assertDatabaseHas('job_postings', [
             'title' => 'Senior Laravel Backend Engineer',
             'status' => 'open',
+            'education_level' => 'bachelor',
+        ]);
+        $jobId = JobPosting::query()->where('title', 'Senior Laravel Backend Engineer')->value('id');
+        $laravelId = Skill::query()->where('slug', 'laravel')->value('id');
+        $dockerId = Skill::query()->where('slug', 'docker')->value('id');
+        $this->assertDatabaseHas('job_posting_skills', [
+            'job_posting_id' => $jobId,
+            'skill_id' => $laravelId,
+            'requirement_type' => 'required',
+            'weight' => 5,
+        ]);
+        $this->assertDatabaseHas('job_posting_skills', [
+            'job_posting_id' => $jobId,
+            'skill_id' => $dockerId,
+            'requirement_type' => 'nice_to_have',
+            'weight' => 2,
         ]);
     }
 

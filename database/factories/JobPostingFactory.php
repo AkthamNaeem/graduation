@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\EducationLevel;
 use App\Enums\JobWorkMode;
 use App\Models\Company;
 use App\Models\JobPosting;
@@ -21,6 +22,7 @@ class JobPostingFactory extends Factory
             'requirements' => fake()->sentence(),
             'employment_type' => 'full-time',
             'experience_level' => 'mid-level',
+            'education_level' => fake()->optional()->randomElement(EducationLevel::cases())?->value,
             'location' => null,
             'work_mode' => JobWorkMode::REMOTE,
             'status' => 'draft',

@@ -1903,7 +1903,7 @@ Seventeen feature tests were added: eleven in `JobPostingContractTest` and six i
 
 ### Remaining Gaps and Git Status
 
-The only remaining verification gap is repository-wide formatting debt outside this increment. Nice-to-have skills, external notifications, AI matching, and unrelated refactors were intentionally excluded. Screening questions, cover letters, and explicit consent are implemented in section 42. No commit or push was performed.
+The only remaining verification gap for that increment was repository-wide formatting debt outside its scope. Candidate Matching v2 and nice-to-have skills are now documented in section 43. External notifications and unrelated refactors remain excluded. Screening questions, cover letters, and explicit consent are implemented in section 42. No commit or push was performed.
 
 ## 42. Job Screening Questions and Immutable Application Answers
 
@@ -1994,4 +1994,97 @@ Web Postman now contains a `Job Screening Questions` folder with management, typ
 
 ### Remaining Scope and Git Status
 
-Nice-to-have skills, AI matching, candidate score, CV summary, email/push notifications, a generic form builder, post-submission answer editing, reapplication, and AI-generated questions remain outside scope. No commit or push was performed.
+Candidate Matching v2 and nice-to-have skills are now implemented in section 43. LLM matching, embeddings, vector databases, CV summary, email/push notifications, a generic form builder, post-submission answer editing, reapplication, and AI-generated questions remain outside scope. No commit or push was performed.
+
+## 43. Candidate Matching v2: Weighted Skills and 0-100 Score
+
+### Baseline and Existing Implementation
+
+This increment started on branch `master` at HEAD `d19a8ee128910f007acb7bedecedc7447822d09f` with a clean working tree, 493 passing tests, 3860 assertions, one opt-in real-S3 test skipped, and no pending migrations. The preceding screening-question work was already isolated in commit `d19a8ee`; no work from that phase was mixed into this increment.
+
+The repository already contained the recommendation and ranked-candidate endpoints, TF-IDF and cosine-similarity primitives, deterministic tie ordering, ownership policies, eager-loaded matching relations, a unique `(job_posting_id, skill_id)` pivot, and a partial `requirement_type` contract with `required` and legacy `optional`. Those pieces were extended rather than duplicated. In particular, no new matching endpoint, score column, cache table, or duplicate `skill_type` column was added.
+
+### Architecture and Database Changes
+
+Migration `2026_07_20_000003_add_candidate_matching_fields.php` adds pivot `weight` as an unsigned tiny integer with default 1, adds the composite `(job_posting_id, requirement_type)` index, canonicalizes existing explicit `optional` rows to `nice_to_have`, and adds nullable `job_postings.education_level`. The existing unique job/skill constraint remains authoritative. Rollback restores the legacy optional spelling before removing only the new index, weight, and education field.
+
+The existing `JobSkillRequirementType` enum is the single type source. It now exposes canonical `required` and `nice_to_have` values while accepting `optional` only as a backward-compatible input/database alias. `EducationLevel` defines the deterministic five-level education order. `JobPostingSkill` casts weight to integer, and the existing job/skills relationship exposes both type and weight without adding duplicate relations or resource-side queries.
+
+### Job Skill API Contract
+
+The existing create, update, and `POST /api/v1/jobs/{jobPosting}/skills` flows accept the separated contract:
+
+```json
+{
+  "required_skills": [{"skill_id": 1, "weight": 5}],
+  "nice_to_have_skills": [{"skill_id": 2, "weight": 2}]
+}
+```
+
+Required weights are integers from 1 through 5. Nice-to-have weights use the same range and default to 1. Arrays are capped at 100, duplicate IDs are rejected within a list, and a cross-list duplicate is rejected before writes. The separated contract, current structured `skills` contract, and historical `skill_ids` contract cannot be mixed. Historical IDs remain required with weight 1; structured `optional` input is normalized to `nice_to_have`.
+
+Writes run transactionally and reuse `sync` or `syncWithoutDetaching`, allowing weight/type changes without duplicate pivots. Drafts may have empty lists. Publication still requires at least one required skill; nice-to-have-only jobs fail with `JOB_REQUIRED_SKILL_MISSING`. Raw invalid legacy types and weights fail safely with `JOB_SKILL_TYPE_INVALID` and `JOB_SKILL_WEIGHT_INVALID`. Existing work-mode, location, requirements, deadline, company, and ownership rules remain unchanged. Audit metadata contains safe IDs and aggregate required/nice-to-have counts, not candidate or skill narrative data.
+
+### Matching Formula and Explainability
+
+`config/matching.php` versions the contract as `2.0` and centrally defines components totaling 100:
+
+- Required skills: `45 × matched required weight / total required weight`.
+- Nice-to-have: `10 × matched nice-to-have weight / total nice-to-have weight`; if none are configured, 10 points with `not_applicable=true`.
+- Experience: 20 points at or above the configured requirement, otherwise `20 × candidate years / required years`; zero required years gives 20.
+- Education: 10 at or above the requested level, 5 one level below, and 0 otherwise; no job requirement gives 10 with `not_applicable=true`.
+- Text similarity: the existing TF-IDF/cosine result multiplied by 15.
+
+Required matches use canonical skill IDs and never names. Candidate experience is calculated from the union of valid date intervals so concurrent jobs are not double-counted; current roles use the current date. The actual `entry`, `entry-level`, `junior`, `mid`, `mid-level`, and `senior` job values map centrally to years. Education normalization is case-insensitive, deterministic, selects the highest explicit known degree, and never infers a requirement from free text.
+
+The final score is clamped to 0-100 and rounded to two decimals. Every recommendation and ranked candidate retains `score`, `breakdown`, and `matched_skills`, and adds `matching_score_version`, five detailed breakdown objects, weighted matched/missing required skills, matched nice-to-have skills, and stable reason codes/messages. Legacy string skill breakdowns and ratio fields remain additive compatibility aids. Sorting remains score descending, then the pre-existing deterministic endpoint-specific tie breaker.
+
+### Recalculation, Authorization, and Privacy
+
+Scores are computed on demand from eagerly loaded current job/profile relations. Changing job weights, skills, experience level, education requirement, professional text, or the candidate's skills, experience, education, or professional text therefore changes the next response without invalidation jobs or stale storage. Matching performs no writes: it does not update application status, create status history, shortlist, accept/reject, notify, or create decision audit records.
+
+The candidate text builder uses an explicit professional allowlist: headline, summary, skill names, experience titles/descriptions, and education fields. Job text uses title, department, description, responsibilities, requirements, experience/education levels, and skill names. Names, email, phone, candidate location, birth data, nationality, screening answers, cover letters, private notes, test answers, and interview evaluations are excluded. Existing job-seeker and owning-employer authorization remains in force, including cross-company ranked-candidate denial.
+
+### API, Seeder, Postman, and Tests
+
+Job resources retain `skills` and add `required_skills` and `nice_to_have_skills`, each with canonical type and weight, plus nullable `education_level`. Recommendation and ranking resources expose the same Candidate Score v2 explainability contract without changing the API envelope.
+
+`SampleUserSeeder` now includes varied required weights, optional nice-to-have skills, a partially matching candidate, overlapping-capable experience data, and an explicit education requirement. Web Postman covers weighted attachment, nice-to-have attachment, weight/type changes, invalid duplicates/weights, publication failure, job details, and ranked breakdown. Mobile Postman documents separated job skills and recommendation explainability. The shared environment adds blank response-populated matching IDs; all three JSON files parse successfully.
+
+Dedicated tests cover weighted and unweighted required/nice-to-have math, missing lists, not-applicable behavior, experience interval union/current/invalid intervals, education normalization and scoring, TF-IDF/cosine boundaries, configuration validation, stable errors, total limits and rounding, API compatibility, authorization, deterministic ranking, publication guards, pivot updates, validation contracts, and an isolated down/up migration cycle that preserves IDs and the historical unique constraint. Final command results are recorded after the complete verification run below.
+
+### Changed Files
+
+| Files | Candidate Matching v2 change |
+| --- | --- |
+| `database/migrations/2026_07_20_000003_add_candidate_matching_fields.php` | Adds weight, type index, optional-to-nice canonicalization, education requirement, and safe rollback. |
+| `app/Enums/EducationLevel.php`, `app/Enums/JobSkillRequirementType.php`, `config/matching.php` | Central education/type domains, version, component weights, and experience mapping. |
+| `app/Services/CandidateExperienceCalculator.php`, `app/Services/EducationLevelNormalizer.php`, `app/Services/MatchingService.php` | Interval union, deterministic degree normalization, 0-100 scoring, explainability, privacy allowlist, and on-demand ranking. |
+| `app/Models/JobPosting.php`, `app/Models/JobPostingSkill.php`, `app/Services/JobPostingService.php` | Education persistence, weighted pivot access, canonical transactional writes, filters, publication validation, and safe audit counts. |
+| Job posting request concern and Store/Update/Attach/Index requests | Separated/structured/legacy contracts, validation, alias normalization, duplicate protection, and filter compatibility. |
+| Job, Skill, Recommended Job, and Ranked Candidate API resources | Canonical weighted skill arrays and Candidate Score v2 fields. |
+| `database/factories/JobPostingFactory.php`, `database/seeders/SampleUserSeeder.php` | Education-capable jobs and meaningful weighted required/nice-to-have samples. |
+| Matching, experience, education, job-skill, job-posting, and API tests | Explicit formula, boundary, compatibility, authorization, publication, recalculation, privacy, and no-side-effect coverage. |
+| Web/Mobile Postman collections and shared environment | Weighted management, invalid cases, job details, ranking/recommendations, and matching variables. |
+| `BACKEND_IMPLEMENTATION_REPORT.md` | Candidate Matching v2 architecture, contracts, privacy, tests, and actual verification results. |
+
+### Verification Results
+
+- `php artisan migrate --force`: passed; Candidate Matching v2 migration ran in batch 6.
+- `php artisan migrate:status`: every migration is `Ran`; none are pending.
+- `php artisan test --filter=Matching`: 31 passed, 163 assertions.
+- `php artisan test --filter=Experience`: 17 passed, 76 assertions.
+- `php artisan test --filter=Education`: 18 passed, 56 assertions.
+- The literal `Recommendation`, `RankedCandidate`, and `JobPostingSkill` filters match no current PHPUnit method/class names; the corresponding `MatchingTest`, `JobSkillRequirementTest`, and `JobSkillWeightTest` files were run directly and passed.
+- Focused job-skill/job-posting verification: 26 passed, 194 assertions.
+- Full `php artisan test --compact`: 534 passed, 3994 assertions; one opt-in real-S3 integration test skipped.
+- PHP syntax checks for every modified or new PHP file: passed.
+- Pint on every modified or new PHP file: passed.
+- Repository-wide `php vendor/bin/pint --test`: 52 pre-existing unrelated files still require formatting; zero task files overlap that set.
+- `php artisan route:list --json`: passed and reports 176 routes; no endpoint was added.
+- Web, Mobile, and Environment Postman files parse as valid JSON.
+- `git diff --check`: passed; no debug calls were introduced.
+
+### Remaining Scope and Git Status
+
+LLM matching, embeddings, vector databases, stored scores, automatic decisions, automatic shortlist, interview/test score inclusion, notifications, and unrelated refactors remain intentionally out of scope. No commit or push was performed.

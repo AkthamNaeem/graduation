@@ -24,6 +24,7 @@ class JobPosting extends Model
         'benefits',
         'employment_type',
         'experience_level',
+        'education_level',
         'location',
         'work_mode',
         'salary_min',
@@ -56,7 +57,7 @@ class JobPosting extends Model
     {
         return $this->belongsToMany(Skill::class, 'job_posting_skills')
             ->using(JobPostingSkill::class)
-            ->withPivot('requirement_type')
+            ->withPivot(['requirement_type', 'weight'])
             ->withTimestamps();
     }
 

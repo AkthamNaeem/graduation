@@ -13,12 +13,14 @@ class JobPostingSkill extends Pivot
         'job_posting_id',
         'skill_id',
         'requirement_type',
+        'weight',
     ];
 
     protected function casts(): array
     {
         return [
             'requirement_type' => JobSkillRequirementType::class,
+            'weight' => 'integer',
         ];
     }
 }

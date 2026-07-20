@@ -401,7 +401,7 @@
               "type": "noauth"
             },
             "method": "GET",
-            "description": "Mobile App / Public: view public job details.",
+            "description": "Mobile App / Public: view education_level plus skills, required_skills, and nice_to_have_skills with weights.",
             "url": "{{base_url}}/jobs/{{job_id}}"
           },
           "event": [
@@ -420,7 +420,7 @@
           "name": "Recommended Jobs",
           "request": {
             "method": "GET",
-            "description": "Mobile App / Job Seeker: get explainable recommended jobs.",
+            "description": "Mobile App / Job Seeker: get Candidate Score v2 with score 0-100, five-component breakdown, matched/missing required skills, nice-to-have matches, and safe reasons.",
             "url": "{{base_url}}/jobs/recommended"
           },
           "event": [
@@ -434,7 +434,9 @@
               }
             }
           ]
-        }
+        },
+        {"name":"Job Details With Required and Nice-to-have Skills","request":{"auth":{"type":"noauth"},"method":"GET","description":"Returns separated required_skills and nice_to_have_skills arrays while retaining skills.","url":"{{base_url}}/jobs/{{matching_job_id}}"}},
+        {"name":"Recommended Matching Breakdown","request":{"method":"GET","description":"Inspect matching_score_version, required/nice/experience/education/text_similarity breakdown, matched and missing skills, and reasons.","url":"{{base_url}}/jobs/recommended?limit=10"}}
       ]
     },
     {

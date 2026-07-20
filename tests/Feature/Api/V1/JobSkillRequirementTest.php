@@ -28,8 +28,8 @@ class JobSkillRequirementTest extends TestCase
             ['skill_id' => $required->id, 'requirement_type' => 'required'],
             ['skill_id' => $optional->id, 'requirement_type' => 'optional'],
         ]])->assertOk()
-            ->assertJsonPath('data.skills.0.requirement_type', 'required')
-            ->assertJsonPath('data.skills.1.requirement_type', 'optional');
+            ->assertJsonFragment(['id' => $required->id, 'requirement_type' => 'required', 'weight' => 1])
+            ->assertJsonFragment(['id' => $optional->id, 'requirement_type' => 'nice_to_have', 'weight' => 1]);
         $this->assertDatabaseHas('audit_logs', ['action' => 'job.skills_updated', 'entity_id' => $job->id]);
 
         $this->withToken($token)->postJson("/api/v1/jobs/{$job->id}/skills", ['skills' => [
@@ -98,6 +98,10 @@ class JobSkillRequirementTest extends TestCase
             ->assertOk()->assertJsonCount(1, 'data.data');
         $this->getJson('/api/v1/jobs?skill=docker&skill_requirement=required')
             ->assertOk()->assertJsonCount(0, 'data.data');
+        $this->getJson('/api/v1/jobs?skill=docker&skill_requirement=optional')
+            ->assertOk()->assertJsonCount(1, 'data.data');
+        $this->getJson('/api/v1/jobs?skill=docker&skill_requirement=nice_to_have')
+            ->assertOk()->assertJsonCount(1, 'data.data');
 
         $this->withToken($token)->putJson("/api/v1/jobs/{$createdId}", ['skills' => [[
             'skill_id' => $docker->id,

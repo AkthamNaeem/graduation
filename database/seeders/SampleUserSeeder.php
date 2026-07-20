@@ -139,10 +139,6 @@ class SampleUserSeeder extends Seeder
             $skills->whereIn('name', ['PHP', 'Laravel', 'MySQL', 'REST APIs', 'Git'])->pluck('id')->all(),
         );
 
-        $backendSkillIds = $skills
-            ->whereIn('name', ['PHP', 'Laravel', 'MySQL', 'REST APIs'])
-            ->pluck('id')
-            ->all();
         $frontendSkillIds = $skills
             ->whereIn('name', ['JavaScript', 'React', 'Communication'])
             ->pluck('id')
@@ -161,6 +157,7 @@ class SampleUserSeeder extends Seeder
                 'benefits' => 'Flexible remote work and professional development support.',
                 'employment_type' => 'full-time',
                 'experience_level' => 'senior',
+                'education_level' => 'bachelor',
                 'location' => 'Remote',
                 'salary_min' => 90000,
                 'salary_max' => 120000,
@@ -168,7 +165,15 @@ class SampleUserSeeder extends Seeder
                 'published_at' => now()->subDays(2),
             ],
         );
-        $openJob->skills()->sync($backendSkillIds);
+        $openJob->skills()->sync([
+            $skills->firstWhere('name', 'PHP')->id => ['requirement_type' => 'required', 'weight' => 4],
+            $skills->firstWhere('name', 'Laravel')->id => ['requirement_type' => 'required', 'weight' => 5],
+            $skills->firstWhere('name', 'MySQL')->id => ['requirement_type' => 'required', 'weight' => 3],
+            $skills->firstWhere('name', 'REST APIs')->id => ['requirement_type' => 'required', 'weight' => 4],
+            $skills->firstWhere('name', 'Testing')->id => ['requirement_type' => 'required', 'weight' => 2],
+            $skills->firstWhere('name', 'Docker')->id => ['requirement_type' => 'nice_to_have', 'weight' => 2],
+            $skills->firstWhere('name', 'AWS')->id => ['requirement_type' => 'nice_to_have', 'weight' => 1],
+        ]);
 
         JobScreeningQuestion::updateOrCreate(
             ['job_posting_id' => $openJob->id, 'question_text' => 'How many years of Laravel experience do you have?'],
@@ -229,7 +234,9 @@ class SampleUserSeeder extends Seeder
                 'published_at' => null,
             ],
         );
-        $draftJob->skills()->sync($frontendSkillIds);
+        $draftJob->skills()->sync(collect($frontendSkillIds)->mapWithKeys(
+            fn (int $skillId): array => [$skillId => ['requirement_type' => 'required', 'weight' => 1]],
+        )->all());
 
         $closedJob = JobPosting::updateOrCreate(
             [
@@ -251,9 +258,11 @@ class SampleUserSeeder extends Seeder
                 'published_at' => now()->subWeeks(2),
             ],
         );
-        $closedJob->skills()->sync(
-            $skills->whereIn('name', ['Communication', 'Problem Solving'])->pluck('id')->all(),
-        );
+        $closedJob->skills()->sync($skills
+            ->whereIn('name', ['Communication', 'Problem Solving'])
+            ->mapWithKeys(fn (Skill $skill): array => [
+                $skill->id => ['requirement_type' => 'required', 'weight' => 1],
+            ])->all());
 
         $admin->tokens()->delete();
         $jobSeeker->tokens()->delete();

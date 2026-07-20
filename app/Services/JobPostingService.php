@@ -89,8 +89,8 @@ class JobPostingService
     public function createJob(User $user, array $data): JobPosting
     {
         return DB::transaction(function () use ($user, $data): JobPosting {
-            $skills = $data['skills'] ?? null;
-            unset($data['skills']);
+            [$skillsProvided, $skills] = $this->extractSkillItems($data);
+            $this->removeSkillContractKeys($data);
             $jobPosting = $this->employerProfile($user)
                 ->company
                 ->jobPostings()
@@ -100,7 +100,7 @@ class JobPostingService
                     'published_at' => null,
                 ]);
 
-            if (is_array($skills)) {
+            if ($skillsProvided) {
                 $jobPosting->skills()->sync($this->skillSyncMap($skills));
             }
 
@@ -132,11 +132,10 @@ class JobPostingService
     public function updateJob(User $actor, JobPosting $jobPosting, array $data): JobPosting
     {
         return DB::transaction(function () use ($actor, $jobPosting, $data): JobPosting {
-            $skillsProvided = array_key_exists('skills', $data);
-            $skills = $data['skills'] ?? [];
-            unset($data['skills']);
+            [$skillsProvided, $skills] = $this->extractSkillItems($data);
+            $this->removeSkillContractKeys($data);
             $safeKeys = array_values(array_intersect(array_keys($data), [
-                'title', 'department', 'employment_type', 'experience_level', 'location', 'salary_min', 'salary_max', 'work_mode', 'application_deadline',
+                'title', 'department', 'employment_type', 'experience_level', 'education_level', 'location', 'salary_min', 'salary_max', 'work_mode', 'application_deadline',
             ]));
             $before = $jobPosting->only($safeKeys);
             $previousWorkMode = $jobPosting->work_mode?->value ?? $jobPosting->work_mode;
@@ -216,6 +215,36 @@ class JobPostingService
             );
         }
 
+        $invalidTypeExists = DB::table('job_posting_skills')
+            ->where('job_posting_id', $jobPosting->id)
+            ->whereNotIn('requirement_type', [
+                JobSkillRequirementType::REQUIRED->value,
+                JobSkillRequirementType::NICE_TO_HAVE->value,
+                JobSkillRequirementType::OPTIONAL->value,
+            ])
+            ->exists();
+        if ($invalidTypeExists) {
+            throw new JobPostingOperationException(
+                'The job contains an invalid skill requirement type.',
+                'JOB_SKILL_TYPE_INVALID',
+                422,
+                ['skills' => ['Every job skill must have a valid requirement type.']],
+            );
+        }
+
+        $invalidWeightExists = DB::table('job_posting_skills')
+            ->where('job_posting_id', $jobPosting->id)
+            ->where(fn ($query) => $query->whereNull('weight')->orWhereNotBetween('weight', [1, 5]))
+            ->exists();
+        if ($invalidWeightExists) {
+            throw new JobPostingOperationException(
+                'The job contains an invalid skill weight.',
+                'JOB_SKILL_WEIGHT_INVALID',
+                422,
+                ['skills' => ['Every job skill weight must be between 1 and 5.']],
+            );
+        }
+
         if ($jobPosting->requiredSkillsCount() < 1) {
             throw new JobPostingOperationException(
                 'At least one required skill is needed before publishing this job.',
@@ -278,25 +307,22 @@ class JobPostingService
      */
     public function attachSkills(User $actor, JobPosting $jobPosting, array $data): JobPosting
     {
-        $items = isset($data['skills'])
-            ? $data['skills']
-            : array_map(fn (int $skillId): array => [
-                'skill_id' => $skillId,
-                'requirement_type' => JobSkillRequirementType::REQUIRED->value,
-            ], $data['skill_ids'] ?? []);
-        $jobPosting->skills()->syncWithoutDetaching($this->skillSyncMap($items));
-        $counts = $this->skillCounts($jobPosting);
-        $this->auditLogService->record(
-            'job.skills_updated',
-            $actor,
-            JobPosting::class,
-            $jobPosting->id,
-            null,
-            null,
-            [...$counts, 'job_id' => $jobPosting->id, 'company_id' => $jobPosting->company_id, 'actor_id' => $actor->id],
-        );
+        return DB::transaction(function () use ($actor, $jobPosting, $data): JobPosting {
+            [, $items] = $this->extractSkillItems($data);
+            $jobPosting->skills()->syncWithoutDetaching($this->skillSyncMap($items));
+            $counts = $this->skillCounts($jobPosting);
+            $this->auditLogService->record(
+                'job.skills_updated',
+                $actor,
+                JobPosting::class,
+                $jobPosting->id,
+                null,
+                null,
+                [...$counts, 'job_id' => $jobPosting->id, 'company_id' => $jobPosting->company_id, 'actor_id' => $actor->id],
+            );
 
-        return $jobPosting->load(['company', 'skills']);
+            return $jobPosting->load(['company', 'skills']);
+        });
     }
 
     public function detachSkills(User $actor, JobPosting $jobPosting, Skill $skill): JobPosting
@@ -396,7 +422,7 @@ class JobPostingService
                     $builder->where('skills.id', (int) $skill);
 
                     if (filled($skillRequirement)) {
-                        $builder->where('job_posting_skills.requirement_type', $skillRequirement);
+                        $this->applySkillRequirementFilter($builder, $skillRequirement);
                     }
 
                     return;
@@ -404,7 +430,7 @@ class JobPostingService
 
                 $builder->where('skills.slug', $skill);
                 if (filled($skillRequirement)) {
-                    $builder->where('job_posting_skills.requirement_type', $skillRequirement);
+                    $this->applySkillRequirementFilter($builder, $skillRequirement);
                 }
             });
         }
@@ -451,18 +477,22 @@ class JobPostingService
         return (int) ($filters['per_page'] ?? 15);
     }
 
-    /** @param array<int, array{skill_id: int, requirement_type: string}> $skills */
+    /** @param array<int, array{skill_id: int, requirement_type: string, weight?: int}> $skills */
     private function skillSyncMap(array $skills): array
     {
         $map = [];
         foreach ($skills as $skill) {
-            $map[(int) $skill['skill_id']] = ['requirement_type' => $skill['requirement_type']];
+            $type = JobSkillRequirementType::normalize((string) $skill['requirement_type']);
+            $map[(int) $skill['skill_id']] = [
+                'requirement_type' => $type?->value ?? $skill['requirement_type'],
+                'weight' => (int) ($skill['weight'] ?? 1),
+            ];
         }
 
         return $map;
     }
 
-    /** @return array{required_skill_count: int, optional_skill_count: int} */
+    /** @return array{required_skill_count: int, optional_skill_count: int, nice_to_have_skill_count: int} */
     private function skillCounts(JobPosting $jobPosting): array
     {
         $counts = DB::table('job_posting_skills')
@@ -471,9 +501,67 @@ class JobPostingService
             ->groupBy('requirement_type')
             ->pluck('aggregate', 'requirement_type');
 
+        $niceCount = (int) ($counts[JobSkillRequirementType::NICE_TO_HAVE->value] ?? 0)
+            + (int) ($counts[JobSkillRequirementType::OPTIONAL->value] ?? 0);
+
         return [
             'required_skill_count' => (int) ($counts[JobSkillRequirementType::REQUIRED->value] ?? 0),
-            'optional_skill_count' => (int) ($counts[JobSkillRequirementType::OPTIONAL->value] ?? 0),
+            'optional_skill_count' => $niceCount,
+            'nice_to_have_skill_count' => $niceCount,
         ];
+    }
+
+    /** @param array<string, mixed> $data
+     * @return array{bool, array<int, array{skill_id: int, requirement_type: string, weight?: int}>}
+     */
+    private function extractSkillItems(array $data): array
+    {
+        if (array_key_exists('required_skills', $data) || array_key_exists('nice_to_have_skills', $data)) {
+            $required = array_map(fn (array $skill): array => [
+                ...$skill,
+                'requirement_type' => JobSkillRequirementType::REQUIRED->value,
+            ], $data['required_skills'] ?? []);
+            $nice = array_map(fn (array $skill): array => [
+                ...$skill,
+                'requirement_type' => JobSkillRequirementType::NICE_TO_HAVE->value,
+                'weight' => $skill['weight'] ?? 1,
+            ], $data['nice_to_have_skills'] ?? []);
+
+            return [true, [...$required, ...$nice]];
+        }
+
+        if (array_key_exists('skills', $data)) {
+            return [true, $data['skills']];
+        }
+
+        if (array_key_exists('skill_ids', $data)) {
+            return [true, array_map(fn (int $skillId): array => [
+                'skill_id' => $skillId,
+                'requirement_type' => JobSkillRequirementType::REQUIRED->value,
+                'weight' => 1,
+            ], $data['skill_ids'])];
+        }
+
+        return [false, []];
+    }
+
+    /** @param array<string, mixed> $data */
+    private function removeSkillContractKeys(array &$data): void
+    {
+        unset($data['skills'], $data['skill_ids'], $data['required_skills'], $data['nice_to_have_skills']);
+    }
+
+    private function applySkillRequirementFilter(Builder $query, string $requirement): void
+    {
+        if ($requirement === JobSkillRequirementType::NICE_TO_HAVE->value) {
+            $query->whereIn('job_posting_skills.requirement_type', [
+                JobSkillRequirementType::NICE_TO_HAVE->value,
+                JobSkillRequirementType::OPTIONAL->value,
+            ]);
+
+            return;
+        }
+
+        $query->where('job_posting_skills.requirement_type', $requirement);
     }
 }

@@ -118,9 +118,14 @@ class MatchingTest extends TestCase
                     'id',
                     'title',
                     'score',
-                    'breakdown' => ['skills', 'experience', 'core', 'education'],
+                    'matching_score_version',
+                    'breakdown' => ['required_skills', 'nice_to_have_skills', 'experience', 'education', 'text_similarity', 'skills', 'core'],
                     'matched_skills',
                     'skill_breakdown' => ['required_skills_matched', 'required_skills_missing', 'optional_skills_matched'],
+                    'matched_required_skills',
+                    'missing_required_skills',
+                    'matched_nice_to_have_skills',
+                    'reasons',
                 ]],
             ]);
     }
@@ -234,8 +239,10 @@ class MatchingTest extends TestCase
                     'job_application_id',
                     'application_status',
                     'score',
-                    'breakdown' => ['skills', 'experience', 'core', 'education'],
+                    'matching_score_version',
+                    'breakdown' => ['required_skills', 'nice_to_have_skills', 'experience', 'education', 'text_similarity', 'skills', 'core'],
                     'matched_skills',
+                    'reasons',
                     'job_seeker_profile',
                 ]],
             ]);

@@ -12,6 +12,10 @@ class IndexJobPostingRequest extends FormRequest
 {
     protected function prepareForValidation(): void
     {
+        if ($this->input('skill_requirement') === JobSkillRequirementType::OPTIONAL->value) {
+            $this->merge(['skill_requirement' => JobSkillRequirementType::NICE_TO_HAVE->value]);
+        }
+
         if ($this->has('accepting_applications')) {
             $value = filter_var($this->input('accepting_applications'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
             if ($value !== null) {
@@ -38,7 +42,7 @@ class IndexJobPostingRequest extends FormRequest
             'employment_type' => ['sometimes', 'nullable', 'string', 'max:255'],
             'work_mode' => ['sometimes', 'nullable', Rule::enum(JobWorkMode::class)],
             'accepting_applications' => ['sometimes', 'boolean'],
-            'skill_requirement' => ['sometimes', Rule::enum(JobSkillRequirementType::class)],
+            'skill_requirement' => ['sometimes', 'in:required,nice_to_have'],
             'salary_min' => ['sometimes', 'nullable', 'numeric', 'min:0'],
             'salary_max' => ['sometimes', 'nullable', 'numeric', 'min:0'],
             'sort_by' => ['sometimes', 'nullable', 'string', 'in:published_at,created_at,salary_min,salary_max,title,application_deadline'],

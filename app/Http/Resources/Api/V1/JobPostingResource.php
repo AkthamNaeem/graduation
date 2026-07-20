@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Enums\JobSkillRequirementType;
 use App\Models\JobPosting;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -25,6 +26,7 @@ class JobPostingResource extends JsonResource
             'benefits' => $this->benefits,
             'employment_type' => $this->employment_type,
             'experience_level' => $this->experience_level,
+            'education_level' => $this->education_level,
             'location' => $this->location,
             'work_mode' => $this->work_mode?->value ?? $this->work_mode,
             'salary_min' => $this->salary_min,
@@ -38,11 +40,28 @@ class JobPostingResource extends JsonResource
             'can_apply' => $this->acceptsApplications(),
             'company' => CompanyResource::make($this->whenLoaded('company')),
             'skills' => SkillResource::collection($this->whenLoaded('skills')),
+            'required_skills' => SkillResource::collection($this->when(
+                $this->relationLoaded('skills'),
+                fn () => $this->skills->filter(fn ($skill): bool => $this->skillType($skill) === JobSkillRequirementType::REQUIRED),
+            )),
+            'nice_to_have_skills' => SkillResource::collection($this->when(
+                $this->relationLoaded('skills'),
+                fn () => $this->skills->filter(fn ($skill): bool => $this->skillType($skill)?->isNiceToHave() === true),
+            )),
             'screening_questions' => JobScreeningQuestionResource::collection(
                 $this->whenLoaded('screeningQuestions'),
             ),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];
+    }
+
+    private function skillType($skill): ?JobSkillRequirementType
+    {
+        $value = $skill->pivot->requirement_type;
+
+        return $value instanceof JobSkillRequirementType
+            ? JobSkillRequirementType::normalize($value->value)
+            : JobSkillRequirementType::normalize((string) $value);
     }
 }

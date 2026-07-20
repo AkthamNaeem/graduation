@@ -2,15 +2,21 @@
 
 namespace App\Http\Requests\Api\V1\JobPosting;
 
-use App\Enums\JobSkillRequirementType;
+use App\Http\Requests\Api\V1\JobPosting\Concerns\NormalizesJobSkillInput;
 use App\Http\Requests\Api\V1\JobPosting\Concerns\ResolvesJobPostingUser;
 use App\Models\JobPosting;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class AttachJobPostingSkillsRequest extends FormRequest
 {
+    use NormalizesJobSkillInput;
     use ResolvesJobPostingUser;
+
+    protected function prepareForValidation(): void
+    {
+        $this->normalizeJobSkillInput();
+    }
 
     public function authorize(): bool
     {
@@ -26,12 +32,11 @@ class AttachJobPostingSkillsRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            'skill_ids' => ['required_without:skills', 'prohibits:skills', 'array', 'min:1'],
-            'skill_ids.*' => ['integer', 'distinct', 'exists:skills,id'],
-            'skills' => ['required_without:skill_ids', 'prohibits:skill_ids', 'array', 'min:1'],
-            'skills.*.skill_id' => ['required', 'integer', 'distinct', 'exists:skills,id'],
-            'skills.*.requirement_type' => ['required', Rule::enum(JobSkillRequirementType::class)],
-        ];
+        return $this->jobSkillRules();
+    }
+
+    public function withValidator(Validator $validator): void
+    {
+        $validator->after(fn (Validator $validator) => $this->validateJobSkillContracts($validator, true));
     }
 }
