@@ -4,6 +4,7 @@ namespace App\Http\Requests\Api\V1\Application;
 
 use App\Http\Requests\Api\V1\Application\Concerns\ResolvesApplicationUser;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreJobApplicationRequest extends FormRequest
 {
@@ -26,9 +27,14 @@ class StoreJobApplicationRequest extends FormRequest
                 'nullable',
                 'integer',
             ],
-            'cover_letter' => ['nullable', 'string', 'max:5000'],
-            'consent_to_share_profile' => ['accepted'],
-            'screening_answers' => ['nullable', 'array'],
+            'cover_letter' => ['nullable', 'string', 'max:10000'],
+            'consent_to_share_profile' => ['required', 'boolean', Rule::in([true])],
+            'screening_answers' => ['sometimes', 'array', 'list', 'max:50'],
+            'screening_answers.*' => ['required', 'array:question_id,value,selected_option_ids'],
+            'screening_answers.*.question_id' => ['required', 'integer', 'distinct'],
+            'screening_answers.*.value' => ['sometimes'],
+            'screening_answers.*.selected_option_ids' => ['sometimes', 'array', 'list', 'min:1', 'max:50'],
+            'screening_answers.*.selected_option_ids.*' => ['required', 'integer', 'distinct'],
         ];
     }
 
@@ -39,6 +45,10 @@ class StoreJobApplicationRequest extends FormRequest
         }
         if ($this->has('consent') && ! $this->has('consent_to_share_profile')) {
             $this->merge(['consent_to_share_profile' => $this->input('consent')]);
+        }
+        if ($this->has('cover_letter') && is_string($this->input('cover_letter'))) {
+            $coverLetter = trim($this->input('cover_letter'));
+            $this->merge(['cover_letter' => $coverLetter === '' ? null : $coverLetter]);
         }
     }
 }

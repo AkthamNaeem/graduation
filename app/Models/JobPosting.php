@@ -65,6 +65,13 @@ class JobPosting extends Model
         return $this->hasMany(JobApplication::class);
     }
 
+    public function screeningQuestions(): HasMany
+    {
+        return $this->hasMany(JobScreeningQuestion::class)
+            ->orderBy('sort_order')
+            ->orderBy('id');
+    }
+
     public function hasApplicationDeadline(): bool
     {
         return $this->application_deadline !== null;

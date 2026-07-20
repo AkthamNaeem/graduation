@@ -2,12 +2,14 @@
 
 namespace Database\Seeders;
 
+use App\Enums\ScreeningQuestionType;
 use App\Enums\UserRole;
 use App\Models\Company;
 use App\Models\Education;
 use App\Models\EmployerProfile;
 use App\Models\Experience;
 use App\Models\JobPosting;
+use App\Models\JobScreeningQuestion;
 use App\Models\JobSeekerProfile;
 use App\Models\Skill;
 use App\Models\User;
@@ -167,6 +169,45 @@ class SampleUserSeeder extends Seeder
             ],
         );
         $openJob->skills()->sync($backendSkillIds);
+
+        JobScreeningQuestion::updateOrCreate(
+            ['job_posting_id' => $openJob->id, 'question_text' => 'How many years of Laravel experience do you have?'],
+            [
+                'question_type' => ScreeningQuestionType::NUMBER,
+                'is_required' => true,
+                'sort_order' => 1,
+                'is_active' => true,
+                'created_by_user_id' => $employer->id,
+            ],
+        )->options()->delete();
+
+        $scheduleQuestion = JobScreeningQuestion::updateOrCreate(
+            ['job_posting_id' => $openJob->id, 'question_text' => 'Which work schedule do you prefer?'],
+            [
+                'question_type' => ScreeningQuestionType::SINGLE_CHOICE,
+                'is_required' => false,
+                'sort_order' => 2,
+                'is_active' => true,
+                'created_by_user_id' => $employer->id,
+            ],
+        );
+        foreach (['Morning', 'Evening'] as $index => $optionText) {
+            $scheduleQuestion->options()->updateOrCreate(
+                ['option_text' => $optionText],
+                ['sort_order' => $index + 1],
+            );
+        }
+
+        JobScreeningQuestion::updateOrCreate(
+            ['job_posting_id' => $openJob->id, 'question_text' => 'Are you available to start within thirty days?'],
+            [
+                'question_type' => ScreeningQuestionType::BOOLEAN,
+                'is_required' => true,
+                'sort_order' => 3,
+                'is_active' => true,
+                'created_by_user_id' => $employer->id,
+            ],
+        )->options()->delete();
 
         $draftJob = JobPosting::updateOrCreate(
             [

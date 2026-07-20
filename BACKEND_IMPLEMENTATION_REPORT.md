@@ -1903,4 +1903,95 @@ Seventeen feature tests were added: eleven in `JobPostingContractTest` and six i
 
 ### Remaining Gaps and Git Status
 
-The only remaining verification gap is repository-wide formatting debt outside this increment. Screening questions, cover letters, consent changes, nice-to-have skills, external notifications, AI matching, and unrelated refactors were intentionally excluded. No commit or push was performed.
+The only remaining verification gap is repository-wide formatting debt outside this increment. Nice-to-have skills, external notifications, AI matching, and unrelated refactors were intentionally excluded. Screening questions, cover letters, and explicit consent are implemented in section 42. No commit or push was performed.
+
+## 42. Job Screening Questions and Immutable Application Answers
+
+### Baseline and Existing Implementation
+
+This increment started on branch `master` at HEAD `951e17ec38d809cac07133c92c4f4afcab3a14c9` with a clean working tree, 458 passing tests, 3638 assertions, one opt-in real-S3 test skipped, and no pending migrations. The repository already had the application submission endpoint and aliases, selected/primary CV resolution, nullable `cover_letter`, explicit consent request validation, a legacy JSON `screening_answers` column, application deadline and duplicate guards, status history, after-commit submission notifications, application authorization, and candidate/employer resources.
+
+The applied 2026-07-02 migration was not modified. Its legacy JSON column remains readable for historical records, but new submissions write normalized relational answers and leave that column null. Existing CV aliases and selected-CV immutability remain unchanged.
+
+### Architecture and Database Schema
+
+Migration `2026_07_20_000002_create_job_screening_question_tables.php` creates six independent tables:
+
+- `job_screening_questions` stores the current job-owned definition, type, required flag, stable order, active state, and safe creator reference.
+- `job_screening_question_options` stores ordered options for current choice questions.
+- `job_application_screening_questions` stores immutable question snapshots owned by one submitted application.
+- `job_application_screening_question_options` stores immutable option text and order for each snapshot question.
+- `job_application_screening_answers` stores exactly one typed scalar answer per application snapshot question using mutually exclusive text, decimal, or boolean columns.
+- `job_application_screening_answer_options` stores selected snapshot-option relationships for choice answers.
+
+Foreign keys cascade only through the owning current definition or application aggregate. Snapshot source references are nullable and use `nullOnDelete`, so deleting a current question or option cannot delete historical text. Composite indexes support active ordered job reads and ordered application reads. Unique constraints prevent duplicate source snapshots, duplicate answers, and duplicate selected options. `down()` drops the six tables in dependency-safe reverse order. The migration ran successfully against the configured MySQL database in batch 5.
+
+### Question Types and Management Rules
+
+`App\Enums\ScreeningQuestionType` is the single source for `short_text`, `long_text`, `single_choice`, `multiple_choice`, `boolean`, and `number`. Question text is trimmed, required, and limited to 2000 characters. Choice questions require 2-50 non-empty options of at most 1000 characters. Option duplicates are rejected after whitespace normalization and case-insensitive comparison. Non-choice questions reject options, and boolean questions do not create artificial true/false rows.
+
+The owner employer can create, update, change type, and deactivate questions while the job is not closed and the company remains approved. Changing choice to a scalar type removes only the current options; changing a scalar type to choice requires valid replacement options. Existing application snapshots are never updated. Deletion is a safe `is_active=false` operation. At most 50 active questions are allowed per job; creation locks the job row before counting and writing. Default ordering uses the current maximum plus one, and all reads use `sort_order ASC, id ASC`.
+
+Question audit records contain only IDs, type, flags, order, state, and option counts. They never contain question or option text.
+
+### Extended Application Contract and Typed Validation
+
+The existing application endpoint now accepts `selected_cv_file_id` or its existing alias, nullable trimmed `cover_letter` up to 10000 characters, explicit JSON boolean `consent_to_share_profile=true`, and a list of `screening_answers`. Missing, false, null, or truthy string consent is rejected before any application write. New writes always persist consent as true.
+
+Each submitted answer must identify one active question belonging to the target job. Duplicate questions, inactive or cross-job questions, cross-question options, duplicate option IDs, extra value fields for choice questions, and option fields for scalar questions are rejected rather than ignored. Required questions must be answered; optional questions may be omitted but cannot be submitted with an invalid empty value.
+
+- `short_text`: trimmed non-empty string, maximum 1000 characters.
+- `long_text`: trimmed non-empty string, maximum 10000 characters.
+- `number`: native JSON integer or decimal from -1000000000 through 1000000000; zero and negative values are valid.
+- `boolean`: native JSON boolean; false is a valid required answer.
+- `single_choice`: exactly one option owned by the question and no scalar value.
+- `multiple_choice`: one or more distinct options owned by the question and no scalar value.
+
+### Snapshot, Atomicity, and Side Effects
+
+Application submission locks the job row, rechecks open status, company availability, deadline, duplicate application, profile, and selected CV, then loads the active ordered questions and options under the same transaction. It builds a fully validated answer plan before creating the application. The application, all question/option snapshots, typed answers, selected snapshot options, and submitted status history are then written in one transaction.
+
+Any validation, snapshot, answer, status-history, CV, duplicate, company, or deadline failure rolls back the complete aggregate. A synthetic snapshot failure test confirms that no application, history, snapshot, answer, selected option, or notification remains. The existing `ApplicationSubmitted` event remains scheduled with `DB::afterCommit`; screening answers and cover letters are not added to notification payloads or audit metadata.
+
+Submitted answers, cover letters, and consent have no update endpoint. Editing or deactivating current questions and options affects only future submissions. Candidate CV selection remains immutable through `selected_cv_file_id`, and status changes or withdrawal do not delete historical answers.
+
+### Authorization, Privacy, Resources, and Queries
+
+Public visitors and job seekers can read active questions for an approved open job. Only the owning approved employer can manage them; other companies, job seekers, visitors, pending companies, and closed jobs are rejected according to existing authorization and company-state contracts.
+
+Application details expose cover letter, consent, immutable question text/type/required/order, typed value, and selected option text only to the candidate owner or owning employer. Source question/option IDs, creator IDs, audit data, and internal timestamps are omitted. Other candidates, other employers, and visitors cannot read the application. Application list endpoints remain summary-only and do not eager-load normalized answers; detail and mutation responses eager-load the entire snapshot graph without resource-side queries. Legacy JSON answers remain readable when a historical application has no normalized snapshots.
+
+Job detail responses add safe ordered `screening_questions`. A dedicated public list endpoint exposes the same safe resource without administrative fields.
+
+### API Endpoints and Error Contracts
+
+- `GET /api/v1/jobs/{jobPosting}/screening-questions`
+- `POST /api/v1/jobs/{jobPosting}/screening-questions`
+- `PUT /api/v1/jobs/{jobPosting}/screening-questions/{question}`
+- `DELETE /api/v1/jobs/{jobPosting}/screening-questions/{question}`
+- Existing `POST /api/v1/jobs/{jobPosting}/applications` and `POST /api/v1/applications/{jobPosting}` aliases were extended; no replacement submission endpoint was added.
+
+Domain failures use the existing API envelope and stable codes including `JOB_SCREENING_QUESTION_LIMIT_REACHED`, `JOB_SCREENING_QUESTION_OPTIONS_REQUIRED`, `JOB_SCREENING_QUESTION_OPTIONS_NOT_ALLOWED`, `JOB_SCREENING_QUESTION_DUPLICATE_OPTION`, `JOB_SCREENING_QUESTION_NOT_FOUND`, `JOB_SCREENING_QUESTION_FORBIDDEN`, `JOB_SCREENING_QUESTION_JOB_CLOSED`, `APPLICATION_SCREENING_REQUIRED_ANSWER_MISSING`, `APPLICATION_SCREENING_QUESTION_INVALID`, `APPLICATION_SCREENING_OPTION_INVALID`, `APPLICATION_SCREENING_DUPLICATE_ANSWER`, and `APPLICATION_SCREENING_ANSWER_TYPE_INVALID`. Structural request failures remain standard Laravel 422 field errors.
+
+### Tests, Postman, and Verification
+
+Thirty-five explicit feature tests were added across `JobScreeningQuestionTest`, `ApplicationScreeningAnswerTest`, and `ApplicationScreeningPrivacyTest`. They cover all six types, option rules, maximum count, ordering, safe resources, ownership and company state, type changes, closed jobs, deactivation, required/optional behavior, cover-letter limits, strict consent, scalar boundaries, choice cardinality and hierarchy, duplicate/inactive/cross-job answers, immutable question and option text, rollback, legacy reads, summary/detail loading, privacy, and PII-free audit/notification data.
+
+Web Postman now contains a `Job Screening Questions` folder with management, type-change, denial, invalid-option, and required/optional examples. Mobile Postman contains job details, scalar and choice submissions, missing-answer, invalid-option, consent failure, and historical detail examples. The shared environment contains response-populated screening IDs and no hard-coded application-specific IDs.
+
+- `php artisan migrate`: passed; the new migration ran in batch 5.
+- `php artisan migrate:status`: every migration is `Ran`; none are pending.
+- `php artisan test --filter=ScreeningQuestion`: 15 passed, 68 assertions.
+- `php artisan test --filter=JobApplication`: 6 passed, 27 assertions.
+- `php artisan test --filter=ApplicationPrivacy`: 4 passed, 65 assertions.
+- `ApplicationScreeningAnswerTest`: 17 passed, 121 assertions.
+- `ApplicationScreeningPrivacyTest`: 3 passed, 30 assertions.
+- Full `php artisan test --compact`: 493 passed, 3860 assertions, one opt-in real-S3 test skipped.
+- Pint on all 35 task PHP files and PHP syntax checks: passed.
+- Repository-wide `vendor/bin/pint --test`: still fails on 54 pre-existing unrelated files; no task file is in that failure set.
+- `php artisan route:list`: passed and reports 176 routes, including the four screening-question routes.
+- Web, Mobile, and Environment Postman JSON parse successfully.
+
+### Remaining Scope and Git Status
+
+Nice-to-have skills, AI matching, candidate score, CV summary, email/push notifications, a generic form builder, post-submission answer editing, reapplication, and AI-generated questions remain outside scope. No commit or push was performed.

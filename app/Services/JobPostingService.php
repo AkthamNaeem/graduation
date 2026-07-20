@@ -74,7 +74,13 @@ class JobPostingService
             abort(404);
         }
 
-        return $jobPosting->loadMissing(['company', 'skills']);
+        return $jobPosting->loadMissing([
+            'company',
+            'skills',
+            'screeningQuestions' => fn (Relation $query) => $query
+                ->where('is_active', true)
+                ->with('options'),
+        ]);
     }
 
     /**

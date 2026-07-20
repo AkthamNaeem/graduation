@@ -58,6 +58,7 @@ class ApplicationWorkflowService
 
     public function __construct(
         private readonly AuditLogService $auditLogService,
+        private readonly ApplicationScreeningAnswerService $screeningAnswerService,
         private readonly CompanyRecruitmentAccessService $companyAccessService,
         private readonly PrivateFileStorageService $privateStorage,
     ) {}
@@ -70,6 +71,12 @@ class ApplicationWorkflowService
         if ($user->role !== UserRole::JOB_SEEKER) {
             throw ValidationException::withMessages([
                 'user' => ['Only job seekers can apply to jobs.'],
+            ]);
+        }
+
+        if (($applicationData['consent_to_share_profile'] ?? null) !== true) {
+            throw ValidationException::withMessages([
+                'consent_to_share_profile' => ['Explicit profile sharing consent is required.'],
             ]);
         }
 
@@ -89,6 +96,10 @@ class ApplicationWorkflowService
             $lockedJobPosting = JobPosting::query()->lockForUpdate()->findOrFail($jobPosting->id);
             $this->assertJobAcceptsApplications($lockedJobPosting);
             $this->checkDuplicateApplication($lockedJobPosting, $profile);
+            $screeningPlan = $this->screeningAnswerService->buildPlan(
+                $lockedJobPosting,
+                $applicationData['screening_answers'] ?? [],
+            );
 
             $submittedStatus = $this->statusBySlug(self::STATUS_SUBMITTED);
 
@@ -98,9 +109,11 @@ class ApplicationWorkflowService
                 'selected_cv_file_id' => $selectedCvFileId,
                 'application_status_id' => $submittedStatus->id,
                 'cover_letter' => $applicationData['cover_letter'] ?? null,
-                'consent_to_share_profile' => (bool) ($applicationData['consent_to_share_profile'] ?? false),
-                'screening_answers' => $applicationData['screening_answers'] ?? null,
+                'consent_to_share_profile' => true,
+                'screening_answers' => null,
             ]);
+
+            $this->screeningAnswerService->persistSnapshots($application, $screeningPlan);
 
             $this->recordHistory($application, null, $submittedStatus, $user);
 
@@ -402,13 +415,13 @@ class ApplicationWorkflowService
 
     private function loadApplication(JobApplication $jobApplication, bool $candidateSafe = false): JobApplication
     {
-        return $jobApplication->load($this->applicationRelations($candidateSafe));
+        return $jobApplication->load($this->applicationRelations($candidateSafe, includeScreeningAnswers: true));
     }
 
     /**
      * @return array<int, string>
      */
-    private function applicationRelations(bool $candidateSafe = false): array
+    private function applicationRelations(bool $candidateSafe = false, bool $includeScreeningAnswers = false): array
     {
         $relations = [
             'jobPosting.company',
@@ -419,6 +432,11 @@ class ApplicationWorkflowService
             'statusHistory.toStatus',
             'latestInformationRequest.response',
         ];
+
+        if ($includeScreeningAnswers) {
+            $relations[] = 'screeningQuestionSnapshots.options';
+            $relations[] = 'screeningQuestionSnapshots.answer.selectedOptions.option';
+        }
 
         if (! $candidateSafe) {
             $relations[] = 'jobSeekerProfile.user';

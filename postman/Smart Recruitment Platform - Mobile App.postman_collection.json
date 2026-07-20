@@ -16,6 +16,19 @@
   },
   "item": [
     {
+      "name": "Screening Questions and Applications",
+      "item": [
+        {"name":"Job Details With Screening Questions","request":{"auth":{"type":"noauth"},"method":"GET","url":"{{base_url}}/jobs/{{job_id}}","description":"Returns active ordered screening_questions without creator or source IDs."}},
+        {"name":"Apply Without Questions","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/jobs/{{job_id}}/applications","body":{"mode":"raw","raw":"{\n  \"selected_cv_file_id\": {{cv_file_id}},\n  \"cover_letter\": null,\n  \"consent_to_share_profile\": true,\n  \"screening_answers\": []\n}","options":{"raw":{"language":"json"}}},"description":"For a job with no active screening questions."}},
+        {"name":"Apply With Text Number Boolean","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/jobs/{{job_id}}/applications","body":{"mode":"raw","raw":"{\n  \"selected_cv_file_id\": {{cv_file_id}},\n  \"cover_letter\": \"My experience matches this role.\",\n  \"consent_to_share_profile\": true,\n  \"screening_answers\": [\n    {\"question_id\": {{screening_question_short_text_id}}, \"value\": \"Three years\"},\n    {\"question_id\": {{screening_question_number_id}}, \"value\": 3},\n    {\"question_id\": {{screening_question_boolean_id}}, \"value\": false}\n  ]\n}","options":{"raw":{"language":"json"}}}},"event":[{"listen":"test","script":{"type":"text/javascript","exec":["if (pm.response.code === 201) pm.environment.set('application_with_screening_answers_id', pm.response.json().data.id);"]}}]},
+        {"name":"Apply With Single Multiple Choice","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/jobs/{{job_id}}/applications","body":{"mode":"raw","raw":"{\n  \"selected_cv_file_id\": {{cv_file_id}},\n  \"consent_to_share_profile\": true,\n  \"screening_answers\": [\n    {\"question_id\": {{screening_question_single_choice_id}}, \"selected_option_ids\": [{{screening_option_id}}]},\n    {\"question_id\": {{screening_question_multiple_choice_id}}, \"selected_option_ids\": [{{screening_multiple_option_id}}, {{screening_multiple_option_two_id}}]}\n  ]\n}","options":{"raw":{"language":"json"}}}}},
+        {"name":"Missing Required Answer Failure","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/jobs/{{job_id}}/applications","body":{"mode":"raw","raw":"{\n  \"selected_cv_file_id\": {{cv_file_id}},\n  \"consent_to_share_profile\": true,\n  \"screening_answers\": []\n}","options":{"raw":{"language":"json"}}},"description":"Expected 422 APPLICATION_SCREENING_REQUIRED_ANSWER_MISSING with no partial rows."}},
+        {"name":"Invalid Option Failure","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/jobs/{{job_id}}/applications","body":{"mode":"raw","raw":"{\n  \"selected_cv_file_id\": {{cv_file_id}},\n  \"consent_to_share_profile\": true,\n  \"screening_answers\": [{\"question_id\": {{screening_question_single_choice_id}}, \"selected_option_ids\": [{{invalid_screening_option_id}}]}]\n}","options":{"raw":{"language":"json"}}},"description":"Expected 422 APPLICATION_SCREENING_OPTION_INVALID."}},
+        {"name":"Consent False Failure","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/jobs/{{job_id}}/applications","body":{"mode":"raw","raw":"{\n  \"selected_cv_file_id\": {{cv_file_id}},\n  \"consent_to_share_profile\": false,\n  \"screening_answers\": []\n}","options":{"raw":{"language":"json"}}},"description":"Expected Laravel 422 validation error and no application."}},
+        {"name":"Application Detail With Historical Answers","request":{"method":"GET","url":"{{base_url}}/applications/{{application_with_screening_answers_id}}","description":"Candidate owner detail includes immutable question/option text; list endpoints remain summary-only."}}
+      ]
+    },
+    {
       "name": "01 Auth - Job Seeker",
       "item": [
         {
@@ -988,7 +1001,7 @@
             "url": "{{base_url}}/jobs/{{job_id}}/applications",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"selected_cv_file_id\": {{cv_file_id}},\n  \"cover_letter\": \"I am interested in this position.\",\n  \"consent_to_share_profile\": true,\n  \"screening_answers\": {\n    \"notice_period\": \"immediate\"\n  }\n}",
+              "raw": "{\n  \"selected_cv_file_id\": {{cv_file_id}},\n  \"cover_letter\": \"I am interested in this position.\",\n  \"consent_to_share_profile\": true,\n  \"screening_answers\": []\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1025,7 +1038,7 @@
             "url": "{{base_url}}/applications/{{job_id}}",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"selected_cv_file_id\": {{cv_file_id}},\n  \"cover_letter\": \"I am interested in this position.\",\n  \"consent_to_share_profile\": true,\n  \"screening_answers\": {\n    \"notice_period\": \"immediate\"\n  }\n}",
+              "raw": "{\n  \"selected_cv_file_id\": {{cv_file_id}},\n  \"cover_letter\": \"I am interested in this position.\",\n  \"consent_to_share_profile\": true,\n  \"screening_answers\": []\n}",
               "options": {
                 "raw": {
                   "language": "json"

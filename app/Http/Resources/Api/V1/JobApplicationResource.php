@@ -41,7 +41,10 @@ class JobApplicationResource extends JsonResource
             ),
             'cover_letter' => $this->cover_letter,
             'consent_to_share_profile' => $this->consent_to_share_profile,
-            'screening_answers' => $this->screening_answers,
+            'screening_answers' => $this->relationLoaded('screeningQuestionSnapshots')
+                && $this->screeningQuestionSnapshots->isNotEmpty()
+                ? JobApplicationScreeningQuestionResource::collection($this->screeningQuestionSnapshots)
+                : ($this->screening_answers ?? []),
             'status_history' => ApplicationStatusHistoryResource::collection($this->whenLoaded('statusHistory')),
             'latest_information_request' => $this->when(
                 $this->relationLoaded('latestInformationRequest'),

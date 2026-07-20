@@ -76,4 +76,16 @@ class JobApplication extends Model
     {
         return $this->hasMany(ApplicationInternalNote::class);
     }
+
+    public function screeningQuestionSnapshots(): HasMany
+    {
+        return $this->hasMany(JobApplicationScreeningQuestion::class)
+            ->orderBy('sort_order')
+            ->orderBy('id');
+    }
+
+    public function normalizedScreeningAnswers(): HasMany
+    {
+        return $this->hasMany(JobApplicationScreeningAnswer::class);
+    }
 }

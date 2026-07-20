@@ -38,6 +38,9 @@ class JobPostingResource extends JsonResource
             'can_apply' => $this->acceptsApplications(),
             'company' => CompanyResource::make($this->whenLoaded('company')),
             'skills' => SkillResource::collection($this->whenLoaded('skills')),
+            'screening_questions' => JobScreeningQuestionResource::collection(
+                $this->whenLoaded('screeningQuestions'),
+            ),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

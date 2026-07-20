@@ -63,6 +63,11 @@ class JobPostingPolicy
         return $this->update($user, $jobPosting);
     }
 
+    public function manageScreeningQuestions(User $user, JobPosting $jobPosting): bool
+    {
+        return $this->update($user, $jobPosting);
+    }
+
     private function belongsToCompany(User $user, JobPosting $jobPosting): bool
     {
         return $user->employerProfile()

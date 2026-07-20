@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\V1\Auth\RegistrationController;
 use App\Http\Controllers\Api\V1\CV\CVController;
 use App\Http\Controllers\Api\V1\Interview\InterviewController;
 use App\Http\Controllers\Api\V1\JobPosting\JobPostingController;
+use App\Http\Controllers\Api\V1\JobPosting\JobScreeningQuestionController;
 use App\Http\Controllers\Api\V1\Notification\NotificationController;
 use App\Http\Controllers\Api\V1\Profile\CompanyController;
 use App\Http\Controllers\Api\V1\Profile\EducationController;
@@ -152,6 +153,9 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function (): void {
         Route::delete('jobs/{jobPosting}/skills/{skill}', [JobPostingController::class, 'detachSkill'])->name('jobs.skills.destroy');
         Route::post('jobs/{jobPosting}/publish', [JobPostingController::class, 'publish'])->name('jobs.publish');
         Route::post('jobs/{jobPosting}/close', [JobPostingController::class, 'close'])->name('jobs.close');
+        Route::post('jobs/{jobPosting}/screening-questions', [JobScreeningQuestionController::class, 'store'])->name('jobs.screening-questions.store');
+        Route::put('jobs/{jobPosting}/screening-questions/{question}', [JobScreeningQuestionController::class, 'update'])->name('jobs.screening-questions.update');
+        Route::delete('jobs/{jobPosting}/screening-questions/{question}', [JobScreeningQuestionController::class, 'destroy'])->name('jobs.screening-questions.destroy');
         Route::get('jobs/{jobPosting}/candidates/ranked', [JobPostingController::class, 'rankedCandidates'])->name('jobs.candidates.ranked');
 
         Route::get('jobs/{jobPosting}/applications', [JobApplicationController::class, 'indexByJob'])->name('jobs.applications.index');
@@ -229,4 +233,5 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function (): void {
 
 Route::get('skills', [SkillController::class, 'index'])->name('skills.index');
 Route::get('jobs', [JobPostingController::class, 'index'])->name('jobs.index');
+Route::get('jobs/{jobPosting}/screening-questions', [JobScreeningQuestionController::class, 'index'])->name('jobs.screening-questions.index');
 Route::get('jobs/{jobPosting}', [JobPostingController::class, 'show'])->name('jobs.show');
