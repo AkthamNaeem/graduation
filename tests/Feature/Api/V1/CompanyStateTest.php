@@ -87,6 +87,7 @@ class CompanyStateTest extends TestCase
         $this->withToken($employerToken)->postJson('/api/v1/jobs', [
             'title' => 'Reapproved Role',
             'description' => 'Recruitment resumed without replacing the employer token.',
+            'requirements' => 'Recruitment platform experience.',
             'employment_type' => 'full-time',
             'experience_level' => 'mid-level',
             'work_mode' => 'remote',

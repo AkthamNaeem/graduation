@@ -17,7 +17,11 @@ class JobPosting extends Model
     protected $fillable = [
         'company_id',
         'title',
+        'department',
         'description',
+        'responsibilities',
+        'requirements',
+        'benefits',
         'employment_type',
         'experience_level',
         'location',
@@ -73,9 +77,13 @@ class JobPosting extends Model
 
     public function acceptsApplications(): bool
     {
-        return $this->status === 'open'
-            && $this->company?->approval_status === 'approved'
-            && ! $this->isApplicationDeadlinePassed();
+        return $this->isAcceptingApplications()
+            && $this->company?->approval_status === 'approved';
+    }
+
+    public function isAcceptingApplications(): bool
+    {
+        return $this->status === 'open' && ! $this->isApplicationDeadlinePassed();
     }
 
     public function requiredSkillsCount(): int

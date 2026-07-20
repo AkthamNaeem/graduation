@@ -7,12 +7,30 @@ use App\Enums\JobWorkMode;
 use App\Http\Requests\Api\V1\JobPosting\Concerns\ResolvesJobPostingUser;
 use App\Models\JobPosting;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
+use Throwable;
 
 class StoreJobPostingRequest extends FormRequest
 {
     use ResolvesJobPostingUser;
+
+    protected function prepareForValidation(): void
+    {
+        $deadline = $this->input('application_deadline');
+        if (! is_string($deadline)) {
+            return;
+        }
+
+        try {
+            $this->merge([
+                'application_deadline' => Carbon::parse($deadline)->utc()->toISOString(),
+            ]);
+        } catch (Throwable) {
+            // Keep the original input so the date validation rule returns the API error.
+        }
+    }
 
     public function authorize(): bool
     {
@@ -27,7 +45,11 @@ class StoreJobPostingRequest extends FormRequest
     {
         return [
             'title' => ['required', 'string', 'max:255'],
+            'department' => ['sometimes', 'nullable', 'string', 'max:255'],
             'description' => ['required', 'string'],
+            'responsibilities' => ['sometimes', 'nullable', 'string', 'max:20000'],
+            'requirements' => ['required', 'string', 'max:20000'],
+            'benefits' => ['sometimes', 'nullable', 'string', 'max:20000'],
             'employment_type' => ['required', 'string', 'max:255'],
             'experience_level' => ['required', 'string', 'max:255'],
             'location' => ['sometimes', 'nullable', 'string', 'max:255'],

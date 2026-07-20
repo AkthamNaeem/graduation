@@ -26,6 +26,7 @@ class JobPostingService
         'salary_min',
         'salary_max',
         'title',
+        'application_deadline',
     ];
 
     public function __construct(
@@ -129,7 +130,7 @@ class JobPostingService
             $skills = $data['skills'] ?? [];
             unset($data['skills']);
             $safeKeys = array_values(array_intersect(array_keys($data), [
-                'title', 'employment_type', 'experience_level', 'location', 'salary_min', 'salary_max', 'work_mode', 'application_deadline',
+                'title', 'department', 'employment_type', 'experience_level', 'location', 'salary_min', 'salary_max', 'work_mode', 'application_deadline',
             ]));
             $before = $jobPosting->only($safeKeys);
             $previousWorkMode = $jobPosting->work_mode?->value ?? $jobPosting->work_mode;
@@ -187,6 +188,15 @@ class JobPostingService
             throw ValidationException::withMessages([
                 'job' => ['Title, description, and employment type are required before publishing this job.'],
             ]);
+        }
+
+        if (blank($jobPosting->requirements)) {
+            throw new JobPostingOperationException(
+                'Job requirements are required before publishing this job.',
+                'JOB_REQUIREMENTS_MISSING',
+                422,
+                ['requirements' => ['Job requirements are required before publishing this job.']],
+            );
         }
 
         $workMode = JobWorkMode::tryFrom((string) $jobPosting->getRawOriginal('work_mode'));
@@ -342,9 +352,21 @@ class JobPostingService
         if ($acceptingApplications !== null) {
             $accepting = filter_var($acceptingApplications, FILTER_VALIDATE_BOOLEAN);
             $query->where(function (Builder $builder) use ($accepting): void {
-                $accepting
-                    ? $builder->whereNull('application_deadline')->orWhere('application_deadline', '>=', now())
-                    : $builder->whereNotNull('application_deadline')->where('application_deadline', '<', now());
+                if ($accepting) {
+                    $builder->where('status', 'open')
+                        ->where(function (Builder $deadlineQuery): void {
+                            $deadlineQuery->whereNull('application_deadline')
+                                ->orWhere('application_deadline', '>=', now());
+                        });
+
+                    return;
+                }
+
+                $builder->where('status', '!=', 'open')
+                    ->orWhere(function (Builder $deadlineQuery): void {
+                        $deadlineQuery->whereNotNull('application_deadline')
+                            ->where('application_deadline', '<', now());
+                    });
             });
         }
 
@@ -398,6 +420,13 @@ class JobPostingService
 
         if (! in_array($sortDirection, ['asc', 'desc'], true)) {
             $sortDirection = 'desc';
+        }
+
+        if ($sortBy === 'application_deadline') {
+            $query->orderByRaw('CASE WHEN application_deadline IS NULL THEN 1 ELSE 0 END')
+                ->orderBy('application_deadline', $sortDirection);
+
+            return;
         }
 
         $query->orderBy($sortBy, $sortDirection);

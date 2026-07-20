@@ -7,8 +7,8 @@ use App\Models\Company;
 use App\Models\Education;
 use App\Models\EmployerProfile;
 use App\Models\Experience;
-use App\Models\JobSeekerProfile;
 use App\Models\JobPosting;
+use App\Models\JobSeekerProfile;
 use App\Models\Skill;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -153,6 +153,10 @@ class SampleUserSeeder extends Seeder
             ],
             [
                 'description' => 'Lead API development for the smart recruitment platform using Laravel, MySQL, and service-based architecture.',
+                'department' => 'Engineering',
+                'responsibilities' => 'Lead API delivery, review code, and maintain backend quality.',
+                'requirements' => 'Professional Laravel, MySQL, REST API, and testing experience.',
+                'benefits' => 'Flexible remote work and professional development support.',
                 'employment_type' => 'full-time',
                 'experience_level' => 'senior',
                 'location' => 'Remote',
@@ -171,6 +175,10 @@ class SampleUserSeeder extends Seeder
             ],
             [
                 'description' => 'Build polished candidate and employer interfaces with strong collaboration across product and design.',
+                'department' => 'Engineering',
+                'responsibilities' => 'Build and test candidate and employer web interfaces.',
+                'requirements' => 'JavaScript, React, and cross-functional collaboration experience.',
+                'benefits' => 'Hybrid work and flexible hours.',
                 'employment_type' => 'full-time',
                 'experience_level' => 'mid-level',
                 'location' => 'New York, NY',
@@ -189,6 +197,10 @@ class SampleUserSeeder extends Seeder
             ],
             [
                 'description' => 'Source and coordinate backend engineering candidates for the recruitment platform.',
+                'department' => 'Talent Acquisition',
+                'responsibilities' => 'Source candidates and coordinate the recruitment process.',
+                'requirements' => 'Technical recruiting and stakeholder communication experience.',
+                'benefits' => null,
                 'employment_type' => 'contract',
                 'experience_level' => 'mid-level',
                 'location' => 'Remote',

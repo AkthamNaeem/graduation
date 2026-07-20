@@ -41,7 +41,7 @@ class IndexJobPostingRequest extends FormRequest
             'skill_requirement' => ['sometimes', Rule::enum(JobSkillRequirementType::class)],
             'salary_min' => ['sometimes', 'nullable', 'numeric', 'min:0'],
             'salary_max' => ['sometimes', 'nullable', 'numeric', 'min:0'],
-            'sort_by' => ['sometimes', 'nullable', 'string', 'in:published_at,created_at,salary_min,salary_max,title'],
+            'sort_by' => ['sometimes', 'nullable', 'string', 'in:published_at,created_at,salary_min,salary_max,title,application_deadline'],
             'sort_direction' => ['sometimes', 'nullable', 'string', 'in:asc,desc'],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
         ];

@@ -25,7 +25,11 @@ class UpdateJobPostingRequest extends StoreJobPostingRequest
     {
         return [
             'title' => ['sometimes', 'required', 'string', 'max:255'],
+            'department' => ['sometimes', 'nullable', 'string', 'max:255'],
             'description' => ['sometimes', 'required', 'string'],
+            'responsibilities' => ['sometimes', 'nullable', 'string', 'max:20000'],
+            'requirements' => ['sometimes', 'required', 'string', 'max:20000'],
+            'benefits' => ['sometimes', 'nullable', 'string', 'max:20000'],
             'employment_type' => ['sometimes', 'required', 'string', 'max:255'],
             'experience_level' => ['sometimes', 'required', 'string', 'max:255'],
             'location' => ['sometimes', 'nullable', 'string', 'max:255'],

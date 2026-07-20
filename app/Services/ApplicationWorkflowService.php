@@ -73,6 +73,45 @@ class ApplicationWorkflowService
             ]);
         }
 
+        $this->assertJobAcceptsApplications($jobPosting);
+
+        $profile = $user->jobSeekerProfile;
+
+        if (! $profile instanceof JobSeekerProfile) {
+            throw ValidationException::withMessages([
+                'job_seeker_profile' => ['A job seeker profile is required before applying.'],
+            ]);
+        }
+
+        return DB::transaction(function () use ($jobPosting, $profile, $user, $applicationData): JobApplication {
+            $lockedProfile = JobSeekerProfile::query()->lockForUpdate()->findOrFail($profile->id);
+            $selectedCvFileId = $this->resolveApplicationCV($user, $lockedProfile, $applicationData['selected_cv_file_id'] ?? null)->id;
+            $lockedJobPosting = JobPosting::query()->lockForUpdate()->findOrFail($jobPosting->id);
+            $this->assertJobAcceptsApplications($lockedJobPosting);
+            $this->checkDuplicateApplication($lockedJobPosting, $profile);
+
+            $submittedStatus = $this->statusBySlug(self::STATUS_SUBMITTED);
+
+            $application = JobApplication::create([
+                'job_posting_id' => $lockedJobPosting->id,
+                'job_seeker_profile_id' => $profile->id,
+                'selected_cv_file_id' => $selectedCvFileId,
+                'application_status_id' => $submittedStatus->id,
+                'cover_letter' => $applicationData['cover_letter'] ?? null,
+                'consent_to_share_profile' => (bool) ($applicationData['consent_to_share_profile'] ?? false),
+                'screening_answers' => $applicationData['screening_answers'] ?? null,
+            ]);
+
+            $this->recordHistory($application, null, $submittedStatus, $user);
+
+            DB::afterCommit(fn (): array => event(new ApplicationSubmitted($application->id)));
+
+            return $this->loadApplication($application, candidateSafe: true);
+        });
+    }
+
+    private function assertJobAcceptsApplications(JobPosting $jobPosting): void
+    {
         if ($jobPosting->status !== 'open') {
             throw ValidationException::withMessages([
                 'job_posting_id' => ['Applications are only allowed for open jobs.'],
@@ -88,38 +127,6 @@ class ApplicationWorkflowService
                 409,
             );
         }
-
-        $profile = $user->jobSeekerProfile;
-
-        if (! $profile instanceof JobSeekerProfile) {
-            throw ValidationException::withMessages([
-                'job_seeker_profile' => ['A job seeker profile is required before applying.'],
-            ]);
-        }
-
-        return DB::transaction(function () use ($jobPosting, $profile, $user, $applicationData): JobApplication {
-            $lockedProfile = JobSeekerProfile::query()->lockForUpdate()->findOrFail($profile->id);
-            $selectedCvFileId = $this->resolveApplicationCV($user, $lockedProfile, $applicationData['selected_cv_file_id'] ?? null)->id;
-            $this->checkDuplicateApplication($jobPosting, $profile);
-
-            $submittedStatus = $this->statusBySlug(self::STATUS_SUBMITTED);
-
-            $application = JobApplication::create([
-                'job_posting_id' => $jobPosting->id,
-                'job_seeker_profile_id' => $profile->id,
-                'selected_cv_file_id' => $selectedCvFileId,
-                'application_status_id' => $submittedStatus->id,
-                'cover_letter' => $applicationData['cover_letter'] ?? null,
-                'consent_to_share_profile' => (bool) ($applicationData['consent_to_share_profile'] ?? false),
-                'screening_answers' => $applicationData['screening_answers'] ?? null,
-            ]);
-
-            $this->recordHistory($application, null, $submittedStatus, $user);
-
-            DB::afterCommit(fn (): array => event(new ApplicationSubmitted($application->id)));
-
-            return $this->loadApplication($application, candidateSafe: true);
-        });
     }
 
     public function changeStatus(User $user, JobApplication $jobApplication, string $targetStatusSlug, ?string $note = null): JobApplication

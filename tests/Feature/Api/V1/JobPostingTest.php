@@ -26,6 +26,7 @@ class JobPostingTest extends TestCase
             ->postJson('/api/v1/jobs', [
                 'title' => 'Backend Engineer',
                 'description' => 'Build Laravel APIs for candidate and employer workflows.',
+                'requirements' => 'Laravel, MySQL, and REST API experience.',
                 'employment_type' => 'full-time',
                 'experience_level' => 'mid-level',
                 'location' => 'Remote',
@@ -502,6 +503,7 @@ class JobPostingTest extends TestCase
             'company_id' => $company->id,
             'title' => 'Platform Engineer',
             'description' => 'Build smart recruitment APIs.',
+            'requirements' => 'Laravel and REST API experience.',
             'employment_type' => 'full-time',
             'experience_level' => 'mid-level',
             'location' => 'Remote',

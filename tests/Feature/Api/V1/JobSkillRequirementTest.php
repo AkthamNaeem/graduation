@@ -81,6 +81,7 @@ class JobSkillRequirementTest extends TestCase
         $createdId = $this->withToken($token)->postJson('/api/v1/jobs', [
             'title' => 'Structured Skill Role',
             'description' => 'Build APIs.',
+            'requirements' => 'Laravel and API experience.',
             'employment_type' => 'full-time',
             'experience_level' => 'mid-level',
             'work_mode' => 'remote',
@@ -138,6 +139,7 @@ class JobSkillRequirementTest extends TestCase
             'company_id' => $company->id,
             'title' => 'Backend Role',
             'description' => 'Build APIs.',
+            'requirements' => 'Laravel and API experience.',
             'employment_type' => 'full-time',
             'experience_level' => 'mid-level',
             'work_mode' => 'remote',

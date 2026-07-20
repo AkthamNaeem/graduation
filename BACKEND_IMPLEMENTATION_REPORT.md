@@ -1830,3 +1830,77 @@ The twenty Work Mode feature tests cover all three persisted/resource values; re
 ### Remaining Gaps and Git Status
 
 The only known verification gap is the pre-existing repository-wide Pint debt outside this task. No Work Mode-specific implementation or test gap remains. No commit or push was performed.
+
+## 41. Core Job Contract and Application Deadline Completion
+
+### Baseline and Existing Implementation
+
+This increment started on branch `master` at HEAD `b569320a9fbe3d087a1ad41ace32aa5fdd0600e9` with a clean working tree, 441 passing tests, 3542 assertions, one opt-in real-S3 test skipped, and no pending migrations.
+
+The repository already had the nullable indexed `job_postings.application_deadline` column, datetime model cast, future create/update validation, publication and application deadline guards, exact-boundary behavior (`now <= application_deadline`), `JOB_APPLICATION_DEADLINE_PASSED`, deadline audit metadata, public/employer `accepting_applications` validation and filtering, resource deadline flags, initial deadline tests, and Postman examples. Those pieces were retained instead of adding a duplicate migration, endpoint, or error envelope.
+
+### Schema and Legacy Compatibility
+
+Migration `2026_07_20_000001_add_job_contract_fields_to_job_postings_table.php` adds nullable `department` string plus nullable `responsibilities`, `requirements`, and `benefits` long-text columns. Nullable database columns preserve reads for legacy rows and do not invent or backfill values. `down()` drops only these four columns. No text indexes were added; the existing application-deadline index remains unchanged.
+
+`requirements` is required, trimmed by the standard request middleware, and limited to 20000 characters for every new API-created job. Legacy rows may remain null, but publication rejects them with 422 `JOB_REQUIREMENTS_MISSING` without backfilling or changing status. `department` is nullable with a 255-character maximum; `responsibilities` and `benefits` are nullable strings with 20000-character limits. All four fields are mass assignable and exposed by `JobPostingResource`.
+
+### Deadline and Availability Rules
+
+Create and update accept a nullable ISO-compatible datetime and normalize valid offset input to UTC before validation and persistence. Non-null submitted deadlines must be strictly after `now`; null removes an existing deadline. An expired open job remains open and editable, and its owner may extend or remove the deadline. Expiry never mutates persisted job status.
+
+Publication preserves the required-skill and Work Mode/location guards, additionally requires non-blank requirements, and rejects a passed deadline with 422 `JOB_APPLICATION_DEADLINE_PASSED`. Null deadlines remain publishable. Application creation allows null deadlines and the exact deadline instant, rejects only when `now > application_deadline` with 409 `JOB_APPLICATION_DEADLINE_PASSED`, and creates no application, history, notification, or audit side effect on rejection.
+
+Application availability is checked before expensive work and rechecked on a freshly loaded job row under `lockForUpdate` immediately before duplicate checking and writes. This prevents a concurrent deadline update from allowing a stale application decision.
+
+`is_accepting_applications` is true exactly when the stored job status is `open` and its deadline is null or not passed. Existing `can_apply` remains for backward compatibility and continues to include company approval. `has_application_deadline` and `is_application_deadline_passed` also remain additive-compatible.
+
+### Filtering, Sorting, and API Contract
+
+Public and employer endpoints accept `accepting_applications=true|false|1|0`. Public `true` returns only open approved-company jobs with null/current/future deadlines; public `false` returns only open approved-company jobs with passed deadlines. Draft and closed jobs never enter the public result. Employer `true` returns only open jobs currently accepting applications within the existing company scope, while employer `false` includes that company's draft, closed, and expired-open jobs.
+
+The filter composes with search, Work Mode, existing filters, sorting, and pagination. `application_deadline` is now an allowed public sort field. A portable `CASE` expression keeps null deadlines last on both MySQL and SQLite, then sorts non-null deadlines in the requested direction.
+
+Create/update requests and every `JobPostingResource` response now support `department`, `responsibilities`, `requirements`, `benefits`, and `application_deadline`. Responses serialize deadlines in UTC ISO-8601 and add `is_accepting_applications` without changing the existing API envelope. No new endpoint was added.
+
+### Changed Files
+
+| File | Change |
+| --- | --- |
+| `database/migrations/2026_07_20_000001_add_job_contract_fields_to_job_postings_table.php` | Adds and rolls back the four nullable legacy-compatible contract columns. |
+| `app/Models/JobPosting.php` | Adds fillable fields and the status/deadline availability helper. |
+| `app/Http/Requests/Api/V1/JobPosting/StoreJobPostingRequest.php` | Adds field validation and UTC deadline normalization. |
+| `app/Http/Requests/Api/V1/JobPosting/UpdateJobPostingRequest.php` | Adds optional update validation while preventing requirements from being cleared. |
+| `app/Http/Requests/Api/V1/JobPosting/IndexJobPostingRequest.php` | Allows safe sorting by application deadline. |
+| `app/Http/Resources/Api/V1/JobPostingResource.php` | Exposes the four fields and `is_accepting_applications`. |
+| `app/Services/JobPostingService.php` | Enforces publication requirements, effective availability filters, and portable deadline sorting. |
+| `app/Services/ApplicationWorkflowService.php` | Centralizes availability enforcement and rechecks the locked job before writes. |
+| `database/seeders/SampleUserSeeder.php` | Gives sample jobs realistic contract fields. |
+| `tests/Feature/Api/V1/JobPostingContractTest.php` | Adds explicit create/update/validation/authorization/publication contract coverage. |
+| `tests/Feature/Api/V1/JobDeadlineTest.php` | Expands boundary, side-effect, resource, filter, sort, pagination, and UTC coverage. |
+| `tests/Feature/Api/V1/JobPostingTest.php` | Updates valid job fixtures for the required requirements contract. |
+| `tests/Feature/Api/V1/JobSkillRequirementTest.php` | Preserves required-skill tests under the new job contract. |
+| `tests/Feature/Api/V1/JobWorkModeTest.php` | Preserves Work Mode tests and isolates legacy invalid-mode publication. |
+| `tests/Feature/Api/V1/CompanyStateTest.php` | Preserves approved-company creation coverage. |
+| Web/Mobile Postman collections and shared environment | Add contract payloads, validation failures, accepting/expired IDs, filters, details, and before/after-deadline application examples. |
+
+### Tests and Verification
+
+Seventeen feature tests were added: eleven in `JobPostingContractTest` and six in `JobDeadlineTest`. They cover all new columns, nullable compatibility, missing/blank requirements, length limits, invalid/past deadlines, updates/removal/extension, UTC offsets, owner/cross-company/candidate authorization, legacy publication, future/null publication, exact-boundary availability, status behavior, public and employer true/false filters, invalid booleans, filter composition, pagination, and portable deadline sorting. Existing application tests continue covering duplicate prevention.
+
+- `php artisan migrate`: passed; the new migration ran in batch 4.
+- `php artisan migrate:status`: all migrations are `Ran`; none are pending.
+- `php artisan test --filter=JobPosting`: 25 passed, 170 assertions.
+- `php artisan test --filter=Application`: 52 passed, 529 assertions.
+- `php artisan test --filter=Deadline`: 30 passed, 269 assertions.
+- Full `php artisan test`: 458 passed, 3638 assertions, one opt-in real-S3 test skipped.
+- Pint on every modified PHP file: passed.
+- Repository-wide `vendor/bin/pint --test`: still fails on 54 pre-existing unrelated files; zero task files are in that failure set.
+- `php artisan route:list`: passed; no route was added or broken.
+- PHP syntax checks for all modified production, migration, seeder, and primary test files: passed.
+- Web, Mobile, and Environment Postman files parse as valid JSON.
+- `git diff --check`: passed.
+
+### Remaining Gaps and Git Status
+
+The only remaining verification gap is repository-wide formatting debt outside this increment. Screening questions, cover letters, consent changes, nice-to-have skills, external notifications, AI matching, and unrelated refactors were intentionally excluded. No commit or push was performed.

@@ -276,6 +276,7 @@ class JobWorkModeTest extends TestCase
             'company_id' => $employer->employerProfile->company_id,
             'title' => 'Legacy Invalid Job',
             'description' => 'Legacy invalid data.',
+            'requirements' => 'Laravel and REST API experience.',
             'employment_type' => 'full-time',
             'experience_level' => 'mid-level',
             'location' => null,
@@ -301,6 +302,7 @@ class JobWorkModeTest extends TestCase
         return [
             'title' => ucfirst($mode).' Backend Developer',
             'description' => 'Build recruitment APIs.',
+            'requirements' => 'Laravel and REST API experience.',
             'employment_type' => 'full-time',
             'experience_level' => 'mid-level',
             'work_mode' => $mode,
@@ -314,6 +316,7 @@ class JobWorkModeTest extends TestCase
             'company_id' => $company->id,
             'title' => 'Remote Platform Engineer',
             'description' => 'Build smart recruitment APIs.',
+            'requirements' => 'Laravel and REST API experience.',
             'employment_type' => 'full-time',
             'experience_level' => 'mid-level',
             'location' => null,

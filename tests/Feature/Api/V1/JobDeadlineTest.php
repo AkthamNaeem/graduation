@@ -75,6 +75,7 @@ class JobDeadlineTest extends TestCase
         $applicationCount = \DB::table('job_applications')->count();
         $historyCount = \DB::table('application_status_histories')->count();
         $notificationCount = \DB::table('notifications')->count();
+        $auditCount = \DB::table('audit_logs')->count();
 
         $this->withToken($token)->postJson("/api/v1/jobs/{$passed->id}/applications", $this->applicationPayload($candidate))
             ->assertStatus(409)
@@ -83,6 +84,7 @@ class JobDeadlineTest extends TestCase
         $this->assertDatabaseCount('job_applications', $applicationCount);
         $this->assertDatabaseCount('application_status_histories', $historyCount);
         $this->assertDatabaseCount('notifications', $notificationCount);
+        $this->assertDatabaseCount('audit_logs', $auditCount);
         $this->assertSame('open', $passed->refresh()->status);
     }
 
@@ -94,6 +96,7 @@ class JobDeadlineTest extends TestCase
 
         $this->getJson("/api/v1/jobs/{$expired->id}")
             ->assertOk()->assertJsonPath('data.can_apply', false)
+            ->assertJsonPath('data.is_accepting_applications', false)
             ->assertJsonPath('data.is_application_deadline_passed', true);
         $this->getJson('/api/v1/jobs?accepting_applications=true')
             ->assertOk()->assertJsonCount(1, 'data.data')
@@ -124,11 +127,117 @@ class JobDeadlineTest extends TestCase
         $this->assertDatabaseMissing('audit_logs', ['action' => 'job.published', 'entity_id' => $job->id]);
     }
 
+    public function test_resource_accepting_state_honors_exact_deadline_and_job_status(): void
+    {
+        [, $company] = $this->employer();
+
+        $openWithoutDeadline = $this->job($company, null, 'No Deadline');
+        $openAtBoundary = $this->job($company, now(), 'At Boundary');
+        $openExpired = $this->job($company, now()->subSecond(), 'Expired');
+        $draft = $this->job($company, null, 'Draft', ['status' => 'draft', 'published_at' => null]);
+        $closed = $this->job($company, null, 'Closed', ['status' => 'closed']);
+
+        $this->getJson("/api/v1/jobs/{$openWithoutDeadline->id}")
+            ->assertOk()->assertJsonPath('data.is_accepting_applications', true);
+        $this->getJson("/api/v1/jobs/{$openAtBoundary->id}")
+            ->assertOk()->assertJsonPath('data.is_accepting_applications', true);
+        $this->getJson("/api/v1/jobs/{$openExpired->id}")
+            ->assertOk()->assertJsonPath('data.is_accepting_applications', false);
+        $this->withToken($this->tokenFor($this->employerForCompany($company)))
+            ->getJson("/api/v1/jobs/{$draft->id}")
+            ->assertOk()->assertJsonPath('data.is_accepting_applications', false);
+        $this->getJson("/api/v1/jobs/{$closed->id}")
+            ->assertOk()->assertJsonPath('data.is_accepting_applications', false);
+        $this->assertFalse($closed->isAcceptingApplications());
+    }
+
+    public function test_public_accepting_filters_keep_open_scope_and_combine_with_existing_filters(): void
+    {
+        [, $company] = $this->employer();
+        $available = $this->job($company, now()->addDay(), 'Backend Available');
+        $expired = $this->job($company, now()->subSecond(), 'Backend Expired');
+        $this->job($company, null, 'Frontend Available');
+        $this->job($company, null, 'Backend Draft', ['status' => 'draft', 'published_at' => null]);
+        $this->job($company, null, 'Backend Closed', ['status' => 'closed']);
+
+        $this->getJson('/api/v1/jobs?search=backend&work_mode=remote&accepting_applications=true&per_page=1')
+            ->assertOk()
+            ->assertJsonCount(1, 'data.data')
+            ->assertJsonPath('data.data.0.id', $available->id)
+            ->assertJsonPath('data.meta.per_page', 1);
+
+        $this->getJson('/api/v1/jobs?accepting_applications=false')
+            ->assertOk()
+            ->assertJsonCount(1, 'data.data')
+            ->assertJsonPath('data.data.0.id', $expired->id)
+            ->assertJsonMissing(['title' => 'Backend Draft'])
+            ->assertJsonMissing(['title' => 'Backend Closed']);
+    }
+
+    public function test_employer_accepting_filter_uses_effective_status_and_deadline(): void
+    {
+        [$employer, $company] = $this->employer();
+        $available = $this->job($company, null, 'Available');
+        $expired = $this->job($company, now()->subSecond(), 'Expired');
+        $draft = $this->job($company, null, 'Draft', ['status' => 'draft', 'published_at' => null]);
+        $closed = $this->job($company, null, 'Closed', ['status' => 'closed']);
+        $token = $this->tokenFor($employer);
+
+        $this->withToken($token)->getJson('/api/v1/jobs/my?accepting_applications=true')
+            ->assertOk()
+            ->assertJsonCount(1, 'data.data')
+            ->assertJsonPath('data.data.0.id', $available->id);
+
+        $response = $this->withToken($token)->getJson('/api/v1/jobs/my?accepting_applications=false')
+            ->assertOk()
+            ->assertJsonCount(3, 'data.data');
+        $ids = collect($response->json('data.data'))->pluck('id')->all();
+        $this->assertEqualsCanonicalizing([$expired->id, $draft->id, $closed->id], $ids);
+    }
+
+    public function test_accepting_filter_rejects_invalid_boolean(): void
+    {
+        $this->getJson('/api/v1/jobs?accepting_applications=maybe')
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['accepting_applications']);
+    }
+
+    public function test_application_deadline_sort_is_chronological_with_nulls_last(): void
+    {
+        [, $company] = $this->employer();
+        $later = $this->job($company, now()->addDays(2), 'Later');
+        $earlier = $this->job($company, now()->addDay(), 'Earlier');
+        $withoutDeadline = $this->job($company, null, 'No Deadline');
+
+        $response = $this->getJson('/api/v1/jobs?sort_by=application_deadline&sort_direction=asc')
+            ->assertOk()
+            ->assertJsonCount(3, 'data.data');
+
+        $this->assertSame([$earlier->id, $later->id, $withoutDeadline->id], collect($response->json('data.data'))->pluck('id')->all());
+    }
+
+    public function test_offset_deadline_is_normalized_to_utc_in_storage_and_response(): void
+    {
+        [$employer] = $this->employer();
+
+        $response = $this->withToken($this->tokenFor($employer))->postJson('/api/v1/jobs', [
+            ...$this->payload(),
+            'application_deadline' => '2026-08-31T23:00:00+03:00',
+        ])->assertCreated()
+            ->assertJsonPath('data.application_deadline', '2026-08-31T20:00:00.000000Z');
+
+        $this->assertDatabaseHas('job_postings', [
+            'id' => $response->json('data.id'),
+            'application_deadline' => '2026-08-31 20:00:00',
+        ]);
+    }
+
     private function payload(): array
     {
         return [
             'title' => 'Deadline Backend Developer',
             'description' => 'Build recruitment APIs.',
+            'requirements' => 'Laravel and REST API experience.',
             'employment_type' => 'full-time',
             'experience_level' => 'mid-level',
             'work_mode' => 'remote',
@@ -152,16 +261,25 @@ class JobDeadlineTest extends TestCase
         return $user;
     }
 
-    private function job(Company $company, Carbon $deadline, string $title = 'Boundary Role'): JobPosting
+    /** @param array<string, mixed> $overrides */
+    private function job(Company $company, ?Carbon $deadline, string $title = 'Boundary Role', array $overrides = []): JobPosting
     {
-        return JobPosting::create([
+        return JobPosting::create(array_merge([
             ...$this->payload(),
             'company_id' => $company->id,
             'title' => $title,
             'status' => 'open',
             'published_at' => now()->subDay(),
             'application_deadline' => $deadline,
-        ]);
+        ], $overrides));
+    }
+
+    private function employerForCompany(Company $company): User
+    {
+        $user = User::factory()->create(['role' => UserRole::EMPLOYER]);
+        EmployerProfile::create(['user_id' => $user->id, 'company_id' => $company->id]);
+
+        return $user;
     }
 
     private function applicationPayload(User $candidate): array
