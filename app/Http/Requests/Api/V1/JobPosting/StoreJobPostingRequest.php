@@ -7,8 +7,8 @@ use App\Enums\JobWorkMode;
 use App\Http\Requests\Api\V1\JobPosting\Concerns\ResolvesJobPostingUser;
 use App\Models\JobPosting;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Validator;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class StoreJobPostingRequest extends FormRequest
 {

@@ -189,8 +189,9 @@ class JobPostingService
             ]);
         }
 
-        if (! $jobPosting->work_mode instanceof JobWorkMode
-            || ($jobPosting->work_mode->requiresLocation() && blank($jobPosting->location))) {
+        $workMode = JobWorkMode::tryFrom((string) $jobPosting->getRawOriginal('work_mode'));
+        if (! $workMode instanceof JobWorkMode
+            || ($workMode->requiresLocation() && blank($jobPosting->location))) {
             throw new JobPostingOperationException(
                 'A valid work mode and location for on-site or hybrid jobs are required before publishing.',
                 'INVALID_JOB_WORK_MODE',

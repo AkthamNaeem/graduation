@@ -442,7 +442,7 @@ Supported public query parameters:
 | `sort_direction` | Optional; `asc` or `desc` | Sort direction. Defaults to `desc`. |
 | `per_page` | Optional integer, 1 to 100 | Pagination size. Defaults to 15. |
 
-Public listing always returns only jobs with `status = open`; draft and closed jobs are not exposed. `work_mode` is not supported because the current `job_postings` schema and model do not contain a `work_mode` field.
+Public listing always returns only jobs with `status = open`; draft and closed jobs are not exposed. The optional `work_mode` filter accepts only `remote`, `on_site`, or `hybrid`, composes with all existing filters, and is also available on the authenticated employer listing.
 
 ### Applications
 
@@ -1782,3 +1782,51 @@ Every scalar and matched entity is compared with its stored `old_value` immediat
 The mobile contract and examples are documented in `docs/MOBILE_CV_REVIEW_FLOW.md`, and the mobile Postman collection contains review, draft replacement, and final-apply requests. Targeted feature coverage includes mode detection, primary-CV exclusion, immutable parsed data, editable initial drafts, atomic initial confirm, unsupported-field exclusion, source tracking, duplicate prevention, stale initial imports, all four comparison types, reversible decisions, entity-specific validation, final atomic apply, stale rollback, and idempotency. No real Groq or S3 request is used by the standard tests.
 
 Final independent verification after the CV review audit and formatting: the focused CV review suites passed 34 tests with 378 assertions; the complete project suite passed 425 tests with 3504 assertions and skipped only the opt-in real-S3 lifecycle test. Pint passed on every modified PHP file, Postman JSON parsed successfully, route discovery showed the review routes, and `git diff --check` passed. No commit or push was performed.
+
+## 40. Work Mode Completion Audit
+
+### Summary and Baseline
+
+This audit completed and verified the existing Work Mode implementation without rewriting the job-posting module. The baseline was branch `master`, HEAD `ef751f2e5e6da72b9d30c020b5a38eb2e8753a70`, and a clean working tree. Before this increment, the full suite passed 425 tests with 3504 assertions and skipped only the opt-in real-S3 integration test.
+
+The repository already contained the Work Mode schema, enum, model cast/fillable entry, create/update effective-state validation, service persistence, resource serialization, public/employer filters, publication guard, initial feature coverage, and Postman examples. Therefore no duplicate migration, endpoint, response envelope, or field contract was introduced.
+
+### Changed Files
+
+| File | Change |
+| --- | --- |
+| `app/Services/JobPostingService.php` | Publication now validates the raw persisted `work_mode` through `JobWorkMode::tryFrom`, so malformed legacy values return the existing 422 domain error instead of failing during enum casting. |
+| `app/Http/Requests/Api/V1/JobPosting/StoreJobPostingRequest.php` | Applied the repository import order to the existing Work Mode request validation. |
+| `app/Http/Resources/Api/V1/JobPostingResource.php` | Kept the existing `work_mode` response contract and made the model mixin import Pint-compliant. |
+| `tests/Feature/Api/V1/JobWorkModeTest.php` | Replaced four grouped tests with twenty explicit create, update, authorization, filtering, resource, and publication cases. |
+| `postman/Smart Recruitment Platform - Web App.postman_collection.json` | Added combined public filtering, employer filtering, on-site-without-location validation, and job-detail response examples. |
+| `postman/Smart Recruitment Platform - Mobile App.postman_collection.json` | Added a canonical Work Mode job-detail response example while preserving the existing public filter. |
+| `BACKEND_IMPLEMENTATION_REPORT.md` | Removed the obsolete statement that Work Mode was unsupported and recorded this audit. |
+
+### Database and API Contract
+
+`database/migrations/2026_07_17_000011_add_mvp_fields_to_job_postings_table.php` already adds indexed string column `job_postings.work_mode` with safe legacy default `on_site` and drops its index/column in `down()`. The migration was already tracked and applied, so creating another migration for the same column would be unsafe and was intentionally avoided.
+
+The canonical values remain `remote`, `on_site`, and `hybrid`, centralized in `App\Enums\JobWorkMode`. Create requires `work_mode`. Remote jobs permit a missing or null `location`; on-site and hybrid jobs require a non-empty location. Update validation uses the effective final combination of persisted and submitted values. Public and employer listings accept the optional `work_mode` filter, invalid values return 422, and public results remain limited to open jobs belonging to approved companies. Every `JobPostingResource` response exposes the enum backing string.
+
+Publishing still requires at least one required skill. It also requires a valid persisted Work Mode and a location for on-site/hybrid jobs; remote jobs can be published without a location. The publication guard now safely rejects malformed legacy Work Mode values before the model enum cast can throw.
+
+### Tests Added
+
+The twenty Work Mode feature tests cover all three persisted/resource values; remote, on-site, and hybrid creation; missing/invalid mode; conditional create location validation; on-site-to-remote and remote-to-hybrid transitions using effective state; cross-company update denial; public remote/on-site filtering; invalid filter validation; composition with search, employment type, and sorting; draft/closed exclusion; employer-company filtering; on-site/hybrid publication rejection without location; valid remote publication; and invalid legacy data publication rejection.
+
+### Verification Results
+
+- `php artisan migrate`: passed. The Work Mode migration was already applied; Laravel applied two previously pending CV-review migrations (`2026_07_19_000001` and `2026_07_19_000002`).
+- `php artisan test --filter=JobWorkModeTest`: 20 passed, 71 assertions.
+- `php artisan test --filter=JobPostingTest`: 14 passed, 111 assertions.
+- `php artisan test`: 441 passed, 3542 assertions, 1 optional real-S3 test skipped.
+- Pint on every modified PHP file: passed.
+- Repository-wide `vendor/bin/pint --test`: still fails on 55 pre-existing unrelated PHP files; zero Work Mode/task files are in the failure set. The baseline had the same repository-wide formatting debt, and unrelated formatting was not changed.
+- `php artisan route:list`: passed and discovered the existing API routes without adding a new endpoint.
+- Web, Mobile, and shared Environment Postman JSON: parsed successfully.
+- `git diff --check`: passed.
+
+### Remaining Gaps and Git Status
+
+The only known verification gap is the pre-existing repository-wide Pint debt outside this task. No Work Mode-specific implementation or test gap remains. No commit or push was performed.

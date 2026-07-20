@@ -380,7 +380,7 @@
         },
         {"name":"Filter Jobs by Work Mode","request":{"method":"GET","description":"Browse approved-company jobs using the on_site, remote, or hybrid work mode.","url":"{{base_url}}/jobs?work_mode={{job_work_mode}}"}},
         {"name":"Filter Accepting Applications","request":{"method":"GET","description":"Returns open approved-company jobs whose deadline is null or has not passed.","url":"{{base_url}}/jobs?accepting_applications=true"}},
-        {"name":"Job Details With Deadline","request":{"method":"GET","description":"Returns work_mode, application_deadline, deadline flags, can_apply, and required/optional skills. Expired open jobs remain visible with can_apply=false.","url":"{{base_url}}/jobs/{{job_id}}"}},
+        {"name":"Job Details With Deadline","request":{"method":"GET","description":"Returns work_mode, application_deadline, deadline flags, can_apply, and required/optional skills. Expired open jobs remain visible with can_apply=false.","url":"{{base_url}}/jobs/{{job_id}}"},"response":[{"name":"Remote job details","status":"OK","code":200,"_postman_previewlanguage":"json","header":[{"key":"Content-Type","value":"application/json"}],"body":"{\n  \"success\": true,\n  \"data\": {\n    \"id\": 1,\n    \"title\": \"Backend Developer\",\n    \"work_mode\": \"remote\",\n    \"location\": null\n  }\n}"}]},
         {
           "name": "Show Public Job",
           "request": {
