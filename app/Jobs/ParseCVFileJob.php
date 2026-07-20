@@ -6,10 +6,13 @@ use App\Exceptions\CVParserException;
 use App\Models\CVFile;
 use App\Models\CVParsingResult;
 use App\Services\AuditLogService;
+use App\Services\CV\CVReviewDraftService;
+use App\Services\CV\ProfileDataStateService;
 use App\Services\CVParsingService;
 use App\Services\PrivateFileStorageService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\DB;
 use Throwable;
 
 class ParseCVFileJob implements ShouldQueue
@@ -24,9 +27,13 @@ class ParseCVFileJob implements ShouldQueue
         CVParsingService $cvParsingService,
         ?AuditLogService $auditLogService = null,
         ?PrivateFileStorageService $privateStorage = null,
+        ?ProfileDataStateService $profileDataStateService = null,
+        ?CVReviewDraftService $reviewDraftService = null,
     ): void {
         $auditLogService ??= app(AuditLogService::class);
         $privateStorage ??= app(PrivateFileStorageService::class);
+        $profileDataStateService ??= app(ProfileDataStateService::class);
+        $reviewDraftService ??= app(CVReviewDraftService::class);
         $this->cvFile->refresh();
         if ($this->cvFile->archived_at !== null) {
             return;
@@ -73,18 +80,28 @@ class ParseCVFileJob implements ShouldQueue
             $rawText = $cvParsingService->extractText($path);
             $parsedJson = $cvParsingService->parseText($rawText);
 
-            CVParsingResult::query()->updateOrCreate(
-                ['cv_file_id' => $this->cvFile->id],
-                [
-                    'raw_text' => $rawText,
-                    'parsed_json' => $parsedJson,
-                ],
-            );
+            DB::transaction(function () use ($rawText, $parsedJson, $profileDataStateService, $reviewDraftService): void {
+                $cvFile = CVFile::query()->lockForUpdate()->findOrFail($this->cvFile->id);
+                $result = CVParsingResult::query()->firstOrCreate(
+                    ['cv_file_id' => $cvFile->id],
+                    ['raw_text' => $rawText, 'parsed_json' => $parsedJson],
+                );
 
-            $this->cvFile->forceFill([
-                'status' => 'parsed',
-                'error_message' => null,
-            ])->save();
+                $state = ['status' => 'parsed', 'error_message' => null];
+                if ($cvFile->review_mode === null) {
+                    $profile = $cvFile->user->jobSeekerProfile()->lockForUpdate()->first();
+                    $hasData = $profile === null || $profileDataStateService->hasMeaningfulData($profile);
+                    $state['review_mode'] = $hasData ? CVFile::REVIEW_MODE_PROFILE_SYNC : CVFile::REVIEW_MODE_INITIAL_IMPORT;
+                    $state['review_status'] = $hasData ? CVFile::REVIEW_STATUS_COMPARISON_PENDING : CVFile::REVIEW_STATUS_DRAFT;
+                    $result->forceFill([
+                        'reviewed_json' => $hasData ? null : $reviewDraftService->build($result->parsed_json),
+                        'reviewed_at' => $hasData ? null : now(),
+                    ])->save();
+                }
+
+                $cvFile->forceFill($state)->save();
+                $this->cvFile = $cvFile;
+            });
             $auditLogService->record('cv.parsing_completed', $this->cvFile->user, CVFile::class, $this->cvFile->id, null, null, [
                 'cv_file_id' => $this->cvFile->id, 'user_id' => $this->cvFile->user_id,
                 'parsing_status' => 'parsed', 'actor_id' => $this->cvFile->user_id,

@@ -8,11 +8,14 @@ use App\Http\Requests\Api\V1\CV\ConfirmCVRequest;
 use App\Http\Requests\Api\V1\CV\CVIndexRequest;
 use App\Http\Requests\Api\V1\CV\CVLifecycleRequest;
 use App\Http\Requests\Api\V1\CV\ShowCVRequest;
+use App\Http\Requests\Api\V1\CV\ShowCVReviewRequest;
 use App\Http\Requests\Api\V1\CV\ShowParsedCVRequest;
 use App\Http\Requests\Api\V1\CV\UpdateCVMetadataRequest;
+use App\Http\Requests\Api\V1\CV\UpdateCVReviewDraftRequest;
 use App\Http\Requests\Api\V1\CV\UploadCVRequest;
 use App\Http\Resources\Api\V1\CVFileResource;
 use App\Http\Resources\Api\V1\CVParsingResultResource;
+use App\Http\Resources\Api\V1\CVReviewResource;
 use App\Http\Resources\Api\V1\JobSeekerProfileResource;
 use App\Http\Resources\Api\V1\ProfileChangeSuggestionResource;
 use App\Models\CVFile;
@@ -91,6 +94,22 @@ class CVController extends Controller
         return ApiResponse::success(
             data: new CVParsingResultResource($this->cvService->getParsedResult($request->user(), $cvFile)),
             message: 'CV parsing result retrieved successfully.',
+        );
+    }
+
+    public function review(ShowCVReviewRequest $request, CVFile $cvFile): JsonResponse
+    {
+        return ApiResponse::success(
+            new CVReviewResource($this->cvService->getReview($request->user(), $cvFile)),
+            'CV review retrieved successfully.',
+        );
+    }
+
+    public function updateReviewDraft(UpdateCVReviewDraftRequest $request, CVFile $cvFile): JsonResponse
+    {
+        return ApiResponse::success(
+            new CVReviewResource($this->cvService->updateReviewDraft($request->user(), $cvFile, $request->validated())),
+            'CV review draft updated successfully.',
         );
     }
 

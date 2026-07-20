@@ -12,6 +12,20 @@ class CVFile extends Model
 {
     use HasFactory;
 
+    public const REVIEW_MODE_INITIAL_IMPORT = 'initial_import';
+
+    public const REVIEW_MODE_PROFILE_SYNC = 'profile_sync';
+
+    public const REVIEW_STATUS_DRAFT = 'draft';
+
+    public const REVIEW_STATUS_COMPARISON_PENDING = 'comparison_pending';
+
+    public const REVIEW_STATUS_DECISIONS_PENDING = 'decisions_pending';
+
+    public const REVIEW_STATUS_READY_TO_APPLY = 'ready_to_apply';
+
+    public const REVIEW_STATUS_APPLIED = 'applied';
+
     protected $table = 'cv_files';
 
     protected $fillable = [
@@ -24,6 +38,8 @@ class CVFile extends Model
         'extension',
         'size_bytes',
         'status',
+        'review_mode',
+        'review_status',
         'error_message',
         'confirmed_at',
         'archived_at',
@@ -66,5 +82,31 @@ class CVFile extends Model
             && in_array($this->status, ['uploaded', 'processing', 'parsed', 'failed'], true)
             && filled($this->disk)
             && filled($this->stored_path);
+    }
+
+    public function nextAction(): string
+    {
+        if (in_array($this->status, ['uploaded', 'processing'], true)) {
+            return 'wait_for_parsing';
+        }
+
+        if ($this->status === 'failed') {
+            return 'retry_upload';
+        }
+
+        if ($this->review_status === self::REVIEW_STATUS_APPLIED) {
+            return 'completed';
+        }
+
+        if ($this->review_mode === self::REVIEW_MODE_INITIAL_IMPORT) {
+            return 'review_draft';
+        }
+
+        return match ($this->review_status) {
+            self::REVIEW_STATUS_COMPARISON_PENDING => 'generate_suggestions',
+            self::REVIEW_STATUS_DECISIONS_PENDING => 'review_suggestions',
+            self::REVIEW_STATUS_READY_TO_APPLY => 'apply_suggestions',
+            default => 'wait_for_parsing',
+        };
     }
 }

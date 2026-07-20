@@ -22,106 +22,93 @@ class ProfileSyncService
 
     private const SOURCE_CV_MERGED = 'cv_merged';
 
-    public function __construct(
-        private readonly AuditLogService $auditLogService,
-    ) {}
+    public function __construct(private readonly AuditLogService $auditLogService) {}
 
-    /**
-     * @return Collection<int, ProfileChangeSuggestion>
-     */
+    /** @return Collection<int, ProfileChangeSuggestion> */
     public function generateSuggestionsFromParsedCV(User $user, CVFile $cvFile): Collection
     {
         $cvFile = $this->ownedCVFile($user, $cvFile)->load('parsingResult');
         $this->assertCVMutable($cvFile);
-
         if (! $cvFile->parsingResult instanceof CVParsingResult) {
             abort(404);
         }
-
-        $existing = $cvFile->profileChangeSuggestions()
-            ->with('cvFile')
-            ->where('user_id', $user->id)
-            ->latest()
-            ->get();
-
-        if ($existing->isNotEmpty()) {
-            return $existing;
+        if ($cvFile->review_mode === CVFile::REVIEW_MODE_INITIAL_IMPORT) {
+            throw new CVLifecycleException('Initial CV imports use the review draft flow.', 'CV_REVIEW_MODE_INVALID');
         }
 
         $suggestions = DB::transaction(function () use ($user, $cvFile): Collection {
+            $lockedCV = CVFile::query()->lockForUpdate()->findOrFail($cvFile->id);
+            $this->ownedCVFile($user, $lockedCV);
+            $this->assertCVMutable($lockedCV);
+            if ($lockedCV->review_mode === CVFile::REVIEW_MODE_INITIAL_IMPORT) {
+                throw new CVLifecycleException('Initial CV imports use the review draft flow.', 'CV_REVIEW_MODE_INVALID');
+            }
+            if ($lockedCV->review_mode === null) {
+                $lockedCV->forceFill(['review_mode' => CVFile::REVIEW_MODE_PROFILE_SYNC])->save();
+            }
+            $existing = $lockedCV->profileChangeSuggestions()->with('cvFile')->where('user_id', $user->id)->latest()->get();
+            if ($existing->isNotEmpty()) {
+                $this->synchronizeReviewStatus($lockedCV);
+
+                return $existing;
+            }
+            $result = CVParsingResult::query()->where('cv_file_id', $lockedCV->id)->firstOrFail();
             $profile = $this->jobSeekerProfile($user)->load(['experiences', 'education', 'skills']);
-            $parsed = $cvFile->parsingResult?->parsed_json ?? [];
+            $parsed = $result->parsed_json ?? [];
 
-            $this->suggestProfileScalars($user, $profile, $cvFile, $parsed);
-            $this->suggestExperiences($user, $profile, $cvFile, $parsed['experience'] ?? []);
-            $this->suggestEducation($user, $profile, $cvFile, $parsed['education'] ?? []);
-            $this->suggestSkills($user, $profile, $cvFile, $parsed['skills'] ?? []);
+            $this->suggestProfileScalars($user, $profile, $lockedCV, $parsed);
+            $this->suggestExperiences($user, $profile, $lockedCV, $parsed['experience'] ?? []);
+            $this->suggestEducation($user, $profile, $lockedCV, $parsed['education'] ?? []);
+            $this->suggestSkills($user, $profile, $lockedCV, $parsed['skills'] ?? []);
+            $this->synchronizeReviewStatus($lockedCV);
 
-            return $cvFile->profileChangeSuggestions()
-                ->with('cvFile')
-                ->where('user_id', $user->id)
-                ->latest()
-                ->get();
+            return $lockedCV->profileChangeSuggestions()->with('cvFile')->where('user_id', $user->id)->latest()->get();
         });
 
-        $this->auditLogService->record(
-            'cv.suggestions.generated',
-            $user,
-            CVFile::class,
-            $cvFile->id,
-            null,
-            ['suggestion_count' => $suggestions->count()],
-        );
+        $counts = $suggestions->groupBy('entity_type')->map->count()->all();
+        $this->auditLogService->record('cv.suggestions.generated', $user, CVFile::class, $cvFile->id, null, null, [
+            'cv_file_id' => $cvFile->id,
+            'actor_id' => $user->id,
+            'suggestion_count' => $suggestions->count(),
+            'entity_type_counts' => $counts,
+            'review_mode' => CVFile::REVIEW_MODE_PROFILE_SYNC,
+        ]);
 
         return $suggestions;
     }
 
-    /**
-     * @return Collection<int, ProfileChangeSuggestion>
-     */
+    /** @return Collection<int, ProfileChangeSuggestion> */
     public function suggestionsForCV(User $user, CVFile $cvFile): Collection
     {
         $cvFile = $this->ownedCVFile($user, $cvFile);
 
-        return $cvFile->profileChangeSuggestions()
-            ->with('cvFile')
-            ->where('user_id', $user->id)
-            ->latest()
-            ->get();
+        return $cvFile->profileChangeSuggestions()->with('cvFile')->where('user_id', $user->id)->latest()->get();
     }
 
     public function accept(User $user, ProfileChangeSuggestion $suggestion, ?array $editedValue = null): ProfileChangeSuggestion
     {
         $suggestion = $this->ownedSuggestion($user, $suggestion);
         $this->assertSuggestionMutable($suggestion);
-
-        if ($suggestion->status !== ProfileChangeSuggestion::STATUS_PENDING) {
-            throw ValidationException::withMessages([
-                'suggestion' => ['Only pending suggestions can be accepted.'],
-            ]);
+        if ($suggestion->suggestion_type === ProfileChangeSuggestion::TYPE_IGNORE) {
+            throw ValidationException::withMessages(['suggestion' => ['Matched items do not require a decision.']]);
         }
 
         return DB::transaction(function () use ($user, $suggestion, $editedValue): ProfileChangeSuggestion {
-            $before = $suggestion->only(['status', 'user_edited_value', 'decided_at', 'applied_at']);
-
-            $suggestion->forceFill([
+            $lockedCV = CVFile::query()->lockForUpdate()->findOrFail($suggestion->cv_file_id);
+            $this->ownedCVFile($user, $lockedCV);
+            $this->assertCVMutable($lockedCV);
+            $locked = ProfileChangeSuggestion::query()->lockForUpdate()->findOrFail($suggestion->id);
+            $this->ownedSuggestion($user, $locked);
+            $this->assertSuggestionMutable($locked);
+            $locked->forceFill([
                 'status' => ProfileChangeSuggestion::STATUS_ACCEPTED,
                 'user_edited_value' => $editedValue,
                 'decided_at' => now(),
             ])->save();
+            $this->synchronizeReviewStatus($lockedCV);
+            $this->auditDecision($user, $locked, 'accepted');
 
-            $applied = $this->applySuggestion($suggestion);
-
-            $this->auditLogService->record(
-                'cv.suggestion.accepted',
-                $user,
-                ProfileChangeSuggestion::class,
-                $suggestion->id,
-                $before,
-                $applied->only(['status', 'user_edited_value', 'decided_at', 'applied_at']),
-            );
-
-            return $applied;
+            return $locked->refresh()->load('cvFile');
         });
     }
 
@@ -129,507 +116,509 @@ class ProfileSyncService
     {
         $suggestion = $this->ownedSuggestion($user, $suggestion);
         $this->assertSuggestionMutable($suggestion);
-
-        if (! in_array($suggestion->status, [ProfileChangeSuggestion::STATUS_PENDING, ProfileChangeSuggestion::STATUS_ACCEPTED], true)) {
-            throw ValidationException::withMessages([
-                'suggestion' => ['Only pending or accepted suggestions can be rejected.'],
-            ]);
+        if ($suggestion->suggestion_type === ProfileChangeSuggestion::TYPE_IGNORE) {
+            throw ValidationException::withMessages(['suggestion' => ['Matched items do not require a decision.']]);
         }
 
-        $before = $suggestion->only(['status', 'reason', 'decided_at']);
+        return DB::transaction(function () use ($user, $suggestion, $reason): ProfileChangeSuggestion {
+            $lockedCV = CVFile::query()->lockForUpdate()->findOrFail($suggestion->cv_file_id);
+            $this->ownedCVFile($user, $lockedCV);
+            $this->assertCVMutable($lockedCV);
+            $locked = ProfileChangeSuggestion::query()->lockForUpdate()->findOrFail($suggestion->id);
+            $this->ownedSuggestion($user, $locked);
+            $this->assertSuggestionMutable($locked);
+            $locked->forceFill(['status' => ProfileChangeSuggestion::STATUS_REJECTED, 'reason' => $reason ?? $locked->reason, 'decided_at' => now()])->save();
+            $this->synchronizeReviewStatus($lockedCV);
+            $this->auditDecision($user, $locked, 'rejected');
 
-        $suggestion->forceFill([
-            'status' => ProfileChangeSuggestion::STATUS_REJECTED,
-            'reason' => $reason ?? $suggestion->reason,
-            'decided_at' => now(),
-        ])->save();
-
-        $this->markCVConfirmedIfReviewed($suggestion);
-        $suggestion = $suggestion->refresh();
-
-        $this->auditLogService->record(
-            'cv.suggestion.rejected',
-            $user,
-            ProfileChangeSuggestion::class,
-            $suggestion->id,
-            $before,
-            $suggestion->only(['status', 'reason', 'decided_at']),
-        );
-
-        return $suggestion;
+            return $locked->refresh()->load('cvFile');
+        });
     }
 
     /**
-     * @param  array<int, int>  $suggestionIds
+     * @return array{applied_count:int,rejected_count:int,ignored_count:int,already_applied:bool,profile:JobSeekerProfile}
+     */
+    public function applyCV(User $user, CVFile $cvFile): array
+    {
+        $cvFile = $this->ownedCVFile($user, $cvFile);
+
+        $result = DB::transaction(function () use ($user, $cvFile): array {
+            $lockedCV = CVFile::query()->lockForUpdate()->findOrFail($cvFile->id);
+            $this->ownedCVFile($user, $lockedCV);
+            if ($lockedCV->archived_at !== null) {
+                throw new CVLifecycleException('Archived CV data is read-only.', 'CV_ARCHIVED_READ_ONLY');
+            }
+            if ($lockedCV->review_status === CVFile::REVIEW_STATUS_APPLIED) {
+                return $this->applicationResult($user, $lockedCV, true);
+            }
+            if (($lockedCV->review_mode ?? CVFile::REVIEW_MODE_PROFILE_SYNC) !== CVFile::REVIEW_MODE_PROFILE_SYNC) {
+                throw new CVLifecycleException('This CV does not use profile synchronization.', 'CV_REVIEW_MODE_INVALID');
+            }
+            if ($lockedCV->review_mode === null) {
+                $lockedCV->forceFill(['review_mode' => CVFile::REVIEW_MODE_PROFILE_SYNC])->save();
+            }
+
+            $profile = JobSeekerProfile::query()->where('user_id', $user->id)->lockForUpdate()->firstOrFail();
+            $suggestions = ProfileChangeSuggestion::query()
+                ->where('cv_file_id', $lockedCV->id)
+                ->where('user_id', $user->id)
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get();
+            if ($lockedCV->review_status !== CVFile::REVIEW_STATUS_READY_TO_APPLY
+                && $suggestions->isNotEmpty()
+                && in_array($lockedCV->review_status, [null, CVFile::REVIEW_STATUS_DECISIONS_PENDING], true)) {
+                $this->synchronizeReviewStatus($lockedCV);
+            }
+            if ($lockedCV->review_status !== CVFile::REVIEW_STATUS_READY_TO_APPLY) {
+                throw new CVLifecycleException('The CV suggestions are not ready to apply.', 'CV_SUGGESTIONS_NOT_READY');
+            }
+            if ($suggestions->contains(fn (ProfileChangeSuggestion $item): bool => $item->suggestion_type !== ProfileChangeSuggestion::TYPE_IGNORE && $item->status === ProfileChangeSuggestion::STATUS_PENDING)) {
+                throw new CVLifecycleException('All actionable suggestions must be decided before applying.', 'CV_SUGGESTIONS_PENDING');
+            }
+            foreach ($suggestions->where('status', ProfileChangeSuggestion::STATUS_ACCEPTED)
+                ->where('suggestion_type', '!=', ProfileChangeSuggestion::TYPE_IGNORE) as $suggestion) {
+                $this->applySuggestion($profile, $suggestion);
+                $suggestion->forceFill(['status' => ProfileChangeSuggestion::STATUS_APPLIED, 'applied_at' => now()])->save();
+            }
+            foreach ($suggestions->where('suggestion_type', ProfileChangeSuggestion::TYPE_IGNORE) as $suggestion) {
+                $suggestion->forceFill(['status' => ProfileChangeSuggestion::STATUS_APPLIED, 'applied_at' => now()])->save();
+            }
+
+            $lockedCV->forceFill(['review_mode' => CVFile::REVIEW_MODE_PROFILE_SYNC, 'review_status' => CVFile::REVIEW_STATUS_APPLIED, 'confirmed_at' => now()])->save();
+
+            return $this->applicationResult($user, $lockedCV, false);
+        });
+
+        $this->auditLogService->record('cv.suggestions.applied', $user, CVFile::class, $cvFile->id, null, null, [
+            'cv_file_id' => $cvFile->id,
+            'actor_id' => $user->id,
+            'review_mode' => CVFile::REVIEW_MODE_PROFILE_SYNC,
+            'review_status' => CVFile::REVIEW_STATUS_APPLIED,
+            'applied_count' => $result['applied_count'],
+            'rejected_count' => $result['rejected_count'],
+            'ignored_count' => $result['ignored_count'],
+        ]);
+
+        return $result;
+    }
+
+    /** @param array<int, int> $suggestionIds
      * @return Collection<int, ProfileChangeSuggestion>
      */
     public function applyBulk(User $user, array $suggestionIds): Collection
     {
-        $suggestions = ProfileChangeSuggestion::query()
-            ->whereIn('id', $suggestionIds)
-            ->get();
-
+        $suggestions = ProfileChangeSuggestion::query()->whereIn('id', $suggestionIds)->get();
         if ($suggestions->count() !== count(array_unique($suggestionIds))) {
             abort(404);
         }
-
         foreach ($suggestions as $suggestion) {
             $this->ownedSuggestion($user, $suggestion);
-            $this->assertSuggestionMutable($suggestion);
-        }
-
-        $appliedSuggestions = DB::transaction(function () use ($suggestions): Collection {
-            foreach ($suggestions as $suggestion) {
-                if ($suggestion->status !== ProfileChangeSuggestion::STATUS_ACCEPTED) {
-                    throw ValidationException::withMessages([
-                        'suggestion_ids' => ['Only accepted suggestions can be applied.'],
-                    ]);
-                }
-
-                $this->applySuggestion($suggestion);
+            if ($suggestion->status !== ProfileChangeSuggestion::STATUS_ACCEPTED) {
+                throw ValidationException::withMessages(['suggestion_ids' => ['Only accepted suggestions can be applied.']]);
             }
-
-            return $suggestions->fresh();
-        });
-
-        $this->auditLogService->record(
-            'cv.suggestions.applied',
-            $user,
-            ProfileChangeSuggestion::class,
-            null,
-            null,
-            ['suggestion_ids' => $appliedSuggestions->pluck('id')->all()],
-        );
-
-        return $appliedSuggestions;
-    }
-
-    private function applySuggestion(ProfileChangeSuggestion $suggestion): ProfileChangeSuggestion
-    {
-        if ($suggestion->status === ProfileChangeSuggestion::STATUS_APPLIED) {
-            return $suggestion;
+        }
+        $cvIds = $suggestions->pluck('cv_file_id')->filter()->unique();
+        if ($cvIds->count() !== 1) {
+            throw ValidationException::withMessages(['suggestion_ids' => ['All suggestions must belong to one CV.']]);
         }
 
-        if ($suggestion->suggestion_type === ProfileChangeSuggestion::TYPE_IGNORE) {
-            $suggestion->forceFill([
-                'status' => ProfileChangeSuggestion::STATUS_APPLIED,
-                'applied_at' => now(),
-            ])->save();
+        $cvFile = CVFile::query()->findOrFail($cvIds->first());
+        $this->applyCV($user, $cvFile);
 
-            $this->markCVConfirmedIfReviewed($suggestion);
-
-            return $suggestion->refresh();
-        }
-
-        $profile = $suggestion->jobSeekerProfile()->firstOrFail();
-        $value = $suggestion->user_edited_value ?: $suggestion->new_value;
-
-        match ($suggestion->entity_type) {
-            ProfileChangeSuggestion::ENTITY_PROFILE => $this->applyProfileUpdate($profile, $value),
-            ProfileChangeSuggestion::ENTITY_EXPERIENCE => $this->applyExperience($profile, $suggestion, $value),
-            ProfileChangeSuggestion::ENTITY_EDUCATION => $this->applyEducation($profile, $suggestion, $value),
-            ProfileChangeSuggestion::ENTITY_SKILL => $this->applySkill($profile, $suggestion, $value),
-            default => null,
-        };
-
-        $suggestion->forceFill([
-            'status' => ProfileChangeSuggestion::STATUS_APPLIED,
-            'applied_at' => now(),
-        ])->save();
-
-        $this->markCVConfirmedIfReviewed($suggestion);
-
-        return $suggestion->refresh();
+        return ProfileChangeSuggestion::query()->whereIn('id', $suggestionIds)->with('cvFile')->get();
     }
 
-    /**
-     * @param  array<string, mixed>  $parsed
-     */
+    /** @param array<string, mixed> $parsed */
     private function suggestProfileScalars(User $user, JobSeekerProfile $profile, CVFile $cvFile, array $parsed): void
     {
-        foreach (['phone'] as $field) {
-            $parsedValue = $this->cleanString($parsed[$field] ?? null);
-
-            if ($parsedValue === null) {
+        foreach (['phone', 'summary', 'location'] as $field) {
+            $incoming = $this->cleanString($parsed[$field] ?? null);
+            if ($incoming === null) {
                 continue;
             }
-
-            $currentValue = $this->cleanString($profile->{$field});
-
-            if ($currentValue === null) {
-                $this->createSuggestion($user, $profile, $cvFile, [
-                    'entity_type' => ProfileChangeSuggestion::ENTITY_PROFILE,
-                    'suggestion_type' => ProfileChangeSuggestion::TYPE_UPDATE,
-                    'old_value' => [$field => null],
-                    'new_value' => [$field => $parsedValue],
-                    'confidence_score' => 0.80,
-                    'reason' => "CV contains {$field} and the profile field is empty.",
-                ]);
-
-                continue;
-            }
-
-            if ($this->normalize($currentValue) !== $this->normalize($parsedValue)) {
-                $this->createSuggestion($user, $profile, $cvFile, [
-                    'entity_type' => ProfileChangeSuggestion::ENTITY_PROFILE,
-                    'suggestion_type' => ProfileChangeSuggestion::TYPE_IGNORE,
-                    'old_value' => [$field => $currentValue],
-                    'new_value' => [$field => $parsedValue],
-                    'confidence_score' => 0.60,
-                    'reason' => "Existing manual {$field} was kept as the source of truth.",
-                ]);
-            }
+            $current = $this->cleanString($profile->{$field});
+            $type = $current === null
+                ? ProfileChangeSuggestion::TYPE_ADD
+                : ($this->equivalent($current, $incoming) ? ProfileChangeSuggestion::TYPE_IGNORE : ProfileChangeSuggestion::TYPE_UPDATE);
+            $this->createSuggestion($user, $profile, $cvFile, [
+                'entity_type' => ProfileChangeSuggestion::ENTITY_PROFILE,
+                'suggestion_type' => $type,
+                'old_value' => [$field => $current],
+                'new_value' => [$field => $incoming],
+                'confidence_score' => $type === ProfileChangeSuggestion::TYPE_IGNORE ? 0.95 : 0.80,
+                'reason' => $type === ProfileChangeSuggestion::TYPE_IGNORE ? 'The profile value already matches.' : 'The CV contains a profile value for review.',
+            ]);
         }
     }
 
-    /**
-     * @param  array<int, mixed>  $items
-     */
+    /** @param array<int, mixed> $items */
     private function suggestExperiences(User $user, JobSeekerProfile $profile, CVFile $cvFile, array $items): void
     {
         foreach ($items as $item) {
             if (! is_array($item)) {
                 continue;
             }
-
-            $description = $this->cleanString($item['description'] ?? null)
-                ?? $this->responsibilitiesDescription($item['responsibilities'] ?? null);
-            $value = array_filter([
-                'title' => $this->cleanString($item['title'] ?? null),
-                'company_name' => $this->cleanString($item['company_name'] ?? null),
-                'location' => $this->cleanString($item['location'] ?? null),
-                'start_date' => $this->cleanString($item['start_date'] ?? null),
-                'end_date' => $this->cleanString($item['end_date'] ?? null),
-                'is_current' => is_bool($item['is_current'] ?? null) ? $item['is_current'] : null,
-                'description' => $description,
-            ], fn (mixed $value): bool => $value !== null);
-
+            $value = $this->experiencePayload(array_merge($item, [
+                'description' => $this->cleanString($item['description'] ?? null) ?? $this->responsibilitiesDescription($item['responsibilities'] ?? null),
+            ]));
             if (! isset($value['title'], $value['company_name'])) {
                 continue;
             }
-
-            $duplicate = $profile->experiences->first(fn (Experience $experience): bool => $this->experienceKey($experience->toArray()) === $this->experienceKey($value));
-
+            $match = $this->matchExperience($profile, $value);
+            $existing = $match instanceof Experience ? $this->experienceApplyPayload($this->modelSnapshot($match)) : null;
+            $type = $existing !== null ? $this->differenceType($existing, $value) : ProfileChangeSuggestion::TYPE_ADD;
             $this->createSuggestion($user, $profile, $cvFile, [
                 'entity_type' => ProfileChangeSuggestion::ENTITY_EXPERIENCE,
-                'suggestion_type' => $duplicate instanceof Experience
-                    ? ($this->hasMergeableDifference($duplicate->toArray(), $value) ? ProfileChangeSuggestion::TYPE_MERGE : ProfileChangeSuggestion::TYPE_IGNORE)
-                    : ProfileChangeSuggestion::TYPE_ADD,
-                'old_value' => $duplicate?->only(['id', 'title', 'company_name', 'location', 'start_date', 'end_date', 'is_current', 'description']),
+                'suggestion_type' => $type,
+                'old_value' => $match ? array_merge(['id' => $match->id], $existing) : null,
                 'new_value' => $value,
-                'confidence_score' => $this->boundedConfidence(
-                    $item['confidence_score'] ?? null,
-                    $duplicate instanceof Experience ? 0.92 : 0.78,
-                ),
-                'reason' => $duplicate instanceof Experience
-                    ? 'Matched by normalized title and company, so it will not be blindly duplicated.'
-                    : 'New experience found in parsed CV.',
+                'confidence_score' => $this->boundedConfidence($item['confidence_score'] ?? null, $match ? 0.92 : 0.78),
+                'reason' => $match ? 'Matched by title, company, and start period.' : 'New experience found in parsed CV.',
             ]);
         }
     }
 
-    /**
-     * @param  array<int, mixed>  $items
-     */
+    /** @param array<int, mixed> $items */
     private function suggestEducation(User $user, JobSeekerProfile $profile, CVFile $cvFile, array $items): void
     {
         foreach ($items as $item) {
             if (! is_array($item)) {
                 continue;
             }
-
-            $value = array_filter([
-                'institution' => $this->cleanString($item['institution'] ?? null),
-                'degree' => $this->cleanString($item['degree'] ?? null),
-                'field_of_study' => $this->cleanString($item['field_of_study'] ?? null),
-                'start_date' => $this->educationYearDate($item['start_year'] ?? null)
-                    ?? $this->cleanString($item['start_date'] ?? null),
-                'end_date' => $this->educationYearDate($item['graduation_year'] ?? null)
-                    ?? $this->cleanString($item['end_date'] ?? null),
-                'description' => $this->cleanString($item['description'] ?? null),
-            ], fn (mixed $value): bool => $value !== null);
-
+            $item['start_date'] = $item['start_date'] ?? $this->yearDate($item['start_year'] ?? null);
+            $item['end_date'] = $item['end_date'] ?? $this->yearDate($item['graduation_year'] ?? null);
+            $value = $this->educationPayload($item);
             if (! isset($value['institution'])) {
                 continue;
             }
-
-            $duplicate = $profile->education->first(fn (Education $education): bool => $this->educationKey($education->toArray()) === $this->educationKey($value));
-
+            $match = $this->matchEducation($profile, $value);
+            $existing = $match instanceof Education ? $this->educationApplyPayload($this->modelSnapshot($match)) : null;
+            $type = $existing !== null ? $this->differenceType($existing, $value) : ProfileChangeSuggestion::TYPE_ADD;
             $this->createSuggestion($user, $profile, $cvFile, [
                 'entity_type' => ProfileChangeSuggestion::ENTITY_EDUCATION,
-                'suggestion_type' => $duplicate instanceof Education
-                    ? ($this->hasMergeableDifference($duplicate->toArray(), $value) ? ProfileChangeSuggestion::TYPE_MERGE : ProfileChangeSuggestion::TYPE_IGNORE)
-                    : ProfileChangeSuggestion::TYPE_ADD,
-                'old_value' => $duplicate?->only(['id', 'institution', 'degree', 'field_of_study', 'start_date', 'end_date', 'description']),
+                'suggestion_type' => $type,
+                'old_value' => $match ? array_merge(['id' => $match->id], $existing) : null,
                 'new_value' => $value,
-                'confidence_score' => $this->boundedConfidence(
-                    $item['confidence_score'] ?? null,
-                    $duplicate instanceof Education ? 0.90 : 0.76,
-                ),
-                'reason' => $duplicate instanceof Education
-                    ? 'Matched by normalized institution and degree, so it will not be blindly duplicated.'
-                    : 'New education entry found in parsed CV.',
+                'confidence_score' => $this->boundedConfidence($item['confidence_score'] ?? null, $match ? 0.90 : 0.76),
+                'reason' => $match ? 'Matched by institution, degree, and start or graduation period.' : 'New education entry found in parsed CV.',
             ]);
         }
     }
 
-    /**
-     * @param  array<int, mixed>  $skillNames
-     */
+    /** @param array<int, mixed> $skillNames */
     private function suggestSkills(User $user, JobSeekerProfile $profile, CVFile $cvFile, array $skillNames): void
     {
-        collect($skillNames)
-            ->filter(fn (mixed $skill): bool => is_string($skill) && trim($skill) !== '')
-            ->map(fn (string $skill): array => ['name' => trim($skill), 'slug' => Str::slug($skill)])
-            ->filter(fn (array $skill): bool => $skill['slug'] !== '')
-            ->unique('slug')
+        collect($skillNames)->filter(fn (mixed $name): bool => is_string($name) && trim($name) !== '')
+            ->map(fn (string $name): array => ['name' => trim($name), 'slug' => Str::slug($name)])
+            ->filter(fn (array $skill): bool => $skill['slug'] !== '')->unique('slug')
             ->each(function (array $value) use ($user, $profile, $cvFile): void {
-                $existingSkill = Skill::query()->where('slug', $value['slug'])->first();
-                $alreadyAttached = $existingSkill instanceof Skill
-                    && $profile->skills->contains('id', $existingSkill->id);
-
+                $existing = Skill::query()->where('slug', $value['slug'])->first();
+                $attached = $existing instanceof Skill && $profile->skills->contains('id', $existing->id);
                 $this->createSuggestion($user, $profile, $cvFile, [
                     'entity_type' => ProfileChangeSuggestion::ENTITY_SKILL,
-                    'suggestion_type' => $alreadyAttached ? ProfileChangeSuggestion::TYPE_IGNORE : ProfileChangeSuggestion::TYPE_ADD,
-                    'old_value' => $alreadyAttached ? $existingSkill->only(['id', 'name', 'slug']) : null,
-                    'new_value' => array_filter([
-                        'id' => $existingSkill?->id,
-                        'name' => $existingSkill?->name ?? $value['name'],
-                        'slug' => $value['slug'],
-                    ]),
-                    'confidence_score' => $alreadyAttached ? 0.95 : 0.82,
-                    'reason' => $alreadyAttached
-                        ? 'Skill already exists on the profile.'
-                        : 'Skill found in parsed CV.',
+                    'suggestion_type' => $attached ? ProfileChangeSuggestion::TYPE_IGNORE : ProfileChangeSuggestion::TYPE_ADD,
+                    'old_value' => $attached ? ['name' => $existing->name] : null,
+                    'new_value' => ['name' => $existing?->name ?? $value['name']],
+                    'confidence_score' => $attached ? 0.95 : 0.82,
+                    'reason' => $attached ? 'Skill already exists on the profile.' : 'New skill found in parsed CV.',
                 ]);
             });
     }
 
-    /**
-     * @param  array<string, mixed>  $attributes
-     */
-    private function createSuggestion(User $user, JobSeekerProfile $profile, CVFile $cvFile, array $attributes): ProfileChangeSuggestion
+    private function applySuggestion(JobSeekerProfile $profile, ProfileChangeSuggestion $suggestion): void
     {
-        return ProfileChangeSuggestion::query()->create(array_merge([
-            'user_id' => $user->id,
-            'cv_file_id' => $cvFile->id,
-            'job_seeker_profile_id' => $profile->id,
-            'status' => ProfileChangeSuggestion::STATUS_PENDING,
-            'source' => ProfileChangeSuggestion::SOURCE_CV_PARSED,
-        ], $attributes));
+        $value = $suggestion->user_edited_value ?: $suggestion->new_value;
+        $this->assertNotStale($profile, $suggestion);
+        match ($suggestion->entity_type) {
+            ProfileChangeSuggestion::ENTITY_PROFILE => $this->applyProfile($profile, $value),
+            ProfileChangeSuggestion::ENTITY_EXPERIENCE => $this->applyExperience($profile, $suggestion, $value),
+            ProfileChangeSuggestion::ENTITY_EDUCATION => $this->applyEducation($profile, $suggestion, $value),
+            ProfileChangeSuggestion::ENTITY_SKILL => $this->applySkill($profile, $suggestion, $value),
+            default => throw ValidationException::withMessages(['suggestion' => ['Unsupported suggestion entity.']]),
+        };
     }
 
-    /**
-     * @param  array<string, mixed>  $value
-     */
-    private function applyProfileUpdate(JobSeekerProfile $profile, array $value): void
+    private function assertNotStale(JobSeekerProfile $profile, ProfileChangeSuggestion $suggestion): void
     {
-        $allowed = collect($value)
-            ->only(['phone'])
-            ->filter(fn (mixed $newValue, string $field): bool => $this->cleanString($profile->{$field}) === null && $this->cleanString($newValue) !== null)
-            ->all();
-
-        if ($allowed !== []) {
-            $profile->update($allowed);
-        }
-    }
-
-    /**
-     * @param  array<string, mixed>  $value
-     */
-    private function applyExperience(JobSeekerProfile $profile, ProfileChangeSuggestion $suggestion, array $value): void
-    {
-        if ($suggestion->suggestion_type === ProfileChangeSuggestion::TYPE_ADD) {
-            if (! $profile->experiences()->get()->contains(fn (Experience $experience): bool => $this->experienceKey($experience->toArray()) === $this->experienceKey($value))) {
-                $profile->experiences()->create(array_merge(
-                    $this->experiencePayload($value),
-                    $this->cvSourcePayload($suggestion, self::SOURCE_CV_CONFIRMED),
-                ));
+        $old = $suggestion->old_value;
+        if ($suggestion->entity_type === ProfileChangeSuggestion::ENTITY_PROFILE) {
+            $field = array_key_first($old ?? []);
+            if (! is_string($field) || ! $this->equivalent($profile->{$field}, $old[$field] ?? null)) {
+                $this->throwStale($suggestion);
             }
 
             return;
         }
-
-        if ($suggestion->suggestion_type === ProfileChangeSuggestion::TYPE_MERGE && isset($suggestion->old_value['id'])) {
-            $experience = $profile->experiences()->whereKey($suggestion->old_value['id'])->first();
-
-            if ($experience instanceof Experience) {
-                $updates = $this->onlyEmptyFields($experience, $this->experiencePayload($value));
-
-                if ($updates !== []) {
-                    $experience->update(array_merge(
-                        $updates,
-                        $this->cvSourcePayload($suggestion, self::SOURCE_CV_MERGED),
-                    ));
-                }
-            }
-        }
-    }
-
-    /**
-     * @param  array<string, mixed>  $value
-     */
-    private function applyEducation(JobSeekerProfile $profile, ProfileChangeSuggestion $suggestion, array $value): void
-    {
-        if ($suggestion->suggestion_type === ProfileChangeSuggestion::TYPE_ADD) {
-            if (! $profile->education()->get()->contains(fn (Education $education): bool => $this->educationKey($education->toArray()) === $this->educationKey($value))) {
-                $profile->education()->create(array_merge(
-                    $this->educationPayload($value),
-                    $this->cvSourcePayload($suggestion, self::SOURCE_CV_CONFIRMED),
-                ));
+        if ($suggestion->entity_type === ProfileChangeSuggestion::ENTITY_SKILL) {
+            $value = $suggestion->user_edited_value ?: $suggestion->new_value;
+            $name = $this->cleanString($value['name'] ?? null);
+            $skill = $name === null ? null : Skill::query()->where('slug', Str::slug($name))->lockForUpdate()->first();
+            if ($skill instanceof Skill && DB::table('job_seeker_skills')
+                ->where('job_seeker_profile_id', $profile->id)
+                ->where('skill_id', $skill->id)
+                ->lockForUpdate()
+                ->exists()) {
+                $this->throwStale($suggestion);
             }
 
             return;
         }
-
-        if ($suggestion->suggestion_type === ProfileChangeSuggestion::TYPE_MERGE && isset($suggestion->old_value['id'])) {
-            $education = $profile->education()->whereKey($suggestion->old_value['id'])->first();
-
-            if ($education instanceof Education) {
-                $updates = $this->onlyEmptyFields($education, $this->educationPayload($value));
-
-                if ($updates !== []) {
-                    $education->update(array_merge(
-                        $updates,
-                        $this->cvSourcePayload($suggestion, self::SOURCE_CV_MERGED),
-                    ));
-                }
+        if (! in_array($suggestion->entity_type, [ProfileChangeSuggestion::ENTITY_EXPERIENCE, ProfileChangeSuggestion::ENTITY_EDUCATION], true)
+            || ! isset($old['id'])) {
+            return;
+        }
+        $query = $suggestion->entity_type === ProfileChangeSuggestion::ENTITY_EXPERIENCE ? $profile->experiences() : $profile->education();
+        $model = $query->whereKey($old['id'])->lockForUpdate()->first();
+        if (! $model) {
+            $this->throwStale($suggestion);
+        }
+        foreach (collect($old)->except('id') as $field => $expected) {
+            if (! $this->equivalent($this->scalar($model->{$field}), $expected)) {
+                $this->throwStale($suggestion);
             }
         }
     }
 
-    /**
-     * @param  array<string, mixed>  $value
-     */
-    private function applySkill(JobSeekerProfile $profile, ProfileChangeSuggestion $suggestion, array $value): void
+    private function throwStale(ProfileChangeSuggestion $suggestion): never
     {
-        $name = $this->cleanString($value['name'] ?? null);
-        $slug = $this->cleanString($value['slug'] ?? null);
-
-        if ($name === null || $slug === null) {
-            return;
-        }
-
-        $skill = Skill::query()->firstOrCreate(['slug' => $slug], ['name' => $name]);
-        $profile->skills()->syncWithoutDetaching([
-            $skill->id => $this->cvSourcePayload($suggestion, self::SOURCE_CV_CONFIRMED),
+        throw new CVLifecycleException('A reviewed profile value changed before apply.', 'SUGGESTION_STALE', 409, [
+            'suggestion_id' => $suggestion->id,
+            'entity_type' => $suggestion->entity_type,
         ]);
     }
 
-    /**
-     * @param  array<string, mixed>  $value
-     * @return array<string, mixed>
-     */
-    private function experiencePayload(array $value): array
+    private function applyProfile(JobSeekerProfile $profile, array $value): void
     {
-        return collect($value)
-            ->only(['title', 'company_name', 'location', 'start_date', 'end_date', 'is_current', 'description'])
-            ->all();
+        $profile->forceFill(collect($value)->only(['phone', 'summary', 'location'])->all())->save();
     }
 
-    /**
-     * @param  array<string, mixed>  $value
-     * @return array<string, mixed>
-     */
-    private function educationPayload(array $value): array
+    private function applyExperience(JobSeekerProfile $profile, ProfileChangeSuggestion $suggestion, array $value): void
     {
-        return collect($value)
-            ->only(['institution', 'degree', 'field_of_study', 'start_date', 'end_date', 'description'])
-            ->all();
+        $payload = $this->experienceApplyPayload($value);
+        if ($suggestion->suggestion_type === ProfileChangeSuggestion::TYPE_ADD) {
+            if (! $profile->experiences()->get()->contains(fn (Experience $item): bool => $this->experienceIdentity($item->toArray()) === $this->experienceIdentity($payload))) {
+                $profile->experiences()->create(array_merge($payload, $this->sourcePayload($suggestion, self::SOURCE_CV_CONFIRMED)));
+            }
+
+            return;
+        }
+        $model = $profile->experiences()->whereKey($suggestion->old_value['id'] ?? null)->lockForUpdate()->firstOrFail();
+        $updates = $suggestion->suggestion_type === ProfileChangeSuggestion::TYPE_MERGE ? $this->onlyEmpty($model, $payload) : $payload;
+        if ($updates !== []) {
+            $model->forceFill(array_merge($updates, $this->sourcePayload($suggestion, $suggestion->suggestion_type === ProfileChangeSuggestion::TYPE_MERGE ? self::SOURCE_CV_MERGED : self::SOURCE_CV_CONFIRMED)))->save();
+        }
     }
 
-    private function educationYearDate(mixed $year): ?string
+    private function applyEducation(JobSeekerProfile $profile, ProfileChangeSuggestion $suggestion, array $value): void
     {
-        return is_int($year) && $year >= 1900 && $year <= 2200 ? $year.'-01-01' : null;
+        $payload = $this->educationApplyPayload($value);
+        if ($suggestion->suggestion_type === ProfileChangeSuggestion::TYPE_ADD) {
+            if (! $profile->education()->get()->contains(fn (Education $item): bool => $this->educationIdentity($item->toArray()) === $this->educationIdentity($payload))) {
+                $profile->education()->create(array_merge($payload, $this->sourcePayload($suggestion, self::SOURCE_CV_CONFIRMED)));
+            }
+
+            return;
+        }
+        $model = $profile->education()->whereKey($suggestion->old_value['id'] ?? null)->lockForUpdate()->firstOrFail();
+        $updates = $suggestion->suggestion_type === ProfileChangeSuggestion::TYPE_MERGE ? $this->onlyEmpty($model, $payload) : $payload;
+        if ($updates !== []) {
+            $model->forceFill(array_merge($updates, $this->sourcePayload($suggestion, $suggestion->suggestion_type === ProfileChangeSuggestion::TYPE_MERGE ? self::SOURCE_CV_MERGED : self::SOURCE_CV_CONFIRMED)))->save();
+        }
     }
 
-    private function responsibilitiesDescription(mixed $responsibilities): ?string
+    private function applySkill(JobSeekerProfile $profile, ProfileChangeSuggestion $suggestion, array $value): void
     {
-        if (! is_array($responsibilities)) {
-            return null;
+        $name = $this->cleanString($value['name'] ?? null);
+        $slug = $name === null ? '' : Str::slug($name);
+        if ($slug === '') {
+            throw ValidationException::withMessages(['suggestion' => ['The skill name is invalid.']]);
+        }
+        $skill = Skill::query()->firstOrCreate(['slug' => $slug], ['name' => $name]);
+        $profile->skills()->syncWithoutDetaching([$skill->id => $this->sourcePayload($suggestion, self::SOURCE_CV_CONFIRMED)]);
+    }
+
+    private function matchExperience(JobSeekerProfile $profile, array $value): ?Experience
+    {
+        $candidates = $profile->experiences->filter(fn (Experience $item): bool => $this->experienceBase($item->toArray()) === $this->experienceBase($value));
+
+        return $this->uniquePeriodMatch($candidates, $value['start_date'] ?? null);
+    }
+
+    private function matchEducation(JobSeekerProfile $profile, array $value): ?Education
+    {
+        $candidates = $profile->education->filter(fn (Education $item): bool => $this->educationBase($item->toArray()) === $this->educationBase($value));
+        $period = $this->educationPeriod($value);
+        if ($period !== null) {
+            $candidates = $candidates->filter(fn (Education $item): bool => $this->educationPeriod($item->toArray()) === $period);
         }
 
-        $lines = collect($responsibilities)
-            ->filter(fn (mixed $responsibility): bool => is_string($responsibility))
-            ->map(fn (string $responsibility): string => trim($responsibility))
-            ->filter()
-            ->map(fn (string $responsibility): string => '- '.$responsibility)
-            ->values()
-            ->all();
-
-        return $lines === [] ? null : implode(PHP_EOL, $lines);
+        return $candidates->count() === 1 ? $candidates->first() : null;
     }
 
-    private function boundedConfidence(mixed $confidence, float $fallback): float
+    private function uniquePeriodMatch(Collection $candidates, mixed $startDate): Experience|Education|null
     {
-        if (! is_numeric($confidence)) {
-            return $fallback;
+        $period = $this->period($startDate);
+        if ($period !== null) {
+            $candidates = $candidates->filter(fn (Experience|Education $item): bool => $this->period($item->start_date) === $period);
         }
 
-        return max(0.0, min(1.0, (float) $confidence));
+        return $candidates->count() === 1 ? $candidates->first() : null;
     }
 
-    /**
-     * @return array<string, mixed>
-     */
-    private function cvSourcePayload(ProfileChangeSuggestion $suggestion, string $sourceType): array
+    private function differenceType(array $existing, array $incoming): string
     {
-        return [
-            'source_type' => $sourceType,
-            'source_cv_file_id' => $suggestion->cv_file_id,
-            'user_verified_at' => now(),
-        ];
-    }
-
-    /**
-     * @param  array<string, mixed>  $existing
-     * @param  array<string, mixed>  $incoming
-     */
-    private function hasMergeableDifference(array $existing, array $incoming): bool
-    {
+        $merge = false;
         foreach ($incoming as $field => $value) {
-            if ($this->cleanString($value) !== null && $this->cleanString($existing[$field] ?? null) === null) {
-                return true;
+            $old = $existing[$field] ?? null;
+            if ($this->emptyValue($old) && ! $this->emptyValue($value)) {
+                $merge = true;
+            } elseif (! $this->emptyValue($old) && ! $this->emptyValue($value) && ! $this->equivalent($old, $value)) {
+                return ProfileChangeSuggestion::TYPE_UPDATE;
             }
         }
 
-        return false;
+        return $merge ? ProfileChangeSuggestion::TYPE_MERGE : ProfileChangeSuggestion::TYPE_IGNORE;
     }
 
-    /**
-     * @param  array<string, mixed>  $incoming
-     * @return array<string, mixed>
-     */
-    private function onlyEmptyFields(Experience|Education $model, array $incoming): array
+    private function synchronizeReviewStatus(CVFile $cvFile): void
     {
-        return collect($incoming)
-            ->filter(fn (mixed $value, string $field): bool => $this->cleanString($value) !== null && $this->cleanString($model->{$field}) === null)
-            ->all();
+        if ($cvFile->review_status === CVFile::REVIEW_STATUS_APPLIED) {
+            return;
+        }
+        $pending = ProfileChangeSuggestion::query()->where('cv_file_id', $cvFile->id)
+            ->where('status', ProfileChangeSuggestion::STATUS_PENDING)
+            ->where('suggestion_type', '!=', ProfileChangeSuggestion::TYPE_IGNORE)->exists();
+        $cvFile->forceFill(['review_status' => $pending ? CVFile::REVIEW_STATUS_DECISIONS_PENDING : CVFile::REVIEW_STATUS_READY_TO_APPLY])->save();
     }
 
-    /**
-     * @param  array<string, mixed>  $value
-     */
-    private function experienceKey(array $value): string
+    private function createSuggestion(User $user, JobSeekerProfile $profile, CVFile $cvFile, array $attributes): ProfileChangeSuggestion
+    {
+        return ProfileChangeSuggestion::query()->create(array_merge([
+            'user_id' => $user->id, 'cv_file_id' => $cvFile->id, 'job_seeker_profile_id' => $profile->id,
+            'status' => ProfileChangeSuggestion::STATUS_PENDING, 'source' => ProfileChangeSuggestion::SOURCE_CV_PARSED,
+        ], $attributes));
+    }
+
+    private function experiencePayload(array $value): array
+    {
+        $payload = collect($value)->only(['title', 'company_name', 'location', 'start_date', 'end_date', 'is_current', 'description'])->map(fn (mixed $item): mixed => $this->scalar($item))->all();
+
+        return array_filter($payload, fn (mixed $item): bool => $item !== null);
+    }
+
+    private function educationPayload(array $value): array
+    {
+        $payload = collect($value)->only(['institution', 'degree', 'field_of_study', 'start_date', 'end_date', 'description'])->map(fn (mixed $item): mixed => $this->scalar($item))->all();
+
+        return array_filter($payload, fn (mixed $item): bool => $item !== null);
+    }
+
+    private function experienceApplyPayload(array $value): array
+    {
+        return collect($value)->only(['title', 'company_name', 'location', 'start_date', 'end_date', 'is_current', 'description'])
+            ->map(fn (mixed $item): mixed => $this->scalar($item))->all();
+    }
+
+    private function educationApplyPayload(array $value): array
+    {
+        return collect($value)->only(['institution', 'degree', 'field_of_study', 'start_date', 'end_date', 'description'])
+            ->map(fn (mixed $item): mixed => $this->scalar($item))->all();
+    }
+
+    private function modelSnapshot(Experience|Education $model): array
+    {
+        return collect($model->getAttributes())->map(fn (mixed $value, string $field): mixed => in_array($field, ['start_date', 'end_date'], true) ? $this->scalar($model->{$field}) : $value)->all();
+    }
+
+    private function onlyEmpty(Experience|Education $model, array $incoming): array
+    {
+        return collect($incoming)->filter(fn (mixed $value, string $field): bool => $this->emptyValue($model->{$field}) && ! $this->emptyValue($value))->all();
+    }
+
+    private function sourcePayload(ProfileChangeSuggestion $suggestion, string $type): array
+    {
+        return ['source_type' => $type, 'source_cv_file_id' => $suggestion->cv_file_id, 'user_verified_at' => now()];
+    }
+
+    private function applicationResult(User $user, CVFile $cvFile, bool $already): array
+    {
+        $suggestions = $cvFile->profileChangeSuggestions()->get();
+
+        return [
+            'applied_count' => $suggestions->where('status', ProfileChangeSuggestion::STATUS_APPLIED)->where('suggestion_type', '!=', ProfileChangeSuggestion::TYPE_IGNORE)->count(),
+            'rejected_count' => $suggestions->where('status', ProfileChangeSuggestion::STATUS_REJECTED)->count(),
+            'ignored_count' => $suggestions->where('suggestion_type', ProfileChangeSuggestion::TYPE_IGNORE)->count(),
+            'already_applied' => $already,
+            'profile' => $this->jobSeekerProfile($user)->load(['user', 'experiences', 'education', 'skills']),
+        ];
+    }
+
+    private function experienceBase(array $value): string
     {
         return $this->normalize(($value['title'] ?? '').'|'.($value['company_name'] ?? ''));
     }
 
-    /**
-     * @param  array<string, mixed>  $value
-     */
-    private function educationKey(array $value): string
+    private function educationBase(array $value): string
     {
         return $this->normalize(($value['institution'] ?? '').'|'.($value['degree'] ?? ''));
     }
 
+    private function experienceIdentity(array $value): string
+    {
+        return $this->experienceBase($value).'|'.($this->period($value['start_date'] ?? null) ?? '');
+    }
+
+    private function educationIdentity(array $value): string
+    {
+        return $this->educationBase($value).'|'.($this->educationPeriod($value) ?? '');
+    }
+
+    private function educationPeriod(array $value): ?string
+    {
+        return $this->period($value['start_date'] ?? null) ?? $this->period($value['end_date'] ?? null);
+    }
+
+    private function period(mixed $value): ?string
+    {
+        $value = $this->scalar($value);
+
+        return is_string($value) && preg_match('/^(\d{4})/', $value, $m) ? $m[1] : null;
+    }
+
+    private function yearDate(mixed $year): ?string
+    {
+        return is_int($year) && $year >= 1900 && $year <= 2200 ? $year.'-01-01' : null;
+    }
+
+    private function scalar(mixed $value): mixed
+    {
+        return $value instanceof \DateTimeInterface ? $value->format('Y-m-d') : (is_string($value) ? $this->cleanString($value) : $value);
+    }
+
+    private function emptyValue(mixed $value): bool
+    {
+        return $value === null || (is_string($value) && trim($value) === '');
+    }
+
+    private function equivalent(mixed $left, mixed $right): bool
+    {
+        return $this->normalizeComparable($left) === $this->normalizeComparable($right);
+    }
+
+    private function normalizeComparable(mixed $value): mixed
+    {
+        $value = $this->scalar($value);
+        if (is_bool($value)) {
+            return (int) $value;
+        }
+
+        return is_string($value) ? $this->normalize($value) : $value;
+    }
+
     private function normalize(mixed $value): string
     {
-        return Str::of((string) $value)
-            ->lower()
-            ->replaceMatches('/[^a-z0-9]+/', ' ')
-            ->squish()
-            ->toString();
+        return Str::of((string) $value)->lower()->replaceMatches('/[^\pL\pN]+/u', ' ')->squish()->toString();
     }
 
     private function cleanString(mixed $value): ?string
@@ -637,10 +626,31 @@ class ProfileSyncService
         if (! is_string($value)) {
             return null;
         }
-
         $value = trim($value);
 
         return $value === '' ? null : $value;
+    }
+
+    private function boundedConfidence(mixed $value, float $fallback): float
+    {
+        return is_numeric($value) ? max(0.0, min(1.0, (float) $value)) : $fallback;
+    }
+
+    private function responsibilitiesDescription(mixed $items): ?string
+    {
+        if (! is_array($items)) {
+            return null;
+        }
+        $lines = collect($items)->filter(fn (mixed $line): bool => is_string($line))->map(fn (string $line): string => trim($line))->filter()->map(fn (string $line): string => '- '.$line)->all();
+
+        return $lines === [] ? null : implode(PHP_EOL, $lines);
+    }
+
+    private function auditDecision(User $user, ProfileChangeSuggestion $suggestion, string $decision): void
+    {
+        $this->auditLogService->record('cv.suggestion.'.$decision, $user, ProfileChangeSuggestion::class, $suggestion->id, null, null, [
+            'cv_file_id' => $suggestion->cv_file_id, 'actor_id' => $user->id, 'entity_type' => $suggestion->entity_type, 'decision' => $decision,
+        ]);
     }
 
     private function ownedCVFile(User $user, CVFile $cvFile): CVFile
@@ -657,8 +667,16 @@ class ProfileSyncService
         return $suggestion;
     }
 
+    private function jobSeekerProfile(User $user): JobSeekerProfile
+    {
+        return $user->jobSeekerProfile()->firstOrFail();
+    }
+
     private function assertSuggestionMutable(ProfileChangeSuggestion $suggestion): void
     {
+        if ($suggestion->status === ProfileChangeSuggestion::STATUS_APPLIED) {
+            throw new CVLifecycleException('Applied suggestions are immutable.', 'SUGGESTION_APPLIED_IMMUTABLE');
+        }
         $cvFile = $suggestion->cvFile()->first();
         if ($cvFile instanceof CVFile) {
             $this->assertCVMutable($cvFile);
@@ -670,32 +688,8 @@ class ProfileSyncService
         if ($cvFile->archived_at !== null) {
             throw new CVLifecycleException('Archived CV data is read-only.', 'CV_ARCHIVED_READ_ONLY');
         }
-    }
-
-    private function jobSeekerProfile(User $user): JobSeekerProfile
-    {
-        return $user->jobSeekerProfile()->firstOrFail();
-    }
-
-    private function markCVConfirmedIfReviewed(ProfileChangeSuggestion $suggestion): void
-    {
-        if (! $suggestion->cv_file_id) {
-            return;
-        }
-
-        $hasPendingOrAccepted = ProfileChangeSuggestion::query()
-            ->where('cv_file_id', $suggestion->cv_file_id)
-            ->whereIn('status', [ProfileChangeSuggestion::STATUS_PENDING, ProfileChangeSuggestion::STATUS_ACCEPTED])
-            ->exists();
-
-        if (! $hasPendingOrAccepted && $suggestion->cvFile?->confirmed_at === null) {
-            $suggestion->cvFile->forceFill(['confirmed_at' => now()])->save();
-            $this->auditLogService->record('cv.parsed_data_confirmed', $suggestion->user, CVFile::class, $suggestion->cv_file_id, null, null, [
-                'cv_file_id' => $suggestion->cv_file_id,
-                'user_id' => $suggestion->user_id,
-                'actor_id' => $suggestion->user_id,
-                'parsing_status' => $suggestion->cvFile->status,
-            ]);
+        if ($cvFile->review_status === CVFile::REVIEW_STATUS_APPLIED || $cvFile->confirmed_at !== null) {
+            throw new CVLifecycleException('Applied CV reviews are immutable.', 'CV_REVIEW_APPLIED_IMMUTABLE');
         }
     }
 }

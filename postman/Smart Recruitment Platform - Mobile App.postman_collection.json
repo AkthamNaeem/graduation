@@ -712,6 +712,8 @@
         {"name":"Archive Primary With Replacement","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"url":"{{base_url}}/cv/{{primary_cv_file_id}}/archive","body":{"mode":"raw","raw":"{\n  \"replacement_cv_file_id\": {{secondary_cv_file_id}}\n}","options":{"raw":{"language":"json"}}}}},
         {"name":"Restore CV","request":{"method":"POST","url":"{{base_url}}/cv/{{archived_cv_file_id}}/restore"}},
         {"name":"Download Own CV Version","request":{"method":"GET","url":"{{base_url}}/cv/{{cv_file_id}}/download"}},
+        {"name":"Show CV Review State","request":{"method":"GET","description":"Route the mobile UI using review_mode, review_status, and next_action. parsed_json is read-only.","url":"{{base_url}}/cv/{{cv_file_id}}/review"}},
+        {"name":"Replace Initial Import Draft","request":{"method":"PUT","header":[{"key":"Content-Type","value":"application/json"}],"description":"Only for initial_import/draft. Replaces reviewed_json completely without changing parsed_json.","url":"{{base_url}}/cv/{{cv_file_id}}/review-draft","body":{"mode":"raw","raw":"{\n  \"profile\": {\"phone\": \"+963555000\", \"summary\": \"Backend engineer\", \"location\": \"Damascus\"},\n  \"experience\": [],\n  \"education\": [],\n  \"skills\": [\"PHP\", \"Laravel\"]\n}","options":{"raw":{"language":"json"}}}}},
         {
           "name": "List CV Files",
           "request": {
@@ -802,7 +804,7 @@
           "name": "Confirm CV Review",
           "request": {
             "method": "POST",
-            "description": "Mobile App / Job Seeker: starts safe review flow and returns suggestions; does not directly overwrite profile. Accepted CV suggestions create or merge profile data only after user approval.",
+            "description": "Mobile App / Job Seeker: for initial_import, atomically applies reviewed_json once; for profile_sync, delegates to suggestion generation for backward compatibility.",
             "url": "{{base_url}}/cv/{{cv_file_id}}/confirm"
           },
           "event": [
@@ -870,7 +872,7 @@
                 "value": "application/json"
               }
             ],
-            "description": "Mobile App / Job Seeker: accept one suggestion, optionally with edited values. Accepted CV data is tracked as cv_confirmed for new records or cv_merged when only empty fields are filled; existing manual values are not overwritten.",
+            "description": "Mobile App / Job Seeker: save an accept decision and optional entity-specific edited_value. This does not update the profile; final apply is required.",
             "url": "{{base_url}}/profile/suggestions/{{suggestion_id}}/accept",
             "body": {
               "mode": "raw",
@@ -904,7 +906,7 @@
                 "value": "application/json"
               }
             ],
-            "description": "Mobile App / Job Seeker: reject a suggestion and keep audit history.",
+            "description": "Mobile App / Job Seeker: save a reject decision without updating the profile. The decision can be changed until final apply.",
             "url": "{{base_url}}/profile/suggestions/{{suggestion_id}}/reject",
             "body": {
               "mode": "raw",
@@ -961,7 +963,8 @@
               }
             }
           ]
-        }
+        },
+        {"name":"Apply Reviewed CV Changes","request":{"method":"POST","description":"Save Changes: atomically applies all accepted suggestions for one CV. Returns counts, profile, and already_applied for safe retries.","url":"{{base_url}}/cv/{{cv_file_id}}/suggestions/apply"}}
       ]
     },
     {

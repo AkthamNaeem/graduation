@@ -42,6 +42,7 @@ Never switch production storage before preserving existing instance-local files.
 - [Render object-storage setup](docs/RENDER_OBJECT_STORAGE_SETUP.md)
 - [Private-storage migration runbook](docs/PRIVATE_STORAGE_MIGRATION_RUNBOOK.md)
 - [Private-storage recovery runbook](docs/PRIVATE_STORAGE_RECOVERY_RUNBOOK.md)
+- [Mobile CV review flow](docs/MOBILE_CV_REVIEW_FLOW.md)
 
 ## Safe migration commands
 
@@ -76,7 +77,7 @@ Standard tests use fake local/S3 disks and require no credentials. Optional real
 
 CV file extraction remains local: PDF/DOCX text is extracted first, and only that text is passed to the configured parser. `CV_PARSER_DRIVER=rules` uses the deterministic legacy parser. `openai` uses the synchronous OpenAI Responses API, while `groq` uses Groq Chat Completions. Both AI drivers use the same strict extraction prompt, JSON Schema, validation, normalization, and bounded timeouts; neither uploads the CV file.
 
-Parsed data is stored as a draft in `cv_parsing_results`. It never writes directly to a profile. The existing confirm, suggestion, accept/reject, and bulk-apply workflow remains the only route into profile data, so manual profile values keep priority.
+Parsed data is stored immutably in `parsed_json` and never writes directly to a profile. An empty profile receives a separate editable `reviewed_json` initial-import draft; an existing profile receives ADD/UPDATE/MERGE/IGNORE suggestions. Accept/reject save decisions only, and profile data changes only during the atomic final confirm/apply operation documented in the mobile CV review flow.
 
 Required configuration:
 

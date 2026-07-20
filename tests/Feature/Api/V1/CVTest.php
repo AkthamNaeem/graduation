@@ -348,9 +348,7 @@ class CVTest extends TestCase
                 'entity_type' => 'skill',
                 'suggestion_type' => 'add',
                 'new_value' => [
-                    'id' => $skill->id,
                     'name' => $skill->name,
-                    'slug' => $skill->slug,
                 ],
             ]);
 

@@ -16,6 +16,8 @@ class CVParsingResult extends Model
         'cv_file_id',
         'raw_text',
         'parsed_json',
+        'reviewed_json',
+        'reviewed_at',
     ];
 
     /**
@@ -25,6 +27,8 @@ class CVParsingResult extends Model
     {
         return [
             'parsed_json' => 'array',
+            'reviewed_json' => 'array',
+            'reviewed_at' => 'datetime',
         ];
     }
 

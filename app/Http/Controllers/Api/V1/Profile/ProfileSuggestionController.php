@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Api\V1\Profile;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\CV\ApplyCVSuggestionsRequest;
 use App\Http\Requests\Api\V1\Profile\AcceptProfileSuggestionRequest;
 use App\Http\Requests\Api\V1\Profile\ApplyProfileSuggestionsRequest;
 use App\Http\Requests\Api\V1\Profile\GenerateProfileSuggestionsRequest;
 use App\Http\Requests\Api\V1\Profile\RejectProfileSuggestionRequest;
+use App\Http\Resources\Api\V1\JobSeekerProfileResource;
 use App\Http\Resources\Api\V1\ProfileChangeSuggestionResource;
 use App\Models\CVFile;
 use App\Models\ProfileChangeSuggestion;
@@ -18,8 +20,7 @@ class ProfileSuggestionController extends Controller
 {
     public function __construct(
         private readonly ProfileSyncService $profileSyncService,
-    ) {
-    }
+    ) {}
 
     public function index(GenerateProfileSuggestionsRequest $request, CVFile $cvFile): JsonResponse
     {
@@ -46,7 +47,7 @@ class ProfileSuggestionController extends Controller
                 $suggestion,
                 $request->validated('edited_value'),
             )),
-            message: 'Profile suggestion accepted and applied successfully.',
+            message: 'Profile suggestion decision saved successfully.',
         );
     }
 
@@ -71,5 +72,18 @@ class ProfileSuggestionController extends Controller
             )),
             message: 'Accepted profile suggestions applied successfully.',
         );
+    }
+
+    public function apply(ApplyCVSuggestionsRequest $request, CVFile $cvFile): JsonResponse
+    {
+        $result = $this->profileSyncService->applyCV($request->user(), $cvFile);
+
+        return ApiResponse::success([
+            'applied_count' => $result['applied_count'],
+            'rejected_count' => $result['rejected_count'],
+            'ignored_count' => $result['ignored_count'],
+            'already_applied' => $result['already_applied'],
+            'profile' => new JobSeekerProfileResource($result['profile']),
+        ], 'Reviewed CV changes applied successfully.');
     }
 }

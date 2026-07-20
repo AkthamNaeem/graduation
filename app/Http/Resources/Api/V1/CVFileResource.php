@@ -2,11 +2,12 @@
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Models\CVFile;
 use App\Models\JobSeekerProfile;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin \App\Models\CVFile */
+/** @mixin CVFile */
 class CVFileResource extends JsonResource
 {
     /**
@@ -32,6 +33,9 @@ class CVFileResource extends JsonResource
             'size_bytes' => $this->size_bytes,
             'parsing_status' => $this->status,
             'status' => $this->status,
+            'review_mode' => $this->review_mode,
+            'review_status' => $this->review_status,
+            'next_action' => $this->nextAction(),
             'is_primary' => $primaryId === $this->id,
             'is_archived' => $this->archived_at !== null,
             'can_set_primary' => $this->archived_at === null && $usable && $primaryId !== $this->id,

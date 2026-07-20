@@ -68,6 +68,7 @@ class ProfileSourceTrackingTest extends TestCase
         $suggestions = $service->generateSuggestionsFromParsedCV($jobSeeker, $cvFile);
 
         $suggestions->each(fn (ProfileChangeSuggestion $suggestion) => $service->accept($jobSeeker, $suggestion));
+        $service->applyCV($jobSeeker, $cvFile);
 
         $this->assertDatabaseHas('experiences', [
             'job_seeker_profile_id' => $jobSeeker->jobSeekerProfile->id,
@@ -116,7 +117,7 @@ class ProfileSourceTrackingTest extends TestCase
         );
     }
 
-    public function test_cv_merge_fills_only_empty_fields_and_marks_records_as_cv_merged(): void
+    public function test_cv_conflicts_are_applied_as_reviewed_updates(): void
     {
         $jobSeeker = $this->jobSeeker();
         $profile = $jobSeeker->jobSeekerProfile;
@@ -164,14 +165,15 @@ class ProfileSourceTrackingTest extends TestCase
         $suggestions = $service->generateSuggestionsFromParsedCV($jobSeeker, $cvFile);
 
         $suggestions->each(fn (ProfileChangeSuggestion $suggestion) => $service->accept($jobSeeker, $suggestion));
+        $service->applyCV($jobSeeker, $cvFile);
 
         $this->assertDatabaseHas('experiences', [
             'job_seeker_profile_id' => $profile->id,
             'title' => 'Laravel Developer',
             'company_name' => 'Acme Software',
-            'location' => 'Manual City',
+            'location' => 'CV City',
             'description' => 'Built recruitment APIs.',
-            'source_type' => 'cv_merged',
+            'source_type' => 'cv_confirmed',
             'source_cv_file_id' => $cvFile->id,
         ]);
 
@@ -179,9 +181,9 @@ class ProfileSourceTrackingTest extends TestCase
             'job_seeker_profile_id' => $profile->id,
             'institution' => 'Tishreen University',
             'degree' => 'Bachelor',
-            'field_of_study' => 'Manual Major',
+            'field_of_study' => 'CV Major',
             'description' => 'Software engineering track.',
-            'source_type' => 'cv_merged',
+            'source_type' => 'cv_confirmed',
             'source_cv_file_id' => $cvFile->id,
         ]);
     }

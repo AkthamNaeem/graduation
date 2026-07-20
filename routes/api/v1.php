@@ -128,9 +128,12 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function (): void {
     Route::post('cv/{cvFile}/restore', [CVController::class, 'restore'])->name('cv.restore');
     Route::get('cv/{cvFile}/download', [CVController::class, 'download'])->name('cv.download');
     Route::get('cv/{cvFile}/parsed', [CVController::class, 'parsed'])->name('cv.parsed');
+    Route::get('cv/{cvFile}/review', [CVController::class, 'review'])->name('cv.review');
+    Route::put('cv/{cvFile}/review-draft', [CVController::class, 'updateReviewDraft'])->name('cv.review-draft.update');
     Route::post('cv/{cvFile}/confirm', [CVController::class, 'confirm'])->name('cv.confirm');
     Route::get('cv/{cvFile}/suggestions', [ProfileSuggestionController::class, 'index'])->name('cv.suggestions.index');
     Route::post('cv/{cvFile}/suggestions/generate', [ProfileSuggestionController::class, 'generate'])->name('cv.suggestions.generate');
+    Route::post('cv/{cvFile}/suggestions/apply', [ProfileSuggestionController::class, 'apply'])->name('cv.suggestions.apply');
     Route::post('profile/suggestions/{suggestion}/accept', [ProfileSuggestionController::class, 'accept'])->name('profile.suggestions.accept');
     Route::post('profile/suggestions/{suggestion}/reject', [ProfileSuggestionController::class, 'reject'])->name('profile.suggestions.reject');
     Route::post('profile/suggestions/apply-bulk', [ProfileSuggestionController::class, 'applyBulk'])->name('profile.suggestions.apply-bulk');

@@ -63,7 +63,15 @@ return Application::configure(basePath: dirname(__DIR__))
                 return null;
             }
 
-            return ApiResponse::error($exception->getMessage(), $exception->errors, $exception->status, $exception->errorCode);
+            $response = ApiResponse::error($exception->getMessage(), $exception->errors, $exception->status, $exception->errorCode);
+            if ($exception->errorCode !== 'SUGGESTION_STALE') {
+                return $response;
+            }
+
+            return response()->json(array_merge($response->getData(true), [
+                'suggestion_id' => $exception->errors['suggestion_id'] ?? null,
+                'entity_type' => $exception->errors['entity_type'] ?? null,
+            ]), $exception->status);
         });
         $exceptions->render(function (InterviewLifecycleException $exception, Request $request) {
             if (! $request->is('api/*')) {

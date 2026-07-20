@@ -133,7 +133,7 @@ class ProfileSuggestionTest extends TestCase
         $this->assertSame(0.76, $educationConfidence['Missing University']);
     }
 
-    public function test_accepting_one_suggestion_applies_only_that_suggestion(): void
+    public function test_accepting_one_suggestion_records_only_the_decision(): void
     {
         $user = $this->jobSeeker();
         Skill::create(['name' => 'Laravel', 'slug' => 'laravel']);
@@ -150,13 +150,9 @@ class ProfileSuggestionTest extends TestCase
         $this->withToken($this->tokenFor($user))
             ->postJson("/api/v1/profile/suggestions/{$experienceSuggestion->id}/accept")
             ->assertOk()
-            ->assertJsonPath('data.status', 'applied');
+            ->assertJsonPath('data.status', 'accepted');
 
-        $this->assertDatabaseHas('experiences', [
-            'job_seeker_profile_id' => $user->jobSeekerProfile->id,
-            'title' => 'Backend Developer',
-            'company_name' => 'Northwind Software',
-        ]);
+        $this->assertDatabaseCount('experiences', 0);
         $this->assertDatabaseHas('audit_logs', [
             'action' => 'cv.suggestion.accepted',
             'entity_type' => ProfileChangeSuggestion::class,
@@ -248,7 +244,7 @@ class ProfileSuggestionTest extends TestCase
             ->assertCreated()
             ->assertJsonFragment([
                 'entity_type' => 'experience',
-                'suggestion_type' => 'ignore',
+                'suggestion_type' => 'update',
             ]);
 
         $suggestion = ProfileChangeSuggestion::query()
@@ -273,7 +269,7 @@ class ProfileSuggestionTest extends TestCase
             ->assertCreated()
             ->assertJsonFragment([
                 'entity_type' => 'profile',
-                'suggestion_type' => 'ignore',
+                'suggestion_type' => 'update',
             ]);
 
         $this->assertDatabaseHas('job_seeker_profiles', [
