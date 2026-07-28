@@ -1,0 +1,83 @@
+{
+  "deltas_vs_initial": {
+    "HitRate@5": 0.0,
+    "MRR": 0.0,
+    "NDCG@10": 0.03692660700234629,
+    "NDCG@5": 0.053280018172929156,
+    "Precision@5": 0.04444444444444451,
+    "Recall@5": 0.013462236746550449
+  },
+  "deltas_vs_matching": {
+    "HitRate@5": 0.0,
+    "MRR": 0.1870370370370371,
+    "NDCG@10": 0.33259297471911276,
+    "NDCG@5": 0.3529456088893787,
+    "Precision@5": 0.6592592592592592,
+    "Recall@5": 0.191392265158175
+  },
+  "deltas_vs_skills": {
+    "HitRate@5": 0.0,
+    "MRR": 0.3895061728395063,
+    "NDCG@10": 0.3681160882758429,
+    "NDCG@5": 0.4137822621685546,
+    "Precision@5": 0.6814814814814815,
+    "Recall@5": 0.19769888137191197
+  },
+  "feature_change_after_test": false,
+  "initial_model_version": "xgbranker-initial-v1",
+  "matching_version": "2.0",
+  "model_changed_after_test": false,
+  "primary_metric": "NDCG@10",
+  "quality_conditions": {
+    "beats_initial_primary": true,
+    "beats_matching_primary": true,
+    "hitrate_no_major_regression": true,
+    "mrr_no_major_regression": true,
+    "ndcg5_no_major_regression": true
+  },
+  "quality_disposition": "PROMOTE_TO_EXPLAINABILITY",
+  "test_results": {
+    "initial_xgbranker": {
+      "HitRate@5": 1.0,
+      "MRR": 0.9814814814814815,
+      "NDCG@10": 0.821207971452485,
+      "NDCG@5": 0.7977112749995743,
+      "Precision@5": 0.8888888888888888,
+      "Recall@5": 0.2568106677368803
+    },
+    "laravel_matching_2_0": {
+      "HitRate@5": 1.0,
+      "MRR": 0.7944444444444444,
+      "NDCG@10": 0.5255416037357186,
+      "NDCG@5": 0.49804568428312473,
+      "Precision@5": 0.2740740740740741,
+      "Recall@5": 0.07888063932525577
+    },
+    "python_matching_2_0": {
+      "HitRate@5": 1.0,
+      "MRR": 0.7944444444444444,
+      "NDCG@10": 0.5255416037357186,
+      "NDCG@5": 0.49804568428312473,
+      "Precision@5": 0.2740740740740741,
+      "Recall@5": 0.07888063932525577
+    },
+    "skills_only": {
+      "HitRate@5": 1.0,
+      "MRR": 0.5919753086419752,
+      "NDCG@10": 0.4900184901789884,
+      "NDCG@5": 0.4372090310039488,
+      "Precision@5": 0.2518518518518519,
+      "Recall@5": 0.07257402311151881
+    },
+    "tuned_xgbranker": {
+      "HitRate@5": 1.0,
+      "MRR": 0.9814814814814815,
+      "NDCG@10": 0.8581345784548313,
+      "NDCG@5": 0.8509912931725034,
+      "Precision@5": 0.9333333333333333,
+      "Recall@5": 0.2702729044834308
+    }
+  },
+  "training_run_after_test": false,
+  "tuned_model_version": "xgbranker-tuned-v1"
+}

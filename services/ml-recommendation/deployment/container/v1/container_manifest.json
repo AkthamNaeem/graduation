@@ -1,0 +1,91 @@
+{
+  "api_contract_version": "recommendation-ranking-api-v1",
+  "architecture_sha256": "60eb219152ce26b525735ed65564f667d403bf438f29000b4ece90d65950553f",
+  "base_image_digest": "sha256:fd95fa221297a88e1cf49c55ec1828edd7c5a428187e67b5d1805692d11588db",
+  "base_image_reference": "python:3.12.10-slim@sha256:fd95fa221297a88e1cf49c55ec1828edd7c5a428187e67b5d1805692d11588db",
+  "bundle_file_hashes": {
+    "BUNDLE_CARD.md": "0ae2dde55be982b0639238f6d4ced78fe15b02518ced6c54c9842147124a7fe8",
+    "bundle_manifest.json": "1d566e4516724fae0c08cd6131214c0722dffcd589a370cf2405b8b0450dfb00",
+    "explanation_contract.json": "d6d38967faab739c038bdad04df23d3ecd3683f3279c2ca7d39c95b17cd3b8a1",
+    "feature_schema.json": "aeb260b25f34b55b7164b215e613a0b4327df33ee65af95abc904045849ce4a0",
+    "model.json": "3abd74137bc8881667643f31a658c790ef6712359d7802ea7fcffa0c4cf9e26e",
+    "model_metadata.json": "5485a2058d22777c3cafe9ea5871ac7534f555bfce6fb8275ddf89526358cb11",
+    "reason_code_mapping.json": "ebb263eb181ffa10114555b3719ef2845e4454795ae9690382624ea33ed03ba5",
+    "score_transform.json": "533d94e9ad8f404d09e5bf8e67b9bf49766899d09e20c6ef2c62dafa686e56ac"
+  },
+  "bundle_version": "job-rec-inference-bundle-v1",
+  "container_packaging_version": "ml-container-v1",
+  "dependency_versions": {
+    "annotated-doc": "0.0.4",
+    "annotated-types": "0.8.0",
+    "anyio": "4.14.2",
+    "click": "8.4.2",
+    "fastapi": "0.139.2",
+    "h11": "0.16.0",
+    "httptools": "0.8.0",
+    "idna": "3.18",
+    "numpy": "2.5.1",
+    "pydantic": "2.13.4",
+    "pydantic-core": "2.46.4",
+    "pydantic-settings": "2.14.2",
+    "python-dotenv": "1.2.2",
+    "pyyaml": "6.0.3",
+    "scipy": "1.18.0",
+    "starlette": "1.3.1",
+    "typing-extensions": "4.16.0",
+    "typing-inspection": "0.4.2",
+    "uvicorn": "0.51.0",
+    "uvloop": "0.22.1",
+    "watchfiles": "1.2.0",
+    "websockets": "16.1",
+    "xgboost": "3.3.0 (xgboost-cpu distribution)"
+  },
+  "dockerfile_sha256": "4f18b71d4079384198b90c3342d0ade625431f312860ec81d800f711e4061d2a",
+  "dockerignore_sha256": "ac12891f00e3d0974e6f7866e1376521a5d914ae8964ca7fdcf7d930318b8ed3",
+  "exposed_port": 8100,
+  "feature_schema_version": "job-rec-features-v1",
+  "forbidden_environment_names": [
+    "DATABASE_URL",
+    "DB_PASSWORD",
+    "REDIS_URL"
+  ],
+  "healthcheck_file_sha256": "8c32b8fa2cbba354d5b8cc3fea6255646444c0c7d1371ed55f291ac8691cb2b9",
+  "intended_network_exposure": "internal-only",
+  "limitations": [
+    "The runtime image is currently packaged and verified for linux/amd64.",
+    "One worker limits per-container throughput; scale horizontally.",
+    "The model was trained on synthetic data and is not a hiring-decision system.",
+    "No production load test or production deployment is included."
+  ],
+  "model_modified": false,
+  "model_version": "xgbranker-tuned-v1",
+  "read_only_supported": true,
+  "required_environment_names": [
+    "ML_SERVICE_TOKEN"
+  ],
+  "runtime_python_version": "3.12.10",
+  "runtime_user": {
+    "gid": 10001,
+    "uid": 10001
+  },
+  "service_version": "0.2.0",
+  "source_revision": "6cd51f733d5197e0c3f6b7dfb3711c2860ffef71",
+  "startup_file_sha256": "0400c8d9062d915b3f781aafeecd813400fcaad097a67c02c9573aac935d83c8",
+  "supported_environment_names": [
+    "ML_BUNDLE_DIR",
+    "ML_DOCS_ENABLED",
+    "ML_ENVIRONMENT",
+    "ML_LOG_LEVEL",
+    "ML_MAX_JOBS_PER_REQUEST",
+    "ML_MAX_RESULTS",
+    "ML_SERVICE_TOKEN",
+    "PORT"
+  ],
+  "test_non_usage": {
+    "locked_test_opened": false,
+    "locked_test_predictions_read": false,
+    "locked_test_rerun": false
+  },
+  "training_executed": false,
+  "worker_count": 1
+}

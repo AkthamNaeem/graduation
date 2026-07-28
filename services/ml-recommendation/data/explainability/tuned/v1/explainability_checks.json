@@ -1,0 +1,78 @@
+{
+  "additivity": {
+    "failed_rows": 0,
+    "maximum_absolute_error": 3.7981299101375043e-06,
+    "mean_absolute_error": 8.606236000983909e-07,
+    "passed": true,
+    "rows_checked": 9180,
+    "tolerance": 1e-05
+  },
+  "attribution_method_version": "xgboost-exact-tree-shap-v1",
+  "bias": {
+    "maximum": 0.025621624663472176,
+    "mean": 0.025621624663472176,
+    "minimum": 0.025621624663472176,
+    "standard_deviation": 0.0
+  },
+  "contribution_contract": {
+    "actual_shape": [
+      9180,
+      1,
+      104
+    ],
+    "expected_shape": [
+      9180,
+      1,
+      104
+    ],
+    "finite_count": 954720,
+    "nonfinite_count": 0
+  },
+  "explanation_version": "xgbranker-tuned-explainability-v1",
+  "frozen_state": {
+    "feature_schema_modified": false,
+    "model_modified": false,
+    "training_executed": false,
+    "tuning_executed": false
+  },
+  "importance_normalization": {
+    "feature_share_sum": 1.0,
+    "group_share_sum": 1.0,
+    "passed": true
+  },
+  "input_contract": {
+    "candidate_groups": 153,
+    "combined_records": 9180,
+    "feature_count": 103,
+    "train_records": 7560,
+    "validation_records": 1620
+  },
+  "local_explanations": {
+    "candidate_count": 27,
+    "missing_pairs": 0,
+    "ranks_selected": [
+      1,
+      5,
+      10,
+      60
+    ],
+    "records": 108,
+    "score_mismatches": 0
+  },
+  "model_version": "xgbranker-tuned-v1",
+  "stability": {
+    "descriptive_only": true,
+    "model_changed_based_on_stability": false,
+    "spearman": 0.9993190704212976,
+    "top_10_jaccard": 1.0,
+    "top_10_overlap": 10,
+    "top_20_jaccard": 1.0,
+    "top_20_overlap": 20
+  },
+  "test_non_usage": {
+    "test_evaluation_rerun": false,
+    "test_explanations_generated": false,
+    "test_features_read": false,
+    "test_predictions_read": false
+  }
+}

@@ -1,0 +1,216 @@
+{
+  "architecture_sha256": "60EB219152CE26B525735ED65564F667D403BF438F29000B4ECE90D65950553F",
+  "candidate_count": 180,
+  "candidate_domain_distribution": {
+    "test": {
+      "Backend Engineering": 2,
+      "Cybersecurity": 2,
+      "Data Analysis": 2,
+      "Data Engineering": 2,
+      "DevOps / Cloud": 2,
+      "Digital Marketing": 3,
+      "Finance / Accounting": 3,
+      "Frontend Engineering": 3,
+      "Mobile Development": 2,
+      "Product Management": 2,
+      "Quality Assurance": 2,
+      "UI/UX Design": 2
+    },
+    "train": {
+      "Backend Engineering": 11,
+      "Cybersecurity": 11,
+      "Data Analysis": 10,
+      "Data Engineering": 10,
+      "DevOps / Cloud": 10,
+      "Digital Marketing": 10,
+      "Finance / Accounting": 10,
+      "Frontend Engineering": 10,
+      "Mobile Development": 11,
+      "Product Management": 11,
+      "Quality Assurance": 11,
+      "UI/UX Design": 11
+    },
+    "validation": {
+      "Backend Engineering": 2,
+      "Cybersecurity": 2,
+      "Data Analysis": 3,
+      "Data Engineering": 3,
+      "DevOps / Cloud": 3,
+      "Digital Marketing": 2,
+      "Finance / Accounting": 2,
+      "Frontend Engineering": 2,
+      "Mobile Development": 2,
+      "Product Management": 2,
+      "Quality Assurance": 2,
+      "UI/UX Design": 2
+    }
+  },
+  "candidate_overlap_counts": {
+    "candidate_train_test": 0,
+    "candidate_train_validation": 0,
+    "candidate_validation_test": 0
+  },
+  "deterministic": true,
+  "feature_count": 103,
+  "feature_pipeline_version": "0.1.0",
+  "feature_schema_version": "job-rec-features-v1",
+  "generation_config": {
+    "architecture_sha256": "60EB219152CE26B525735ED65564F667D403BF438F29000B4ECE90D65950553F",
+    "generator_version": "0.1.0",
+    "group_key": "candidate_id",
+    "seed": 20260724,
+    "source_revision": "6cd51f733d5197e0c3f6b7dfb3711c2860ffef71",
+    "split_version": "candidate-group-split-v1",
+    "test_ratio": 0.15,
+    "train_ratio": 0.7,
+    "validation_ratio": 0.15
+  },
+  "group_key": "candidate_id",
+  "intended_use": [
+    "train_for_future_phase_7_plus_fitting",
+    "validation_for_model_selection_without_test_access",
+    "test_for_phase_10_final_locked_evaluation_only"
+  ],
+  "job_coverage": {
+    "test": 180,
+    "train": 180,
+    "validation": 180
+  },
+  "label_distribution": {
+    "test": {
+      "0": 842,
+      "1": 309,
+      "2": 367,
+      "3": 102
+    },
+    "train": {
+      "0": 3871,
+      "1": 1436,
+      "2": 1702,
+      "3": 551
+    },
+    "validation": {
+      "0": 821,
+      "1": 313,
+      "2": 381,
+      "3": 105
+    }
+  },
+  "limitations": [
+    "synthetic_candidate_groups",
+    "domain_aware_allocation_does_not_guarantee_production_balance",
+    "jobs_repeat_across_splits",
+    "validation_and_test_have_27_candidate_groups_each",
+    "no_baseline_metrics_training_or_model"
+  ],
+  "output_files": [
+    {
+      "path": "SPLIT_CARD.md",
+      "record_count": 1,
+      "sha256": "381b77138cfb92220a96a5abad22c0b4893f54e5b013bb07b26a66495e219402",
+      "size_bytes": 3122
+    },
+    {
+      "path": "assignments.jsonl",
+      "record_count": 180,
+      "sha256": "ba5c075f244c8d65200316e44a4b0bb68f579aa6e2b0546e3527e17db98bc502",
+      "size_bytes": 14763
+    },
+    {
+      "path": "test.jsonl",
+      "record_count": 1620,
+      "sha256": "79fcb93b232b63482a9c26d1d0caa660289b7b798776c09f0945865ca6741a05",
+      "size_bytes": 1099011
+    },
+    {
+      "path": "test_lock.json",
+      "record_count": 1,
+      "sha256": "00f938c9f888156022d221a9fb3eab7c76e8d4316803d175470355a84f33ec73",
+      "size_bytes": 1116
+    },
+    {
+      "path": "train.jsonl",
+      "record_count": 7560,
+      "sha256": "d87095055d16ced57461eb8d4543bf4c3863b0ebe1771e5b3528eaf290b98c3d",
+      "size_bytes": 5137764
+    },
+    {
+      "path": "validation.jsonl",
+      "record_count": 1620,
+      "sha256": "a8cc27158bc126b11e93a0eefdf6a82a0e3f88e8d82cf9e9a0bae0491b04da7e",
+      "size_bytes": 1100505
+    }
+  ],
+  "pair_overlap_counts": {
+    "pair_train_test": 0,
+    "pair_train_validation": 0,
+    "pair_validation_test": 0
+  },
+  "record_count": 10800,
+  "source_dataset_schema_version": "synthetic-job-rec-schema-v1",
+  "source_dataset_version": "synthetic-job-rec-1.0.0",
+  "source_files": [
+    {
+      "path": "synthetic/candidates.jsonl",
+      "record_count": 180,
+      "sha256": "5d0ddbe461437afd80576e4b36044c94e083adfe2d232c05e4653a9fa54ef320",
+      "size_bytes": 131908
+    },
+    {
+      "path": "features/FEATURE_SCHEMA_CARD.md",
+      "record_count": 1,
+      "sha256": "578959a86aafdc45cffcff570b1be8730fc3d93f66c729eb2a6c4813a3b4d771",
+      "size_bytes": 3872
+    },
+    {
+      "path": "features/feature_schema.json",
+      "record_count": 1,
+      "sha256": "aeb260b25f34b55b7164b215e613a0b4327df33ee65af95abc904045849ce4a0",
+      "size_bytes": 45406
+    },
+    {
+      "path": "features/features.jsonl",
+      "record_count": 10800,
+      "sha256": "4e405d74714a6a9a79b3d6339b19b595cb67b8cbd6f589b721e662d274ebd18e",
+      "size_bytes": 7337280
+    },
+    {
+      "path": "features/manifest.json",
+      "record_count": 1,
+      "sha256": "dd0e79d6ff8d7441c73a0e284140e5588e01a317b64c1d00c741f145b899882e",
+      "size_bytes": 3249
+    }
+  ],
+  "source_revision": "6cd51f733d5197e0c3f6b7dfb3711c2860ffef71",
+  "split_counts": {
+    "test": {
+      "candidate_count": 27,
+      "record_count": 1620,
+      "unique_job_count": 180
+    },
+    "train": {
+      "candidate_count": 126,
+      "record_count": 7560,
+      "unique_job_count": 180
+    },
+    "validation": {
+      "candidate_count": 27,
+      "record_count": 1620,
+      "unique_job_count": 180
+    }
+  },
+  "split_generator_version": "0.1.0",
+  "split_release_date": "2026-07-24",
+  "split_seed": 20260724,
+  "split_version": "candidate-group-split-v1",
+  "test_lock_file": {
+    "path": "test_lock.json",
+    "record_count": 1,
+    "sha256": "00f938c9f888156022d221a9fb3eab7c76e8d4316803d175470355a84f33ec73",
+    "size_bytes": 1116
+  },
+  "test_locked": true,
+  "test_ratio": 0.15,
+  "train_ratio": 0.7,
+  "validation_ratio": 0.15
+}

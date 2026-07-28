@@ -1,0 +1,601 @@
+<?php
+
+namespace Tests\Feature\Api\V1;
+
+use App\Contracts\Recommendation\RecommendationContextFingerprintContract;
+use App\Contracts\Recommendation\RecommendationEligibilityProviderContract;
+use App\Contracts\Recommendation\RecommendationResultCacheContract;
+use App\Enums\UserRole;
+use App\Models\ApplicationStatus;
+use App\Models\Education;
+use App\Models\Experience;
+use App\Models\JobApplication;
+use App\Models\JobPosting;
+use App\Models\RecommendationRun;
+use App\Models\Skill;
+use App\Models\User;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Str;
+use Tests\Feature\Concerns\BuildsRecommendationPersistenceScenarios;
+use Tests\TestCase;
+
+class RecommendationEndToEndTest extends TestCase
+{
+    use BuildsRecommendationPersistenceScenarios;
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->setUpRecommendationPersistenceScenario();
+    }
+
+    protected function tearDown(): void
+    {
+        $this->tearDownRecommendationPersistenceScenario();
+        parent::tearDown();
+    }
+
+    public function test_recommendation_end_to_end_cold_cache_and_persistence_lifecycle(): void
+    {
+        [$user, $eligibleJobs, $sensitiveValues] = $this->canonicalFixture();
+        $this->fakeSuccessfulRecommendationMl();
+        $token = $user->createToken('phase17-e2e-'.Str::random(8))->plainTextToken;
+
+        $cold = $this->withToken($token)
+            ->getJson('/api/v1/jobs/recommended?limit=5')
+            ->assertOk()
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('message', 'Recommended jobs retrieved successfully.')
+            ->assertJsonCount(5, 'data')
+            ->assertJsonPath('data.0.recommendation_engine', 'ml_xgbranker')
+            ->assertJsonPath('data.0.fallback_used', false);
+
+        $this->assertSame(
+            collect($eligibleJobs)->pluck('id')->sort()->values()->all(),
+            collect($cold->json('data'))->pluck('id')->sort()->values()->all(),
+        );
+        $this->assertSame(range(1, 5), array_column($cold->json('data'), 'rank'));
+        foreach ($cold->json('data') as $item) {
+            $this->assertGreaterThanOrEqual(0, $item['score']);
+            $this->assertLessThanOrEqual(100, $item['score']);
+            foreach ($item['reasons'] as $reason) {
+                $this->assertContains($reason['code'], [
+                    'DOMAIN_ALIGNMENT',
+                    'SKILLS_ALIGNMENT',
+                    'EXPERIENCE_ALIGNMENT',
+                    'EDUCATION_ALIGNMENT',
+                    'WORK_MODE_ALIGNMENT',
+                    'EMPLOYMENT_TYPE_ALIGNMENT',
+                    'MISSING_REQUIRED_SKILLS',
+                ]);
+            }
+        }
+        $this->assertDatabaseCount('recommendation_runs', 1);
+        $this->assertDatabaseCount('recommendation_items', 5);
+        Http::assertSentCount(1);
+
+        $cached = $this->withToken($token)
+            ->getJson('/api/v1/jobs/recommended?limit=5')
+            ->assertOk();
+        $this->assertSame($cold->json('data'), $cached->json('data'));
+        $this->assertDatabaseCount('recommendation_runs', 1);
+        $this->assertDatabaseCount('recommendation_items', 5);
+        Http::assertSentCount(1);
+
+        Cache::flush();
+        $persisted = $this->withToken($token)
+            ->getJson('/api/v1/jobs/recommended?limit=5')
+            ->assertOk();
+        $this->assertSame($cold->json('data'), $persisted->json('data'));
+        $this->assertDatabaseCount('recommendation_runs', 1);
+        $this->assertDatabaseCount('recommendation_items', 5);
+        Http::assertSentCount(1);
+
+        $eligibility = app(RecommendationEligibilityProviderContract::class)
+            ->eligibleJobs($user->fresh(), now());
+        $context = app(RecommendationContextFingerprintContract::class)
+            ->fingerprint($eligibility, true);
+        $key = app(RecommendationResultCacheContract::class)->key(
+            $user->jobSeekerProfile->id,
+            $context,
+            5,
+        );
+        $this->assertSame([
+            'schema_version',
+            'recommendation_run_id',
+            'context_hash',
+            'requested_limit',
+            'expires_at',
+        ], array_keys(Cache::get($key)));
+
+        $publicBodies = $cold->getContent().$cached->getContent().$persisted->getContent();
+        foreach ([...$sensitiveValues, self::ML_TOKEN, $token] as $sensitive) {
+            $this->assertStringNotContainsString($sensitive, $publicBodies);
+        }
+        $this->assertStringNotContainsString('raw_score', $publicBodies);
+        $this->assertStringNotContainsString('feature_group', $publicBodies);
+        $this->assertStringNotContainsString('contribution', $publicBodies);
+
+        $stored = RecommendationRun::firstOrFail()->load('items');
+        $storedJson = $stored->toJson();
+        foreach ([...$sensitiveValues, self::ML_TOKEN, $token] as $sensitive) {
+            $this->assertStringNotContainsString($sensitive, $storedJson);
+        }
+        $this->assertStringNotContainsString('Builds private candidate systems.', $storedJson);
+        $this->assertStringNotContainsString('Laravel', $storedJson);
+    }
+
+    public function test_recommendation_end_to_end_invalidation_and_eligibility(): void
+    {
+        [$user, $eligibleJobs] = $this->canonicalFixture();
+        $this->fakeSuccessfulRecommendationMl();
+        $token = $user->createToken('phase17-invalidation')->plainTextToken;
+
+        $first = $this->withToken($token)
+            ->getJson('/api/v1/jobs/recommended?limit=5')
+            ->assertOk();
+        $firstContextHash = RecommendationRun::firstOrFail()->context_hash;
+        $this->assertDatabaseCount('recommendation_runs', 1);
+        Http::assertSentCount(1);
+
+        $user->update([
+            'name' => 'Changed Private Fixture Name',
+            'email' => 'changed-private-phase17@example.test',
+        ]);
+        $user->jobSeekerProfile->update(['phone' => '+000000000000']);
+        $unrelated = $this->withToken($token)
+            ->getJson('/api/v1/jobs/recommended?limit=5')
+            ->assertOk();
+        $this->assertSame($first->json('data'), $unrelated->json('data'));
+        $this->assertDatabaseCount('recommendation_runs', 1);
+        Http::assertSentCount(1);
+
+        $user->jobSeekerProfile->update(['headline' => 'Changed scoring headline']);
+        $profileMutation = $this->withToken($token)
+            ->getJson('/api/v1/jobs/recommended?limit=5')
+            ->assertOk();
+        $this->assertDatabaseCount('recommendation_runs', 2);
+        $this->assertNotSame(
+            $firstContextHash,
+            RecommendationRun::latest('id')->firstOrFail()->context_hash,
+        );
+        Http::assertSentCount(2);
+
+        $eligibleJobs[0]->update(['description' => 'Changed ranking description.']);
+        $this->withToken($token)
+            ->getJson('/api/v1/jobs/recommended?limit=5')
+            ->assertOk();
+        $this->assertDatabaseCount('recommendation_runs', 3);
+        Http::assertSentCount(3);
+
+        JobApplication::create([
+            'job_posting_id' => $eligibleJobs[0]->id,
+            'job_seeker_profile_id' => $user->jobSeekerProfile->id,
+            'application_status_id' => ApplicationStatus::firstOrFail()->id,
+            'cover_letter' => null,
+            'consent_to_share_profile' => true,
+        ]);
+        $excluded = $this->withToken($token)
+            ->getJson('/api/v1/jobs/recommended?limit=5')
+            ->assertOk()
+            ->assertJsonCount(4, 'data');
+        $this->assertNotContains(
+            $eligibleJobs[0]->id,
+            array_column($excluded->json('data'), 'id'),
+        );
+        $this->assertDatabaseCount('recommendation_runs', 4);
+        Http::assertSentCount(4);
+        $this->assertSame($first->json('data'), $profileMutation->json('data'));
+    }
+
+    public function test_recommendation_public_route_and_resource_contract_remain_frozen(): void
+    {
+        $route = Route::getRoutes()->getByName('v1.jobs.recommended');
+        $this->assertNotNull($route);
+        $this->assertSame('api/v1/jobs/recommended', $route->uri());
+        $this->assertSame(['GET', 'HEAD'], $route->methods());
+        $this->assertSame([
+            'api',
+            'auth:sanctum',
+            'user.active',
+            'company.approved',
+        ], $route->middleware());
+
+        $user = $this->recommendationUser();
+        $job = $this->recommendationJob($this->recommendationCompany());
+        $this->fakeSuccessfulRecommendationMl();
+        $response = $this->withToken(
+            $user->createToken('phase17-contract')->plainTextToken,
+        )->getJson('/api/v1/jobs/recommended?limit=1');
+
+        $response->assertOk()
+            ->assertJsonPath('data.0.id', $job->id)
+            ->assertExactJsonStructure([
+                'success',
+                'message',
+                'data' => [[
+                    'id',
+                    'company_id',
+                    'title',
+                    'department',
+                    'description',
+                    'responsibilities',
+                    'requirements',
+                    'benefits',
+                    'employment_type',
+                    'experience_level',
+                    'education_level',
+                    'location',
+                    'work_mode',
+                    'salary_min',
+                    'salary_max',
+                    'status',
+                    'published_at',
+                    'application_deadline',
+                    'has_application_deadline',
+                    'is_application_deadline_passed',
+                    'is_accepting_applications',
+                    'can_apply',
+                    'company',
+                    'skills',
+                    'required_skills',
+                    'nice_to_have_skills',
+                    'created_at',
+                    'updated_at',
+                    'score',
+                    'matching_score_version',
+                    'breakdown',
+                    'matched_skills',
+                    'skill_breakdown',
+                    'matched_required_skills',
+                    'missing_required_skills',
+                    'matched_nice_to_have_skills',
+                    'reasons',
+                    'rank',
+                    'recommendation_engine',
+                    'model_version',
+                    'feature_schema_version',
+                    'explanation_contract_version',
+                    'fallback_used',
+                ]],
+            ]);
+    }
+
+    public function test_phase17_protected_baseline_entries_and_aggregate_are_valid(): void
+    {
+        $path = base_path('docs/ml-job-recommendation/PHASE_17_PROTECTED_BASELINE.json');
+        $this->assertSame(
+            'CB3959FF2550064CA4F7D82953A1E6E0A539A1C32A2BC97ABB1E64F09FDBCAC0',
+            strtoupper(hash_file('sha256', $path)),
+        );
+        $this->assertSame(
+            'F425D51C0094D2D2AAAFC220C02FE3DA4AA1796DDC59534F0F5E471A27995521',
+            strtoupper(hash_file(
+                'sha256',
+                base_path('docs/ml-job-recommendation/PHASE_18_PROTECTED_BASELINE.json'),
+            )),
+        );
+        $baseline = json_decode(
+            file_get_contents($path),
+            true,
+            512,
+            JSON_THROW_ON_ERROR,
+        );
+
+        $this->assertSame('phase-17-protected-baseline-v1', $baseline['baseline_version']);
+        $this->assertSame(864, $baseline['file_count']);
+        $this->assertSame(864, count($baseline['files']));
+        $this->assertSame(
+            'indeterminate',
+            $baseline['historical_phase_16_mismatch_count'],
+        );
+        $this->assertFalse(collect($baseline['files'])->contains(
+            fn (array $entry): bool => $entry['path']
+                === 'docs/ml-job-recommendation/PHASE_17_PROTECTED_BASELINE.json',
+        ));
+
+        $records = [];
+        $paths = [];
+        $approvedPhase17Documentation = [
+            'BACKEND_IMPLEMENTATION_REPORT.md',
+            'README.md',
+            'services/ml-recommendation/README.md',
+            // Approved post-handover commit-safety portability remediations.
+            'services/ml-recommendation/data/baselines/v1/BASELINE_REPORT.md',
+            'services/ml-recommendation/data/baselines/v1/manifest.json',
+            'services/ml-recommendation/src/smart_recruitment_ml/baselines/evaluator.py',
+            // Approved post-handover provenance and Locked-Test-safety maintenance.
+            'services/ml-recommendation/src/smart_recruitment_ml/training/trainer.py',
+            'services/ml-recommendation/tests/test_model_artifacts.py',
+        ];
+        foreach ($baseline['files'] as $entry) {
+            $file = base_path($entry['path']);
+            $this->assertFileExists($file);
+            if (! in_array($entry['path'], $approvedPhase17Documentation, true)) {
+                $this->assertSame($entry['size_bytes'], filesize($file), $entry['path']);
+                $this->assertSame($entry['sha256'], strtoupper(hash_file('sha256', $file)), $entry['path']);
+            }
+            $records[] = implode('|', [
+                $entry['path'],
+                $entry['size_bytes'],
+                $entry['sha256'],
+            ]);
+            $paths[] = $entry['path'];
+        }
+        $sorted = $paths;
+        usort($sorted, strcmp(...));
+        $this->assertSame($sorted, $paths);
+        $this->assertSame(count($paths), count(array_unique($paths)));
+        $this->assertSame(
+            $baseline['aggregate_sha256'],
+            strtoupper(hash('sha256', implode("\n", $records)."\n")),
+        );
+
+        $trainer = file_get_contents(base_path(
+            'services/ml-recommendation/src/smart_recruitment_ml/training/trainer.py',
+        ));
+        $this->assertIsString($trainer);
+        $this->assertStringContainsString(
+            'C591708A58AE66941BB004CE08522EAADC90F476105F7BED08B5E2DB477046BF',
+            $trainer,
+        );
+
+        $artifactTest = file_get_contents(base_path(
+            'services/ml-recommendation/tests/test_model_artifacts.py',
+        ));
+        $this->assertIsString($artifactTest);
+        foreach ([
+            'frozen_manifest = json.loads(frozen_bytes["manifest.json"])',
+            'historical_locked_test_sha256 = str(historical_locked_test["sha256"])',
+            'monkeypatch.setattr(Path, "open", reject_locked_test_open)',
+            'for name in ARTIFACT_NAMES:',
+        ] as $historicalReproductionContract) {
+            $this->assertStringContainsString(
+                $historicalReproductionContract,
+                $artifactTest,
+            );
+        }
+
+        $phase7ManifestPath =
+            'services/ml-recommendation/data/baselines/v1/manifest.json';
+        $phase7Manifest = json_decode(
+            file_get_contents(base_path($phase7ManifestPath)),
+            true,
+            512,
+            JSON_THROW_ON_ERROR,
+        );
+        $reportPath =
+            'services/ml-recommendation/data/baselines/v1/BASELINE_REPORT.md';
+        $reportRecord = collect($phase7Manifest['output_files'])->firstWhere(
+            'path',
+            $reportPath,
+        );
+        $this->assertIsArray($reportRecord);
+        $this->assertSame(
+            filesize(base_path($reportPath)),
+            $reportRecord['size_bytes'],
+        );
+        $this->assertSame(
+            strtolower(hash_file('sha256', base_path($reportPath))),
+            $reportRecord['sha256'],
+        );
+
+        $rootReadme = base_path('README.md');
+        $this->assertFileExists($rootReadme);
+        $this->assertTrue(is_readable($rootReadme));
+        $readme = file_get_contents($rootReadme);
+        $this->assertIsString($readme);
+        foreach ([
+            'docs/ml-job-recommendation/phase18/FINAL_HANDOVER.md',
+            'docs/ml-job-recommendation/phase18/DEMO_RUNBOOK.md',
+            'services/ml-recommendation/DEPLOYMENT.md',
+            'docs/ml-job-recommendation/phase17/PHASE_17_E2E_REPORT.md',
+        ] as $relativePath) {
+            $this->assertStringContainsString("]({$relativePath})", $readme);
+        }
+        $this->assertStringContainsString(
+            'Production deployment has not been performed.',
+            $readme,
+        );
+        $this->assertDoesNotMatchRegularExpression(
+            '/(?:^|[\s("`])[A-Za-z]:[\\\\\/]/m',
+            $readme,
+        );
+        $this->assertStringNotContainsString('/home/', strtolower($readme));
+        $this->assertStringNotContainsString('file://', strtolower($readme));
+        $this->assertDoesNotMatchRegularExpression(
+            '/Bearer\s+[A-Za-z0-9._-]{16,}/i',
+            $readme,
+        );
+        $this->assertDoesNotMatchRegularExpression(
+            '/(?:X-ML-Service-Token|ML_SERVICE_TOKEN)\s*[:=]\s*[\'"]?(?!<|replace-|\{\{)[A-Za-z0-9._-]{8,}/i',
+            $readme,
+        );
+    }
+
+    public function test_phase17_e2e_matrix_schema_is_complete_and_secret_free(): void
+    {
+        $path = base_path(
+            'docs/ml-job-recommendation/phase17/E2E_TEST_MATRIX.json',
+        );
+        $matrix = json_decode(
+            file_get_contents($path),
+            true,
+            512,
+            JSON_THROW_ON_ERROR,
+        );
+
+        $this->assertSame('phase-17-e2e-test-matrix-v1', $matrix['matrix_version']);
+        $this->assertSame(35, $matrix['scenario_count']);
+        $this->assertSame(35, $matrix['passed_count']);
+        $this->assertSame(0, $matrix['failed_count']);
+        $this->assertCount(35, $matrix['scenarios']);
+
+        $scenarioKeys = [
+            'id',
+            'category',
+            'description',
+            'expected_behavior',
+            'result',
+            'provider_calls',
+            'matching_calls',
+            'http_status',
+            'public_engine',
+            'recommendation_runs_created',
+            'recommendation_items_created',
+            'sensitive_data_exposed',
+            'notes',
+        ];
+        $ids = [];
+        foreach ($matrix['scenarios'] as $scenario) {
+            $this->assertSame($scenarioKeys, array_keys($scenario));
+            $this->assertSame('passed', $scenario['result']);
+            $this->assertFalse($scenario['sensitive_data_exposed']);
+            $ids[] = $scenario['id'];
+        }
+        $sortedIds = $ids;
+        sort($sortedIds, SORT_STRING);
+        $this->assertSame($sortedIds, $ids);
+        $this->assertSame(count($ids), count(array_unique($ids)));
+
+        $encoded = json_encode($matrix, JSON_THROW_ON_ERROR);
+        foreach ([
+            'access_token',
+            'service_token',
+            'authorization',
+            'bearer ',
+            '@example.test',
+            'private fixture',
+            'c:\\users\\',
+            '/home/',
+        ] as $forbidden) {
+            $this->assertStringNotContainsString(
+                $forbidden,
+                strtolower($encoded),
+            );
+        }
+    }
+
+    public function test_phase17_harness_is_loopback_only_and_never_rebuilds_the_image(): void
+    {
+        $harness = file_get_contents(
+            base_path('scripts/phase17/run-e2e.ps1'),
+        );
+        $faultServer = file_get_contents(
+            base_path('scripts/phase17/fault_server.py'),
+        );
+
+        $this->assertStringContainsString(
+            'workeyx/ml-recommendation:0.2.0-phase16',
+            $harness,
+        );
+        $this->assertStringNotContainsString('docker build', strtolower($harness));
+        $this->assertStringContainsString('127.0.0.1', $harness);
+        $this->assertStringContainsString('finally {', $harness);
+        $this->assertStringContainsString('default="127.0.0.1"', $faultServer);
+        $this->assertStringNotContainsString(
+            'events.write(raw_body',
+            $faultServer,
+        );
+        $this->assertStringNotContainsString(
+            'events.write(str(self.headers',
+            $faultServer,
+        );
+    }
+
+    /**
+     * @return array{0: User, 1: list<JobPosting>, 2: list<string>}
+     */
+    private function canonicalFixture(): array
+    {
+        $user = $this->recommendationUser(
+            [
+                'headline' => 'Backend platform engineer',
+                'summary' => 'Builds private candidate systems.',
+                'phone' => '+111111111111',
+            ],
+            [
+                'name' => 'Private Phase Seventeen Candidate',
+                'email' => 'private-phase17@example.test',
+                'role' => UserRole::JOB_SEEKER,
+            ],
+        );
+        Experience::create([
+            'job_seeker_profile_id' => $user->jobSeekerProfile->id,
+            'title' => 'Backend Engineer',
+            'company_name' => 'Fixture Company',
+            'start_date' => now()->subYears(4)->toDateString(),
+            'end_date' => null,
+            'is_current' => true,
+            'description' => 'Builds reliable backend services.',
+            'source_type' => 'manual',
+        ]);
+        Education::create([
+            'job_seeker_profile_id' => $user->jobSeekerProfile->id,
+            'institution' => 'Fixture University',
+            'degree' => 'bachelor',
+            'field_of_study' => 'Computer Science',
+            'start_date' => now()->subYears(8)->toDateString(),
+            'end_date' => now()->subYears(4)->toDateString(),
+            'description' => 'Synthetic education fixture.',
+            'source_type' => 'manual',
+        ]);
+        $laravel = Skill::create(['name' => 'Laravel', 'slug' => 'laravel-phase17']);
+        $python = Skill::create(['name' => 'Python', 'slug' => 'python-phase17']);
+        $user->jobSeekerProfile->skills()->attach($laravel, ['source_type' => 'manual']);
+        $user->jobSeekerProfile->skills()->attach($python, ['source_type' => 'manual']);
+
+        $approved = $this->recommendationCompany();
+        $eligibleJobs = [];
+        for ($index = 0; $index < 5; $index++) {
+            $eligibleJobs[] = $this->recommendationJob($approved, [
+                'title' => 'Eligible Platform Role '.$index,
+                'published_at' => $index === 4 ? null : now()->subHours($index + 1),
+                'application_deadline' => match ($index) {
+                    0 => null,
+                    1 => now(),
+                    default => now()->addDays($index),
+                },
+            ]);
+            $eligibleJobs[$index]->skills()->attach($laravel, [
+                'requirement_type' => 'required',
+                'weight' => 5,
+            ]);
+            $eligibleJobs[$index]->skills()->attach($python, [
+                'requirement_type' => 'nice_to_have',
+                'weight' => 2,
+            ]);
+        }
+
+        $this->recommendationJob($approved, ['status' => 'draft']);
+        $this->recommendationJob($approved, ['status' => 'closed']);
+        $this->recommendationJob($approved, [
+            'application_deadline' => now()->subSecond(),
+        ]);
+        foreach (['pending', 'rejected', 'suspended'] as $approval) {
+            $this->recommendationJob($this->recommendationCompany($approval));
+        }
+        $applied = $this->recommendationJob($approved);
+        JobApplication::create([
+            'job_posting_id' => $applied->id,
+            'job_seeker_profile_id' => $user->jobSeekerProfile->id,
+            'application_status_id' => ApplicationStatus::firstOrFail()->id,
+            'cover_letter' => null,
+            'consent_to_share_profile' => true,
+        ]);
+
+        return [
+            $user,
+            $eligibleJobs,
+            [
+                'Private Phase Seventeen Candidate',
+                'private-phase17@example.test',
+                '+111111111111',
+            ],
+        ];
+    }
+}

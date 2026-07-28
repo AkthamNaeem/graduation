@@ -1,0 +1,118 @@
+{
+  "architecture_sha256": "60EB219152CE26B525735ED65564F667D403BF438F29000B4ECE90D65950553F",
+  "candidate_count": 180,
+  "dataset_release_date": "2026-07-24",
+  "dataset_schema_version": "synthetic-job-rec-schema-v1",
+  "dataset_version": "synthetic-job-rec-1.0.0",
+  "deterministic": true,
+  "domain_count": 12,
+  "domains": [
+    "Backend Engineering",
+    "Frontend Engineering",
+    "Mobile Development",
+    "Data Engineering",
+    "Data Analysis",
+    "DevOps / Cloud",
+    "Cybersecurity",
+    "Quality Assurance",
+    "Product Management",
+    "UI/UX Design",
+    "Digital Marketing",
+    "Finance / Accounting"
+  ],
+  "eligibility_scope": "laravel_pre_filtered_eligible_jobs",
+  "excluded_sensitive_fields": [
+    "personal_name",
+    "full_name",
+    "first_name",
+    "last_name",
+    "email",
+    "phone",
+    "birth_date",
+    "age",
+    "gender",
+    "nationality",
+    "marital_status",
+    "address",
+    "photo",
+    "cv",
+    "raw_cv",
+    "application_status",
+    "application_history",
+    "cover_letter",
+    "screening_answers",
+    "tests",
+    "interviews",
+    "internal_notes",
+    "company_name",
+    "auth_token",
+    "latent_score",
+    "feature_vector",
+    "application_outcome",
+    "acceptance_probability"
+  ],
+  "files": [
+    {
+      "path": "candidates.jsonl",
+      "record_count": 180,
+      "sha256": "5d0ddbe461437afd80576e4b36044c94e083adfe2d232c05e4653a9fa54ef320",
+      "size_bytes": 131908
+    },
+    {
+      "path": "jobs.jsonl",
+      "record_count": 180,
+      "sha256": "7aa398a1957c8851fb4fea4743f953be3f915177ae19266970ccf2d61440e74d",
+      "size_bytes": 120346
+    },
+    {
+      "path": "pairs.jsonl",
+      "record_count": 10800,
+      "sha256": "31a2e7c6f26e0c9840674cd7caff465be70ec4f753c13333f61ae3593998ecb1",
+      "size_bytes": 3912080
+    }
+  ],
+  "generation_config": {
+    "architecture_sha256": "60EB219152CE26B525735ED65564F667D403BF438F29000B4ECE90D65950553F",
+    "candidate_count": 180,
+    "job_count": 180,
+    "pairs_per_candidate": 60,
+    "random_seed": 20260724,
+    "source_revision": "6cd51f733d5197e0c3f6b7dfb3711c2860ffef71"
+  },
+  "generator_version": "0.1.0",
+  "intended_use": [
+    "future_learning_to_rank_research",
+    "feature_pipeline_validation",
+    "reproducible_baseline_experiments"
+  ],
+  "job_count": 180,
+  "label_distribution": {
+    "0": 5534,
+    "1": 2058,
+    "2": 2450,
+    "3": 758
+  },
+  "limitations": [
+    "fully_synthetic_labels",
+    "synthetic_to_production_gap",
+    "no_fairness_guarantee",
+    "no_production_performance_guarantee",
+    "no_data_split_or_feature_pipeline_yet"
+  ],
+  "noise_count": 1080,
+  "noise_rate": 0.1,
+  "pair_count": 10800,
+  "pairs_per_candidate": 60,
+  "random_seed": 20260724,
+  "scenario_distribution": {
+    "adjacent_domain": 694,
+    "borderline": 1080,
+    "clear_mismatch": 4860,
+    "good_match": 1826,
+    "hard_negative": 1080,
+    "noise_injected": 1080,
+    "strong_match": 180
+  },
+  "source_revision": "6cd51f733d5197e0c3f6b7dfb3711c2860ffef71",
+  "synthetic": true
+}

@@ -1,0 +1,69 @@
+{
+  "architecture_sha256": "60eb219152ce26b525735ed65564f667d403bf438f29000b4ece90d65950553f",
+  "artifacts": [
+    {
+      "bytes": 1907,
+      "path": "BUNDLE_CARD.md",
+      "sha256": "0ae2dde55be982b0639238f6d4ced78fe15b02518ced6c54c9842147124a7fe8"
+    },
+    {
+      "bytes": 1903,
+      "path": "explanation_contract.json",
+      "sha256": "d6d38967faab739c038bdad04df23d3ecd3683f3279c2ca7d39c95b17cd3b8a1"
+    },
+    {
+      "bytes": 45406,
+      "path": "feature_schema.json",
+      "sha256": "aeb260b25f34b55b7164b215e613a0b4327df33ee65af95abc904045849ce4a0"
+    },
+    {
+      "bytes": 920863,
+      "path": "model.json",
+      "sha256": "3abd74137bc8881667643f31a658c790ef6712359d7802ea7fcffa0c4cf9e26e"
+    },
+    {
+      "bytes": 6000,
+      "path": "model_metadata.json",
+      "sha256": "5485a2058d22777c3cafe9ea5871ac7534f555bfce6fb8275ddf89526358cb11"
+    },
+    {
+      "bytes": 1529,
+      "path": "reason_code_mapping.json",
+      "sha256": "ebb263eb181ffa10114555b3719ef2845e4454795ae9690382624ea33ed03ba5"
+    },
+    {
+      "bytes": 1079,
+      "path": "score_transform.json",
+      "sha256": "533d94e9ad8f404d09e5bf8e67b9bf49766899d09e20c6ef2c62dafa686e56ac"
+    }
+  ],
+  "bundle_builder_version": "0.1.0",
+  "bundle_release_date": "2026-07-25",
+  "bundle_schema_version": "inference-bundle-schema-v1",
+  "bundle_version": "job-rec-inference-bundle-v1",
+  "dataset_version": "synthetic-job-rec-1.0.0",
+  "deterministic": true,
+  "explanation_contract_version": "recommendation-explanation-contract-v1",
+  "feature_count": 103,
+  "feature_schema_sha256": "aeb260b25f34b55b7164b215e613a0b4327df33ee65af95abc904045849ce4a0",
+  "feature_schema_version": "job-rec-features-v1",
+  "frozen_state": {
+    "feature_pipeline_modified": false,
+    "model_modified": false,
+    "training_executed": false,
+    "tuning_executed": false
+  },
+  "model_format": "xgboost-json-v1",
+  "model_sha256": "3abd74137bc8881667643f31a658c790ef6712359d7802ea7fcffa0c4cf9e26e",
+  "model_source_revision": "6cd51f733d5197e0c3f6b7dfb3711c2860ffef71",
+  "model_version": "xgbranker-tuned-v1",
+  "reason_code_mapping_version": "recommendation-reason-codes-v1",
+  "score_transform_version": "validation-minmax-selected-trial-t06-v1",
+  "selected_config_id": "T06",
+  "test_non_usage": {
+    "test_evaluation_rerun": false,
+    "test_features_read": false,
+    "test_inference_run": false,
+    "test_predictions_read": false
+  }
+}

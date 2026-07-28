@@ -1,0 +1,29 @@
+name: workeyx-ml
+
+services:
+  ml-recommendation:
+    image: workeyx/ml-recommendation:0.2.0-phase16
+    build:
+      context: ./services/ml-recommendation
+      args:
+        SOURCE_REVISION: 6cd51f733d5197e0c3f6b7dfb3711c2860ffef71
+        BUILD_DATE: "2026-07-25"
+    environment:
+      ML_SERVICE_TOKEN: ${ML_SERVICE_TOKEN:?ML_SERVICE_TOKEN is required}
+    ports:
+      - "127.0.0.1:8100:8100"
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=67108864
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    init: true
+    healthcheck:
+      test: ["CMD", "python", "/app/container/healthcheck.py"]
+      interval: 10s
+      timeout: 3s
+      start_period: 20s
+      retries: 3
+    stop_grace_period: 30s

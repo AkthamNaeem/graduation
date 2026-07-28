@@ -1,0 +1,39 @@
+{
+  "additivity_semantics": "The feature contributions plus bias reconstruct the raw model margin within absolute tolerance 1e-5.",
+  "attribution_method_version": "xgboost-exact-tree-shap-v1",
+  "bias_semantics": "The XGBoost contribution bias on the raw margin scale.",
+  "consumer_contract": {
+    "explanation_note": "AI assistant only: attribution supports human review and never makes an automatic hiring decision.",
+    "model_rank": "Display as the within-candidate rank from the frozen artifact.",
+    "model_score": "Display only as a ranking score.",
+    "top_negative_factors": "Display at most five score-decreasing factors.",
+    "top_positive_factors": "Display at most five score-increasing factors."
+  },
+  "explanation_contract_version": "recommendation-explanation-contract-v1",
+  "feature_schema_version": "job-rec-features-v1",
+  "limitations": [
+    "synthetic development data",
+    "in-sample final model explanations",
+    "handcrafted features",
+    "feature importance may hide interactions",
+    "no fairness guarantee",
+    "no Test explanations",
+    "no Production traffic validation"
+  ],
+  "local_factor_limit": 5,
+  "local_selection_policy": "validation-origin-ranks-1-5-10-60-v1",
+  "model_version": "xgbranker-tuned-v1",
+  "negative_factor_semantics": "Negative exact Tree SHAP contributions decrease this pair's model score relative to the bias.",
+  "positive_factor_semantics": "Positive exact Tree SHAP contributions increase this pair's model score relative to the bias.",
+  "prohibited_interpretations": [
+    "not a probability",
+    "not an acceptance prediction",
+    "not a causal explanation",
+    "not a fairness certification",
+    "not an automatic hiring decision"
+  ],
+  "score_semantics": "A raw XGBoost ranking score on the model margin scale; it is not a probability or acceptance likelihood.",
+  "supported_source_splits": [
+    "validation"
+  ]
+}

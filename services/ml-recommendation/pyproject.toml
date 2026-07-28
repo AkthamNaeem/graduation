@@ -1,0 +1,79 @@
+[build-system]
+requires = ["setuptools>=75,<82"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "smart-recruitment-ml-service"
+version = "0.2.0"
+description = "Internal FastAPI inference service for Smart Recruitment job recommendations."
+readme = "README.md"
+requires-python = ">=3.12,<3.14"
+dependencies = [
+    "fastapi>=0.115,<1.0",
+    "pydantic-settings>=2.7,<3.0",
+    "uvicorn[standard]>=0.34,<1.0",
+]
+
+[project.scripts]
+generate-synthetic-dataset = "smart_recruitment_ml.data.generator:main"
+build-feature-dataset = "smart_recruitment_ml.features.pipeline:main"
+build-candidate-group-split = "smart_recruitment_ml.splits.splitter:main"
+evaluate-existing-baselines = "smart_recruitment_ml.baselines.evaluator:main"
+train-initial-xgbranker = "smart_recruitment_ml.training.trainer:main"
+train-tuned-xgbranker = "smart_recruitment_ml.tuning.tuner:main"
+evaluate-locked-final-test = "smart_recruitment_ml.evaluation.final_evaluator:main"
+explain-tuned-xgbranker = "smart_recruitment_ml.explainability.explainer:main"
+build-inference-bundle = "smart_recruitment_ml.bundle.builder:main"
+export-inference-contract = "smart_recruitment_ml.api.contract_export:main"
+
+[project.optional-dependencies]
+dev = [
+    "httpx>=0.28,<1.0",
+    "mypy>=1.15,<2.0",
+    "pytest>=8.3,<9.0",
+    "pytest-cov>=6.0,<8.0",
+    "ruff>=0.11,<1.0",
+]
+ml = [
+    "numpy==2.5.1",
+    "scipy==1.18.0",
+    "xgboost==3.3.0",
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = ["-ra", "--strict-config", "--strict-markers"]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["smart_recruitment_ml"]
+
+[tool.coverage.report]
+fail_under = 90
+show_missing = true
+skip_covered = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = [".venv"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "TCH", "RUF", "ARG", "PT"]
+
+[tool.ruff.format]
+indent-style = "space"
+line-ending = "auto"
+quote-style = "double"
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+files = ["src", "tests"]
+exclude = ["\\.venv"]

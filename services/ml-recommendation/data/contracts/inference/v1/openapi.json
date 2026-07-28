@@ -1,0 +1,1016 @@
+{
+  "components": {
+    "schemas": {
+      "CandidateInput": {
+        "additionalProperties": false,
+        "description": "Candidate wrapper that keeps identity outside model features.",
+        "properties": {
+          "professional_facts": {
+            "$ref": "#/components/schemas/CandidateProfessionalFacts"
+          },
+          "profile_ref": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile Ref"
+          }
+        },
+        "required": [
+          "professional_facts"
+        ],
+        "title": "CandidateInput",
+        "type": "object"
+      },
+      "CandidateProfessionalFacts": {
+        "additionalProperties": false,
+        "description": "Professional facts consumed by the frozen Feature Pipeline.",
+        "properties": {
+          "adjacent_domains": {
+            "items": {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Adjacent Domains",
+            "type": "array"
+          },
+          "career_level": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Career Level"
+          },
+          "education_level": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Education Level"
+          },
+          "headline": {
+            "anyOf": [
+              {
+                "maxLength": 256,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Headline"
+          },
+          "preferred_employment_types": {
+            "items": {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 10,
+            "title": "Preferred Employment Types",
+            "type": "array"
+          },
+          "preferred_work_modes": {
+            "items": {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 10,
+            "title": "Preferred Work Modes",
+            "type": "array"
+          },
+          "primary_domain": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Domain"
+          },
+          "skills": {
+            "items": {
+              "$ref": "#/components/schemas/CandidateSkillFact"
+            },
+            "maxItems": 100,
+            "title": "Skills",
+            "type": "array"
+          },
+          "total_experience_years": {
+            "anyOf": [
+              {
+                "maximum": 100.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Experience Years"
+          }
+        },
+        "title": "CandidateProfessionalFacts",
+        "type": "object"
+      },
+      "CandidateSkillFact": {
+        "additionalProperties": false,
+        "description": "One professional Candidate skill.",
+        "properties": {
+          "name": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "proficiency": {
+            "anyOf": [
+              {
+                "maximum": 5.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Proficiency"
+          },
+          "years_experience": {
+            "anyOf": [
+              {
+                "maximum": 100.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Years Experience"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "CandidateSkillFact",
+        "type": "object"
+      },
+      "ExplanationFactor": {
+        "additionalProperties": false,
+        "description": "Safe feature-group attribution returned to consumers.",
+        "properties": {
+          "code": {
+            "title": "Code",
+            "type": "string"
+          },
+          "contribution": {
+            "title": "Contribution",
+            "type": "number"
+          },
+          "direction": {
+            "enum": [
+              "increases_model_score",
+              "decreases_model_score"
+            ],
+            "title": "Direction",
+            "type": "string"
+          },
+          "feature_group": {
+            "title": "Feature Group",
+            "type": "string"
+          },
+          "strength": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Strength",
+            "type": "number"
+          }
+        },
+        "required": [
+          "code",
+          "feature_group",
+          "direction",
+          "contribution",
+          "strength"
+        ],
+        "title": "ExplanationFactor",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "JobInput": {
+        "additionalProperties": false,
+        "description": "One eligible Job supplied by Laravel.",
+        "properties": {
+          "job_id": {
+            "exclusiveMinimum": 0.0,
+            "title": "Job Id",
+            "type": "integer"
+          },
+          "professional_facts": {
+            "$ref": "#/components/schemas/JobProfessionalFacts"
+          }
+        },
+        "required": [
+          "job_id",
+          "professional_facts"
+        ],
+        "title": "JobInput",
+        "type": "object"
+      },
+      "JobProfessionalFacts": {
+        "additionalProperties": false,
+        "description": "Professional Job facts consumed by the frozen Feature Pipeline.",
+        "properties": {
+          "career_level": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Career Level"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 4000,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "domain": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Domain"
+          },
+          "education_level": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Education Level"
+          },
+          "employment_type": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Employment Type"
+          },
+          "minimum_experience_years": {
+            "anyOf": [
+              {
+                "maximum": 100.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minimum Experience Years"
+          },
+          "nice_to_have_skills": {
+            "items": {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Nice To Have Skills",
+            "type": "array"
+          },
+          "required_skills": {
+            "items": {
+              "$ref": "#/components/schemas/RequiredSkillFact"
+            },
+            "maxItems": 100,
+            "title": "Required Skills",
+            "type": "array"
+          },
+          "responsibilities": {
+            "items": {
+              "maxLength": 500,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Responsibilities",
+            "type": "array"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 256,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "work_mode": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Work Mode"
+          }
+        },
+        "title": "JobProfessionalFacts",
+        "type": "object"
+      },
+      "LivenessResponse": {
+        "additionalProperties": false,
+        "description": "Response returned when the HTTP process is alive.",
+        "properties": {
+          "service": {
+            "const": "ml-recommendation",
+            "default": "ml-recommendation",
+            "title": "Service",
+            "type": "string"
+          },
+          "service_version": {
+            "title": "Service Version",
+            "type": "string"
+          },
+          "status": {
+            "const": "live",
+            "default": "live",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "service_version"
+        ],
+        "title": "LivenessResponse",
+        "type": "object"
+      },
+      "ModelMetadataResponse": {
+        "additionalProperties": false,
+        "description": "Safe metadata exposed to the future Laravel client.",
+        "properties": {
+          "api_contract_version": {
+            "title": "Api Contract Version",
+            "type": "string"
+          },
+          "bundle_version": {
+            "title": "Bundle Version",
+            "type": "string"
+          },
+          "dataset_version": {
+            "title": "Dataset Version",
+            "type": "string"
+          },
+          "explanation_contract_version": {
+            "title": "Explanation Contract Version",
+            "type": "string"
+          },
+          "feature_count": {
+            "title": "Feature Count",
+            "type": "integer"
+          },
+          "feature_schema_sha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Feature Schema Sha256",
+            "type": "string"
+          },
+          "feature_schema_version": {
+            "title": "Feature Schema Version",
+            "type": "string"
+          },
+          "model_format": {
+            "title": "Model Format",
+            "type": "string"
+          },
+          "model_sha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Model Sha256",
+            "type": "string"
+          },
+          "model_source_revision": {
+            "title": "Model Source Revision",
+            "type": "string"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "ready": {
+            "title": "Ready",
+            "type": "boolean"
+          },
+          "reason_code_mapping_version": {
+            "title": "Reason Code Mapping Version",
+            "type": "string"
+          },
+          "score_transform_version": {
+            "title": "Score Transform Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "api_contract_version",
+          "bundle_version",
+          "model_version",
+          "model_format",
+          "model_sha256",
+          "dataset_version",
+          "feature_schema_version",
+          "feature_schema_sha256",
+          "feature_count",
+          "model_source_revision",
+          "score_transform_version",
+          "explanation_contract_version",
+          "reason_code_mapping_version",
+          "ready"
+        ],
+        "title": "ModelMetadataResponse",
+        "type": "object"
+      },
+      "NotReadyResponse": {
+        "additionalProperties": false,
+        "description": "Safe readiness failure without paths or exception details.",
+        "properties": {
+          "code": {
+            "enum": [
+              "MODEL_BUNDLE_NOT_READY",
+              "SERVICE_TOKEN_NOT_CONFIGURED"
+            ],
+            "title": "Code",
+            "type": "string"
+          },
+          "status": {
+            "const": "not_ready",
+            "default": "not_ready",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code"
+        ],
+        "title": "NotReadyResponse",
+        "type": "object"
+      },
+      "Prediction": {
+        "additionalProperties": false,
+        "description": "One ranked Job prediction.",
+        "properties": {
+          "display_score": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Display Score",
+            "type": "number"
+          },
+          "job_id": {
+            "title": "Job Id",
+            "type": "integer"
+          },
+          "rank": {
+            "minimum": 1.0,
+            "title": "Rank",
+            "type": "integer"
+          },
+          "raw_score": {
+            "title": "Raw Score",
+            "type": "number"
+          },
+          "top_negative_factors": {
+            "items": {
+              "$ref": "#/components/schemas/ExplanationFactor"
+            },
+            "maxItems": 3,
+            "title": "Top Negative Factors",
+            "type": "array"
+          },
+          "top_positive_factors": {
+            "items": {
+              "$ref": "#/components/schemas/ExplanationFactor"
+            },
+            "maxItems": 3,
+            "title": "Top Positive Factors",
+            "type": "array"
+          }
+        },
+        "required": [
+          "job_id",
+          "rank",
+          "raw_score",
+          "display_score",
+          "top_positive_factors",
+          "top_negative_factors"
+        ],
+        "title": "Prediction",
+        "type": "object"
+      },
+      "RankRequest": {
+        "additionalProperties": false,
+        "description": "Complete internal ranking request.",
+        "properties": {
+          "candidate": {
+            "$ref": "#/components/schemas/CandidateInput"
+          },
+          "feature_schema_version": {
+            "title": "Feature Schema Version",
+            "type": "string"
+          },
+          "jobs": {
+            "items": {
+              "$ref": "#/components/schemas/JobInput"
+            },
+            "maxItems": 500,
+            "minItems": 1,
+            "title": "Jobs",
+            "type": "array"
+          },
+          "limit": {
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "request_id": {
+            "format": "uuid",
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "feature_schema_version",
+          "candidate",
+          "jobs",
+          "limit"
+        ],
+        "title": "RankRequest",
+        "type": "object"
+      },
+      "RankResponse": {
+        "additionalProperties": false,
+        "description": "Complete response; predictions are never truncated by requested limit.",
+        "properties": {
+          "api_contract_version": {
+            "title": "Api Contract Version",
+            "type": "string"
+          },
+          "bundle_version": {
+            "title": "Bundle Version",
+            "type": "string"
+          },
+          "dataset_version": {
+            "title": "Dataset Version",
+            "type": "string"
+          },
+          "explanation_contract_version": {
+            "title": "Explanation Contract Version",
+            "type": "string"
+          },
+          "explanation_note": {
+            "const": "Model attribution only; not a probability or hiring decision.",
+            "title": "Explanation Note",
+            "type": "string"
+          },
+          "feature_schema_version": {
+            "title": "Feature Schema Version",
+            "type": "string"
+          },
+          "latency_ms": {
+            "minimum": 0.0,
+            "title": "Latency Ms",
+            "type": "number"
+          },
+          "model_source_revision": {
+            "title": "Model Source Revision",
+            "type": "string"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "prediction_count": {
+            "title": "Prediction Count",
+            "type": "integer"
+          },
+          "predictions": {
+            "items": {
+              "$ref": "#/components/schemas/Prediction"
+            },
+            "title": "Predictions",
+            "type": "array"
+          },
+          "request_id": {
+            "format": "uuid",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "requested_limit": {
+            "title": "Requested Limit",
+            "type": "integer"
+          },
+          "score_transform_version": {
+            "title": "Score Transform Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id",
+          "api_contract_version",
+          "bundle_version",
+          "model_version",
+          "dataset_version",
+          "feature_schema_version",
+          "model_source_revision",
+          "score_transform_version",
+          "explanation_contract_version",
+          "requested_limit",
+          "prediction_count",
+          "predictions",
+          "explanation_note",
+          "latency_ms"
+        ],
+        "title": "RankResponse",
+        "type": "object"
+      },
+      "ReadyResponse": {
+        "additionalProperties": false,
+        "description": "Response returned after token and Bundle validation succeed.",
+        "properties": {
+          "bundle_version": {
+            "title": "Bundle Version",
+            "type": "string"
+          },
+          "feature_schema_version": {
+            "title": "Feature Schema Version",
+            "type": "string"
+          },
+          "model_version": {
+            "title": "Model Version",
+            "type": "string"
+          },
+          "service": {
+            "const": "ml-recommendation",
+            "default": "ml-recommendation",
+            "title": "Service",
+            "type": "string"
+          },
+          "service_version": {
+            "title": "Service Version",
+            "type": "string"
+          },
+          "status": {
+            "const": "ready",
+            "default": "ready",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "service_version",
+          "bundle_version",
+          "model_version",
+          "feature_schema_version"
+        ],
+        "title": "ReadyResponse",
+        "type": "object"
+      },
+      "RequiredSkillFact": {
+        "additionalProperties": false,
+        "description": "One weighted Job requirement.",
+        "properties": {
+          "name": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "weight": {
+            "anyOf": [
+              {
+                "maximum": 5.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weight"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "RequiredSkillFact",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "title": "ml-recommendation",
+    "version": "0.2.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/health/live": {
+      "get": {
+        "description": "Report that the HTTP application is running.",
+        "operationId": "liveness_health_live_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LivenessResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Liveness",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "description": "Report token and Bundle readiness without reloading either.",
+        "operationId": "readiness_health_ready_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/ReadyResponse"
+                    },
+                    {
+                      "$ref": "#/components/schemas/NotReadyResponse"
+                    }
+                  ],
+                  "title": "Response Readiness Health Ready Get"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Readiness",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/v1/model/metadata": {
+      "get": {
+        "description": "Return safe identity and contract metadata, never artifact contents.",
+        "operationId": "model_metadata_v1_model_metadata_get",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-ML-Service-Token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Ml-Service-Token"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ModelMetadataResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Authentication failed."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "description": "Not ready."
+          }
+        },
+        "summary": "Model Metadata",
+        "tags": [
+          "model"
+        ]
+      }
+    },
+    "/v1/recommendations/rank": {
+      "post": {
+        "description": "Rank all supplied Jobs; requested limit is intentionally not truncating.",
+        "operationId": "rank_recommendations_v1_recommendations_rank_post",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-ML-Service-Token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Ml-Service-Token"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RankRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RankResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "401": {
+            "description": "Authentication failed."
+          },
+          "422": {
+            "description": "Request validation failed."
+          },
+          "500": {
+            "description": "Inference contract failed."
+          },
+          "503": {
+            "description": "Model Bundle is not ready."
+          }
+        },
+        "summary": "Rank Recommendations",
+        "tags": [
+          "recommendations"
+        ]
+      }
+    }
+  }
+}

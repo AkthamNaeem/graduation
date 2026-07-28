@@ -1,0 +1,22 @@
+{
+  "clipping": "Values below/above the Validation range are clipped to 0/100.",
+  "fit_source": "selected_validation_predictions_only",
+  "formula": "round(100 * clamp((raw_score - minimum_raw_score) / (maximum_raw_score - minimum_raw_score), 0, 1), 2)",
+  "is_acceptance_prediction": false,
+  "is_calibrated_probability": false,
+  "is_probability": false,
+  "limitations": [
+    "Validation-derived normalization is not probability calibration.",
+    "Scores outside the selected Validation range are clipped."
+  ],
+  "locked_test_used": false,
+  "maximum_raw_score": 4.705573558807373,
+  "minimum_raw_score": -4.985489368438721,
+  "rounding": "round_half_even_to_2_decimal_places",
+  "score_semantics_version": "relevance-indicator-v1",
+  "score_transform_version": "validation-minmax-selected-trial-t06-v1",
+  "source_artifact": "services/ml-recommendation/data/models/tuned/v1/selected_validation_predictions.jsonl",
+  "source_artifact_sha256": "a9bf4d7944cfa532e80219f4b5299ecdc058c6a2cea64508ff1bba0372e09321",
+  "source_config_id": "T06",
+  "source_record_count": 1620
+}

@@ -122,3 +122,16 @@ php artisan test
 - Production must set `APP_DEBUG=false`.
 
 The production-readiness audit and remaining findings are in `reports/`.
+
+## ML Job Recommendation
+
+The 18-phase ML Job Recommendation implementation plan is complete as a
+documented decision-support feature. Laravel remains the authority for
+eligibility, final ranking, persistence, cache, public responses, and the
+MatchingService 2.0 fallback. Production deployment has not been performed.
+
+- [Final handover](docs/ml-job-recommendation/phase18/FINAL_HANDOVER.md)
+- [10–15 minute demo runbook](docs/ml-job-recommendation/phase18/DEMO_RUNBOOK.md)
+- [ML deployment runbook](services/ml-recommendation/DEPLOYMENT.md)
+- [Phase 17 E2E report](docs/ml-job-recommendation/phase17/PHASE_17_E2E_REPORT.md)
+- [Final verification](docs/ml-job-recommendation/phase18/FINAL_VERIFICATION_REPORT.md)

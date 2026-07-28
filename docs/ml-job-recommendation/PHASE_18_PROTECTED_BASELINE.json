@@ -1,0 +1,4388 @@
+{
+  "baseline_version": "phase-18-protected-baseline-v1",
+  "created_before_phase": 18,
+  "source_revision": "6cd51f733d5197e0c3f6b7dfb3711c2860ffef71",
+  "branch": "master",
+  "phase_17_gate": "READY_FOR_PHASE_18",
+  "file_count": 873,
+  "aggregate_sha256": "5CC89EC6F445E1DB25CABED4666314890186080D0799B1954CB8F0AF59D233A4",
+  "exclusions": [
+    ".git/**",
+    ".env and .env.* at any repository depth",
+    "virtual environments: .venv/, venv/, env/",
+    "caches: __pycache__/, .pytest_cache/, .ruff_cache/, .mypy_cache/, .cache/",
+    "coverage artifacts: .coverage*, coverage/, coverage.xml, htmlcov/",
+    "temporary files and directories: tmp/, temp/, pytest-temp/, *.tmp, *.temp, editor swap/backup files",
+    "machine-local logs: *.log",
+    "Docker image/container runtime metadata",
+    "private keys and certificates: *.pem, *.key, *.p12, *.pfx, *.crt, *.cer",
+    "docs/ml-job-recommendation/PHASE_18_PROTECTED_BASELINE.json"
+  ],
+  "files": [
+    {
+      "path": ".dockerignore",
+      "size_bytes": 133,
+      "sha256": "0AB3979CD5DE47733CB6DC88B67083D2AC021D6C149323835298E1071AE3DD30"
+    },
+    {
+      "path": ".editorconfig",
+      "size_bytes": 252,
+      "sha256": "F78CC5A2EF8BA61AD956D0F5DB453748A981270F6A1B9F4A5A00DF8690E7946D"
+    },
+    {
+      "path": ".gitattributes",
+      "size_bytes": 186,
+      "sha256": "A40EB27EE0B545CA5B5542DAAF99FEC51F84F23B3766A6353864EF2A115BC51C"
+    },
+    {
+      "path": ".gitignore",
+      "size_bytes": 283,
+      "sha256": "41E54ABD62AA86FD5B731E0CD411C5BC7D4196A1F7AEF363F434672DA8FFFA5D"
+    },
+    {
+      "path": ".gitlab-ci.yml",
+      "size_bytes": 337,
+      "sha256": "5DBE5869B0B43C06826E934B8FAD79DB702FD811970F6F78B3F4DF120602F870"
+    },
+    {
+      "path": "BACKEND_IMPLEMENTATION_REPORT.md",
+      "size_bytes": 218641,
+      "sha256": "E381554ED777AC23BA4C17E9451A1E46A06960B93CBF0C262594610B4AE52875"
+    },
+    {
+      "path": "Dockerfile",
+      "size_bytes": 554,
+      "sha256": "168C1ED906BEF143DF3A6AB6A8995E8D32D59B11694DBBF3FCAAC396453681D8"
+    },
+    {
+      "path": "README.md",
+      "size_bytes": 7340,
+      "sha256": "3C40EF512C5D0D0E64F0E8A8F980729C81C0C68E3AFDDBEE03DB1BAD88B8A113"
+    },
+    {
+      "path": "app/Console/Commands/InventoryPrivateFilesCommand.php",
+      "size_bytes": 4648,
+      "sha256": "889DA39C2D114414A6025712366CAC99AA9EC55D93455ADD2F3811535E1843DD"
+    },
+    {
+      "path": "app/Console/Commands/MigratePrivateFilesCommand.php",
+      "size_bytes": 8415,
+      "sha256": "B4CB3565A7D219A45D0EBF85CEAD81D1927CE78DECCF91F3CECA81BE17FB0819"
+    },
+    {
+      "path": "app/Console/Commands/PruneRecommendationRunsCommand.php",
+      "size_bytes": 1961,
+      "sha256": "D7234A73C1EC41B9E178D161F2E6E38EA2A620EF112A7BE35C813D2D81AE01F9"
+    },
+    {
+      "path": "app/Console/Commands/VerifyPrivateStorageCommand.php",
+      "size_bytes": 1934,
+      "sha256": "7982CAFD6C3BFF6554432DA677E6540827433F3B34174AF2C44918763FE054CF"
+    },
+    {
+      "path": "app/Contracts/CV/CVTextParser.php",
+      "size_bytes": 166,
+      "sha256": "17FF2EB266FAA1383A4C82DE101508BB89B7ED1261125F4932B58D0AF7D059FC"
+    },
+    {
+      "path": "app/Contracts/Recommendation/RecommendationContextFingerprintContract.php",
+      "size_bytes": 346,
+      "sha256": "2825D89BAD316E65AB9A4630AA3FBCBB3FD105E022A9F0D2CF1D8C1773435F90"
+    },
+    {
+      "path": "app/Contracts/Recommendation/RecommendationEligibilityProviderContract.php",
+      "size_bytes": 298,
+      "sha256": "C5D0DCCC74FFB6B7B8BAACA18EFE044540131EC841A526558D4C9B5AAEABC2BF"
+    },
+    {
+      "path": "app/Contracts/Recommendation/RecommendationMlClientFactoryContract.php",
+      "size_bytes": 217,
+      "sha256": "4271991CEC20161B867A849B625B2068B337BA665CE729DBABD7B16A8937745B"
+    },
+    {
+      "path": "app/Contracts/Recommendation/RecommendationMlRequestMapperContract.php",
+      "size_bytes": 424,
+      "sha256": "171A2E5F6B7BE28C2DC6FAE1DE7577C3FC3D564AC9D244D1CAE85F14B12C76BC"
+    },
+    {
+      "path": "app/Contracts/Recommendation/RecommendationOrchestratorContract.php",
+      "size_bytes": 246,
+      "sha256": "4EE9C708F896C833138FD48139B458DABBA3282B596DC9F38F37D391A7AB8DA5"
+    },
+    {
+      "path": "app/Contracts/Recommendation/RecommendationResultCacheContract.php",
+      "size_bytes": 664,
+      "sha256": "757D45CE40523AB375BB6A9EA65E334EDEEE4039DD1B20A4A7D6D49E01431A01"
+    },
+    {
+      "path": "app/Contracts/Recommendation/RecommendationResultHydratorContract.php",
+      "size_bytes": 489,
+      "sha256": "B1BA4C5F90C89A0E4516E5ED25045B8E86C967FC8D8A9FF4CB98A45476039495"
+    },
+    {
+      "path": "app/Contracts/Recommendation/RecommendationResultStoreContract.php",
+      "size_bytes": 896,
+      "sha256": "8350B585009A8FBE5BEAE82A973CAD2AE0740A31A0B7E80F2DFB21E8162FA6AD"
+    },
+    {
+      "path": "app/Contracts/RecommendationMl/RecommendationMlClientContract.php",
+      "size_bytes": 543,
+      "sha256": "418E9ECB6FAFF98AEA5DDCF361155BEBAD6A2183F925B5D931690CBBA2C62981"
+    },
+    {
+      "path": "app/Data/Recommendation/RecommendationContext.php",
+      "size_bytes": 374,
+      "sha256": "7D0DE20BBD57E6EE7A91FE9221412B59851B87A0458910E4AA049046C4E61209"
+    },
+    {
+      "path": "app/Data/Recommendation/RecommendationEligibility.php",
+      "size_bytes": 801,
+      "sha256": "0E25ED953B00F51127043EE42CB4EA8926003329EA67A4322415020EA6D704B8"
+    },
+    {
+      "path": "app/Data/Recommendation/RecommendationEngine.php",
+      "size_bytes": 215,
+      "sha256": "7CF5CB023376D7C981F2B2AE9B34C7EE8EEFCDABDCC75C2570C37BC2171A2597"
+    },
+    {
+      "path": "app/Data/Recommendation/RecommendationMlClientHandle.php",
+      "size_bytes": 368,
+      "sha256": "11082532882918B08F9159D2278422D4523A9A874AC541F90A1D791FD295DD6E"
+    },
+    {
+      "path": "app/Data/Recommendation/RecommendationPersistenceConfiguration.php",
+      "size_bytes": 3062,
+      "sha256": "26953015DEFE60F77EE016E368602D60678B759355FBD1019FF29100C7F49035"
+    },
+    {
+      "path": "app/Data/Recommendation/RecommendationResult.php",
+      "size_bytes": 1878,
+      "sha256": "0D72141B9B61CB7E4CE532173827A67BA597B22A225564032FCA1BDA18722ABF"
+    },
+    {
+      "path": "app/Data/Recommendation/RecommendationStoredResult.php",
+      "size_bytes": 256,
+      "sha256": "B39A447B88AE812E812DEEE441ACE316B34E881444C0343B2D5A42C45771F451"
+    },
+    {
+      "path": "app/Data/RecommendationMl/MlCandidateProfessionalFacts.php",
+      "size_bytes": 6366,
+      "sha256": "1B3234E21BB87D3E1AC2985818C0A38C432FA21E534087E2F7372F0FCC390AF8"
+    },
+    {
+      "path": "app/Data/RecommendationMl/MlCandidateSkill.php",
+      "size_bytes": 1940,
+      "sha256": "FF84A89C6FDED8BAEF614F2F06F43BF9111FF2A36BF67AB5376307C0B45A6955"
+    },
+    {
+      "path": "app/Data/RecommendationMl/MlClientConfiguration.php",
+      "size_bytes": 5571,
+      "sha256": "94E5D4C5E3BC410478879884A5C720967EC016F61E274419647A903C35EC883F"
+    },
+    {
+      "path": "app/Data/RecommendationMl/MlJobProfessionalFacts.php",
+      "size_bytes": 7202,
+      "sha256": "A4FD66D716D62C0D0BF289872362EAEB7BCBA1EBDEC5972B76FD6731D543E643"
+    },
+    {
+      "path": "app/Data/RecommendationMl/MlLivenessResult.php",
+      "size_bytes": 1186,
+      "sha256": "86AD189923B5E7B1516583733D7FE1D5FAB5F254FF2DB69FFA76F26C519BC8A5"
+    },
+    {
+      "path": "app/Data/RecommendationMl/MlModelMetadata.php",
+      "size_bytes": 5389,
+      "sha256": "E14F1C17008601C4198F2D4C59D22CA176B98A00221BE2E2174E16763F6F7195"
+    },
+    {
+      "path": "app/Data/RecommendationMl/MlRankJob.php",
+      "size_bytes": 1198,
+      "sha256": "ECBD405DD648B8176961252BF15F5ED67FEF05C74E6CF1DB9086C3968EE64075"
+    },
+    {
+      "path": "app/Data/RecommendationMl/MlRankPrediction.php",
+      "size_bytes": 3558,
+      "sha256": "3195F21AAB8DBFAE83B9FA34E6617E680BF6549CB1C298834D1EFF65236B79EC"
+    },
+    {
+      "path": "app/Data/RecommendationMl/MlRankRequest.php",
+      "size_bytes": 4896,
+      "sha256": "D1464EC7330DA03A0455A4BBB6C3AE6DADF2F688702DB9B90C14F53E8A1BF66F"
+    },
+    {
+      "path": "app/Data/RecommendationMl/MlRankResponse.php",
+      "size_bytes": 8527,
+      "sha256": "6A7D6F9D87D97B8FFBF79800C5814FB078D443030E9B370D9D3E3FB9F4A41E5A"
+    },
+    {
+      "path": "app/Data/RecommendationMl/MlReadinessResult.php",
+      "size_bytes": 1999,
+      "sha256": "FD460B2FAE8895E1FDC477DFBD2AD3B1E0F5904016A1703B1F88723FBF3A062C"
+    },
+    {
+      "path": "app/Data/RecommendationMl/MlReasonFactor.php",
+      "size_bytes": 3322,
+      "sha256": "9BC1CE09597597D7A268B35A3F76FDF42A0132697B18BBD4FBC0EF04B8487518"
+    },
+    {
+      "path": "app/Data/RecommendationMl/MlRequiredSkill.php",
+      "size_bytes": 1277,
+      "sha256": "21044BCCC9C19CFD481C02D58491CFCC2B426742E609561FE883435B87D68421"
+    },
+    {
+      "path": "app/Enums/ApplicationInformationRequestStatus.php",
+      "size_bytes": 180,
+      "sha256": "3029ADCC6A9B832C0F243441C57E0B64A2DEDBA4A77604173D9F8F9586270044"
+    },
+    {
+      "path": "app/Enums/CompanyApprovalStatus.php",
+      "size_bytes": 196,
+      "sha256": "B3742FFFE599ED748BB5F6C3B85DD89DDDD89C7E1C183AD20442950B3739AE77"
+    },
+    {
+      "path": "app/Enums/EducationLevel.php",
+      "size_bytes": 476,
+      "sha256": "00935DE9C5A8FFEE30739B4007E23CF1734AB898A5161784591DCD24535FD40A"
+    },
+    {
+      "path": "app/Enums/InterviewAttendanceStatus.php",
+      "size_bytes": 190,
+      "sha256": "B31E1FBE808C76E112DB6B6906A378BE265A0CA8BFAE6652C5059FA1F88C9B9E"
+    },
+    {
+      "path": "app/Enums/InterviewMode.php",
+      "size_bytes": 118,
+      "sha256": "17542A2CFE56BA31E30B03139218D2CD972E1F9C243BBB4CAB73C66F9958509C"
+    },
+    {
+      "path": "app/Enums/InterviewStatus.php",
+      "size_bytes": 443,
+      "sha256": "3D241D3426876B3A113E1FF0B6964D42D4D6CA0AA44A3E3218C42345D6E3E37F"
+    },
+    {
+      "path": "app/Enums/InterviewType.php",
+      "size_bytes": 140,
+      "sha256": "62342934A88E02B2AFB94A50665A196DF229610D29DC1162A425A40DB7126F91"
+    },
+    {
+      "path": "app/Enums/JobSkillRequirementType.php",
+      "size_bytes": 887,
+      "sha256": "3109ACB30206414EB5F8B5DFE05E5AB38AC9F203234A31B4090A9D0298736C43"
+    },
+    {
+      "path": "app/Enums/JobWorkMode.php",
+      "size_bytes": 241,
+      "sha256": "87A349CD43B9632B0606FB09F1D1A55C3FC2A4717342D2D0B419FD7727C1C9B2"
+    },
+    {
+      "path": "app/Enums/ScreeningQuestionType.php",
+      "size_bytes": 415,
+      "sha256": "9F7768B559BD4D6D69141328803A057B8D36966786041DAB5CFB9A30A5DF77E8"
+    },
+    {
+      "path": "app/Enums/TestAnswerGradingType.php",
+      "size_bytes": 130,
+      "sha256": "964B5E6FCC165831B250CAB9B7E7794D36EE16B1E749AB2D01E5B7580C6CE70B"
+    },
+    {
+      "path": "app/Enums/TestAttemptGradingStatus.php",
+      "size_bytes": 241,
+      "sha256": "08C1F7A6A158CA6CF459F8BD5E1770E4CC97154771E40381A6136D40DD07DF7F"
+    },
+    {
+      "path": "app/Enums/TestQuestionType.php",
+      "size_bytes": 605,
+      "sha256": "C4A48FB6ACDB3092A025011213AE50C0FAA47E0A43D656F8E822B7CE83116121"
+    },
+    {
+      "path": "app/Enums/UserRole.php",
+      "size_bytes": 149,
+      "sha256": "6F1AEA7FCB83B0ECA236918575350CAED58D15ECCFBC683E89BAB32F504FCBCA"
+    },
+    {
+      "path": "app/Enums/UserStatus.php",
+      "size_bytes": 119,
+      "sha256": "FE69E349623ABB8EC3B599F1CBAB0E743B37FC0ABE65CD487D1FCB634AC73F86"
+    },
+    {
+      "path": "app/Events/ApplicationInformationRequestCancelled.php",
+      "size_bytes": 146,
+      "sha256": "65471F38F8AA5574622AD855E2E16413B504C9A19422BD037FBA32931C25A6D8"
+    },
+    {
+      "path": "app/Events/ApplicationInformationRequestUpdated.php",
+      "size_bytes": 221,
+      "sha256": "FF8F76A3CDD8DB2504ED0EDD2C668A22D0CB86EB3AAF371F31AEC88322C4C440"
+    },
+    {
+      "path": "app/Events/ApplicationInformationRequested.php",
+      "size_bytes": 139,
+      "sha256": "661578768CECD8FB1EF8152BCF83198153FC4351D85120CEF6002516F136D677"
+    },
+    {
+      "path": "app/Events/ApplicationInformationResponded.php",
+      "size_bytes": 139,
+      "sha256": "0229B277BD39C7A16A9311C12D50F8A2953CD20E967A352BAB0C11301BFAC20B"
+    },
+    {
+      "path": "app/Events/ApplicationStatusChanged.php",
+      "size_bytes": 380,
+      "sha256": "D500D4641B21FFDCED94ED4A9A1D11841E6CEE0916A571DC07B04CF4C760D5BA"
+    },
+    {
+      "path": "app/Events/ApplicationSubmitted.php",
+      "size_bytes": 150,
+      "sha256": "8049897B992BF8D9465B93BA0937C2624911ED696232AB86F0FC8218122920F2"
+    },
+    {
+      "path": "app/Events/InterviewAttendanceUpdated.php",
+      "size_bytes": 178,
+      "sha256": "F5EE3C42822145C2522BF99B2991D9D9042C9B83DC59D2CD1DF27C9E3D355E8F"
+    },
+    {
+      "path": "app/Events/InterviewCancelled.php",
+      "size_bytes": 349,
+      "sha256": "74D1C0EF7D044BED4E86074793E803ED21A974D1FE19EF4D5C1F2AA6B2EA1C8F"
+    },
+    {
+      "path": "app/Events/InterviewCompleted.php",
+      "size_bytes": 160,
+      "sha256": "94B96130E8423F514D71DC35A9D409B0873FFBB43015E5A190A6A8F916CCADD6"
+    },
+    {
+      "path": "app/Events/InterviewConfirmed.php",
+      "size_bytes": 160,
+      "sha256": "AB08A2B883B46A0F382128F5011281D658E01DA1F878ED92CA0B960C64887502"
+    },
+    {
+      "path": "app/Events/InterviewEvaluated.php",
+      "size_bytes": 191,
+      "sha256": "E62450CC0D3F7490D17B245A16FD27D193DD34064CF4A75F33CEDD7CC6EC8322"
+    },
+    {
+      "path": "app/Events/InterviewNoShow.php",
+      "size_bytes": 157,
+      "sha256": "D53EC3746B93B56A4D598EF401D1B7682458DD2F8A3E81E346956F06287F58D1"
+    },
+    {
+      "path": "app/Events/InterviewRescheduled.php",
+      "size_bytes": 169,
+      "sha256": "21D0963AD51623FEEB83A809AD885BEB656A1AE1914CBA98F9D4311DCA89CF91"
+    },
+    {
+      "path": "app/Events/InterviewScheduled.php",
+      "size_bytes": 191,
+      "sha256": "81C49AD50FB44E6A86E637D48803CBD98585734CDADA0DC07ACDCCEA3E21B64C"
+    },
+    {
+      "path": "app/Events/InterviewUpdated.php",
+      "size_bytes": 203,
+      "sha256": "DB558AF089344B33A8C25C0C01B7680715725AA489AED701FD71ADB9FE515A28"
+    },
+    {
+      "path": "app/Events/TestAssigned.php",
+      "size_bytes": 143,
+      "sha256": "BBE4700A647A792D4043AA0C56A664233D74E79D9E503A70FC30251E5847A818"
+    },
+    {
+      "path": "app/Events/TestAssignmentDeadlineExtended.php",
+      "size_bytes": 211,
+      "sha256": "CAA116F388761A94FAD0F72545E76E0DA8CB945287033E98498D40CAF4FCDF57"
+    },
+    {
+      "path": "app/Events/TestEvaluated.php",
+      "size_bytes": 145,
+      "sha256": "A62A38F298DC83B07B6251E7EBF355C76E182C7B05916D640BFFA351C94CA169"
+    },
+    {
+      "path": "app/Events/TestRetakeGranted.php",
+      "size_bytes": 143,
+      "sha256": "E0FF4DC7461D5DCEAE79F0C977C21583523753FDBA6215C02CE7053A0C38575C"
+    },
+    {
+      "path": "app/Events/TestSubmitted.php",
+      "size_bytes": 140,
+      "sha256": "47A8BC976935AE928AEAEE7D71E962D168CBF2BAEE85B99AE3EADCB93D4E30E5"
+    },
+    {
+      "path": "app/Exceptions/ApplicationInformationRequestException.php",
+      "size_bytes": 372,
+      "sha256": "59C1A8EA4D8184E8B024892F4213C233C1A53B9DDD2B61167148E11BBAACC453"
+    },
+    {
+      "path": "app/Exceptions/ApplicationInternalNoteException.php",
+      "size_bytes": 366,
+      "sha256": "3890545B57CF1BEF0008E8D22A01E9756D09CEFE67A8518AC618371F98406F68"
+    },
+    {
+      "path": "app/Exceptions/CVLifecycleException.php",
+      "size_bytes": 354,
+      "sha256": "9FF1E8B3C395CAB9C2DDB9A4C191C95B74C857F3CDD246B3C01B08031DBD4C17"
+    },
+    {
+      "path": "app/Exceptions/CVParserException.php",
+      "size_bytes": 243,
+      "sha256": "92FBA15CD1E8006A29D1248A6A865066F4188903BC27274B2357DCD7334E9711"
+    },
+    {
+      "path": "app/Exceptions/InterviewLifecycleException.php",
+      "size_bytes": 421,
+      "sha256": "68C7574724909260BE48DD18E214AC1DC8D28E56F963C78AA5008144CDEC8A1A"
+    },
+    {
+      "path": "app/Exceptions/JobPostingOperationException.php",
+      "size_bytes": 356,
+      "sha256": "740A1FE7AD425B9D1DF56A656FCC366244AA6B3B7AAA28D66897B3FF2669011D"
+    },
+    {
+      "path": "app/Exceptions/PrivateFileStorageException.php",
+      "size_bytes": 383,
+      "sha256": "CB906E84E4D1EAE5AEC3840FEF200DB0EB811274F9371CE6C78C526FF5DDB299"
+    },
+    {
+      "path": "app/Exceptions/Recommendation/RecommendationMappingException.php",
+      "size_bytes": 241,
+      "sha256": "813723F79B57BFA5AC9B489EF89EBE5959E0F3974EBD27F0068E9F025FFFB47A"
+    },
+    {
+      "path": "app/Exceptions/Recommendation/RecommendationReconciliationException.php",
+      "size_bytes": 255,
+      "sha256": "A8FD793517BF63694AE10DFED00BD67B664BA44FFB68CA1F2509253BA3C5FAC7"
+    },
+    {
+      "path": "app/Exceptions/RecommendationMl/MlRecommendationAuthenticationException.php",
+      "size_bytes": 140,
+      "sha256": "4A44B635E4C7F9F30813DAFAA0FF5759C247597E9798D5E2A9E144929CDCC8FF"
+    },
+    {
+      "path": "app/Exceptions/RecommendationMl/MlRecommendationConfigurationException.php",
+      "size_bytes": 139,
+      "sha256": "04CCB163BFA5FF74CC8D5CB85627A6327D07712CD342C359DCC5B498E5AE422E"
+    },
+    {
+      "path": "app/Exceptions/RecommendationMl/MlRecommendationContractException.php",
+      "size_bytes": 134,
+      "sha256": "4F2273204BFF0A859AFBB337D57A0BE2CC4114513272BE7A4F1FEDDA1371D087"
+    },
+    {
+      "path": "app/Exceptions/RecommendationMl/MlRecommendationException.php",
+      "size_bytes": 1274,
+      "sha256": "ADEA4927D15F83E7A5A5CE9F4826F83F978D3D37DC34D427D63BA699DBCBD78F"
+    },
+    {
+      "path": "app/Exceptions/RecommendationMl/MlRecommendationTransportException.php",
+      "size_bytes": 135,
+      "sha256": "D713082BC0173A741CBCA78FAE7ABD95AD34BEA705826B6986ED2BA6A774BE11"
+    },
+    {
+      "path": "app/Exceptions/RecommendationMl/MlRecommendationUnavailableException.php",
+      "size_bytes": 137,
+      "sha256": "00986BC84C818500E041FB50C243FD28610B20772CD15F68F51AAEB68B8CF1F3"
+    },
+    {
+      "path": "app/Exceptions/RecommendationMl/MlRecommendationValidationException.php",
+      "size_bytes": 136,
+      "sha256": "AD61C4123BBD054AE48392CF99184187F7CFA1808E0DEEC5FEB3E4C3AA9488FD"
+    },
+    {
+      "path": "app/Exceptions/RecruitmentAccessException.php",
+      "size_bytes": 360,
+      "sha256": "C3E68B522B64CD51A06059CC6C14636B457B42FD3384EB3ABA7DA02E34B408FD"
+    },
+    {
+      "path": "app/Exceptions/TestAttemptTimingException.php",
+      "size_bytes": 360,
+      "sha256": "A0BADCDD2EF21FDFE2D3F8E4EF8F73963E73C5DC6EC733002136CC7B0F1B4CB8"
+    },
+    {
+      "path": "app/Exceptions/TestContentAccessException.php",
+      "size_bytes": 354,
+      "sha256": "9B8BABB78079EA48EB3C13F2F0C9C52B4B44BCF92B38DF13BDB225994134AE50"
+    },
+    {
+      "path": "app/Exceptions/TestScorePolicyException.php",
+      "size_bytes": 352,
+      "sha256": "BE3B7551D9EE1AD1EC93A6A678895FBA93C832C419B485FF6326A0FB757A5574"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/Admin/AdminCompanyController.php",
+      "size_bytes": 3965,
+      "sha256": "5DC1F436CA7A73925510D3759C6548F3D52625D8DFC75A816607F51CC84D6AD6"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/Admin/AdminReportController.php",
+      "size_bytes": 1493,
+      "sha256": "8E55F4E5259F116C955092556ECB15F321BFDE7844CC658E470F861CABF2B9BF"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/Admin/AdminSkillController.php",
+      "size_bytes": 4207,
+      "sha256": "C89C5A92611E895FCE84FE81E311F035DD3D9846FA07287F7E2C0380953DA041"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/Admin/AdminTestController.php",
+      "size_bytes": 1912,
+      "sha256": "613D257D13BDD901AC2681205BA5B327C494BD2C493950E87E1F0490C6AD6D42"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/Admin/AdminUserController.php",
+      "size_bytes": 3981,
+      "sha256": "E240B2C6D81211AC987C6A414C3EEC741E82B22B2B57DED56BF1378A65866C4E"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/Admin/AuditLogController.php",
+      "size_bytes": 1529,
+      "sha256": "6375384EC6E1057E10219F9EC9D35CBCDEA7094A9F8FB9DAD87352DE4EBD1C31"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/Application/ApplicationInformationRequestController.php",
+      "size_bytes": 3976,
+      "sha256": "670AD0453052B6CFC78AAA6BE446AD0F94D9F2ECB700ED226BB608B0DB6302E3"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/Application/ApplicationInternalNoteController.php",
+      "size_bytes": 3267,
+      "sha256": "6F6074181D9D793D1B62DEABDA38086237C7BEF256B08B744FAC63C13AD816B9"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/Application/JobApplicationController.php",
+      "size_bytes": 4575,
+      "sha256": "627CCFD7FC3143CC455DB83F5513A7E3D99831266F8A7238650C5545696567BA"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/Auth/AuthController.php",
+      "size_bytes": 4054,
+      "sha256": "A75464C42641905787E5C42C80B7EAC4C8F56CB113DBC606F6D654C9E7991B7A"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/Auth/RegistrationController.php",
+      "size_bytes": 1246,
+      "sha256": "91E4F15DFA47D511FEB43B6C4E477A37F2380735DE14E843E19603F980D3F176"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/CV/CVController.php",
+      "size_bytes": 5240,
+      "sha256": "6D5E461F066BEDC168D6CE2D5132DA4734710B23FC94F42561C897057D229208"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/Interview/InterviewController.php",
+      "size_bytes": 8290,
+      "sha256": "3052EB73011D28C82751F0E75873B824FAF76FCAF7B0165AF157177BCD7F6D51"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/JobPosting/JobPostingController.php",
+      "size_bytes": 5961,
+      "sha256": "4E2903C8A211F99599CFF4F37A5FA4B3954709BEDECBDF59BF17A850DC4CFFDB"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/JobPosting/JobScreeningQuestionController.php",
+      "size_bytes": 2397,
+      "sha256": "74D30C3F0701A54881DF44E7402917FA8177FFA0090CD39101F68A48FB29D550"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/Notification/NotificationController.php",
+      "size_bytes": 3217,
+      "sha256": "A128619AEF863C32DE327F033CD73C5C9F3EADD2B01E31F029966CA774EC8A7E"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/Profile/CompanyController.php",
+      "size_bytes": 1085,
+      "sha256": "200A0EECFA641F60F8442700DF2EACC9D980AFDEB98378845A84B3AC1EEA94B1"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/Profile/EducationController.php",
+      "size_bytes": 2376,
+      "sha256": "8FE7006B0DEC50E97B8C25E362F16E6780430737189D2BB90E4DD97E90E766BF"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/Profile/EmployerProfileController.php",
+      "size_bytes": 1183,
+      "sha256": "3169C0ACB0F3156D478DAEB51915F135A71BB02BAA49D0E6731973C6EABA61B8"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/Profile/ExperienceController.php",
+      "size_bytes": 2372,
+      "sha256": "B0D947DAA96B83A07A989460047073D71FD05708A326F0493CA3CB73A6E6FCD1"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/Profile/ProfileController.php",
+      "size_bytes": 1148,
+      "sha256": "DE6806EA789BB471D917039FB758F7A3A239FEA884DCF4DD7D5844F178155030"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/Profile/ProfileSkillController.php",
+      "size_bytes": 1216,
+      "sha256": "0F86FA349837ECD2B6ECEE6D18156FE7ECD446301B64BC283D77FF2189747952"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/Profile/ProfileSuggestionController.php",
+      "size_bytes": 3599,
+      "sha256": "69D4F748091CEAE38E2C4C427877A1D7D1CA69ACB6A5CADDE0640D054FBAE6B1"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/Skill/SkillController.php",
+      "size_bytes": 1193,
+      "sha256": "CD1CBE0929A5B0C88A643E8D59C84CE4F835C70C5C76BB8210F98C970BAE1CFB"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/Test/TestAnswerController.php",
+      "size_bytes": 2532,
+      "sha256": "93162A79B6386DECFF84C53FCB16E72DCFEF5CA1F4819BF184D3D756CF4ACF06"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/Test/TestAssignmentController.php",
+      "size_bytes": 2765,
+      "sha256": "33409DE7103F31FB996A355F0538023BDE2C1CCCA8D85E34098F02514A219C47"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/Test/TestAssignmentDeadlineController.php",
+      "size_bytes": 2124,
+      "sha256": "83D40C4916D1EF8DA767D7720A1694D8F89052E6EDBC9227B17EFFDF85C4F478"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/Test/TestAttemptController.php",
+      "size_bytes": 3232,
+      "sha256": "8C5968DE9936DA281C23C3DA926626A2531080985026FA5930A3EC5CE3918994"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/Test/TestAttemptQuestionController.php",
+      "size_bytes": 827,
+      "sha256": "B43096A957D98EAAF56FEF5C0A7E4B44095059AE082A328529570EA9609BD1DF"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/Test/TestCatalogController.php",
+      "size_bytes": 2335,
+      "sha256": "1013B28722B1D3B6DD12C8E8C9B50DB7662A4B0B5A5BA106F12FDA35BC1ED1A4"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/Test/TestManualGradingController.php",
+      "size_bytes": 2626,
+      "sha256": "7D5FA58D8920D8336C94A8548A7A71D366EF27764FA493146BD7446234C94E08"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/Test/TestQuestionController.php",
+      "size_bytes": 4089,
+      "sha256": "4A8D1D361BC224F3B705425A174A949BA8D0398E214EA6A5B82EF329A9C9800A"
+    },
+    {
+      "path": "app/Http/Controllers/Api/V1/Test/TestRetakeController.php",
+      "size_bytes": 2565,
+      "sha256": "99BB05B3CF27E653A3A1636AE1F86ECCD39891F6C25C5C19D98E9BF2921411F2"
+    },
+    {
+      "path": "app/Http/Controllers/Controller.php",
+      "size_bytes": 77,
+      "sha256": "25D1C1EF8E6CC8A376553FAACFBA2B07D9DFAEE9BDBB84F14F77517580E9DEB1"
+    },
+    {
+      "path": "app/Http/Middleware/AdminMiddleware.php",
+      "size_bytes": 628,
+      "sha256": "80E85BBF706122AFEF164D79DA08136F55C85F190190BA15B876D6130986DDD5"
+    },
+    {
+      "path": "app/Http/Middleware/EnsureCompanyApproved.php",
+      "size_bytes": 780,
+      "sha256": "FCC53E63860757BEFC09D16DCE461B176166F83A7984C9381B5D70DB30AFA6D1"
+    },
+    {
+      "path": "app/Http/Middleware/EnsureUserIsActive.php",
+      "size_bytes": 698,
+      "sha256": "7B49B2AF88187060CAC430AB54B9FD4C033E7CCCEA5F9A322859EA10B33DE17F"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Admin/AdminReportRequest.php",
+      "size_bytes": 809,
+      "sha256": "B47474C06DCF575EE4AB78C10A4DE5D9C965A7E8E991221DFBCB2336185A6F1B"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Admin/AdminUserStatusActionRequest.php",
+      "size_bytes": 359,
+      "sha256": "D80740F4CF9B02A55D32D3B40F16D373018C5ECCC1E7307B86401DDFBA03D069"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Admin/CompanyApprovalRequest.php",
+      "size_bytes": 353,
+      "sha256": "5BBC71087DF39669B48DAA547C2DD7C52DEDDF86A914F1A7089BFDBEDC645EED"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Admin/Concerns/AuthorizesAdmin.php",
+      "size_bytes": 684,
+      "sha256": "3EEBDBEB816EA82E36646FC482CE196385E4CB9141F6A7D65E57F6662FC33CF7"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Admin/DeleteAdminRequest.php",
+      "size_bytes": 349,
+      "sha256": "C33D8A6ACDF077E6DC5D485AAF087C97C9A3A08997FA96172933EF2EE609B0EE"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Admin/IndexAdminCompanyRequest.php",
+      "size_bytes": 1048,
+      "sha256": "ADD09E74EB36E6C329097F6A56CD3E7C393A1055320CF3C1619FE1497C4EA0B8"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Admin/IndexAdminRequest.php",
+      "size_bytes": 529,
+      "sha256": "A9D4D7303A1DD76AD619F76E23C1A498255CE7EB18A320F98A8310038CD42C9D"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Admin/IndexAdminSkillRequest.php",
+      "size_bytes": 708,
+      "sha256": "6F3C43BDC78F1BACE842810C93B2FC9991524E4A0CFA546C326389826220B765"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Admin/IndexAdminUserRequest.php",
+      "size_bytes": 1039,
+      "sha256": "C684E02B50087F0F79979DBE3128442445954FFC6E6584ADE0F8FC6E9C0BCB7E"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Admin/IndexAuditLogRequest.php",
+      "size_bytes": 821,
+      "sha256": "0DD730E61AE528B373FB039B97F083104B1B3CD0EF81E98220F11CEA806ABC9A"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Admin/StoreAdminSkillRequest.php",
+      "size_bytes": 901,
+      "sha256": "FAF09F190BE9A42ACC0F8F63059FFFA99CA35AB26001DF376BFF47D019600112"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Admin/StoreAdminTestRequest.php",
+      "size_bytes": 260,
+      "sha256": "85D37868CB846C40F7C6C549818C60DE4F187698889E1144BB716579E2A25FFE"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Admin/UpdateAdminSkillRequest.php",
+      "size_bytes": 1304,
+      "sha256": "3E96655CEF97BC35A5C57DC8EB430EFB99B830FFB0EC8C04FDA369094B0422A1"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Admin/UpdateAdminTestRequest.php",
+      "size_bytes": 263,
+      "sha256": "45EFE6C7E44BD514759813697E669AF3AE0F15997B52C5F493D29FACE0342EBC"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Admin/UpdateUserRoleRequest.php",
+      "size_bytes": 515,
+      "sha256": "C7B4CE676F326BFE4F2572DBF875A176C1067EB3EA3661F65B50CE9A23D39A43"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Admin/UpdateUserStatusRequest.php",
+      "size_bytes": 523,
+      "sha256": "60FB206B5B389CF15DD77CE6A18CBE68A783ECE1EA35E51752983E6A29E560B6"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Application/CancelApplicationInformationRequestRequest.php",
+      "size_bytes": 913,
+      "sha256": "534031735DC292A249EDF4B78EE9ACC895434588785A7B90398093770A1E6C35"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Application/ChangeApplicationStatusRequest.php",
+      "size_bytes": 832,
+      "sha256": "020EF2B7599FB7A0ACFCF878355B8E3BB6CF32C270B59D637CA4316815D8DA44"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Application/Concerns/ResolvesApplicationUser.php",
+      "size_bytes": 838,
+      "sha256": "3B3D062D29C1F65A7C0CA3BA513FEF9A5D588D50947C4F82FEA324D5D337D27D"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Application/Concerns/ValidatesInformationRequestItems.php",
+      "size_bytes": 1646,
+      "sha256": "A0D36D309F84E5D682E334922C45480B775F0DD593853D1FE3F0551906B92D5F"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Application/DownloadApplicationInformationResponseAttachmentRequest.php",
+      "size_bytes": 871,
+      "sha256": "FFC4C558D7DB6543D4713648736A107EE7F90E54FE50B35D8EC69B4B012DA9CA"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Application/IndexApplicationInformationRequestRequest.php",
+      "size_bytes": 695,
+      "sha256": "64E4879C80E6DAB540FC38411FA6EA35B258C56243F5F95BCB15498EDD36E0A7"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Application/IndexJobApplicationsForJobRequest.php",
+      "size_bytes": 747,
+      "sha256": "C2206573A63C5760A816AAE674C848D2B7028CA8D5F55F970ED38E11F2CD0A62"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Application/InternalNote/DeleteApplicationInternalNoteRequest.php",
+      "size_bytes": 621,
+      "sha256": "D09648289E080587B909E497E40A6A158C9D89AEC203B05E93909FDF89D46D4C"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Application/InternalNote/IndexApplicationInternalNoteRequest.php",
+      "size_bytes": 1257,
+      "sha256": "A66BAB44B2309DC27E9666765479DB9C27A2DD399228307532E05154BA3A5D3B"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Application/InternalNote/IndexApplicationInternalNoteRevisionRequest.php",
+      "size_bytes": 567,
+      "sha256": "1E7094E9F55CCFD70AF5F14EBDE8F444DE4BDED4824C5ED0E2F57EDD2411318A"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Application/InternalNote/InternalNoteRequest.php",
+      "size_bytes": 663,
+      "sha256": "09B6ACE7DD87612D5A81AD8000C869E1D8259B5A54431B1B3281369C34B51D7E"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Application/InternalNote/ShowApplicationInternalNoteRequest.php",
+      "size_bytes": 446,
+      "sha256": "6C192F1F9F3A059C673D690BCFAE73CB1E5E7090927C086BC1781053B98940FD"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Application/InternalNote/StoreApplicationInternalNoteRequest.php",
+      "size_bytes": 1044,
+      "sha256": "ADDA8D2FAB9C824744B669AEAE22F6A10E320CEF50B2C3C10CF3D17F37EA97F1"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Application/InternalNote/UpdateApplicationInternalNoteRequest.php",
+      "size_bytes": 1119,
+      "sha256": "B89F1D63628974697DC047139A0E3EC5A4A30946E7DE37AE738531C990FA94C9"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Application/MyJobApplicationIndexRequest.php",
+      "size_bytes": 560,
+      "sha256": "AEECD6E32AFA98CEFD248DD3BEC951FDB019B3E3C0840330E83EDF7CE152358E"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Application/ShowApplicationInformationRequestRequest.php",
+      "size_bytes": 625,
+      "sha256": "4DB8CB14EA6434EC2C722DFA1CC9E8B07BF2DB33806024E044F3F105121BB881"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Application/ShowJobApplicationRequest.php",
+      "size_bytes": 667,
+      "sha256": "42B3E2701708A6F1CAE8C730A4B6856CF0267E24A58C49D78FD0288ADC613F4E"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Application/StoreApplicationInformationRequestRequest.php",
+      "size_bytes": 1383,
+      "sha256": "BB237E92805B407EF46FC868B87E747C9A2010AA568DC3DDC4280B4055C9EB46"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Application/StoreJobApplicationRequest.php",
+      "size_bytes": 2053,
+      "sha256": "34AA8DCF9C0640435CFD36EB856F8918370FF9D3FE48D031DB6FB89B5F1B2253"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Application/SubmitApplicationInformationResponseRequest.php",
+      "size_bytes": 1163,
+      "sha256": "721DA3A5F4058957D18C60016E5C0A94D72D16690436A8EBABC006B49E3725FB"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Application/UpdateApplicationInformationRequestRequest.php",
+      "size_bytes": 1340,
+      "sha256": "F9656F5DA681D271DCF4281CF2B708FED431BBFA1B0CB81A8DC855AF754DAF24"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Application/WithdrawJobApplicationRequest.php",
+      "size_bytes": 743,
+      "sha256": "3FF4EDC2FC9B24CF34380A25550A46B1FDBDF6E90A529FC24B782FA5A90395C5"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Auth/ChangePasswordRequest.php",
+      "size_bytes": 520,
+      "sha256": "6E9980903E14D15455A915C590463D85A1D3EB5190F2A9C430073A5192D18C6E"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Auth/EmployerRegisterRequest.php",
+      "size_bytes": 855,
+      "sha256": "46202FFE228242604DE5763F30F4DF59A1DB5970163A093BD9B8FF9BB8B78164"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Auth/ForgotPasswordRequest.php",
+      "size_bytes": 391,
+      "sha256": "9E5FE1750D210954BEA8F1F5D223273009CAD4A47B99E72E626E71EDB3880C45"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Auth/JobSeekerRegisterRequest.php",
+      "size_bytes": 726,
+      "sha256": "A82020DA323ED327F856EC00E2AF65F7A41A3CDC01D2F92D92DF9F63B35C6A05"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Auth/LoginRequest.php",
+      "size_bytes": 442,
+      "sha256": "48CCBF8C20B12877C3A22EEA3BD8F2F291DF1A7210B739BC641BBE57375DF657"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Auth/LogoutRequest.php",
+      "size_bytes": 328,
+      "sha256": "B422929B61D159317650F4C44DBBCD7266CB7126A8E5DAF90289FD124F362ADC"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Auth/MeRequest.php",
+      "size_bytes": 324,
+      "sha256": "D83EFAF6AC8D61DC67F05FEC29F39E6CF1B2BABDDADB521E7C8B00D496C56D0F"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Auth/ResetPasswordRequest.php",
+      "size_bytes": 554,
+      "sha256": "7E0D65ECE0CFF546499F28DE1F4557FD6EA694B20C5C2043C2998F554311E9D5"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/CV/ApplyCVSuggestionsRequest.php",
+      "size_bytes": 110,
+      "sha256": "0B231F9EA2CB204B6B07C118831B8AF340F37060DF0DFE61EB97591799B12F8B"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/CV/ArchiveCVRequest.php",
+      "size_bytes": 413,
+      "sha256": "EADBDDA59F487A7F93407496D79167F48E6F6A289D2381061D8B0C2FB24DEA1D"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/CV/CVIndexRequest.php",
+      "size_bytes": 1037,
+      "sha256": "B4C6F7E85EBEF9DB662688336C1BD71BD23C9D98DB07C2CE3EEF14931E614CC3"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/CV/CVLifecycleRequest.php",
+      "size_bytes": 364,
+      "sha256": "B491AF3B1D9408C5B56FB3FF7975B178CD7BBD853102B19115327CE5C689375C"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/CV/ConfirmCVRequest.php",
+      "size_bytes": 97,
+      "sha256": "BCA49584F7722BF1EBEF041FD10F7E5A3690C94407485B0787D74E31CA55BA9C"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/CV/ShowCVRequest.php",
+      "size_bytes": 94,
+      "sha256": "96F7C0FEA5A92D4895E59FB45BE06DD7E428C1C5F46E3AEA53C1139FC822206C"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/CV/ShowCVReviewRequest.php",
+      "size_bytes": 166,
+      "sha256": "1C022338DE7796E142B270467B209B1701088771D26FB8EC90DEA6FCB49BFFDF"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/CV/ShowParsedCVRequest.php",
+      "size_bytes": 100,
+      "sha256": "72ACCBB6303AC11805F1ECDC16518B56C7781BDF8B41EDF6738DAD28A8A63928"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/CV/UpdateCVMetadataRequest.php",
+      "size_bytes": 432,
+      "sha256": "C34BAF7BD26ECD74078EFF8C2B9F25CFE0DE4E25EB0428B2C748BA7FE63C2FE3"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/CV/UpdateCVReviewDraftRequest.php",
+      "size_bytes": 3402,
+      "sha256": "89D908CD57193EAAFBBB4C286D12D7569DACC01124B81A0BAAF042EA807253D4"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/CV/UploadCVRequest.php",
+      "size_bytes": 1213,
+      "sha256": "633417F882F932058D4A209F8A0CBAF2442B86E907F08CEA1AC5096BF5D9229F"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Interview/CancelInterviewRequest.php",
+      "size_bytes": 723,
+      "sha256": "1448E8F0E0AD603C08338AC63FF7916942D23B085274DC519DD970CDF8D9D67B"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Interview/CompleteInterviewRequest.php",
+      "size_bytes": 729,
+      "sha256": "23E939C8D2370846534D6EC06AA36DEF3609A704061F3E8C5D442EBC492C985D"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Interview/Concerns/NormalizesInterviewScheduleInput.php",
+      "size_bytes": 1701,
+      "sha256": "DC03517273055C446F6EB519014A31B646E4C1F5F2E53ACC4E0EA8CB89B65DFA"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Interview/ConfirmInterviewRequest.php",
+      "size_bytes": 572,
+      "sha256": "9FBDDDF1F6B2718E031FD928034A0DFBFDD14868A22354FD5CD26E951D01826F"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Interview/CreateInterviewRequest.php",
+      "size_bytes": 1759,
+      "sha256": "281F8B125184E27F84B439A4340F638B765C561280B426DA1D50D08D2BDAACFC"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Interview/DeleteInterviewRequest.php",
+      "size_bytes": 634,
+      "sha256": "AEAB087FDD67F3A0AC578EC57B223B11C08307273853C3BC8C9E1442A8E44300"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Interview/EvaluateInterviewRequest.php",
+      "size_bytes": 1101,
+      "sha256": "0D7C9A8B662CD1E70D8BFE391D138ACDB797CAF719957E16DB300F6760900AC6"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Interview/InterviewScheduleHistoryRequest.php",
+      "size_bytes": 133,
+      "sha256": "F296BAB459509AA9F44B88D33425D9B13B5D92F8210433A5F85FE957CE748448"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Interview/InterviewStatusHistoryRequest.php",
+      "size_bytes": 660,
+      "sha256": "1ADBCEE2180B07CACAE471431390E88B62BAE0422641FB2C1E0828E651256A73"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Interview/ListApplicationInterviewsRequest.php",
+      "size_bytes": 755,
+      "sha256": "3DF7375AC22286405200107A849987C63D0977D0D429C67F28DD392F8154B297"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Interview/ListMyInterviewsRequest.php",
+      "size_bytes": 611,
+      "sha256": "A21E28CAA4DC52722CA5F9252FD1D2297BB673FB8C80473D1247BD124589EF29"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Interview/MarkInterviewNoShowRequest.php",
+      "size_bytes": 764,
+      "sha256": "94122879CBDEAC4B8C093BBDF05FFB08502F57A5B945DFF34A4C4BE055B7DAFA"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Interview/RescheduleInterviewRequest.php",
+      "size_bytes": 1278,
+      "sha256": "F0C1E82889FE6B07A3C0ECAC6A6188D3B7E9439405D253D76D44450BF25AB894"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Interview/ShowInterviewRequest.php",
+      "size_bytes": 630,
+      "sha256": "4A9633FC5AD0D9778D59B1BC273B097D05DD89E149AC6F9412D7FB422010D1EC"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Interview/UpdateInterviewAttendanceRequest.php",
+      "size_bytes": 1031,
+      "sha256": "AE6FD0780698700D6A1412386E1417AFA8123E69679DAD89A43E91741522B792"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Interview/UpdateInterviewRequest.php",
+      "size_bytes": 949,
+      "sha256": "BBD3DA72B2B246A20091699816C5A9489493C489B3E45F794B82749C01F8DE56"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/JobPosting/AttachJobPostingSkillsRequest.php",
+      "size_bytes": 1132,
+      "sha256": "A79920A09E90F3873A2DE8FEA2D42F32361B459F298ADC20AABDBD82E76B1DD1"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/JobPosting/CloseJobPostingRequest.php",
+      "size_bytes": 665,
+      "sha256": "6CE01F78CB86A572A95AC8C03676E6186EB0FFC6A4E6223F4072C5052B3DEB26"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/JobPosting/Concerns/NormalizesJobSkillInput.php",
+      "size_bytes": 3090,
+      "sha256": "24F1B66F0BC18DD1378E0090B510B97E970F7058345B65BC5088B3EC8994782B"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/JobPosting/Concerns/ResolvesJobPostingUser.php",
+      "size_bytes": 707,
+      "sha256": "FAB4EB00365424F428AFCDCD11AEC891DA9AEB7C59BCA0A36FAD17FD390F9BB0"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/JobPosting/DestroyJobPostingRequest.php",
+      "size_bytes": 668,
+      "sha256": "2C17BA575CE984128EEC68BD6C0332D13900C05F3BCBAF4CADE79AD409AED536"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/JobPosting/DestroyJobScreeningQuestionRequest.php",
+      "size_bytes": 207,
+      "sha256": "298C9AEE64B192DF21069ADF1C61524C370B6D483F14B7CF20A727AFB01FBF4C"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/JobPosting/DetachJobPostingSkillRequest.php",
+      "size_bytes": 678,
+      "sha256": "66E1A5E90B10C391B07B7870B1AD4D6EA79A9C25E6C1FC997B2843A566BEB743"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/JobPosting/IndexJobPostingRequest.php",
+      "size_bytes": 2837,
+      "sha256": "5F82A8480BC3471B22655A905F0A66DB0580086CF7F19E86A099B144A1BE443F"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/JobPosting/IndexJobScreeningQuestionRequest.php",
+      "size_bytes": 778,
+      "sha256": "F58FFF433FBADFF67FAE270A1A37793431DCBECCBD70B905FE5FF4A51EC8F001"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/JobPosting/MyJobPostingIndexRequest.php",
+      "size_bytes": 318,
+      "sha256": "227916B9E9DD7FB6032FC8C6C85951293630016C34FFDE7C14A225AE5E39E921"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/JobPosting/PublishJobPostingRequest.php",
+      "size_bytes": 669,
+      "sha256": "E9C6D21771CCB16168D98DC4F88D790F9D4C3E329B98C54C9CEE49A2518B54CA"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/JobPosting/RankedCandidatesRequest.php",
+      "size_bytes": 729,
+      "sha256": "F73DFC92058EC0C2B0A009E001884B1613A45193323CA0CE7DB1F28A962001DE"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/JobPosting/RecommendedJobsRequest.php",
+      "size_bytes": 549,
+      "sha256": "D5D716FC507524EDDEAD7D4C82D38B94E1D090EE64C0A40D1F3D634D0B7A675A"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/JobPosting/ShowJobPostingRequest.php",
+      "size_bytes": 778,
+      "sha256": "022BB4A523117AF95ED79E6F069075C155C38D38FCFB1286BE77F8A2EAEE609B"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/JobPosting/StoreJobPostingRequest.php",
+      "size_bytes": 3799,
+      "sha256": "2CD4431400F08738C917F2EFEA341931873DB202D25B2AAAA09FF38E46DCCFEE"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/JobPosting/StoreJobScreeningQuestionRequest.php",
+      "size_bytes": 2038,
+      "sha256": "E237D8CFF755B359130DFC5DD776BEE90F4AC2BBA4923C0019474176A9130F39"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/JobPosting/UpdateJobPostingRequest.php",
+      "size_bytes": 1772,
+      "sha256": "BD9638AE0EF583D4480F978F3E2B08CCB43FC95E66AC9884C54D84C6D0D6AD1A"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/JobPosting/UpdateJobScreeningQuestionRequest.php",
+      "size_bytes": 872,
+      "sha256": "79450A9AA3FF2A445CEEE289AE9569C55B424CDD8DC4915B2EF2BC95B4FD442A"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Notification/IndexNotificationRequest.php",
+      "size_bytes": 1024,
+      "sha256": "6A790BB9B451CD161E573360017CD5C3C4FE0E268C3729EAE32E6329D6183B12"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Notification/MarkNotificationReadRequest.php",
+      "size_bytes": 377,
+      "sha256": "ADD95367AEC992F5850574C01DC63499EFEDF60456C160AA21145B9E22F44FA1"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Notification/UnreadCountNotificationRequest.php",
+      "size_bytes": 380,
+      "sha256": "B1F42BA7A1E16573908AAF9A09D1CC065B63DF5A1661AC93F82C67893FB26F73"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Profile/AcceptProfileSuggestionRequest.php",
+      "size_bytes": 3757,
+      "sha256": "0A96895A3A09DC1AF86D902E3E7B4820F5149223648E757844C130D505BC82BF"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Profile/ApplyProfileSuggestionsRequest.php",
+      "size_bytes": 385,
+      "sha256": "B386E0CD90E4E5710BCE194508A95A4CE652EE5D27C1B838BC83DF4939B57527"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Profile/AttachSkillRequest.php",
+      "size_bytes": 535,
+      "sha256": "EF58BED44D8F28D924E686B892112005321373F20C25DC9CF6F0655372CA9B8A"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Profile/Concerns/AuthorizesProfileRoles.php",
+      "size_bytes": 351,
+      "sha256": "2C059E55988EA6E503906C27DFFB8DE6A70DED3D60FC934B2D4A53750BE7B2C3"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Profile/DestroyEducationRequest.php",
+      "size_bytes": 115,
+      "sha256": "2E5F1CA71F23372DC3461915F0DB8B2808C4A6CF2206ECD7BBADD3328BDF24F9"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Profile/DestroyExperienceRequest.php",
+      "size_bytes": 117,
+      "sha256": "D37A3A8E46F095B14C1F807983FFE88A146D52EC13A9BB02FBFE163196319BA5"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Profile/DetachSkillRequest.php",
+      "size_bytes": 108,
+      "sha256": "CEA1D989B6C898EAD2CFA8EA3B7D3993CCBE1BCBAE69C29243F7141E0B136A11"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Profile/EducationIndexRequest.php",
+      "size_bytes": 115,
+      "sha256": "8530931115885A7E968DE2006E5FABEF590D0A350669A1C1C2DD14C854ECC79D"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Profile/ExperienceIndexRequest.php",
+      "size_bytes": 459,
+      "sha256": "D15D77C949DFB6FE97F6E665228C0A18A640598CB681D78B848C5FC03F10FDE5"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Profile/GenerateProfileSuggestionsRequest.php",
+      "size_bytes": 470,
+      "sha256": "0C13E4E124CFDD593C2A2104B27E516FC1A97414EC41BC91F2536E16D059CDEC"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Profile/RejectProfileSuggestionRequest.php",
+      "size_bytes": 335,
+      "sha256": "4CC358D2BFD4DE73845AFC20FB7CE312B7C81D25589B8C763AE26F7B9F026C05"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Profile/ShowCompanyRequest.php",
+      "size_bytes": 454,
+      "sha256": "B9CA64F84A6657BD03A94B58383055AB91D03DAA1E1FB4EEC4B11F993695A9AC"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Profile/ShowEducationRequest.php",
+      "size_bytes": 113,
+      "sha256": "9C7E740E1E83411335FFB1AC0722F6CA98F16839B3F6CCA5C744649EC36F6435"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Profile/ShowEmployerProfileRequest.php",
+      "size_bytes": 116,
+      "sha256": "0B4AD52ED52CFD6C025175E637FDFC2AD9CB4C3B4A001376D08F9CE8E025C00B"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Profile/ShowExperienceRequest.php",
+      "size_bytes": 458,
+      "sha256": "18BE2C1E5A11764231BA2A7EFC000D40350B71973556654C2D39ACF544096F10"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Profile/ShowProfileRequest.php",
+      "size_bytes": 455,
+      "sha256": "D02C4435BDDCF154B9CCA675830C1988F14CFF0FF9EE63D76BD07C1EA3C92A3B"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Profile/StoreEducationRequest.php",
+      "size_bytes": 902,
+      "sha256": "3DDF767F5ACEECA4A53715320EC156C5E4283FD6E1370CBD19DD98B91796A5F7"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Profile/StoreExperienceRequest.php",
+      "size_bytes": 938,
+      "sha256": "6C41CCD1762A039F8E393D7C161D93743CCDB1B86F68CB3B5BDD93B164BB5B98"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Profile/UpdateCompanyRequest.php",
+      "size_bytes": 819,
+      "sha256": "8B879F6D107A93B9AB86542BA9413E3631009AE0F5FA2C98EA11C08EBE7BC588"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Profile/UpdateEducationRequest.php",
+      "size_bytes": 690,
+      "sha256": "C9DF7D70707A7E3E6EA3AFAF0E04FC574280AF30E897D971751D5F31E2511F0B"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Profile/UpdateEmployerProfileRequest.php",
+      "size_bytes": 676,
+      "sha256": "94FEF4E2730C9253852B2AFAC05868E6E9337D042CBB953AD5AC2DF27EACBA70"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Profile/UpdateExperienceRequest.php",
+      "size_bytes": 740,
+      "sha256": "5139F0FDFDDA966D2F3CD424E91BFEAB5B29B7A105D0F69935FDD31C868E5999"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Profile/UpdateJobSeekerProfileRequest.php",
+      "size_bytes": 979,
+      "sha256": "917314A17AA95FB2152149D5272BDA9C0B8B6461DD7C72284D571F161820E6CA"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Skill/IndexSkillRequest.php",
+      "size_bytes": 483,
+      "sha256": "F8674A197E90A0CCB815EFFEDAE4E626DE304F0BD7B47E9D5DF5DF0683FFE483"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/AssignTestRequest.php",
+      "size_bytes": 1463,
+      "sha256": "F60D9F91E6864AD43B6D48F13A98A97AF4A19F74C3DF5305B844544AE0FABCE7"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/BulkManualTestAnswerGradingRequest.php",
+      "size_bytes": 1264,
+      "sha256": "C7DD34D62CF96D5C34CCB0619AA19367905F623343EE34381D7C14D648DBB6F5"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/BulkUpsertTestAnswerRequest.php",
+      "size_bytes": 797,
+      "sha256": "EFB5ED8DA5A509C0A38F5D3A5476F8010DFA71B2F5576E2F40AA1B22165ED11B"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/Concerns/AuthorizesTestAnswers.php",
+      "size_bytes": 1453,
+      "sha256": "CED04BDF26F5D29A6C270D06D2DAC45AE37B6DEF8DFF7378DAAD330EE3DF39C5"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/Concerns/AuthorizesTestCatalog.php",
+      "size_bytes": 1839,
+      "sha256": "AEB82B115C737927BE8B46458D175DD2A3EE0ADDAB22625647C26D4A59947849"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/Concerns/AuthorizesTestStructure.php",
+      "size_bytes": 1700,
+      "sha256": "2CB768C73D6883050703F40E3BBF1D29DB64211A82447E97214B827F5BCF12E7"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/DeleteManualTestAnswerGradingRequest.php",
+      "size_bytes": 425,
+      "sha256": "CBDC09F8A2410DCCE4248DBFF15C3D7CD6EFB7102992598DCAA012492680CAEA"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/DeleteTestAnswerRequest.php",
+      "size_bytes": 405,
+      "sha256": "8C8B47812281E8CF8614DFA8B8F6B25A594D03E09DC004CF162A5B3E39DA6DD7"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/DeleteTestCatalogRequest.php",
+      "size_bytes": 545,
+      "sha256": "DA4EE5D58DFD9EFBD16569FACBBDB040628819582A26C7745B789F6548EB2A8E"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/DeleteTestOptionRequest.php",
+      "size_bytes": 424,
+      "sha256": "E48E7A1FF55F613008D58667EC62226D71535CBDD0AB3B5CABE5CBB8CB4857FC"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/DeleteTestQuestionRequest.php",
+      "size_bytes": 116,
+      "sha256": "AFB60D813E12555E0A10D9278DB51B9A04572049250F32EA77CDA04AF6672955"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/DownloadTestAnswerFileRequest.php",
+      "size_bytes": 412,
+      "sha256": "FB5F6CCF7A156CC80455A9CFF1AAA2F6FFCB3D4133E31556214C7446B707DE75"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/EvaluateTestAttemptRequest.php",
+      "size_bytes": 1087,
+      "sha256": "2CA71DB54A36CF262BCD4B4E5EC51DD8D67EAA295FB1ED62BBE250FD49ADEF23"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/ExtendTestAssignmentDeadlineRequest.php",
+      "size_bytes": 1000,
+      "sha256": "C6B01CC10285486217EF557D7DD15D36015E827B3CB28F3761E0FC5F6871345C"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/GrantTestRetakeRequest.php",
+      "size_bytes": 1127,
+      "sha256": "FDD2E70BDF87D42A5C40C7024C6B1F8CD5769421B38D949D4BB41AAF9B817178"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/IndexTestAnswerRequest.php",
+      "size_bytes": 402,
+      "sha256": "D2FD3CEBA3932C9233397D7921DFF2A388D02819BD38A273E518F2A5BE16FCF0"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/IndexTestAssignmentDeadlineHistoryRequest.php",
+      "size_bytes": 660,
+      "sha256": "DE5786E022A19766E240C82A30FD930AB267C2A9D8A105C82396F7A05A9C22D9"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/IndexTestAttemptQuestionRequest.php",
+      "size_bytes": 681,
+      "sha256": "CD87F0E9564C1F409D3E7DE7FBF4723A742CE84FF5C2E63EC6829B0D6E040E6D"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/IndexTestCatalogRequest.php",
+      "size_bytes": 540,
+      "sha256": "F0108ABA12E2E9A27D169AE72ED3939682178003727D81B6C611D85F448B244C"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/IndexTestQuestionRequest.php",
+      "size_bytes": 383,
+      "sha256": "4C2E31CEBEC646218F9D4C69EF10DFFFB89D9F9216803EF2A9E088BB9D26BFD2"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/ListApplicationTestsRequest.php",
+      "size_bytes": 777,
+      "sha256": "3841B4464BBA1B6293C697A04F7D49F1A61564C7259B6DB825681F5B00AE01A5"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/ListMyTestsRequest.php",
+      "size_bytes": 601,
+      "sha256": "D7089892B9CAEAE9B381083C3EC05207AA6A82A78962BDD605FC47A0B4241030"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/ReorderTestOptionRequest.php",
+      "size_bytes": 636,
+      "sha256": "9B853DBBFFD66C66B93F7CF83C0DA291CC01826659DDA3502B58A717099F9217"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/ReorderTestQuestionRequest.php",
+      "size_bytes": 625,
+      "sha256": "FADE0109C337339B8A1CA12D83FAF8133F518E62111AFACB2004B5CC9DA10878"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/ShowTestAssignmentSeriesRequest.php",
+      "size_bytes": 641,
+      "sha256": "FC49D057C22D92EC84C0D32A86BB2A2E3B3967B6963260DB51EDC2B545BAE500"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/ShowTestAttemptResultRequest.php",
+      "size_bytes": 407,
+      "sha256": "F9F4584D5FF594DB9498BE7EC09478533F252C7D39FAF76AE7301B4B2A6619FE"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/ShowTestCatalogRequest.php",
+      "size_bytes": 596,
+      "sha256": "4AA3D59B191607FC1F789E46682B950208D456820844EC4392C283557470636E"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/ShowTestQuestionRequest.php",
+      "size_bytes": 403,
+      "sha256": "82489745E9064B9F903755AE8445D5CCC6F98800CA642308298DFDD854FF4E37"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/StartTestAttemptRequest.php",
+      "size_bytes": 680,
+      "sha256": "8359940328C61D6BA8589FD02F8FB80A58C1DF8C438A19D32B70225CC6F4AA88"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/StoreTestCatalogRequest.php",
+      "size_bytes": 1330,
+      "sha256": "7AF6197FE7B2AB02466246B04DD51BA99B27B0D318112AB0299BFAC2D831342D"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/StoreTestOptionRequest.php",
+      "size_bytes": 596,
+      "sha256": "2F24CFB738C5A0FA554D16AB66489A32DD8F8B9A37AF2C927D4B9F6AE83BA24C"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/StoreTestQuestionRequest.php",
+      "size_bytes": 2064,
+      "sha256": "76E985905910DEC3F39511CCEDB475B3EF039BCB423ADD1049B1E3AA358DB45F"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/SubmitTestAttemptRequest.php",
+      "size_bytes": 823,
+      "sha256": "D5E59297E1063B17DC7DC347708175BE83CC96BAFACC2BDE9112E80426F45489"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/UpdateTestCatalogRequest.php",
+      "size_bytes": 939,
+      "sha256": "656735283A61A926FC595F365E222479DCE2295C97C8976C963A8F1E4D218EA3"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/UpdateTestOptionRequest.php",
+      "size_bytes": 521,
+      "sha256": "4E4A539281776B0A7101EA083A7B7C4811397E1CC318BBD33912D00A27E98754"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/UpdateTestQuestionRequest.php",
+      "size_bytes": 2471,
+      "sha256": "61AFAE034174F601FFA74E295511630D425D60F7E7DC9D21C08D0D685E453C3B"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/UpdateTestRetakePolicyRequest.php",
+      "size_bytes": 991,
+      "sha256": "FCA139BFE8DF98A2896332F06B0734658E74C10AC14378A225108CAA9C79A316"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/UpsertManualTestAnswerGradingRequest.php",
+      "size_bytes": 826,
+      "sha256": "EA97AAE6A41AA03FAF42EA0681D9E090261283B8C900152BD0750868AD2D4FEA"
+    },
+    {
+      "path": "app/Http/Requests/Api/V1/Test/UpsertTestAnswerRequest.php",
+      "size_bytes": 881,
+      "sha256": "14E82856A8A9BF2AE9DCE4734BDDA195C4A8F21AA6ED46209074F381DC29BB73"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/ApplicationInformationRequestItemResource.php",
+      "size_bytes": 434,
+      "sha256": "F259A7E1D0437926AAE293B4AE23808F182AF83048864C0484B812596CF2C9D6"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/ApplicationInformationRequestResource.php",
+      "size_bytes": 1792,
+      "sha256": "FDCFE909537F3E38F3FF3F3C3E12F1EB9464D51982AFB3B32AAD2C9671E0F66B"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/ApplicationInformationResponseAttachmentResource.php",
+      "size_bytes": 528,
+      "sha256": "776EBEC64E9EA3FC362A74CD54EF70E0F9B2BCA8561F216A33D2BE7E06F104A0"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/ApplicationInformationResponseResource.php",
+      "size_bytes": 943,
+      "sha256": "DE18AAE71DDA441B91906B8A50AA88B59C96A57CA34BD9CD20C625187F7E85BD"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/ApplicationInternalNoteAuthorResource.php",
+      "size_bytes": 317,
+      "sha256": "BA65ED8E5BBE97038D9702A58A3CC0AEBE0813CE3E5099C67DABFCCAAA86A256"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/ApplicationInternalNoteResource.php",
+      "size_bytes": 1510,
+      "sha256": "795375BB2500D50CDDACCD5550EAE1C5F7EE2FAC1D2ADEE7E6495846B95652CC"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/ApplicationInternalNoteRevisionResource.php",
+      "size_bytes": 655,
+      "sha256": "DC1EF8D0859E78DD532C72C251623645AB21CE96B9CA8582323B87AFF6916F1C"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/ApplicationStatusHistoryResource.php",
+      "size_bytes": 1745,
+      "sha256": "35DA28C6BFE23B8451113844D1567C82EF51D47857FBE22E45D1A8178374BFD8"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/ApplicationStatusResource.php",
+      "size_bytes": 597,
+      "sha256": "4B855ED59C6638F0F03C8CAA430AB33A029348BD4ABAF5F27D882FB2D3F275BC"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/ApplicationTestAssignmentResource.php",
+      "size_bytes": 4223,
+      "sha256": "936BDE9D02547165F80FCC9269A8A6C1B29E730E76ECCBE6F9B5707273C96DD1"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/AuditLogResource.php",
+      "size_bytes": 955,
+      "sha256": "7CC2EE0C751892D84E5164272C02336BE260BA7313D18EB04F2FED636EB49556"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/CVFileResource.php",
+      "size_bytes": 2109,
+      "sha256": "73E68E54594E360C74C222B025E7F8AC672B2FE9C6A7F8D5B0ADF1DFD93EA588"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/CVParsingResultResource.php",
+      "size_bytes": 800,
+      "sha256": "CF5C243E721DDACB1675E077714CF125C240578ADBFA46442EEB1C0D250D7643"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/CVReviewResource.php",
+      "size_bytes": 1693,
+      "sha256": "CB6D41EF2BD9BC941A2B41FA417216BC9FFF63A85B1AA4AE690BADC810C57D9E"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/CandidateApplicationTestAssignmentResource.php",
+      "size_bytes": 3316,
+      "sha256": "438086767A337159F4A83B81683022C04379247DD964D59A14F0074B590F4BDD"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/CandidateAssignedTestSummaryResource.php",
+      "size_bytes": 621,
+      "sha256": "76E17F2A8119EC6D523573546A90DD61FEDC93F67BF89FCB895EF447382FC882"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/CandidateTestOptionResource.php",
+      "size_bytes": 457,
+      "sha256": "03D09C19CE7620C516793EB6B79EE4131EAFD850797FA844009D18BE90ED4516"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/CandidateTestQuestionResource.php",
+      "size_bytes": 673,
+      "sha256": "7F6A02C251EECDADB314DE99AE8CE7840EB7FAC8C1E1F7A623A07BAB35EDBE9C"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/CompanyResource.php",
+      "size_bytes": 1515,
+      "sha256": "78AA3F35DA81B4C3BFDC52023D00EEB8569A538090477E5EE9BE833B04968861"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/Concerns/ResolvesResourceViewer.php",
+      "size_bytes": 1211,
+      "sha256": "B7F02D254308FAADA942E84D6BC51E5CC1C149F9943D7C79808404BE05729315"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/EducationResource.php",
+      "size_bytes": 1081,
+      "sha256": "700FD20002EBF81035BE1497ED7FA97529361CEB876D4B3009A8A332EC4FCB67"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/EmployerProfileResource.php",
+      "size_bytes": 873,
+      "sha256": "F5AEAE35F2418005B7617CC9FFC09E0F235E74AD259682D5929E2B2431FB87E0"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/ExperienceResource.php",
+      "size_bytes": 1118,
+      "sha256": "AC13EA5898BAC6B0963C401194918DCCFF837E86DC1E5AB0BF3A4935974045CA"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/InterviewEvaluationItemResource.php",
+      "size_bytes": 709,
+      "sha256": "2E489A1A310F669395D744F35173E17E718F8577BFD90A30FE5C501A762B9281"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/InterviewEvaluationResource.php",
+      "size_bytes": 1479,
+      "sha256": "EAE47EB806256B82C154A270F3BE3EC47DDB4CAF7793E55C0E5E83E3A028B73F"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/InterviewResource.php",
+      "size_bytes": 3900,
+      "sha256": "D04D520A9641595071F122AE6D0AF26F0BF4DBA9D14A6668CFF7F3DF15EE6F95"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/InterviewScheduleChangeResource.php",
+      "size_bytes": 1312,
+      "sha256": "9B6FD06F7CC954F547622F56545A1C0A5F2A5B3A9A9AC7D619574DA19D4A9046"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/InterviewStatusHistoryResource.php",
+      "size_bytes": 812,
+      "sha256": "D98BA427FCE38A06B17FBE4BA5D53655596528DBBB881F43A28C40A129EFF9A9"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/JobApplicationResource.php",
+      "size_bytes": 3274,
+      "sha256": "4FF99F355AE4D2A5D9C4215E19ADCAEEDC5C369AFCF5071CBA8AB29C05E24993"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/JobApplicationScreeningQuestionResource.php",
+      "size_bytes": 1652,
+      "sha256": "D5A9C5CA06150389F4E2176D6990F4EF5A54B32BB248DA0C83B4A5D4923C92ED"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/JobPostingResource.php",
+      "size_bytes": 2925,
+      "sha256": "EDBBE5CEA558FC5F5AD1D3B735B975C17C2C2AC4FBE667C4E78F8C5E6BF92149"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/JobScreeningQuestionOptionResource.php",
+      "size_bytes": 410,
+      "sha256": "BF7E0657BD08E2898BDAA21AC5E8816457147705468E4AC07FE04777BDFC84B6"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/JobScreeningQuestionResource.php",
+      "size_bytes": 620,
+      "sha256": "FA1985F4AB24D16B89B9142FF70D55E31FF515A26F65757D7F61F70EA8D223B7"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/JobSeekerProfileResource.php",
+      "size_bytes": 1215,
+      "sha256": "715A870762C6038D8F429A8E254ECD7315035B07BFB679E0B227DCA6495376FB"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/NotificationResource.php",
+      "size_bytes": 700,
+      "sha256": "6C15C2A373AE0DE19E0FB55C585D224050BDAEEBA90A456A67B6A43CEABCF3D5"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/ProfileChangeSuggestionResource.php",
+      "size_bytes": 2647,
+      "sha256": "00F32C4B1729526717275F115F6F84BB2B3920C0CF76EBD910BEF5DA9F78E10F"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/RankedCandidateResource.php",
+      "size_bytes": 1527,
+      "sha256": "25C589368AB3C0E809F5B945FA2C90F114ADEB164157C79D6589B3D79E5F9DC3"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/RecommendedJobResource.php",
+      "size_bytes": 1618,
+      "sha256": "317DE783B3C393750655809906F8E7A2474596A198A623D62416E118970C294D"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/SkillResource.php",
+      "size_bytes": 1477,
+      "sha256": "8DCE751558A1B9AAA728873A4177344008C4B680C8536874CA6EA10F4E0759A7"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/TestAnswerGradingResource.php",
+      "size_bytes": 636,
+      "sha256": "F16661829F7974B7C7575818160C9FB9A3A5A07286B29CC4184A4BCB4B86E684"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/TestAnswerResource.php",
+      "size_bytes": 1136,
+      "sha256": "D277DE3AC80C98D3058C301ABC0E5459DDF76CC4B28A0E1595AAD32BCA7672EE"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/TestAssignmentDeadlineChangeResource.php",
+      "size_bytes": 816,
+      "sha256": "63D7F7AC1E85A0623F1A39665436141D34994D20750B62F79235BD2EE0284C66"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/TestAssignmentSeriesResource.php",
+      "size_bytes": 2555,
+      "sha256": "3144AAECE0F3AE0DB7FA5A48406AA9725E2FE16FDB74001B465D56701B74715D"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/TestAttemptResource.php",
+      "size_bytes": 2902,
+      "sha256": "C4B997B3C75C2BFB32268EBD76D7DE0184B76F1EA432B94CDC96FF7505258421"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/TestAttemptResultResource.php",
+      "size_bytes": 6572,
+      "sha256": "3DE4575943E1AB82481EDE8123654EEA9BF136A65B1E163A33139258DB82C76F"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/TestOptionResource.php",
+      "size_bytes": 859,
+      "sha256": "5309842ACAAEBACB43A3C2402C4730DF7F9B5B09FC21970A8CEB820A78666049"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/TestQuestionResource.php",
+      "size_bytes": 844,
+      "sha256": "4215DDC0E47B093A79D8EC8BEF10939931898E37C30D38609218567FFD609AF4"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/TestResource.php",
+      "size_bytes": 1463,
+      "sha256": "40C81A83149E27D80C27F092C4C2965B78DD624BF89B228F7B267D9E320C6367"
+    },
+    {
+      "path": "app/Http/Resources/Api/V1/UserResource.php",
+      "size_bytes": 1146,
+      "sha256": "577BD200F00F5B2E731C22EC24F8ED18B78F715A7A01364A16A1ECFAE1554824"
+    },
+    {
+      "path": "app/Jobs/ParseCVFileJob.php",
+      "size_bytes": 6290,
+      "sha256": "AABA8DCC6B097AFCBE686434D7A4AFDC91881F5875030F24AB085620601B4289"
+    },
+    {
+      "path": "app/Listeners/CreateApplicationInformationRequestCancelledNotification.php",
+      "size_bytes": 1169,
+      "sha256": "22DCCFBE9EAD26C96C8D9430853738C544A7847CAC7336A87E3EB890B5D2F81E"
+    },
+    {
+      "path": "app/Listeners/CreateApplicationInformationRequestUpdatedNotification.php",
+      "size_bytes": 1245,
+      "sha256": "1C4C6D5B982F961A9A97B34C8C4CC16D34212FB0CDB65A6C5B2AEFDABAEBCA12"
+    },
+    {
+      "path": "app/Listeners/CreateApplicationInformationRequestedNotification.php",
+      "size_bytes": 1324,
+      "sha256": "4F27D0598B968D9739E5DA1674C09BFEFAA4290ECE8B7E2E3E97A591BBC0F44A"
+    },
+    {
+      "path": "app/Listeners/CreateApplicationInformationRespondedNotification.php",
+      "size_bytes": 1330,
+      "sha256": "B93206DB7EBD8EECCC17E632C132B252386C2DB5AB522AD9FC583325A2681720"
+    },
+    {
+      "path": "app/Listeners/CreateApplicationStatusChangedNotification.php",
+      "size_bytes": 2244,
+      "sha256": "DA786ABF0DC26A57087E0D22436ABA18A2B2BBA3C6AF8661A56CD00F645D4E4C"
+    },
+    {
+      "path": "app/Listeners/CreateApplicationSubmittedNotifications.php",
+      "size_bytes": 2176,
+      "sha256": "EF264BD8B1AE576F1FD4437157F658B00E839C505FAD1372004CEB781E867856"
+    },
+    {
+      "path": "app/Listeners/CreateInterviewAttendanceUpdatedNotification.php",
+      "size_bytes": 1168,
+      "sha256": "CD602A9C19CE7CC5C2F1F5F250B93544F42BCE72B58B870F89B8C65A397CCC04"
+    },
+    {
+      "path": "app/Listeners/CreateInterviewCancelledNotification.php",
+      "size_bytes": 1374,
+      "sha256": "5C2C575330117CD29C1A60AB498A706986604BD393FF27D09E9D237965ED5BCD"
+    },
+    {
+      "path": "app/Listeners/CreateInterviewCompletedNotification.php",
+      "size_bytes": 1056,
+      "sha256": "2FE487A06F35D62F329854C9C0FB21D5A1EF392CF54E89F9C89BA4AA30C7A923"
+    },
+    {
+      "path": "app/Listeners/CreateInterviewConfirmedNotification.php",
+      "size_bytes": 1068,
+      "sha256": "36CD00CB80D7EE564F5ADABD1812D28257E1CE7367D08E453465EBD0C522B131"
+    },
+    {
+      "path": "app/Listeners/CreateInterviewEvaluatedNotification.php",
+      "size_bytes": 1493,
+      "sha256": "690F2D005D5162CD8A71D58311F7E491DA533BCE45ED98FB79A8A52D5929CC6F"
+    },
+    {
+      "path": "app/Listeners/CreateInterviewNoShowNotifications.php",
+      "size_bytes": 1211,
+      "sha256": "435649E3ACE8850023E8946A67B116FCC82FD632CFB6685A6D48CD87219F8DA3"
+    },
+    {
+      "path": "app/Listeners/CreateInterviewRescheduledNotification.php",
+      "size_bytes": 1284,
+      "sha256": "55ECF4AF61D211B1DE5659C6E88BDE52761088B1F24D69BC1D2FC6C48857551B"
+    },
+    {
+      "path": "app/Listeners/CreateInterviewScheduledNotification.php",
+      "size_bytes": 2054,
+      "sha256": "2A79543C9F3AC23B82026149AD9C5FEFE82BF6C0178DC6C49550CDA57FED80D6"
+    },
+    {
+      "path": "app/Listeners/CreateInterviewUpdatedNotification.php",
+      "size_bytes": 1403,
+      "sha256": "A28DAF26624FE38FABF2A19A6086FE4B1DAAF0ABA903ED2155814554D40FB954"
+    },
+    {
+      "path": "app/Listeners/CreateTestAssignedNotification.php",
+      "size_bytes": 1653,
+      "sha256": "3AA24926E0351FE4A4B1C4A2B243B5B64EE562F5DF1E5C735A62D1E8F10A6753"
+    },
+    {
+      "path": "app/Listeners/CreateTestAssignmentDeadlineExtendedNotification.php",
+      "size_bytes": 1203,
+      "sha256": "40AE2F831D83EDF24B47EF30B5AFC64E0060206C504FF766E43F4809DFF9A6F4"
+    },
+    {
+      "path": "app/Listeners/CreateTestEvaluatedNotification.php",
+      "size_bytes": 1706,
+      "sha256": "E75B3B038EFF41992B690F06453FC4D8434EB7958F4626ED0F834C7C0D17DCF1"
+    },
+    {
+      "path": "app/Listeners/CreateTestRetakeGrantedNotification.php",
+      "size_bytes": 1221,
+      "sha256": "399B5DC75BED71A466B0A93125120D8E7348F24776CF8D75241E6D9818E826C2"
+    },
+    {
+      "path": "app/Listeners/CreateTestSubmittedNotification.php",
+      "size_bytes": 1819,
+      "sha256": "3B1CCEBE40788A2ECA5BBFE3835243E7AE5C2D31C4B7F27DD0C7344EBF45F1E4"
+    },
+    {
+      "path": "app/Listeners/IdempotentNotificationListener.php",
+      "size_bytes": 1273,
+      "sha256": "9E9126867A870D73B105C04BDEED30E7ABA079EBF12FCB874AE4B76981854ED5"
+    },
+    {
+      "path": "app/Models/ApplicationInformationRequest.php",
+      "size_bytes": 2192,
+      "sha256": "ADACADE3F7FEFB0E6D1F95D82F03AF4198E6A99B51970FCE0A9BCEBF697DDF08"
+    },
+    {
+      "path": "app/Models/ApplicationInformationRequestItem.php",
+      "size_bytes": 677,
+      "sha256": "C320C0DC4CEB2E113B63792DB1D72CCC2CFEAB5C5A2F1DE07E42E3CF04273C55"
+    },
+    {
+      "path": "app/Models/ApplicationInformationResponse.php",
+      "size_bytes": 961,
+      "sha256": "7292047CAA8B229663907A9EB50DD8526708EC6DA2BC9A95FD9B40FCEFEF43D4"
+    },
+    {
+      "path": "app/Models/ApplicationInformationResponseAttachment.php",
+      "size_bytes": 674,
+      "sha256": "1D89E7AB5AEA33938E8B558435826C5DA16C054B3E18D0B64C5EBACB02AB0703"
+    },
+    {
+      "path": "app/Models/ApplicationInternalNote.php",
+      "size_bytes": 1430,
+      "sha256": "840053ECFED532BF82DB3D42875106C7124BAEE6A54AB4BCA6A00BAA09399A5C"
+    },
+    {
+      "path": "app/Models/ApplicationInternalNoteRevision.php",
+      "size_bytes": 784,
+      "sha256": "D7174827350F8E6B4E1FD59AC09DA34BD41D403B8218DA7577065C27A0137EF2"
+    },
+    {
+      "path": "app/Models/ApplicationStatus.php",
+      "size_bytes": 730,
+      "sha256": "B03E81D5EC7F9C231D98AAAFF309D126AB275B83AA23292E8ED8D8A897371A20"
+    },
+    {
+      "path": "app/Models/ApplicationStatusHistory.php",
+      "size_bytes": 964,
+      "sha256": "C047ACF7446A80DEF3F93CCA024DBF5FFC38FF49442DA134EE4B9C5E435C9FB0"
+    },
+    {
+      "path": "app/Models/ApplicationTestAssignment.php",
+      "size_bytes": 4144,
+      "sha256": "17987CB01C8FCB3FA1F01EA978EA0619E6709DDE7FF3041F8124DE32EAC1C2F5"
+    },
+    {
+      "path": "app/Models/ApplicationTestAssignmentDeadlineChange.php",
+      "size_bytes": 905,
+      "sha256": "0DF7AD30970AA67C313B6F4E75C582E69D018CE49AFFA3074405B866B6B0EA8A"
+    },
+    {
+      "path": "app/Models/AuditLog.php",
+      "size_bytes": 778,
+      "sha256": "D152E2F0EA483B30772746EF5B4590CC8890BED3801288AC821D5910DF54A453"
+    },
+    {
+      "path": "app/Models/CVFile.php",
+      "size_bytes": 2981,
+      "sha256": "2A04CC92282CED15C463BED6616349C8031FBF76EC0D5A27572BC46571E8320D"
+    },
+    {
+      "path": "app/Models/CVParsingResult.php",
+      "size_bytes": 801,
+      "sha256": "167EF3B8D1642F3A0C1FCC0F4D44E948CB1D3E0FB661ECB70EF2AEA7F3753485"
+    },
+    {
+      "path": "app/Models/Company.php",
+      "size_bytes": 707,
+      "sha256": "7883A84F697707E8EF1C27CF8BCFB1FD7D2AFC0036A685B3DA33F509D7AE90E9"
+    },
+    {
+      "path": "app/Models/Education.php",
+      "size_bytes": 1049,
+      "sha256": "865FF28C2E83D544CEFC5F88A8D150EE71472676E56C356C7350B25EEB05AEE3"
+    },
+    {
+      "path": "app/Models/EmployerProfile.php",
+      "size_bytes": 570,
+      "sha256": "05C61B14054F1805132D310ED875258584176A02925535984546D72C862D0C2F"
+    },
+    {
+      "path": "app/Models/EventSideEffectExecution.php",
+      "size_bytes": 481,
+      "sha256": "18D99FE4FF1BEAC4FA9C1650C023BA687A61BFA97EDBB0762BC031B2A1372513"
+    },
+    {
+      "path": "app/Models/Experience.php",
+      "size_bytes": 1068,
+      "sha256": "785A2D526276984665F4AC3159C5006CA276F4B7C40829987CBCE752DF6F43D3"
+    },
+    {
+      "path": "app/Models/Interview.php",
+      "size_bytes": 2699,
+      "sha256": "D72F3872A92F795D62078C83514256BF92D8126D01C435F26717C91B8172FC34"
+    },
+    {
+      "path": "app/Models/InterviewEvaluation.php",
+      "size_bytes": 1025,
+      "sha256": "08A73AD52ECF6BCC86D6E080D1B30A0AEB1A92CBBD7423E8E81DC5C70E52C303"
+    },
+    {
+      "path": "app/Models/InterviewEvaluationItem.php",
+      "size_bytes": 748,
+      "sha256": "A8F062838D922D86B5CCB806D1A1AFAE1EBD2B2C4B3257F30A8E24719C47ED99"
+    },
+    {
+      "path": "app/Models/InterviewScheduleChange.php",
+      "size_bytes": 996,
+      "sha256": "7A04AD669F69C0B15907CBA793E307E1A9A0E64FD7AD1C7364FE8CAE5249137C"
+    },
+    {
+      "path": "app/Models/InterviewStatusHistory.php",
+      "size_bytes": 675,
+      "sha256": "64C5485DFC4B95A8E89F59861CCF9A0F3CECC87213E42AD2DA0928E71D8B8EB3"
+    },
+    {
+      "path": "app/Models/JobApplication.php",
+      "size_bytes": 2388,
+      "sha256": "93922458074456AB464FEE717B06B018536C8D8AE75D80D0C2D82D6C812EE7A8"
+    },
+    {
+      "path": "app/Models/JobApplicationScreeningAnswer.php",
+      "size_bytes": 998,
+      "sha256": "0AABB1AF5B261038A18A55CC5D3F28E4636486F5A50E866CECDB38CCF37FDE7F"
+    },
+    {
+      "path": "app/Models/JobApplicationScreeningAnswerOption.php",
+      "size_bytes": 610,
+      "sha256": "C2D139CCC241E8022E1F5E90DCCCB2EE0E79DBEB134C8B990F813A232C232202"
+    },
+    {
+      "path": "app/Models/JobApplicationScreeningQuestion.php",
+      "size_bytes": 1212,
+      "sha256": "22D32722EA315FB90BCB39BB49216485EECE80D9CE287924222F741C94978A29"
+    },
+    {
+      "path": "app/Models/JobApplicationScreeningQuestionOption.php",
+      "size_bytes": 580,
+      "sha256": "616FFA03BBF5870BF468161047145E0FCC3FD3F60573BAEB7283C06B45456B11"
+    },
+    {
+      "path": "app/Models/JobPosting.php",
+      "size_bytes": 2665,
+      "sha256": "4182DDB8C98188F92DD42963A6E93C2B28BEFFE497588D5B1F5D17DAC29CC4F3"
+    },
+    {
+      "path": "app/Models/JobPostingSkill.php",
+      "size_bytes": 513,
+      "sha256": "F98CFCA1B7A5BDD146783A40EA1A0FB99F2509EEA3E1A713155F3527AFF67F72"
+    },
+    {
+      "path": "app/Models/JobScreeningQuestion.php",
+      "size_bytes": 1214,
+      "sha256": "49DFA7CFC9B2F9BCA4750A28425F579911D95567AB198B272037CE566D63BD5F"
+    },
+    {
+      "path": "app/Models/JobScreeningQuestionOption.php",
+      "size_bytes": 610,
+      "sha256": "5F456DA7DD989F2FCE3D73B3140C53769C144D4E172EDE9031DED4F55780E82E"
+    },
+    {
+      "path": "app/Models/JobSeekerProfile.php",
+      "size_bytes": 1550,
+      "sha256": "5A89AD69783AF21D2360D3439B7B8FB00B16E2EC86AC8C37C944397C2CE3597C"
+    },
+    {
+      "path": "app/Models/JobSeekerSkill.php",
+      "size_bytes": 408,
+      "sha256": "98771DC7732AEA26AAC180D6AA9A724502647E7A5CD434F291DF6398AFD5C95B"
+    },
+    {
+      "path": "app/Models/Notification.php",
+      "size_bytes": 660,
+      "sha256": "C11B442D67BAA8FB7DC1D398255EF45451C7822597E623FF85A9E259E6F0115C"
+    },
+    {
+      "path": "app/Models/ProfileChangeSuggestion.php",
+      "size_bytes": 1888,
+      "sha256": "1CF8C3DC4C276C0914344325B7D643A10A64F9F3D62D71472AD19E45ACDEBABF"
+    },
+    {
+      "path": "app/Models/RecommendationItem.php",
+      "size_bytes": 976,
+      "sha256": "049E61332BE7D54E64148D891FA3236D500ED25893D226E991B0840139F28E93"
+    },
+    {
+      "path": "app/Models/RecommendationRun.php",
+      "size_bytes": 1336,
+      "sha256": "4BE1283291C571145B4D14FBABBB352CCC6782BA206383C5878DDEC1B81BC920"
+    },
+    {
+      "path": "app/Models/Skill.php",
+      "size_bytes": 786,
+      "sha256": "C33D777C0AA81DF1E9A6E8D1630372CDBC2300CC1E01F30F4C37956ABB05A577"
+    },
+    {
+      "path": "app/Models/Test.php",
+      "size_bytes": 1138,
+      "sha256": "A8C056B9B5B610932492763BC2363582D795296F61E1056B1666F859D0FF7CDD"
+    },
+    {
+      "path": "app/Models/TestAnswer.php",
+      "size_bytes": 1181,
+      "sha256": "C96F2B7C7F0B668FAE6F91F783BADD4D4F5F852893B7CBBC7F5CF4A2C117A6C8"
+    },
+    {
+      "path": "app/Models/TestAnswerGrading.php",
+      "size_bytes": 1026,
+      "sha256": "466DE1C3F6B943540D864A910622ACD0823A9ED749B56D0A7963EC29824B5229"
+    },
+    {
+      "path": "app/Models/TestAttempt.php",
+      "size_bytes": 2569,
+      "sha256": "D8FE7A787C1B449FE037D18E5399233A96FCE2CC015C517FB18FFCDF70015618"
+    },
+    {
+      "path": "app/Models/TestOption.php",
+      "size_bytes": 808,
+      "sha256": "E816F38C46A2AA0299FF6078A643F886F2ACCFE1D59D171BC6CF59D42534F927"
+    },
+    {
+      "path": "app/Models/TestQuestion.php",
+      "size_bytes": 1046,
+      "sha256": "FF5C24699A6E5279543DF1C00FC3E8B9DB40B8E8EF8319B809A84CF15E3968B1"
+    },
+    {
+      "path": "app/Models/User.php",
+      "size_bytes": 2029,
+      "sha256": "F51C5C383F2823F1C3492BA8D8C2D414E4B4EF3513EFB871D753673CAEA0D1AA"
+    },
+    {
+      "path": "app/Policies/ApplicationInformationRequestPolicy.php",
+      "size_bytes": 2073,
+      "sha256": "D9C1436F39EBC78BEA77ADE249187A1EDEB1E23C1625B5ADB7419639D6C9E6F5"
+    },
+    {
+      "path": "app/Policies/ApplicationInternalNotePolicy.php",
+      "size_bytes": 1537,
+      "sha256": "17CA6A56642F30F641BAEF676D6667D6DB1AD11C7F4E736951C756C3928425F7"
+    },
+    {
+      "path": "app/Policies/ApplicationTestAssignmentPolicy.php",
+      "size_bytes": 2315,
+      "sha256": "F81D09DC1320BF419832D192757AC80BA08279EF14969F1FC51E98FEC3D4B53A"
+    },
+    {
+      "path": "app/Policies/InterviewPolicy.php",
+      "size_bytes": 2750,
+      "sha256": "72D5115387D348026AA382964E8A7B69529FDEC0C921A135431E689747DCDBCA"
+    },
+    {
+      "path": "app/Policies/JobApplicationPolicy.php",
+      "size_bytes": 1462,
+      "sha256": "53A67CC873E0B658100FD6ED35AAE00DE1C15202D7DEEAA5BCFB0BA648E0A691"
+    },
+    {
+      "path": "app/Policies/JobPostingPolicy.php",
+      "size_bytes": 1986,
+      "sha256": "7F10F1E12C25444AD8CBD14E75D1F6D4FC91DF4E1918EC0DC80EA268B194741B"
+    },
+    {
+      "path": "app/Policies/TestAttemptPolicy.php",
+      "size_bytes": 2379,
+      "sha256": "0A28CEE3FAA6045CB12DC8AC48D90792403C7AE86D0361D03EA4ABCBA3880128"
+    },
+    {
+      "path": "app/Policies/TestPolicy.php",
+      "size_bytes": 1401,
+      "sha256": "BFBB1EF0B5407B401DB4B59135131FBD89BA5FB04F55438BDBCD00ECE926CA34"
+    },
+    {
+      "path": "app/Providers/AppServiceProvider.php",
+      "size_bytes": 8909,
+      "sha256": "2AF96736E1C4E817B5AACA1A27187BCFD24A37C67748D1297EEB67B4433D8396"
+    },
+    {
+      "path": "app/Services/AdminCompanyStatusService.php",
+      "size_bytes": 1312,
+      "sha256": "817BA5E2ABC3573610A46AF6EAA82CEEBC90120311656F5B8CC663CE903694F5"
+    },
+    {
+      "path": "app/Services/AdminReportService.php",
+      "size_bytes": 8300,
+      "sha256": "B5644FFA688066C994222B6CE8CF56A4036A2838230354529E8DF3EDE75A812C"
+    },
+    {
+      "path": "app/Services/AdminUserStatusService.php",
+      "size_bytes": 1496,
+      "sha256": "3D049FD93C935AB11DD5ED6140A64CBAC406070C5B021761D56CC7494FEA13FE"
+    },
+    {
+      "path": "app/Services/ApplicationInformationRequestService.php",
+      "size_bytes": 17370,
+      "sha256": "A7AE0F9EF4059AD62C34B1E02000D81EDB529522960458F6D328B205B8DED446"
+    },
+    {
+      "path": "app/Services/ApplicationInternalNoteService.php",
+      "size_bytes": 10457,
+      "sha256": "22CC3B64ED70047B7D96CE0B5C703BF2F4EFD0BF390051940130E9A15847CDB8"
+    },
+    {
+      "path": "app/Services/ApplicationScreeningAnswerService.php",
+      "size_bytes": 10312,
+      "sha256": "01693C5F1577BD23CDF74FAD68392B631102111E6260EEAC00A1D92BFF56CF0C"
+    },
+    {
+      "path": "app/Services/ApplicationWorkflowService.php",
+      "size_bytes": 19007,
+      "sha256": "03000539F8F86F764EA76EED7F0C435837334E614B4D1E0C0B7BAD0F753D50F4"
+    },
+    {
+      "path": "app/Services/AuditLogService.php",
+      "size_bytes": 1436,
+      "sha256": "3FB6BC7A91305045E749E953C2E0F128AC1E7992FE714E869E203E3541AAF55C"
+    },
+    {
+      "path": "app/Services/Auth/AuthService.php",
+      "size_bytes": 3161,
+      "sha256": "19828AC355929011340272005543698ED99E8254CED27F2FE3E62E3F6D8C0FDD"
+    },
+    {
+      "path": "app/Services/Auth/RegistrationService.php",
+      "size_bytes": 1994,
+      "sha256": "00F4ED4DAFD54A4C3842EF08C08ADC257F362DA261396CA3A46D256AF0FA03C4"
+    },
+    {
+      "path": "app/Services/CV/CVParsedDataNormalizer.php",
+      "size_bytes": 20207,
+      "sha256": "09BA5DE6E136BAD6112B5145B57BFA1D395BAE3F0FC155D6C93EA36E1BE1D149"
+    },
+    {
+      "path": "app/Services/CV/CVParsingPrompt.php",
+      "size_bytes": 7706,
+      "sha256": "930B1D9BF87007FFA02EFB356B1BEBBF674B81D4B7E4E663FA89332C36A852FE"
+    },
+    {
+      "path": "app/Services/CV/CVParsingSchema.php",
+      "size_bytes": 9467,
+      "sha256": "40BA5C1F7461E1444D416F1F7C332D762B664ADD84DF59276B91A71570995AE2"
+    },
+    {
+      "path": "app/Services/CV/CVReviewDraftService.php",
+      "size_bytes": 7493,
+      "sha256": "62CBE29144F9AD579A49398AA70FBCD2025211223CC79469B2583B3031C691E2"
+    },
+    {
+      "path": "app/Services/CV/EmailAddressExtractor.php",
+      "size_bytes": 1032,
+      "sha256": "C2170C59FC48322DBE423946ECCB44A217156DDF11F48A7626AB53E89D09E62E"
+    },
+    {
+      "path": "app/Services/CV/ExtractedTextNormalizer.php",
+      "size_bytes": 1206,
+      "sha256": "FF1657B89166F9F8443938D474093FED60B3EFED6F2132C7037947669950AFAB"
+    },
+    {
+      "path": "app/Services/CV/GroqCVTextParser.php",
+      "size_bytes": 11405,
+      "sha256": "4FB4C32337296ED5D5F5B55C69F94AD24E58C9D1E6EF6C8C96B16B921257B55A"
+    },
+    {
+      "path": "app/Services/CV/OpenAICVTextParser.php",
+      "size_bytes": 5697,
+      "sha256": "D72A001950A55B717B0F5F4DD81CA76180F673F1366B9F06C5A5A3C72B489788"
+    },
+    {
+      "path": "app/Services/CV/PDFEmailRecoveryService.php",
+      "size_bytes": 2180,
+      "sha256": "9239AE22FEDEC35C90EFC9CE6BF9EE5E290FC0448498047D1ABDE0151FEC4CF8"
+    },
+    {
+      "path": "app/Services/CV/ProfileDataStateService.php",
+      "size_bytes": 718,
+      "sha256": "819008C1919E39E925FF244EE8B080A9A302F4646CFE3FEF31C5D731C340C9C0"
+    },
+    {
+      "path": "app/Services/CV/RuleBasedCVTextParser.php",
+      "size_bytes": 8173,
+      "sha256": "2D41F75E872A3FEAE0E83A873F754EC63470E26CD655A16795CC73ECAAC2D2F5"
+    },
+    {
+      "path": "app/Services/CVParsingService.php",
+      "size_bytes": 4790,
+      "sha256": "1F6835D087C980A7CC03F606E227A93D7E5A13991BAE1EA01607760A6A9D219F"
+    },
+    {
+      "path": "app/Services/CVService.php",
+      "size_bytes": 20700,
+      "sha256": "1628DED7E64B987764CE584EE24D512E2E2D438BFAEECFEDAA6B6E21B3450B1E"
+    },
+    {
+      "path": "app/Services/CandidateExperienceCalculator.php",
+      "size_bytes": 1675,
+      "sha256": "86E819EC94AB76A368735338C92F0708F85128EC489E7B58C94EAD7EE22C4E87"
+    },
+    {
+      "path": "app/Services/CompanyRecruitmentAccessService.php",
+      "size_bytes": 3521,
+      "sha256": "0379B9CE71D6CDE222BE8A617516D29649197641B65F6517F5A29DE1A704C26E"
+    },
+    {
+      "path": "app/Services/EducationLevelNormalizer.php",
+      "size_bytes": 1330,
+      "sha256": "6DDBC82BA8FD1CEEED128CD68A86F941B8CDBF611DEA6966D0A4AFBB8EC04D56"
+    },
+    {
+      "path": "app/Services/EventEffectKeyFactory.php",
+      "size_bytes": 1303,
+      "sha256": "3BBD9EFBBAC34A6522C404B6984A7151C7EC302E8371BBA77EF148E9DCD4CED6"
+    },
+    {
+      "path": "app/Services/EventSideEffectService.php",
+      "size_bytes": 1460,
+      "sha256": "AEF884C8353087E7485410039C4CAC312500A7931BEE5880A21CBDA5433B5F2B"
+    },
+    {
+      "path": "app/Services/InterviewService.php",
+      "size_bytes": 28601,
+      "sha256": "C43E216162ABCF198B0B2C827997D6AB447D9B9D72521617975A0C8A82AB1081"
+    },
+    {
+      "path": "app/Services/JobPostingService.php",
+      "size_bytes": 20789,
+      "sha256": "26BF15522F2872D6F827D38DD5485EAA031F16641A908ACFBCE7CA8C093EDFBB"
+    },
+    {
+      "path": "app/Services/JobScreeningQuestionService.php",
+      "size_bytes": 11287,
+      "sha256": "595A3FCA43378BB8621F8A76400EEA37116EE747929C6513FD8D5AB22C5DC70D"
+    },
+    {
+      "path": "app/Services/MatchingService.php",
+      "size_bytes": 21584,
+      "sha256": "B8F7DF3F8F9189467AB73384498AA1F2AEE725F15971BBA4C07E67BD3B7EABEE"
+    },
+    {
+      "path": "app/Services/NotificationService.php",
+      "size_bytes": 3858,
+      "sha256": "E94796D4D718005E4F525AB11BE3D1FCD5E76F87C91353DB6AB4896DD49FCDCF"
+    },
+    {
+      "path": "app/Services/PrivateFileRecordService.php",
+      "size_bytes": 2774,
+      "sha256": "C3F5E166AC607B10191AB6FE693F27E6BD3328B9797EDEB4F04B47623F4728A2"
+    },
+    {
+      "path": "app/Services/PrivateFileStorageService.php",
+      "size_bytes": 11096,
+      "sha256": "6C429D16B32C74A7B0CBF8519DEC5DBCFF5C933823ED0F9AA3BD027E87051727"
+    },
+    {
+      "path": "app/Services/ProfileService.php",
+      "size_bytes": 5787,
+      "sha256": "AE6C95417780CCD663C7D03416C1587D19F24E6CA2C1FBC5B84376503464C2D8"
+    },
+    {
+      "path": "app/Services/ProfileSyncService.php",
+      "size_bytes": 34046,
+      "sha256": "4C6CDC2724551C62FEE91BF3BF6947D4BC3ED187873ED1476EFEDEB55E5907E1"
+    },
+    {
+      "path": "app/Services/Recommendation/RecommendationContextFingerprint.php",
+      "size_bytes": 8278,
+      "sha256": "ACB84677B6C65AB05BDE3FA7A1A12289D3F7211D6165C2EFFECDFEC341550653"
+    },
+    {
+      "path": "app/Services/Recommendation/RecommendationEligibilityProvider.php",
+      "size_bytes": 2023,
+      "sha256": "A1D373212D78EBF5E36E915EF2D111E7591F55558B63368AD98EA0245B9240B3"
+    },
+    {
+      "path": "app/Services/Recommendation/RecommendationMlClientFactory.php",
+      "size_bytes": 1112,
+      "sha256": "F568920D485D59778C8EFB1FF955BD62043089799006FB5970A495E2BDC79396"
+    },
+    {
+      "path": "app/Services/Recommendation/RecommendationMlRequestMapper.php",
+      "size_bytes": 8317,
+      "sha256": "A33199E24B985D57F529D10B0E18A78AFB808918F9E47714C2A325513EE27EC4"
+    },
+    {
+      "path": "app/Services/Recommendation/RecommendationOrchestrator.php",
+      "size_bytes": 22083,
+      "sha256": "18439EC28744201A7A2E334CB78AE00D69091B69D6809A591FC796EEC93F33D5"
+    },
+    {
+      "path": "app/Services/Recommendation/RecommendationResultCache.php",
+      "size_bytes": 3538,
+      "sha256": "6D5A346CB9D9B2D4137DDD72291B68BBE83C1C00DEDDEC55DE1E329275A7E48F"
+    },
+    {
+      "path": "app/Services/Recommendation/RecommendationResultHydrator.php",
+      "size_bytes": 10692,
+      "sha256": "D16476D7C3070537021C3D5013BAAD081095967CA6F757D1669A0AAAE2A56B21"
+    },
+    {
+      "path": "app/Services/Recommendation/RecommendationResultStore.php",
+      "size_bytes": 9275,
+      "sha256": "035275BD480342EBBF92B045C6EDE55D82387440537EFB68531364FC1C153EB5"
+    },
+    {
+      "path": "app/Services/RecommendationMl/RecommendationMlClient.php",
+      "size_bytes": 7559,
+      "sha256": "51EF67C1E37CED6062303C2C5245F177969FC3653C2CF297654B0F559C4F6CA4"
+    },
+    {
+      "path": "app/Services/TestAnswerService.php",
+      "size_bytes": 14730,
+      "sha256": "01BB6E45667C63C049FE0EAA1190E77A3A20B133308C827D9BD3D20E49C6F23C"
+    },
+    {
+      "path": "app/Services/TestAssignmentDeadlineService.php",
+      "size_bytes": 6471,
+      "sha256": "3ACD6DB0C55AD3837E0A58804BF63D29A95B2A04590ED32F5E92E7963D07CF51"
+    },
+    {
+      "path": "app/Services/TestAttemptContentService.php",
+      "size_bytes": 1607,
+      "sha256": "2BA114CCD4E438228274A764B6F70DC48737FC71673DF516F6503D9E4D602C9B"
+    },
+    {
+      "path": "app/Services/TestAttemptTimingService.php",
+      "size_bytes": 3126,
+      "sha256": "BE51D85477C6067B7A79601922C21370068C2AB6CBF789AD798801BD5A466C87"
+    },
+    {
+      "path": "app/Services/TestGradingService.php",
+      "size_bytes": 6286,
+      "sha256": "8E202983D7B7433AF1FCE309BE05D163B566E588359F3F34D62A727327FEDEC0"
+    },
+    {
+      "path": "app/Services/TestManualGradingService.php",
+      "size_bytes": 15309,
+      "sha256": "E5437FC47A85F4E7CDEBE5AA311F98A398528EA164B40D8B84E4515101011ADB"
+    },
+    {
+      "path": "app/Services/TestQuestionService.php",
+      "size_bytes": 12937,
+      "sha256": "F4482A6928E377D6D017BB1875C5FDEB84D1F8ADEB37660B3E51AAB439F2301F"
+    },
+    {
+      "path": "app/Services/TestRetakeService.php",
+      "size_bytes": 11269,
+      "sha256": "5116DFA438E2D5F90C50CE5C24CDA7F074DBBF54301A3073683CC8632E14EBC4"
+    },
+    {
+      "path": "app/Services/TestScorePolicyService.php",
+      "size_bytes": 5332,
+      "sha256": "15FF654BFB285C9C51ED3F3C4555107C28BABBDB4BE9D97B975351ADC6EC79B8"
+    },
+    {
+      "path": "app/Services/TestService.php",
+      "size_bytes": 23150,
+      "sha256": "E9DFCF502079F07D646A7FA0295C054DE521394FF84B11F0C3E7AE9661D247E1"
+    },
+    {
+      "path": "app/Support/ApiResponse.php",
+      "size_bytes": 1352,
+      "sha256": "6DD2F200541265F12432465D59736B8DC505D55742867D46857C80B40C70CD32"
+    },
+    {
+      "path": "app/Support/Recommendation/MlRecommendationResourceAdapter.php",
+      "size_bytes": 6831,
+      "sha256": "CCF6D94350990A3D7751FE93EB8020958490636F512E04161C1F4755275F550A"
+    },
+    {
+      "path": "app/Support/RecommendationMl/MlDataValidator.php",
+      "size_bytes": 5066,
+      "sha256": "8D8269D36F48B3702CA4046542649F9FEFCE8CC3EE5F99E4EAC4CA7366A7A043"
+    },
+    {
+      "path": "app/Support/RecommendationMl/MlOutboundPayloadGuard.php",
+      "size_bytes": 2509,
+      "sha256": "DF794E5169F6E693330168B9CEA30C4252E624CD801F6BFD286C29AAA984A916"
+    },
+    {
+      "path": "app/Support/StoredPrivateFile.php",
+      "size_bytes": 656,
+      "sha256": "2C69BB4ECA09A9262352B1C366EA8267DF60A67747C26F08FC748BA19A29B9EF"
+    },
+    {
+      "path": "artisan",
+      "size_bytes": 425,
+      "sha256": "F91A517C0C5D3A904C3F390933964A5E08EC1FC68146882730DAAC4ACA4FFCEC"
+    },
+    {
+      "path": "bootstrap/app.php",
+      "size_bytes": 8782,
+      "sha256": "56C3AD26DB9549875722ED31C70D1D1D7197D609D531C6D4ECF95BDFAB8A8472"
+    },
+    {
+      "path": "bootstrap/cache/.gitignore",
+      "size_bytes": 14,
+      "sha256": "240A3E0D37D2E86B614063F5347EB02D4F99CA6C254DE6B82871FF8D95532A7D"
+    },
+    {
+      "path": "bootstrap/providers.php",
+      "size_bytes": 89,
+      "sha256": "F720E185207A343D4C19FC99DBB317A4187EFBCD7D38A303A695BBDD77FFB943"
+    },
+    {
+      "path": "compose.ml.yml",
+      "size_bytes": 749,
+      "sha256": "3D06A8DCB5212250FF45D9C74D2956FDF41196FFFE437BB7E11F0DBB8E20E9B7"
+    },
+    {
+      "path": "composer.json",
+      "size_bytes": 3004,
+      "sha256": "6DA5C31FCFFEF90EF2B772C0B0805360FA661A87492B81F35B8E4271E714EAB0"
+    },
+    {
+      "path": "composer.lock",
+      "size_bytes": 333212,
+      "sha256": "EFC3B032057DE7E7509F5D05B2018270FDFC882F7C31AD5776A849890E6F8ADC"
+    },
+    {
+      "path": "config/app.php",
+      "size_bytes": 4272,
+      "sha256": "78DCD36B226FD7B24057CB95F567CB6E96561C2406653892D8AEF6DCEA8461E4"
+    },
+    {
+      "path": "config/application.php",
+      "size_bytes": 66,
+      "sha256": "FF3F8C33669C7DDC4FBC896AFC86013D1EBD8B056E4C85162903E98543F53611"
+    },
+    {
+      "path": "config/auth.php",
+      "size_bytes": 4040,
+      "sha256": "C7E204E9785C9F596D66FB884B493F658F2327F157646BDB4088EFD6B3A7773F"
+    },
+    {
+      "path": "config/cache.php",
+      "size_bytes": 3683,
+      "sha256": "B8BCF382283330B94C0A602FF06452DE819041EA709E28EEA5065D51D1D7D085"
+    },
+    {
+      "path": "config/cv.php",
+      "size_bytes": 904,
+      "sha256": "4D5AC5BB2A62A38E0DA8BD0E6BEB057405794DBE6869C205EC0F385DD692B339"
+    },
+    {
+      "path": "config/database.php",
+      "size_bytes": 6982,
+      "sha256": "06759B7B36B8641E9025FE03DD728970C4CB02D5B58FF709CBB0649987B4BFC2"
+    },
+    {
+      "path": "config/filesystems.php",
+      "size_bytes": 2634,
+      "sha256": "E0FAB09DA02426354E332187E04000A682982F588540A9FAC7E5035883AA85A1"
+    },
+    {
+      "path": "config/logging.php",
+      "size_bytes": 4340,
+      "sha256": "299EC1BA5B5A803C8E20F666AE7628E442E856CC2FF7AC9E2ADB17B97E8AD63B"
+    },
+    {
+      "path": "config/mail.php",
+      "size_bytes": 3631,
+      "sha256": "C43FF49A31C5F32CE21EB7159F2A4B3CD2F4074EAED5838D265646DBFEDD3474"
+    },
+    {
+      "path": "config/matching.php",
+      "size_bytes": 410,
+      "sha256": "766F9D734C6297D971E22AA2DA5B29549E602F45D1B9BB84A146644A087838FC"
+    },
+    {
+      "path": "config/queue.php",
+      "size_bytes": 4199,
+      "sha256": "6101774DA7C8B79AF46D0028F2B8B31A484C3F7EDA10B76E5B27B6093AD364A4"
+    },
+    {
+      "path": "config/recommendation_ml.php",
+      "size_bytes": 2195,
+      "sha256": "2DFE1FDC78F062A5D9BE53BFB51E79FAF7AC2BB5A42F7E84BF505F62A1DB6213"
+    },
+    {
+      "path": "config/sanctum.php",
+      "size_bytes": 3037,
+      "sha256": "797BD69C696B20299D61B0A4B373B4EBF6C23403346E270D5A03E0005E410FE1"
+    },
+    {
+      "path": "config/services.php",
+      "size_bytes": 1039,
+      "sha256": "8258C4487EB1D73A97E569EB0E411E3F25368044812DF4CBA807860432BE1D92"
+    },
+    {
+      "path": "config/session.php",
+      "size_bytes": 7848,
+      "sha256": "F2E75E189021597E29940C0859C00C3088EC591E403768FFF5143C5687A80F59"
+    },
+    {
+      "path": "database/.gitignore",
+      "size_bytes": 10,
+      "sha256": "E758642D95E83E907E010B6E46B07B3F953C7CEF11FE5EBEFC2A77B9D7B4D5F7"
+    },
+    {
+      "path": "database/factories/CompanyFactory.php",
+      "size_bytes": 405,
+      "sha256": "9F9A28ECF7F915AAB1C2240C2EE1E4DBD7314576AC95FDA40077D4C311A283BF"
+    },
+    {
+      "path": "database/factories/JobPostingFactory.php",
+      "size_bytes": 900,
+      "sha256": "B0D7E7D8584F025A6F85FB79385C6F8F5F043AE603E34AC1FAC89B67D4EAF8B8"
+    },
+    {
+      "path": "database/factories/JobScreeningQuestionFactory.php",
+      "size_bytes": 743,
+      "sha256": "EC5C6CD387F72080BC99BAA149558C874CF8BDA0F9CF8F6B275144122832B69F"
+    },
+    {
+      "path": "database/factories/JobScreeningQuestionOptionFactory.php",
+      "size_bytes": 582,
+      "sha256": "52CA38EA5190C13AAA172A985BA4F9F2013FE4B29BA0950587653FF0F42E0AB8"
+    },
+    {
+      "path": "database/factories/UserFactory.php",
+      "size_bytes": 1112,
+      "sha256": "FE700836A1BC5C5ED4AD8CD5B553A4D9A93B98B73468CF084669DD31AB8F0608"
+    },
+    {
+      "path": "database/migrations/0001_01_01_000000_create_users_table.php",
+      "size_bytes": 1518,
+      "sha256": "8FF05D5A72705A1CFFB665997DCA0223E8CB0173646290873848C0F81F99B731"
+    },
+    {
+      "path": "database/migrations/0001_01_01_000001_create_cache_table.php",
+      "size_bytes": 867,
+      "sha256": "2CA8398390ECEF8EAF72AEAC7FEFCE67F7DE631B6F2EC7B7081C8DB8953215DC"
+    },
+    {
+      "path": "database/migrations/0001_01_01_000002_create_jobs_table.php",
+      "size_bytes": 1812,
+      "sha256": "7C9C712ADF4091C87BF2612F4D0DCCDFA1DF4501553E4AC068B83D7BD5462FA5"
+    },
+    {
+      "path": "database/migrations/2026_04_27_214025_create_personal_access_tokens_table.php",
+      "size_bytes": 863,
+      "sha256": "C81ECDE85EA5072188C468DCAF79776728B6EB8F684D63FC0D88A4908484CA75"
+    },
+    {
+      "path": "database/migrations/2026_04_28_000001_create_job_seeker_profiles_table.php",
+      "size_bytes": 1010,
+      "sha256": "B95873FCF4DD1BE7DD83FAE1DDEDFC5A4C9BBD121CC57BABD3C365E4D418D530"
+    },
+    {
+      "path": "database/migrations/2026_04_28_000002_create_companies_table.php",
+      "size_bytes": 779,
+      "sha256": "E5C0C313002FD69C85C70155C0BED06B2B6416E47076C667BBFFD12DC4A1C94A"
+    },
+    {
+      "path": "database/migrations/2026_04_28_000003_create_employer_profiles_table.php",
+      "size_bytes": 863,
+      "sha256": "A074536405082BD9E20164B41699962470A082F381617686D84300179AC88751"
+    },
+    {
+      "path": "database/migrations/2026_04_28_000004_create_experiences_table.php",
+      "size_bytes": 976,
+      "sha256": "78EA7004145906533F7897AA7C17AA0864615E358DFD53DCA158B9517B35ED30"
+    },
+    {
+      "path": "database/migrations/2026_04_28_000005_create_education_table.php",
+      "size_bytes": 931,
+      "sha256": "4AF560397B57B2BCBB49F185A2E04631FB587753E24978B8BC13A33EDB5AFE04"
+    },
+    {
+      "path": "database/migrations/2026_04_28_000006_create_skills_table.php",
+      "size_bytes": 621,
+      "sha256": "8918F27EFD8D6D8E4B1FD51405D43899734A9B7311485D9744D7EAD295D0B63A"
+    },
+    {
+      "path": "database/migrations/2026_04_28_000007_create_job_seeker_skills_table.php",
+      "size_bytes": 786,
+      "sha256": "E043B8FCAE4FF367EBF3D0C3B13F281593255F1D61575368901175212AF2C8D8"
+    },
+    {
+      "path": "database/migrations/2026_04_28_000008_create_cv_files_table.php",
+      "size_bytes": 1127,
+      "sha256": "462AD2E09C9BC6C596C52EA827AF2D37125DE5BB729F160EFD80357A55376628"
+    },
+    {
+      "path": "database/migrations/2026_04_28_000009_create_cv_parsing_results_table.php",
+      "size_bytes": 725,
+      "sha256": "A176A0890822C88B8034BAE48CA64DF3AAD64DDD73F95E4DA1360691CB486B12"
+    },
+    {
+      "path": "database/migrations/2026_04_29_000010_create_job_postings_table.php",
+      "size_bytes": 1292,
+      "sha256": "4E1CBCF7301955E212039E03392CC78DEFAF2542C746A740F531532CD287BCAE"
+    },
+    {
+      "path": "database/migrations/2026_04_29_000011_create_job_posting_skills_table.php",
+      "size_bytes": 774,
+      "sha256": "ACCBC86D3E6DE4FA1CE55511C7EF126A1B1C3F6779A83123BCB8CDDE29731478"
+    },
+    {
+      "path": "database/migrations/2026_04_29_000012_create_application_statuses_table.php",
+      "size_bytes": 639,
+      "sha256": "0678A4148DA76554E616D94FF21996DA0308E120D9F29BF758B9108683147B5F"
+    },
+    {
+      "path": "database/migrations/2026_04_29_000013_create_job_applications_table.php",
+      "size_bytes": 961,
+      "sha256": "7A57D41F0306D4A87A13328A8A4F0C54101D56552C59449AAD1B317A59916B54"
+    },
+    {
+      "path": "database/migrations/2026_04_29_000014_create_application_status_histories_table.php",
+      "size_bytes": 1108,
+      "sha256": "F277DF337C66599D79A0C31F09596916E003DB25572436B15362CB1283E3F570"
+    },
+    {
+      "path": "database/migrations/2026_04_29_000015_create_tests_table.php",
+      "size_bytes": 909,
+      "sha256": "E053D38A30D08FA194C0FE871A20CA8803EE4905CBAE5FFE4FC848D0320CE2D8"
+    },
+    {
+      "path": "database/migrations/2026_04_29_000016_create_application_test_assignments_table.php",
+      "size_bytes": 989,
+      "sha256": "8EB4416D2722442EA3BCD94234F80946B70711B0D037356F32CD09DA05EF6E31"
+    },
+    {
+      "path": "database/migrations/2026_04_29_000017_create_test_attempts_table.php",
+      "size_bytes": 1128,
+      "sha256": "D4DE90AC43C64B35451529DDD31E01B4E8BFD247D4D0A57BBC4A1FB9A96F5853"
+    },
+    {
+      "path": "database/migrations/2026_04_29_000018_create_interviews_table.php",
+      "size_bytes": 1372,
+      "sha256": "CF2599444AED2214FA65B084F38468B3ED433581DB9E6701FDEDF888046B70B6"
+    },
+    {
+      "path": "database/migrations/2026_04_29_000019_create_interview_evaluations_table.php",
+      "size_bytes": 897,
+      "sha256": "020CB4C20769E8146478796230834641C433F5D1157D34A4E32A049DD30435E8"
+    },
+    {
+      "path": "database/migrations/2026_04_29_000020_create_interview_evaluation_items_table.php",
+      "size_bytes": 864,
+      "sha256": "4F53F2BA9E7CFED2F7D8EE8EAED7FD8274341CB718C0404CB952FFCAE68C3C35"
+    },
+    {
+      "path": "database/migrations/2026_04_30_000001_create_notifications_table.php",
+      "size_bytes": 868,
+      "sha256": "1B5F6647AA041FC3A0E75C857471BF9FBE4DFC6B45FB610CCDF776511CF3D096"
+    },
+    {
+      "path": "database/migrations/2026_04_30_000002_add_admin_status_fields.php",
+      "size_bytes": 957,
+      "sha256": "87BA548FC072A57FFF3A030312077E7745046DEB969EFA148F4F188F7820C9E5"
+    },
+    {
+      "path": "database/migrations/2026_05_01_000001_create_profile_change_suggestions_table.php",
+      "size_bytes": 1578,
+      "sha256": "CBB2822FF215A0219029E49828AB73939D9F26C94DBF700E9EDCCA652D5E9BE7"
+    },
+    {
+      "path": "database/migrations/2026_07_01_000001_create_audit_logs_table.php",
+      "size_bytes": 1195,
+      "sha256": "854B5B478CD2FE73D824E45D55EF9E6C505446310BC5487EDF3D181D35FF3BF2"
+    },
+    {
+      "path": "database/migrations/2026_07_02_000001_add_application_submission_fields.php",
+      "size_bytes": 1082,
+      "sha256": "B85B108EC9B7EA736EC19CBCE55DE470140256E864F73845473C858A216A6EAE"
+    },
+    {
+      "path": "database/migrations/2026_07_02_000002_add_profile_data_source_tracking.php",
+      "size_bytes": 2529,
+      "sha256": "49AEC437FDC1E761A5A0901FFC319F30510277E207F1793AB944D2A49778F514"
+    },
+    {
+      "path": "database/migrations/2026_07_17_000001_add_company_id_to_tests_table.php",
+      "size_bytes": 749,
+      "sha256": "3CB820727FE5D95C0DE5115E37D07AE219DDBF213F9E0AD46134729988E536A4"
+    },
+    {
+      "path": "database/migrations/2026_07_17_000002_create_test_questions_table.php",
+      "size_bytes": 854,
+      "sha256": "6575B40F8B91162734F05381596A33D590F2BAEA19A2E9A52BCD065D7D1E6498"
+    },
+    {
+      "path": "database/migrations/2026_07_17_000003_create_test_options_table.php",
+      "size_bytes": 760,
+      "sha256": "D5930C6AE8B751FE8EB688165B3B79E8FE29CA7E78E0ACB421460BF0A50A2BAC"
+    },
+    {
+      "path": "database/migrations/2026_07_17_000004_create_test_answers_table.php",
+      "size_bytes": 1040,
+      "sha256": "37BF2CCE7586339D920163FA6E485C35A87B837323B510D1EB6D71A28CDD725B"
+    },
+    {
+      "path": "database/migrations/2026_07_17_000005_create_test_answer_options_table.php",
+      "size_bytes": 680,
+      "sha256": "331C9A06755A76EABFBA2D4981B87C76C96ADD421B7A4E3829D8C566E092E25D"
+    },
+    {
+      "path": "database/migrations/2026_07_17_000006_add_grading_fields_to_test_attempts_table.php",
+      "size_bytes": 1718,
+      "sha256": "C1B46AD8228BD77DC1FA885B1F71D6914592DD530DF3F6F95ED682E0F01140FF"
+    },
+    {
+      "path": "database/migrations/2026_07_17_000007_create_test_answer_gradings_table.php",
+      "size_bytes": 1013,
+      "sha256": "B50192DDE28CDD87171992CE97BD3A9E65CF8811A639CCE9BBCF4738B69C2810"
+    },
+    {
+      "path": "database/migrations/2026_07_17_000008_add_deadline_at_to_application_test_assignments_table.php",
+      "size_bytes": 652,
+      "sha256": "E781906FE3663CFE0816D6DEAAB1049C9562ED0813D4C344467921413B2457B2"
+    },
+    {
+      "path": "database/migrations/2026_07_17_000009_create_application_test_assignment_deadline_changes_table.php",
+      "size_bytes": 1130,
+      "sha256": "0C9BE971C7D5A17992D8FC089C64DD1C0FAD72A4C0C36C5D35C306D746299744"
+    },
+    {
+      "path": "database/migrations/2026_07_17_000010_add_retake_series_fields_to_application_test_assignments_table.php",
+      "size_bytes": 3488,
+      "sha256": "42B73756EDF8878CD05BD10ECAE4A7B2F488CD6404BEA143346E7E9AE941533E"
+    },
+    {
+      "path": "database/migrations/2026_07_17_000011_add_mvp_fields_to_job_postings_table.php",
+      "size_bytes": 798,
+      "sha256": "BCC0AC274290733C1EADA639B841BE0D15E76ED5AC57BE731643AB291F36D474"
+    },
+    {
+      "path": "database/migrations/2026_07_17_000012_add_effective_deadline_at_to_test_attempts_table.php",
+      "size_bytes": 651,
+      "sha256": "167E4DFD003E25807977F39475CE40972762B52C41CD3B459B3554BD8309CCEF"
+    },
+    {
+      "path": "database/migrations/2026_07_17_000012_add_requirement_type_to_job_posting_skills_table.php",
+      "size_bytes": 650,
+      "sha256": "8B2EA112E895A238FC3BCAE9C44471DBA9A795E99D6E52FF4EAEE4FEE0F4BBC9"
+    },
+    {
+      "path": "database/migrations/2026_07_17_000013_create_application_information_request_tables.php",
+      "size_bytes": 3929,
+      "sha256": "9FB0E060C908F360B208754AC0554BC0C0F2B94C90D00FCC9B36555E41917B61"
+    },
+    {
+      "path": "database/migrations/2026_07_18_000001_add_lifecycle_fields_to_cv_files.php",
+      "size_bytes": 873,
+      "sha256": "88B4C4C39A91072F320D762B6E5F2046E1458B8782C91B7B4478FF575A9CFF4A"
+    },
+    {
+      "path": "database/migrations/2026_07_18_000001_normalize_test_score_configuration.php",
+      "size_bytes": 1601,
+      "sha256": "FE884D35108BFA13EC97A3551B0DBA8ABE8F62278EE0CD31ADBD24AF62DBF49F"
+    },
+    {
+      "path": "database/migrations/2026_07_18_000002_add_primary_cv_to_job_seeker_profiles.php",
+      "size_bytes": 2106,
+      "sha256": "A16C4F2CEBC7E41049A8E9B53CB8C556F7CD611FE334C5E2628114E743691AD3"
+    },
+    {
+      "path": "database/migrations/2026_07_18_000002_create_event_side_effect_executions_table.php",
+      "size_bytes": 960,
+      "sha256": "E22DDFCF313F4914D0D0669170DDA468B6271187F1269AC3C9E461609CA78DF3"
+    },
+    {
+      "path": "database/migrations/2026_07_18_000003_complete_interview_lifecycle.php",
+      "size_bytes": 6219,
+      "sha256": "03726A966C17D3055834D4CB454681329E7F6BB7D86EB0D71718ED01F30CCF37"
+    },
+    {
+      "path": "database/migrations/2026_07_18_000004_create_application_internal_note_tables.php",
+      "size_bytes": 1806,
+      "sha256": "5286101FBACBD5E725872D94BE1CC4F4D605A1EA7B0AA28B2E6E79871E20E246"
+    },
+    {
+      "path": "database/migrations/2026_07_19_000001_add_review_fields_to_cv_files.php",
+      "size_bytes": 1136,
+      "sha256": "BD97D9A2C876DB76232D6C19C210F17F73F8F40B790C90600E80382408C41EB4"
+    },
+    {
+      "path": "database/migrations/2026_07_19_000002_add_reviewed_json_to_cv_parsing_results.php",
+      "size_bytes": 661,
+      "sha256": "43C44EC342FD9E5FD7BDFB828A4741D581AFCE54BC7AD5A84A28F2DDA93BE943"
+    },
+    {
+      "path": "database/migrations/2026_07_20_000001_add_job_contract_fields_to_job_postings_table.php",
+      "size_bytes": 927,
+      "sha256": "6EF3416EE9A833CB20A00720A6122D6961586AB363B1A015BE0FCA20AC14CF37"
+    },
+    {
+      "path": "database/migrations/2026_07_20_000002_create_job_screening_question_tables.php",
+      "size_bytes": 5949,
+      "sha256": "78D6963177FFD9C79AED9DDB28B42E78842478D252B934977124187FB7F91314"
+    },
+    {
+      "path": "database/migrations/2026_07_20_000003_add_candidate_matching_fields.php",
+      "size_bytes": 1388,
+      "sha256": "758E11009CB81E5DBD2CF3C4F0D75B1841B892089E3D5768BAD8B7E6C9ECEB7E"
+    },
+    {
+      "path": "database/migrations/2026_07_25_000001_create_recommendation_tables.php",
+      "size_bytes": 2831,
+      "sha256": "80A2EEEE5769455BAC56BA51A5D613EBCB6FCE16E36F45AB3A970A81EA04E386"
+    },
+    {
+      "path": "database/seeders/ApplicationStatusSeeder.php",
+      "size_bytes": 1428,
+      "sha256": "03D3BCD6A31A04113E73E31B4CC1FBA0CAA64FD5D6D9A1FBA6F580C43FB605B7"
+    },
+    {
+      "path": "database/seeders/DatabaseSeeder.php",
+      "size_bytes": 411,
+      "sha256": "5DFB458EE7B8EC19724F3F61398F3383FF69533297D5DAC8B52A138413111D1F"
+    },
+    {
+      "path": "database/seeders/SampleUserSeeder.php",
+      "size_bytes": 10694,
+      "sha256": "3097E474D50A25AED1EC88B60B992BD44BBC97805A6AC430902A661329557B11"
+    },
+    {
+      "path": "docker/apache.conf",
+      "size_bytes": 284,
+      "sha256": "DB26A6BDDAC8E4D901F5A2A005A30E2D8C83F13E35023B0B8C074171373C37C7"
+    },
+    {
+      "path": "docs/MOBILE_CV_REVIEW_FLOW.md",
+      "size_bytes": 3891,
+      "sha256": "BE5DF708D51700AA03488982826AEEA41AC5F43AC3DAEAFD2BBE373ED77121D0"
+    },
+    {
+      "path": "docs/PRIVATE_STORAGE_MIGRATION_RUNBOOK.md",
+      "size_bytes": 3673,
+      "sha256": "83859F9B10F844B87109B699998B5848B5F354129FB665C3A8D039FCF3BBE42D"
+    },
+    {
+      "path": "docs/PRIVATE_STORAGE_RECOVERY_RUNBOOK.md",
+      "size_bytes": 2913,
+      "sha256": "C0FBC51A1ACE56167DD15F9C761740E23700A04331BF8B5EDA7CCA63D4F45461"
+    },
+    {
+      "path": "docs/RENDER_OBJECT_STORAGE_SETUP.md",
+      "size_bytes": 3394,
+      "sha256": "AD4DF585242F6103402959913685BF14E304422BD2833618636CB166D9CBD0AD"
+    },
+    {
+      "path": "docs/ml-job-recommendation/ARCHITECTURE.md",
+      "size_bytes": 53792,
+      "sha256": "60EB219152CE26B525735ED65564F667D403BF438F29000B4ECE90D65950553F"
+    },
+    {
+      "path": "docs/ml-job-recommendation/PHASE_16_INTEGRITY_EXCEPTION.md",
+      "size_bytes": 637,
+      "sha256": "B53A3950A53552542C10A6B2DDA2FF5B3BC3C5B25870D8C5310507515514E422"
+    },
+    {
+      "path": "docs/ml-job-recommendation/PHASE_17_PROTECTED_BASELINE.json",
+      "size_bytes": 168285,
+      "sha256": "CB3959FF2550064CA4F7D82953A1E6E0A539A1C32A2BC97ABB1E64F09FDBCAC0"
+    },
+    {
+      "path": "docs/ml-job-recommendation/phase17/E2E_TEST_MATRIX.json",
+      "size_bytes": 23967,
+      "sha256": "039755B90097B2A0AFE34E444F49E143FF9466789247222DBA81FED82FA0006C"
+    },
+    {
+      "path": "docs/ml-job-recommendation/phase17/PHASE_17_E2E_REPORT.md",
+      "size_bytes": 18241,
+      "sha256": "6FB97968B6FD59890308CC16BDAD7BF7E69E0382BC4A1B20BF7C5F245D223C10"
+    },
+    {
+      "path": "package.json",
+      "size_bytes": 414,
+      "sha256": "E1BF666B49A401C06EDE562B32FC741B8E8DC45CCA0A67DE136EDFBD51335F33"
+    },
+    {
+      "path": "phpunit.xml",
+      "size_bytes": 1322,
+      "sha256": "493369CFB7FEEA104DA4BEC214C2CC6526CA2F1B9D937C50A2961FC59CB61AAF"
+    },
+    {
+      "path": "postman/Smart Recruitment Platform - Environment.postman_environment.json",
+      "size_bytes": 9267,
+      "sha256": "20BC1051C912CF0F8C59FCA2F27143F9CB58BBE63C03703643EA4042AF03463B"
+    },
+    {
+      "path": "postman/Smart Recruitment Platform - Mobile App.postman_collection.json",
+      "size_bytes": 73142,
+      "sha256": "09AF93FD6DFFC1F4978DADC79DD6DD4744DE1A6E4775CDFDF2102C14A0689FA1"
+    },
+    {
+      "path": "postman/Smart Recruitment Platform - Web App.postman_collection.json",
+      "size_bytes": 267246,
+      "sha256": "7E6967D6046E15DB65C8DAA8AD090CFEA69A89D1F7B9A154D53D72B56577CAE4"
+    },
+    {
+      "path": "public/.htaccess",
+      "size_bytes": 740,
+      "sha256": "B7E379C77639FD56144947DBAE84C84EB466D9C686EA81F2F013AE85421DA923"
+    },
+    {
+      "path": "public/favicon.ico",
+      "size_bytes": 0,
+      "sha256": "E3B0C44298FC1C149AFBF4C8996FB92427AE41E4649B934CA495991B7852B855"
+    },
+    {
+      "path": "public/index.php",
+      "size_bytes": 543,
+      "sha256": "EBA77CBA39695B6BD091FE5211D481F7EBB2CE2D8D26230B5A609465D0A4AFF9"
+    },
+    {
+      "path": "public/robots.txt",
+      "size_bytes": 24,
+      "sha256": "E5C4B84484EE4216E9373BE99380320C25DD94805F99F0A805846F087636553F"
+    },
+    {
+      "path": "reports/BACKEND_MVP_PRODUCTION_READINESS_AUDIT.md",
+      "size_bytes": 23916,
+      "sha256": "AB6D3262417E286D29969406F8409058FE2F4CC99A0624D54459D85FCD414C05"
+    },
+    {
+      "path": "reports/COMPOSER_SECURITY_REMEDIATION.md",
+      "size_bytes": 5519,
+      "sha256": "6F086F4C07701E2D60C58D77C099B8CF9BC9CA722FE95488E925569D8820C725"
+    },
+    {
+      "path": "reports/api-route-coverage-matrix.csv",
+      "size_bytes": 84069,
+      "sha256": "5F4F25C7FC1B8D63F5ED6402BCA42CE9FD0B4FF1A5A54A59808C425F8F7B9B01"
+    },
+    {
+      "path": "reports/backend-mvp-findings.csv",
+      "size_bytes": 11467,
+      "sha256": "091BA6CE2A0930B543A0BAAB788CC02D35FF7D0D1BA0FB4EC32043775726D5D0"
+    },
+    {
+      "path": "reports/mysql-compatibility-audit.md",
+      "size_bytes": 3840,
+      "sha256": "23CA3DF04169BC4E9DADCB95713A9E28CCB19D463507709CAE4787E88BB4637A"
+    },
+    {
+      "path": "reports/production-deployment-checklist.md",
+      "size_bytes": 7294,
+      "sha256": "4A71E31AFDCACE569C75C44110E749ED8FB6BA1F7A4D5D80BB58AACE1FF7345A"
+    },
+    {
+      "path": "resources/css/app.css",
+      "size_bytes": 390,
+      "sha256": "9F49ED837FDC773B89A294D1E86DC68828EF2F774D7E797BA5F89C2A08C84760"
+    },
+    {
+      "path": "resources/js/app.js",
+      "size_bytes": 22,
+      "sha256": "CF6DAB196C721F6911FF99CC4F910897F978599A2D289971A316A5FC33091F94"
+    },
+    {
+      "path": "resources/js/bootstrap.js",
+      "size_bytes": 127,
+      "sha256": "6FD9FC82E68FA915A882F4E227B9FAACBE7BFD66CB953C628840E83BDA6B72F4"
+    },
+    {
+      "path": "resources/views/welcome.blade.php",
+      "size_bytes": 82568,
+      "sha256": "E50E41602994840B788471625FEC54A4DB6138EC971BE05CFDFBA40DAF906C22"
+    },
+    {
+      "path": "routes/api.php",
+      "size_bytes": 129,
+      "sha256": "D08520E451ACB036A25D6BDAEBDD1942F236018D2512CD5F5C747599C0C13697"
+    },
+    {
+      "path": "routes/api/v1.php",
+      "size_bytes": 23361,
+      "sha256": "0DAAE095115E3B8CBBBA0AFD74FAB231B99376395EB0B362EDD60304E54B2686"
+    },
+    {
+      "path": "routes/console.php",
+      "size_bytes": 210,
+      "sha256": "9ADCCC33E7DD400683E434774077C7FDB2F299C5712CEDF16A43FDF56F2850FA"
+    },
+    {
+      "path": "routes/web.php",
+      "size_bytes": 108,
+      "sha256": "248C7EEEB43BB61EE4FB6603E52B44843C64F72A841D671BCD41871AAB23F970"
+    },
+    {
+      "path": "scripts/phase17/README.md",
+      "size_bytes": 1064,
+      "sha256": "B661FB1185C758D577EBA9C6FEB69644521747711755B88CDC169091B93EAA71"
+    },
+    {
+      "path": "scripts/phase17/fault_server.py",
+      "size_bytes": 7451,
+      "sha256": "2E0E863FA26A9F614DF8C77B069BCAB8F6FC4488BCEFAD11C423210FBAFDC25D"
+    },
+    {
+      "path": "scripts/phase17/run-e2e.ps1",
+      "size_bytes": 38230,
+      "sha256": "6D31A2FDD21A93F6078D1CED013CC353D869F1A69EC77270AF79BFA9506A1016"
+    },
+    {
+      "path": "services/ml-recommendation/.dockerignore",
+      "size_bytes": 1104,
+      "sha256": "AC12891F00E3D0974E6F7866E1376521A5D914AE8964CA7FDCF7D930318B8ED3"
+    },
+    {
+      "path": "services/ml-recommendation/.gitignore",
+      "size_bytes": 133,
+      "sha256": "7193BD5135EAE3438C609A4486A8B67393CA74453BE541EB9C60094644507A18"
+    },
+    {
+      "path": "services/ml-recommendation/DEPLOYMENT.md",
+      "size_bytes": 5958,
+      "sha256": "913A05C94CD39EA8328065C6A91EB806F712736FE51C04B82A13E6C779076E7D"
+    },
+    {
+      "path": "services/ml-recommendation/Dockerfile",
+      "size_bytes": 3806,
+      "sha256": "4F18B71D4079384198B90C3342D0ADE625431F312860EC81D800F711E4061D2A"
+    },
+    {
+      "path": "services/ml-recommendation/README.md",
+      "size_bytes": 23532,
+      "sha256": "AC19C16DAC567DCF8BCF2DAF90D4ADA3C6AE76C24932197CECD9CEA2DBB55E36"
+    },
+    {
+      "path": "services/ml-recommendation/container/healthcheck.py",
+      "size_bytes": 1301,
+      "sha256": "8C32B8FA2CBBA354D5B8CC3FEA6255646444C0C7D1371ED55F291AC8691CB2B9"
+    },
+    {
+      "path": "services/ml-recommendation/container/start.py",
+      "size_bytes": 1583,
+      "sha256": "0400C8D9062D915B3F781AAFEECD813400FCAAD097A67C02C9573AAC935D83C8"
+    },
+    {
+      "path": "services/ml-recommendation/data/baselines/v1/BASELINE_REPORT.md",
+      "size_bytes": 9661,
+      "sha256": "E6F142989BCF1DED5216A078983EFF2C7FA986EF1B75A9C6F39E94E9B92E2A95"
+    },
+    {
+      "path": "services/ml-recommendation/data/baselines/v1/manifest.json",
+      "size_bytes": 8546,
+      "sha256": "CB5853921B6CDFEF7A53989E79950116290B06CFD27596ACF70F79FBB33636D4"
+    },
+    {
+      "path": "services/ml-recommendation/data/baselines/v1/metrics.json",
+      "size_bytes": 9747,
+      "sha256": "4BFFEF2B5E2C2BA16CCF92686465E45533DFC075B8AB56BC2544AF1FCCD75778"
+    },
+    {
+      "path": "services/ml-recommendation/data/baselines/v1/parity.json",
+      "size_bytes": 1271,
+      "sha256": "EE246B0125D9CA10E7C93A1F61FC33D5ADB1117B8546FE576480F456F8AB96EF"
+    },
+    {
+      "path": "services/ml-recommendation/data/baselines/v1/train_predictions.jsonl",
+      "size_bytes": 5014918,
+      "sha256": "2669FADA65567136970EC22F60005442362E98D7B5376B6D8E47294468C39F5E"
+    },
+    {
+      "path": "services/ml-recommendation/data/baselines/v1/validation_predictions.jsonl",
+      "size_bytes": 1074589,
+      "sha256": "8A963A733021E2FE03E6B5BFC20FEA156AFB1B538C5514776F59E144CB8E271B"
+    },
+    {
+      "path": "services/ml-recommendation/data/bundles/recommendation/v1/BUNDLE_CARD.md",
+      "size_bytes": 1907,
+      "sha256": "0AE2DDE55BE982B0639238F6D4CED78FE15B02518CED6C54C9842147124A7FE8"
+    },
+    {
+      "path": "services/ml-recommendation/data/bundles/recommendation/v1/bundle_manifest.json",
+      "size_bytes": 2423,
+      "sha256": "1D566E4516724FAE0C08CD6131214C0722DFFCD589A370CF2405B8B0450DFB00"
+    },
+    {
+      "path": "services/ml-recommendation/data/bundles/recommendation/v1/explanation_contract.json",
+      "size_bytes": 1903,
+      "sha256": "D6D38967FAAB739C038BDAD04DF23D3ECD3683F3279C2CA7D39C95B17CD3B8A1"
+    },
+    {
+      "path": "services/ml-recommendation/data/bundles/recommendation/v1/feature_schema.json",
+      "size_bytes": 45406,
+      "sha256": "AEB260B25F34B55B7164B215E613A0B4327DF33EE65AF95ABC904045849CE4A0"
+    },
+    {
+      "path": "services/ml-recommendation/data/bundles/recommendation/v1/model.json",
+      "size_bytes": 920863,
+      "sha256": "3ABD74137BC8881667643F31A658C790EF6712359D7802EA7FCFFA0C4CF9E26E"
+    },
+    {
+      "path": "services/ml-recommendation/data/bundles/recommendation/v1/model_metadata.json",
+      "size_bytes": 6000,
+      "sha256": "5485A2058D22777C3CAFE9EA5871AC7534F555BFCE6FB8275DDF89526358CB11"
+    },
+    {
+      "path": "services/ml-recommendation/data/bundles/recommendation/v1/reason_code_mapping.json",
+      "size_bytes": 1529,
+      "sha256": "EBB263EB181FFA10114555B3719EF2845E4454795AE9690382624EA33ED03BA5"
+    },
+    {
+      "path": "services/ml-recommendation/data/bundles/recommendation/v1/score_transform.json",
+      "size_bytes": 1079,
+      "sha256": "533D94E9AD8F404D09E5BF8E67B9BF49766899D09E20C6EF2C62DAFA686E56AC"
+    },
+    {
+      "path": "services/ml-recommendation/data/contracts/inference/v1/INFERENCE_CONTRACT.md",
+      "size_bytes": 3723,
+      "sha256": "5D1E909DF798EF716A4997AAE17D3E97C5417779CAC59BF7B2E9200A5BBF4B80"
+    },
+    {
+      "path": "services/ml-recommendation/data/contracts/inference/v1/contract_manifest.json",
+      "size_bytes": 2301,
+      "sha256": "A51E8F4E74189CCB086BDB7FE32816C6E56953533F3C77243E50650BE0BF9CB2"
+    },
+    {
+      "path": "services/ml-recommendation/data/contracts/inference/v1/openapi.json",
+      "size_bytes": 27118,
+      "sha256": "B73B11B5FA67C40927E5A05AB72E2D2F7B292FA3149F0D945AE74BE08F7CA96D"
+    },
+    {
+      "path": "services/ml-recommendation/data/contracts/inference/v1/request.example.json",
+      "size_bytes": 4704,
+      "sha256": "A21D59AB86E6B01B69F7BD2C7E7E4A4535C3CBF0F4D06E3F014D32B940B0AB91"
+    },
+    {
+      "path": "services/ml-recommendation/data/contracts/inference/v1/response.example.json",
+      "size_bytes": 5145,
+      "sha256": "748A4716BAD9E57C85CC50375CE8762CDAAF37106B70228233CE2FA684B66BC0"
+    },
+    {
+      "path": "services/ml-recommendation/data/evaluations/final-test/v1/FINAL_TEST_REPORT.md",
+      "size_bytes": 3468,
+      "sha256": "6CDCC62C8ADE910058D75086012F93DA64684FA28315899132E9280E8557D064"
+    },
+    {
+      "path": "services/ml-recommendation/data/evaluations/final-test/v1/comparison.json",
+      "size_bytes": 2449,
+      "sha256": "C1DACC745FDFC9ADE72F53829E2336A4F0CEC427979066D337F5052B30CC0886"
+    },
+    {
+      "path": "services/ml-recommendation/data/evaluations/final-test/v1/evaluation_receipt.json",
+      "size_bytes": 2624,
+      "sha256": "A9F58DB9B33DFB81A8476DAE6581E2BEB6E26331AD8E3E9F7F47B0816584036C"
+    },
+    {
+      "path": "services/ml-recommendation/data/evaluations/final-test/v1/manifest.json",
+      "size_bytes": 7273,
+      "sha256": "0A4051FA80A7F22CDF741679922150E3F4DAB5CAEE21BC8A41933CFFB5C13386"
+    },
+    {
+      "path": "services/ml-recommendation/data/evaluations/final-test/v1/matching_parity.json",
+      "size_bytes": 775,
+      "sha256": "05ADC3DB5187058774CA0BB85065330D3A4B8C5DA74EA9EB9D1D6BE96FB291FA"
+    },
+    {
+      "path": "services/ml-recommendation/data/evaluations/final-test/v1/metrics.json",
+      "size_bytes": 6914,
+      "sha256": "3DD3260058FEF9ABAF106339816AF50BF370208414E3325A7D293FAACD1034E0"
+    },
+    {
+      "path": "services/ml-recommendation/data/evaluations/final-test/v1/test_predictions.jsonl",
+      "size_bytes": 584163,
+      "sha256": "6E28E38322F668C6DD570D2F522C8693F80AA35AEF878E25013956CF2B165901"
+    },
+    {
+      "path": "services/ml-recommendation/data/explainability/tuned/v1/MODEL_EXPLAINABILITY_REPORT.md",
+      "size_bytes": 6807,
+      "sha256": "5A2A11CB87722D1E77972CDEAF08624E08740C4794DDAC5AACC9A72A509FB8D5"
+    },
+    {
+      "path": "services/ml-recommendation/data/explainability/tuned/v1/explainability_checks.json",
+      "size_bytes": 1796,
+      "sha256": "D37BE7694A91C123E0A0BB19F65605AEC7622FD887BE52236848B46B9FCB8C0F"
+    },
+    {
+      "path": "services/ml-recommendation/data/explainability/tuned/v1/explanation_contract.json",
+      "size_bytes": 1903,
+      "sha256": "D6D38967FAAB739C038BDAD04DF23D3ECD3683F3279C2CA7D39C95B17CD3B8A1"
+    },
+    {
+      "path": "services/ml-recommendation/data/explainability/tuned/v1/feature_group_importance.json",
+      "size_bytes": 40928,
+      "sha256": "DFC251C8F8622DACDC900145573DCCA916462825D7436C32E428DC71AEC051BF"
+    },
+    {
+      "path": "services/ml-recommendation/data/explainability/tuned/v1/global_feature_importance.json",
+      "size_bytes": 125538,
+      "sha256": "0B59D1F0E8EEAD6EBB1EB65580975C1F39247E665DCE1BCFB430B613B50FBF6A"
+    },
+    {
+      "path": "services/ml-recommendation/data/explainability/tuned/v1/local_explanations.jsonl",
+      "size_bytes": 281410,
+      "sha256": "CABE7EA92496C3A91E3DD1EE25CB323E7846AA3ECD87E85CBFD780806C2322A6"
+    },
+    {
+      "path": "services/ml-recommendation/data/explainability/tuned/v1/manifest.json",
+      "size_bytes": 12395,
+      "sha256": "547907387E5C25707F7DAD48E3F8CE6E2C2422535A83193A7F552B9608C619A7"
+    },
+    {
+      "path": "services/ml-recommendation/data/features/v1/FEATURE_SCHEMA_CARD.md",
+      "size_bytes": 3872,
+      "sha256": "578959A86AAFDC45CFFCFF570B1BE8730FC3D93F66C729EB2A6C4813A3B4D771"
+    },
+    {
+      "path": "services/ml-recommendation/data/features/v1/feature_schema.json",
+      "size_bytes": 45406,
+      "sha256": "AEB260B25F34B55B7164B215E613A0B4327DF33EE65AF95ABC904045849CE4A0"
+    },
+    {
+      "path": "services/ml-recommendation/data/features/v1/features.jsonl",
+      "size_bytes": 7337280,
+      "sha256": "4E405D74714A6A9A79B3D6339B19B595CB67B8CBD6F589B721E662D274EBD18E"
+    },
+    {
+      "path": "services/ml-recommendation/data/features/v1/manifest.json",
+      "size_bytes": 3249,
+      "sha256": "DD0E79D6FF8D7441C73A0E284140E5588E01A317B64C1D00C741F145B899882E"
+    },
+    {
+      "path": "services/ml-recommendation/data/models/initial/v1/MODEL_CARD.md",
+      "size_bytes": 3658,
+      "sha256": "628DE4D0B5D470A9196FA292EE72A9E95BFBE09F04E4E98D6E5166CD4DD331F0"
+    },
+    {
+      "path": "services/ml-recommendation/data/models/initial/v1/manifest.json",
+      "size_bytes": 6629,
+      "sha256": "1D94C2CA7895636889613EDD642B1E3B282654B7C84455DB95C4F5B829EAF4ED"
+    },
+    {
+      "path": "services/ml-recommendation/data/models/initial/v1/metrics.json",
+      "size_bytes": 10662,
+      "sha256": "C487FA5446CEC543DF19A7542165A70B760BB02BF5F938E9C2E859089DEED1FE"
+    },
+    {
+      "path": "services/ml-recommendation/data/models/initial/v1/model.json",
+      "size_bytes": 571399,
+      "sha256": "14064405827CB46FF475236E25D4FC6306B3A33278217BA77C6BF3F57FA2B789"
+    },
+    {
+      "path": "services/ml-recommendation/data/models/initial/v1/model_metadata.json",
+      "size_bytes": 5743,
+      "sha256": "8F02244EF31FF6B74A22D7451069BF2AEFC7E7D30B1FE5D87D258E7679715B71"
+    },
+    {
+      "path": "services/ml-recommendation/data/models/initial/v1/train_predictions.jsonl",
+      "size_bytes": 1809493,
+      "sha256": "A2DE6137A9B89D44D8997E00749F3E72EB13692B07B620104B4CDE3FA1225897"
+    },
+    {
+      "path": "services/ml-recommendation/data/models/initial/v1/training_history.json",
+      "size_bytes": 62762,
+      "sha256": "34BE7F56DC8493375B8E291AED216B9EF91FF9830723D27AE0782E2E27F52E72"
+    },
+    {
+      "path": "services/ml-recommendation/data/models/initial/v1/validation_predictions.jsonl",
+      "size_bytes": 387766,
+      "sha256": "9FF94D6A74D29A9DCE4BB6521C352F296CCB5F72751B3B95635725028DFF948B"
+    },
+    {
+      "path": "services/ml-recommendation/data/models/tuned/v1/MODEL_CARD.md",
+      "size_bytes": 3201,
+      "sha256": "ED2F7C06FE50811CFBC40D4E6F1CDFEC23A2D740B8C666018DBE61ED71D027D5"
+    },
+    {
+      "path": "services/ml-recommendation/data/models/tuned/v1/final_train_validation_predictions.jsonl",
+      "size_bytes": 2397494,
+      "sha256": "55E64D1B7AD8098DA6D4938B0C01CC18C456566BEAA3B58089CE8F84F80CAC5C"
+    },
+    {
+      "path": "services/ml-recommendation/data/models/tuned/v1/manifest.json",
+      "size_bytes": 14973,
+      "sha256": "8D71BABF225363B0B3D773147C2F95CAD4BF910F78695A58DEA7D31A6D7A042B"
+    },
+    {
+      "path": "services/ml-recommendation/data/models/tuned/v1/model.json",
+      "size_bytes": 920863,
+      "sha256": "3ABD74137BC8881667643F31A658C790EF6712359D7802EA7FCFFA0C4CF9E26E"
+    },
+    {
+      "path": "services/ml-recommendation/data/models/tuned/v1/model_metadata.json",
+      "size_bytes": 6000,
+      "sha256": "5485A2058D22777C3CAFE9EA5871AC7534F555BFCE6FB8275DDF89526358CB11"
+    },
+    {
+      "path": "services/ml-recommendation/data/models/tuned/v1/selected_config.json",
+      "size_bytes": 2724,
+      "sha256": "5F4CA5A1F497DFB01389D04B54C9A3542DCF9581C1FC0DCE6F54F28DA83F3EC7"
+    },
+    {
+      "path": "services/ml-recommendation/data/models/tuned/v1/selected_validation_predictions.jsonl",
+      "size_bytes": 436177,
+      "sha256": "A9BF4D7944CFA532E80219F4B5299ECDC058C6A2CEA64508FF1BBA0372E09321"
+    },
+    {
+      "path": "services/ml-recommendation/data/models/tuned/v1/selection_metrics.json",
+      "size_bytes": 10466,
+      "sha256": "06863B32964BD6444F95743CE58C0F46292CDB73C520D9BF2660986FF005EB8E"
+    },
+    {
+      "path": "services/ml-recommendation/data/models/tuned/v1/tuning_trials.jsonl",
+      "size_bytes": 22683,
+      "sha256": "2CC4E88A754D9F051129CD94596869A2E67D529A09424E6F645AAB2D33FFABDD"
+    },
+    {
+      "path": "services/ml-recommendation/data/splits/v1/SPLIT_CARD.md",
+      "size_bytes": 3122,
+      "sha256": "381B77138CFB92220A96A5ABAD22C0B4893F54E5B013BB07B26A66495E219402"
+    },
+    {
+      "path": "services/ml-recommendation/data/splits/v1/assignments.jsonl",
+      "size_bytes": 14763,
+      "sha256": "BA5C075F244C8D65200316E44A4B0BB68F579AA6E2B0546E3527E17DB98BC502"
+    },
+    {
+      "path": "services/ml-recommendation/data/splits/v1/manifest.json",
+      "size_bytes": 6057,
+      "sha256": "F032847615DEA42B28D41F8D47F2627DF3D030399C8690DF8747BB1AE26DBD0A"
+    },
+    {
+      "path": "services/ml-recommendation/data/splits/v1/test.jsonl",
+      "size_bytes": 1099011,
+      "sha256": "79FCB93B232B63482A9C26D1D0CAA660289B7B798776C09F0945865CA6741A05"
+    },
+    {
+      "path": "services/ml-recommendation/data/splits/v1/test_lock.json",
+      "size_bytes": 1116,
+      "sha256": "00F938C9F888156022D221A9FB3EAB7C76E8D4316803D175470355A84F33EC73"
+    },
+    {
+      "path": "services/ml-recommendation/data/splits/v1/train.jsonl",
+      "size_bytes": 5137764,
+      "sha256": "D87095055D16CED57461EB8D4543BF4C3863B0EBE1771E5B3528EAF290B98C3D"
+    },
+    {
+      "path": "services/ml-recommendation/data/splits/v1/validation.jsonl",
+      "size_bytes": 1100505,
+      "sha256": "A8CC27158BC126B11E93A0EEFDF6A82A0E3F88E8D82CF9E9A0BAE0491B04DA7E"
+    },
+    {
+      "path": "services/ml-recommendation/data/synthetic/v1/DATASET_CARD.md",
+      "size_bytes": 4555,
+      "sha256": "C35BE3FA0A40C75E28DAC79105971D3A32270B6AC05953515B381CEE92D8D905"
+    },
+    {
+      "path": "services/ml-recommendation/data/synthetic/v1/candidates.jsonl",
+      "size_bytes": 131908,
+      "sha256": "5D0DDBE461437AFD80576E4B36044C94E083ADFE2D232C05E4653A9FA54EF320"
+    },
+    {
+      "path": "services/ml-recommendation/data/synthetic/v1/jobs.jsonl",
+      "size_bytes": 120346,
+      "sha256": "7AA398A1957C8851FB4FEA4743F953BE3F915177AE19266970CCF2D61440E74D"
+    },
+    {
+      "path": "services/ml-recommendation/data/synthetic/v1/manifest.json",
+      "size_bytes": 3026,
+      "sha256": "05916DBBC0EB066C146386F16CF677C714EA0F08DC0EEE59C508C274C1CE6DC1"
+    },
+    {
+      "path": "services/ml-recommendation/data/synthetic/v1/pairs.jsonl",
+      "size_bytes": 3912080,
+      "sha256": "31A2E7C6F26E0C9840674CD7CAFF465BE70EC4F753C13333F61AE3593998ECB1"
+    },
+    {
+      "path": "services/ml-recommendation/deployment/container/v1/CONTAINER_CARD.md",
+      "size_bytes": 2164,
+      "sha256": "301DC56BCE70DC13F05616C72390B8BD4929058818A9240ED53AE72071C31A46"
+    },
+    {
+      "path": "services/ml-recommendation/deployment/container/v1/container_manifest.json",
+      "size_bytes": 3605,
+      "sha256": "1DD6BB89D805544266F04B6EA1C5BD4E71C00DF7AC97E78473DDE6A19B431FD1"
+    },
+    {
+      "path": "services/ml-recommendation/pyproject.toml",
+      "size_bytes": 2121,
+      "sha256": "7D161C3B317E0D86A482D76AC546586F007C1A67B9C0990BC21CD5E33D088294"
+    },
+    {
+      "path": "services/ml-recommendation/requirements-container.lock",
+      "size_bytes": 605,
+      "sha256": "F4757E6BC1D8253CF486F3D1FC8CDDC8CA584A832871F6AE9BCC69644E08F835"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/__init__.py",
+      "size_bytes": 67,
+      "sha256": "0F2C1AF64C1035C75C284883FF48AE7D5C26BAEA3DD307C118F4A19C703B4831"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/api/__init__.py",
+      "size_bytes": 67,
+      "sha256": "8493F5C340EC2C9E6232803790B5CFF39DF59F4C247D80407FAC742FF8A4E021"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/api/contract_export.py",
+      "size_bytes": 14050,
+      "sha256": "9D31C9E8BFA6E1A4FE1B9F37EBA98753AC3ECCC7050E1E276DF82F73C48BB733"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/api/health.py",
+      "size_bytes": 2105,
+      "sha256": "1DD7F1CDD1B828656121F1B6105F317B4010E7F59AC3FA67173C5F17F6EB1025"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/api/model.py",
+      "size_bytes": 2258,
+      "sha256": "B83CD5F582347A6AE52E06C2A1507F18FB222D8A5361F075621EC82957325C87"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/api/recommendations.py",
+      "size_bytes": 2131,
+      "sha256": "317EB7CBA3368ADAF0B486E2395ABE61633B4BF871ABDBEC1C8FDF7AFB07F71D"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/baselines/__init__.py",
+      "size_bytes": 320,
+      "sha256": "0EE53F793CA8F3D1CE3CD1A7E0062ACF6D1827A9BA05EC3B0014A928205AB954"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/baselines/__main__.py",
+      "size_bytes": 150,
+      "sha256": "EB6AB889FE8057F1D3A1A4E88069154172F12A30D33A393CDACF175E8C31E139"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/baselines/adapter.py",
+      "size_bytes": 4230,
+      "sha256": "4AB84DB25FA7C4F45BDEE4E2A3E95D15917644D537E2CB56CEFBB844F45C8A27"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/baselines/evaluator.py",
+      "size_bytes": 42863,
+      "sha256": "3D8237EB02047D55CF863E1CA08FD63D45428F9E75159971D6EDECEEE36039CF"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/baselines/matching_v2_oracle.py",
+      "size_bytes": 8470,
+      "sha256": "8601FD526DD1F7B49832B3D9E9665DFFAB45E1E1459CE2F905420EB19B8AFE4C"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/baselines/metrics.py",
+      "size_bytes": 2753,
+      "sha256": "7CEED61C008DC411B1EB3F598A9221C0EDBA260BC334A1E550D7114CF2F29958"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/baselines/skills_only.py",
+      "size_bytes": 1510,
+      "sha256": "E99364C0F4DE43E93EDB1268E9081F4547493CB55E1B2F102F7EAF6BAA6822A8"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/bundle/__init__.py",
+      "size_bytes": 185,
+      "sha256": "BFF248FE3CE954DE254E5C3746BA3A9719B1C206645596F68F127D5C997BB092"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/bundle/__main__.py",
+      "size_bytes": 140,
+      "sha256": "2397FB8799A445CF23E91E5BAFCB81641ED13AB539CF0742A5E06FA4C46FCA1C"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/bundle/builder.py",
+      "size_bytes": 18650,
+      "sha256": "9D5720E2DF6C74BF4F3BCC6DA4971506BCDCAA63B1A4B1BF0F72AB690BDD5935"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/bundle/loader.py",
+      "size_bytes": 10874,
+      "sha256": "6B5264CA90FE71639BEA46744B5015357FA9B235B5E68B346CEA86977EEF6550"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/core/__init__.py",
+      "size_bytes": 34,
+      "sha256": "BCE7A273F2840511C7470A7AACE7EB1BDB8ABD899DBB3E1936E5FD6E24C905AD"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/core/config.py",
+      "size_bytes": 2497,
+      "sha256": "0C473125BEB2A82459FC1F946FD02C6D3BED67A50714315AE812ECED939B6630"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/core/errors.py",
+      "size_bytes": 1220,
+      "sha256": "620ABC74804FE358454B1489401EEAD083A23C886D1CD0D814015632917089D9"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/core/inference.py",
+      "size_bytes": 9488,
+      "sha256": "F66332FE277366AC62347B4B7E7183FC92557C685CE7A63CACF417527BA37128"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/core/security.py",
+      "size_bytes": 1291,
+      "sha256": "B364D7031644A42B90FD2ACAEBEE1D0CF4F346C66337CDB8A7CF78B8F4B490FE"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/data/__init__.py",
+      "size_bytes": 766,
+      "sha256": "B7076B8799ABA248F2D370303B8486F7E3FC8FDE807960D13771DFB0FC3464CD"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/data/__main__.py",
+      "size_bytes": 143,
+      "sha256": "58D3FC77435FAF92B0EAA4D1E3B9F9F31C1E47C7EA3A5F728A308E52D0E14F8E"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/data/catalog.py",
+      "size_bytes": 8510,
+      "sha256": "F43E5899837E8529EAD06231252BF3EB4907EBE1B48B10B16ABF5E6B7B1FEB9B"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/data/generator.py",
+      "size_bytes": 37308,
+      "sha256": "AF65F5A759CB93742DB37FFF9A5880BA8978D7D0C79FE5154AD4BFF1664794D5"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/evaluation/__init__.py",
+      "size_bytes": 204,
+      "sha256": "0F6E9999AFF3601718E0C26B11B3A74F0FC9E03778828D33542D25755C0CE90F"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/evaluation/__main__.py",
+      "size_bytes": 120,
+      "sha256": "DA37921B18080EDF48C7FDF585E6D2A62F5B4017DFBEA7EB0F5BFE00D8E093F9"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/evaluation/final_evaluator.py",
+      "size_bytes": 44855,
+      "sha256": "BD15264D40BD4945A746D1E83C6B0F904367FBC3559303C1926DC3E10F0B1D59"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/evaluation/locked_test.py",
+      "size_bytes": 5706,
+      "sha256": "4BAB9140C31847A60AA07E27D00711D3691F9D863E280BF30DA0EDBC2A06A9A0"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/explainability/__init__.py",
+      "size_bytes": 570,
+      "sha256": "8AEAE8209EDE3916F1BB305C59C5944A5AD5A20C993932A6FB45D41CEB4D1C12"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/explainability/__main__.py",
+      "size_bytes": 109,
+      "sha256": "7CE14D73EB7037BFBA59ED53B82E166AD85C012C9B88E50EB178128B1073AC07"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/explainability/aggregation.py",
+      "size_bytes": 6340,
+      "sha256": "2FA3CD5DC21FA7D516E3F58668536131DEDC8385A456948B6CD60C51ADD6177C"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/explainability/engine.py",
+      "size_bytes": 9855,
+      "sha256": "5A6D788B2CFD8E10323379B9009FB405E4ADFD13BAE89A044E94431DC1FF922E"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/explainability/explainer.py",
+      "size_bytes": 26639,
+      "sha256": "D3CA323732580805D7D1F251D47F75A83AFA60D7035D06829A5AE883C7EC67C1"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/explainability/feature_groups.py",
+      "size_bytes": 1661,
+      "sha256": "01D578892A78FFE1CDE52147915710A15CF2D414F216E0454E8889D379875332"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/explainability/selector.py",
+      "size_bytes": 7776,
+      "sha256": "7ED5AA0120FBB6AB0A55FC391BFCDC5F3ECA4B226DA59B32271893F7AB6FBB5B"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/features/__init__.py",
+      "size_bytes": 181,
+      "sha256": "A6CD7C2B6BF46FFA05A840D7DD7BEBCA09466D7A51380EA178FBFBC08437180D"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/features/__main__.py",
+      "size_bytes": 141,
+      "sha256": "FCB4C209D001C3A7D2EF9940B66823947A1C669B7C0DCB8EC7FE57FE7BC38A62"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/features/normalization.py",
+      "size_bytes": 4507,
+      "sha256": "ADDC17E475B878CCE23A3A5ECCAD9F2DD31C3133461A0BBB109376215851AD6D"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/features/pipeline.py",
+      "size_bytes": 40312,
+      "sha256": "91B9AB7794A4CD1C04E203BB98C10D72D32F995187E7C75BD8CA14DEF3280C37"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/main.py",
+      "size_bytes": 5487,
+      "sha256": "8E350113B835D86A805752D7A3B9C618A52485EC94F6091720DB02FB5C133E88"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/schemas/__init__.py",
+      "size_bytes": 69,
+      "sha256": "8BAD564D5B9D27B3B17B454E8E19231C56D1D88FF614104279A9D637944761E7"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/schemas/baselines.py",
+      "size_bytes": 6412,
+      "sha256": "9B34DD5EF202BF256F4797706CFD1FF99CB1DEA13C93A690B459113BFF68B1AA"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/schemas/bundle.py",
+      "size_bytes": 3657,
+      "sha256": "1EF759CEB9616FA6092CF8A3B903CE2567B354FC8C39EEF3F0D0D404C0F11F5F"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/schemas/errors.py",
+      "size_bytes": 609,
+      "sha256": "D3ABD670EA84137F2D6095A2D58D1F7D2254500DE939449F1AB008FE866F2D46"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/schemas/explainability.py",
+      "size_bytes": 3203,
+      "sha256": "823B84BDD6A72BF128A3F56C332ADFFD911DF129FB6C5EA8F5432AB1F234833F"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/schemas/features.py",
+      "size_bytes": 4714,
+      "sha256": "DC11E3BAD1C58144184F0AFA7E01F5AF2EF3ACDEE8774A96F361DB402A22D093"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/schemas/final_evaluation.py",
+      "size_bytes": 2634,
+      "sha256": "F2498F0822076730C26498A2CF51ED80E88E65E37F0C0A9EA5194D9F185E0D45"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/schemas/health.py",
+      "size_bytes": 1003,
+      "sha256": "F68FD9C3BFEF22A6271369375047B04AAF8DFDB9888DC5151BDD537B2F39C124"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/schemas/inference.py",
+      "size_bytes": 8729,
+      "sha256": "AB84585B2B96AA5EE21347CDAF1CE102F82A00CF3AAF5D176AC1408C55E36074"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/schemas/model.py",
+      "size_bytes": 709,
+      "sha256": "0D0B230E3421E1D441CFCE81D265D0B5C82EA42F847F9AA8308A9812413AF435"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/schemas/splits.py",
+      "size_bytes": 3031,
+      "sha256": "D7CCCA9B52F86D2F2DA839F1FAC679B8CC3340C5F9AB3E6E0B7AE09A0CF3D022"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/schemas/synthetic.py",
+      "size_bytes": 4132,
+      "sha256": "A85F12543A9FB719010F3E48BF2D6271827F4E13B0ADA4D3D786B1A12C8A6F4C"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/schemas/training.py",
+      "size_bytes": 3997,
+      "sha256": "11542C0CB2F84F4CA354D7333B25F5B930A935ECE8632E5285F1659D470C9106"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/schemas/tuning.py",
+      "size_bytes": 2389,
+      "sha256": "845872862FFE582E34EAF0466E7740080E744C77A8BC31E8386020A52EF41DCD"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/splits/__init__.py",
+      "size_bytes": 171,
+      "sha256": "8ECB2A384D94A745731EE3E778406270623EE6B251D389E62C018979197770B1"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/splits/__main__.py",
+      "size_bytes": 145,
+      "sha256": "E1F2D30BCD93A1EAAC522B0550A604601FDAA83F0423A5379C0F772F38F2EA7E"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/splits/splitter.py",
+      "size_bytes": 33839,
+      "sha256": "F32B639F81E5BCF3F09FE0E6444C2F6D08854E7B6DDBF822E3934A7BEFB62CA5"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/training/__init__.py",
+      "size_bytes": 595,
+      "sha256": "5E26BA9FB36FA0F0F57218096EE124379AAB6441B576D9B7BB828FE0FF8B214C"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/training/__main__.py",
+      "size_bytes": 135,
+      "sha256": "599FF8DA3E5CAC1ED9F56179D1FE54FCD39C7B31CD9BEADC014DC68DA27C352A"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/training/dataset.py",
+      "size_bytes": 6314,
+      "sha256": "F3E139F4B5E38D1522B91174E71EFDA83FE205330A886E76FA6C89AE5E216983"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/training/trainer.py",
+      "size_bytes": 35067,
+      "sha256": "8104027D2D7010CBD343A13D39F3833F2479DCBD01BA052C1C7D5113718B3AD3"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/training/xgbranker.py",
+      "size_bytes": 2614,
+      "sha256": "2A6B8A25E96AE7D252A910A460C769250546A628BC90987B4E05CABA2F46ADDC"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/tuning/__init__.py",
+      "size_bytes": 482,
+      "sha256": "8F10CA6B36546AC0BE34FBE4F474AD9EB692E013470116339DCC22F35DFA0AC8"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/tuning/__main__.py",
+      "size_bytes": 96,
+      "sha256": "D90E283EB10EC18353C4ECA33E248303767B2F4B446310DFF4505C00AE72344E"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/tuning/search_space.py",
+      "size_bytes": 4728,
+      "sha256": "CD25F7E3FC616867A949FB87F2355A6E5E2FDD6EC9713771599DA14944FB9C09"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/tuning/selection.py",
+      "size_bytes": 2354,
+      "sha256": "5DAC5BD29FE10C5AA9421B98F0D20C5AD3BCA199311603A738FA69666AB5B37D"
+    },
+    {
+      "path": "services/ml-recommendation/src/smart_recruitment_ml/tuning/tuner.py",
+      "size_bytes": 38825,
+      "sha256": "902E4CF9F72FCFF7A85A6C6CCFAD20359619B645008DA766B4013933F1430173"
+    },
+    {
+      "path": "services/ml-recommendation/tests/__init__.py",
+      "size_bytes": 50,
+      "sha256": "EC1D23731A753877A78996AB121CB82B50180AB0BD4402DBBB156857FAB4F50D"
+    },
+    {
+      "path": "services/ml-recommendation/tests/conftest.py",
+      "size_bytes": 1864,
+      "sha256": "B8B3902816B77DCACCDD435483F4E4D7953E81A389624D6728A8757968D116BA"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_baseline_cli.py",
+      "size_bytes": 6997,
+      "sha256": "7CEF1B272B5377A0069CA8AD6175D789863F162B39B02CAE2B47A99E7A4C50BC"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_baseline_metrics.py",
+      "size_bytes": 2335,
+      "sha256": "0784097F27BE7D254FB5AD741D69F68183A24E187B4B1FF216AA2F137A9EF8C4"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_bundle_builder.py",
+      "size_bytes": 5713,
+      "sha256": "00AEFBDF9879B748621722E40AA0BE34A0D54FCA1C5A0EF802F6FB5323562EE4"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_bundle_loader.py",
+      "size_bytes": 6126,
+      "sha256": "69A5F9F4A28DEAC8D5CA5FD841672C2BE37389297C10781B7957A13521BB6996"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_config.py",
+      "size_bytes": 3124,
+      "sha256": "241837CE6FF75A9D960604EA37889979D96E4B4377F11374C357A67CFB91F340"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_container_packaging.py",
+      "size_bytes": 10405,
+      "sha256": "6458BE68CBA32622BB2510BC8F1F4E5A6D690E25A999084E6998137533D34283"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_explainability_artifacts.py",
+      "size_bytes": 5104,
+      "sha256": "5F53EF2D82E9BB8D156A7818531EFA0262733F9C215F3A7E5248ACF5410F2896"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_explainability_cli.py",
+      "size_bytes": 11470,
+      "sha256": "253DA4835A057AE3CD2B6A099EB0C4999FFB6B5467FDAE743C6C1967AC804997"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_explanation_aggregation.py",
+      "size_bytes": 16330,
+      "sha256": "5832BF71BDE7DEC5C353E96CE68FA5892FF0FFDE17C6C3468A897204B1D5F0A2"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_feature_cli.py",
+      "size_bytes": 3513,
+      "sha256": "A5F0BED8DB0AC41B905D97628177B15F5161CFDB3582476879F1A8439A306FE3"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_feature_pipeline.py",
+      "size_bytes": 17579,
+      "sha256": "B079003483E77EA03B8DFBE6CA62714BB1DA7F8D418C1DCF35F0B0ECC0C5AEDF"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_final_evaluation_artifacts.py",
+      "size_bytes": 6497,
+      "sha256": "FA89843F25ADCC0B0D64575F0EDEC7DFF03243297B9AA8BEE290D31EB8F07248"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_final_evaluation_cli.py",
+      "size_bytes": 6004,
+      "sha256": "2CCFD611390DEE0B16D75E26D4151D287E5B799654587AD5140AE7312BF5FDE8"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_final_model_comparison.py",
+      "size_bytes": 9847,
+      "sha256": "8456BAA22881111CC12496D3CB0B3C4E45239A7022BAB3E5B075B8605FFCAD4A"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_health.py",
+      "size_bytes": 3331,
+      "sha256": "3D775096108BEEB0BB9A291D49ECFAB105796F10284DB0DA4116ECEF1E37E796"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_inference_api.py",
+      "size_bytes": 10551,
+      "sha256": "7FD844BEF3552A9FD3D61CC97765A05547C735896F1FF3F8A2CCCD90C4DC98AF"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_inference_contract.py",
+      "size_bytes": 5157,
+      "sha256": "E1DC781284A70513B93C1332692E377AADF53FF0C228FB9C64D1FBD66C6E46CD"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_inference_security.py",
+      "size_bytes": 5907,
+      "sha256": "28B9FB4832BA8FB9D149D845837D549B49C774C1D166E7872E870C61FC68CBC9"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_laravel_baseline_bridge.py",
+      "size_bytes": 4029,
+      "sha256": "0F5EE7CFF12C784790E8431223A7A4FB4CA4B458B7D56CC8197D9B9A0CBC9DD5"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_locked_test_evaluation.py",
+      "size_bytes": 4130,
+      "sha256": "9417E68CD8F8AF505A49162D8E4812B4C57E7068B59FFCAB52870AAD764CD91A"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_matching_v2_parity.py",
+      "size_bytes": 5032,
+      "sha256": "D317B162519F1E22267E462EF2A24199A83F5FF7892C5FE26B0DBE94488694F4"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_model_artifacts.py",
+      "size_bytes": 11127,
+      "sha256": "B1C0A6C57FA3DF1E59273E111C54D8CFB5AC48FA6B019BBA1B92F87060E4DE78"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_shap_contributions.py",
+      "size_bytes": 10520,
+      "sha256": "0C6E3A9D0D3BAED149F9751754C4E6501CD24E7A32C8E242498B8413B99590C9"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_skills_baseline.py",
+      "size_bytes": 4021,
+      "sha256": "AD0897E209DB4B2AFBE63D77ABE333818A64C31A790D3EAD7393987C05590665"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_split_cli.py",
+      "size_bytes": 4475,
+      "sha256": "CC137C9022F5CE3D5934E1562A93526524CB168D96FEE4C61A5B8C0C57768518"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_splitter.py",
+      "size_bytes": 15551,
+      "sha256": "BD412D86BF48909571DFC6A8CC4CAD69CC8AFB24DAD62CA4BBE304047E0EE68F"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_synthetic_cli.py",
+      "size_bytes": 2669,
+      "sha256": "3B1EF07C6B036C8E6BB6689EDDCBE26BD52E15F9DAFA4D35D304875BF66C0591"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_synthetic_generator.py",
+      "size_bytes": 14362,
+      "sha256": "213D7095ABE9CCACA0B8841CE28679A8F008B7FA980A7480ADC0456D0E929E15"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_training_cli.py",
+      "size_bytes": 3711,
+      "sha256": "F68B1E3399D5FCA24CC3B3393E635C28BA7A0B81F539465673376BA0C2B2036C"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_training_dataset.py",
+      "size_bytes": 7156,
+      "sha256": "E1E72DC1CDA428539920CEB894634C2E1D7582066ACC6B462F7FD93549F5839E"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_tuned_model_artifacts.py",
+      "size_bytes": 6335,
+      "sha256": "2CC52C598FE4B56EF15DED2E2720E76C82DB189B20F23537FB51F7F42036DE0F"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_tuning_cli.py",
+      "size_bytes": 4420,
+      "sha256": "EC35A999F5D4C57BA04CCB3388E4AB7AF485A582F95CA768C63D667247E73937"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_tuning_search_space.py",
+      "size_bytes": 3576,
+      "sha256": "135904A1D3260320AEEA17E37DC3F0DCFAA0AB01A434F5007FC0DBE25D07993B"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_tuning_selection.py",
+      "size_bytes": 2325,
+      "sha256": "C2C7A99AC2FE546363412CF9796569DD478AB922AEEFE376206A1E118FCA5138"
+    },
+    {
+      "path": "services/ml-recommendation/tests/test_xgbranker_training.py",
+      "size_bytes": 6302,
+      "sha256": "CD3CFCE76090345E8FA6623555252849697E0E07200C1DA22C0EE39FFE095B8F"
+    },
+    {
+      "path": "services/ml-recommendation/tools/laravel_matching_v2_baseline.php",
+      "size_bytes": 10304,
+      "sha256": "34D8F8FA7A6F22DBF01924076EC211E22C85E91BBA87E9F93CFB5FDB07262C14"
+    },
+    {
+      "path": "storage/app/.gitignore",
+      "size_bytes": 33,
+      "sha256": "993B9E3709D7B5189DA331725D1169D79E561A509DB2490B722B525073D2D976"
+    },
+    {
+      "path": "storage/app/private/.gitignore",
+      "size_bytes": 14,
+      "sha256": "240A3E0D37D2E86B614063F5347EB02D4F99CA6C254DE6B82871FF8D95532A7D"
+    },
+    {
+      "path": "storage/app/public/.gitignore",
+      "size_bytes": 14,
+      "sha256": "240A3E0D37D2E86B614063F5347EB02D4F99CA6C254DE6B82871FF8D95532A7D"
+    },
+    {
+      "path": "storage/framework/.gitignore",
+      "size_bytes": 119,
+      "sha256": "2D452D65596636197757AFA17DF52331C84DA7BB74EE0F3462FD5BE4EB6AFDC6"
+    },
+    {
+      "path": "storage/framework/cache/.gitignore",
+      "size_bytes": 21,
+      "sha256": "32F79194633DDB34F013C6EE8819D112104FF822357ADF308EC385B46A7F42F6"
+    },
+    {
+      "path": "storage/framework/cache/data/.gitignore",
+      "size_bytes": 14,
+      "sha256": "240A3E0D37D2E86B614063F5347EB02D4F99CA6C254DE6B82871FF8D95532A7D"
+    },
+    {
+      "path": "storage/framework/sessions/.gitignore",
+      "size_bytes": 14,
+      "sha256": "240A3E0D37D2E86B614063F5347EB02D4F99CA6C254DE6B82871FF8D95532A7D"
+    },
+    {
+      "path": "storage/framework/testing/.gitignore",
+      "size_bytes": 14,
+      "sha256": "240A3E0D37D2E86B614063F5347EB02D4F99CA6C254DE6B82871FF8D95532A7D"
+    },
+    {
+      "path": "storage/framework/views/.gitignore",
+      "size_bytes": 14,
+      "sha256": "240A3E0D37D2E86B614063F5347EB02D4F99CA6C254DE6B82871FF8D95532A7D"
+    },
+    {
+      "path": "storage/logs/.gitignore",
+      "size_bytes": 14,
+      "sha256": "240A3E0D37D2E86B614063F5347EB02D4F99CA6C254DE6B82871FF8D95532A7D"
+    },
+    {
+      "path": "tests/Feature/Api/V1/AccountStateTest.php",
+      "size_bytes": 4789,
+      "sha256": "F62D4F95F414AB82AD4530EBBC9689609B8AB20720DF587C50C7E13B16A22E75"
+    },
+    {
+      "path": "tests/Feature/Api/V1/AdminApiTest.php",
+      "size_bytes": 17124,
+      "sha256": "3D9B74EE9B51DD0EB06864C9148CA74C93D601C24F73A5F00C074B66A971A6FA"
+    },
+    {
+      "path": "tests/Feature/Api/V1/ApplicationInformationRequestTest.php",
+      "size_bytes": 14297,
+      "sha256": "A87BD7C80C49AEBEBEFE89C470B3E68EB9AF3FB4EAD78C85D698CA068DAA630B"
+    },
+    {
+      "path": "tests/Feature/Api/V1/ApplicationInformationResponseTest.php",
+      "size_bytes": 8024,
+      "sha256": "AEA986AE4D50699CAD654130885FFF92AF20B31E90B48D934A03DD2EA2FA6EDA"
+    },
+    {
+      "path": "tests/Feature/Api/V1/ApplicationInternalNoteTest.php",
+      "size_bytes": 18155,
+      "sha256": "D3EA9AA4E0D4F0EF768ADC69374C0530428F343C414887A28CFB9558EE81426F"
+    },
+    {
+      "path": "tests/Feature/Api/V1/ApplicationPrivacyTest.php",
+      "size_bytes": 9553,
+      "sha256": "602D0188416E6C8D16444468357ABC1CA3703053ED667AB50EA8DC03D242FFA3"
+    },
+    {
+      "path": "tests/Feature/Api/V1/ApplicationScreeningAnswerTest.php",
+      "size_bytes": 18303,
+      "sha256": "2AD215F9A21E41329AC897437C2F638ED6AFEBBA5379522BAC098206926E59FE"
+    },
+    {
+      "path": "tests/Feature/Api/V1/ApplicationScreeningPrivacyTest.php",
+      "size_bytes": 6516,
+      "sha256": "8AAD65EE5CBBB808D8CC42E0D6925126E28A25C5D3BE54DE2EF758D4E1E79F12"
+    },
+    {
+      "path": "tests/Feature/Api/V1/AuthTest.php",
+      "size_bytes": 15145,
+      "sha256": "66AD5EFB0A2C9B14197066B523AC9BE40A25902874EE90F64622CB444FB4D7BA"
+    },
+    {
+      "path": "tests/Feature/Api/V1/CVReviewContractTest.php",
+      "size_bytes": 32328,
+      "sha256": "0D4F1D47DB9573D934A4F25DF9F440859A7EE809E97C43E1251F471648B8D57E"
+    },
+    {
+      "path": "tests/Feature/Api/V1/CVReviewFlowTest.php",
+      "size_bytes": 28621,
+      "sha256": "C5E83F2DE5FA97648096E50497395163222E9B29DD57204B68B93A164E688239"
+    },
+    {
+      "path": "tests/Feature/Api/V1/CVReviewMigrationTest.php",
+      "size_bytes": 4146,
+      "sha256": "CFD1719122348924E8DB667698D0A1A7973844B5D7098C08FCF4CF9B5E8AA917"
+    },
+    {
+      "path": "tests/Feature/Api/V1/CVTest.php",
+      "size_bytes": 20256,
+      "sha256": "C23305D7D22AA97CC265FF137EC511A3F9F874020E2A6CA7236FC589A7876073"
+    },
+    {
+      "path": "tests/Feature/Api/V1/CompanyStateTest.php",
+      "size_bytes": 11238,
+      "sha256": "AA8127E3BA677F6A54FB790C1CE0BD124E0DFAE438B30334F7672D8CCE0C606E"
+    },
+    {
+      "path": "tests/Feature/Api/V1/Concerns/CreatesInterviewScenarios.php",
+      "size_bytes": 3133,
+      "sha256": "A1CA4827921739D30FD1F70F2C9A8F09661CFFBBCBB3DC7DA67D14E33ABA0126"
+    },
+    {
+      "path": "tests/Feature/Api/V1/EventIdempotencyTest.php",
+      "size_bytes": 7140,
+      "sha256": "F82871B964EDE20A0F83BA02686E963684271B234C709B9F726694421098D2D8"
+    },
+    {
+      "path": "tests/Feature/Api/V1/EventRegistrationTest.php",
+      "size_bytes": 3116,
+      "sha256": "35405E17FA3C93827E1CEB488397D3C1E4DD10389DACE443FD67E3AA71989C83"
+    },
+    {
+      "path": "tests/Feature/Api/V1/InterviewAttendanceTest.php",
+      "size_bytes": 4569,
+      "sha256": "DEA798E434D8A20AA061061D03D212CDA0CFDA48FE4FC594CE2887A76B33B0BE"
+    },
+    {
+      "path": "tests/Feature/Api/V1/InterviewLifecycleTest.php",
+      "size_bytes": 6415,
+      "sha256": "21657272AB4BF738F4CF940302D9F1D27694A081A33784A7EA030E745D664A3E"
+    },
+    {
+      "path": "tests/Feature/Api/V1/InterviewModeTest.php",
+      "size_bytes": 4278,
+      "sha256": "8FC13D2C19C572F922EB7A200089633F1C24C929AF812486588211B0877367FC"
+    },
+    {
+      "path": "tests/Feature/Api/V1/InterviewModuleTest.php",
+      "size_bytes": 19890,
+      "sha256": "F1642D9E0E5A89066806FFA5579ACD6C1D736C92EACCBC8FDE2DAB0647FB0C40"
+    },
+    {
+      "path": "tests/Feature/Api/V1/InterviewPrivacyTest.php",
+      "size_bytes": 8598,
+      "sha256": "3C1D3A5D63A8FBF14F6EEB133E924CF7EDC375CCBBCDE1834522C7B412D98481"
+    },
+    {
+      "path": "tests/Feature/Api/V1/JobApplicationTest.php",
+      "size_bytes": 9645,
+      "sha256": "4D5D0F4058D75FB49E39558DEC7BFD2D9F7253BBC63665ED984782C2165C0730"
+    },
+    {
+      "path": "tests/Feature/Api/V1/JobDeadlineTest.php",
+      "size_bytes": 13311,
+      "sha256": "A019E9457795B159D7F32F74696EECC0FA703DD841678505DF28B64CBB600E3C"
+    },
+    {
+      "path": "tests/Feature/Api/V1/JobPostingContractTest.php",
+      "size_bytes": 10948,
+      "sha256": "A43A6CD8B274BA9F83BF16ABFA5D07F4D8FE3814919B4820D5823D4AB0E2D282"
+    },
+    {
+      "path": "tests/Feature/Api/V1/JobPostingTest.php",
+      "size_bytes": 20470,
+      "sha256": "5BEA385DE625FFDC8615E0B922E29741C043C27795395B920A6080B9C60A1111"
+    },
+    {
+      "path": "tests/Feature/Api/V1/JobScreeningQuestionTest.php",
+      "size_bytes": 12093,
+      "sha256": "2617DB2F0420631D74E6A238CA7D727A40CD215AE68FA303298E7B6A287A52AC"
+    },
+    {
+      "path": "tests/Feature/Api/V1/JobSkillRequirementTest.php",
+      "size_bytes": 7291,
+      "sha256": "562967B0B74ABF7F68D3814EE9373EF277A1CCDBDC6FF99759BC56C00EFAE668"
+    },
+    {
+      "path": "tests/Feature/Api/V1/JobSkillWeightTest.php",
+      "size_bytes": 7587,
+      "sha256": "EC8D4B915CA8C29467E95165B22C29F8A5304466FE2F9BC0A341F67210888204"
+    },
+    {
+      "path": "tests/Feature/Api/V1/JobWorkModeTest.php",
+      "size_bytes": 14987,
+      "sha256": "4390AF82C7B2874854EE9A899103B1ECACA5B14FA12DA96ED7E16D2BFE6D0798"
+    },
+    {
+      "path": "tests/Feature/Api/V1/ManualGradingModuleTest.php",
+      "size_bytes": 22710,
+      "sha256": "D9736ADF033AC02BA5613DC569B07A6741F8A090F22C432175409BD82291EE80"
+    },
+    {
+      "path": "tests/Feature/Api/V1/MatchingTest.php",
+      "size_bytes": 14777,
+      "sha256": "AA8E47FF52F607708C19C10989C6F5244F7A38F954A94DF11B2836369D49E1E6"
+    },
+    {
+      "path": "tests/Feature/Api/V1/NotificationTest.php",
+      "size_bytes": 26419,
+      "sha256": "E8CE035B6C25514A4EE2BC24744F6C78A0B580AE716661C1BC5AB873D5F67C0D"
+    },
+    {
+      "path": "tests/Feature/Api/V1/PrimaryCVTest.php",
+      "size_bytes": 9649,
+      "sha256": "E70854F53B4EC90D62E3FBBEE1B7F65483E0CD1C4DD161811E712D0F892CB180"
+    },
+    {
+      "path": "tests/Feature/Api/V1/ProfileSourceTrackingTest.php",
+      "size_bytes": 8754,
+      "sha256": "93385986C450ED94C0E94F527C17C132885BCF151243702231B1FC0496EDEE2E"
+    },
+    {
+      "path": "tests/Feature/Api/V1/ProfileSuggestionTest.php",
+      "size_bytes": 15170,
+      "sha256": "4EA7B01DF5595BFB96E26CC0F0FE4E163BB216730BD52B53F4F74980207859F2"
+    },
+    {
+      "path": "tests/Feature/Api/V1/ProfileTest.php",
+      "size_bytes": 12323,
+      "sha256": "6D9A3F3E2D80B2C9E7A2758ADB920CA565188D7ACCF679181C2A47124A756550"
+    },
+    {
+      "path": "tests/Feature/Api/V1/RecommendationConcurrencyTest.php",
+      "size_bytes": 4199,
+      "sha256": "34E9E84C64A3EAA6216F5659FD120B52BDAE990D39C877D830D9CA649623CF11"
+    },
+    {
+      "path": "tests/Feature/Api/V1/RecommendationContainerIntegrationTest.php",
+      "size_bytes": 7018,
+      "sha256": "973506DD91D001377D8EB96D8F9604BDB64E653F9C8410630F8C125E2913A3FF"
+    },
+    {
+      "path": "tests/Feature/Api/V1/RecommendationEndToEndTest.php",
+      "size_bytes": 19563,
+      "sha256": "62EEF8ABB752AE1462D55D2D1878195DCA25FECA98EA3C2E06CB9A51A0D7FD9D"
+    },
+    {
+      "path": "tests/Feature/Api/V1/RecommendationFailureMatrixTest.php",
+      "size_bytes": 7453,
+      "sha256": "4B5382879A59D2F1D550A2D3C3B3DC6EB0AD625257D94C53900485F4F5C65CF4"
+    },
+    {
+      "path": "tests/Feature/Api/V1/RecommendedJobsMlTest.php",
+      "size_bytes": 23897,
+      "sha256": "53A5AA39611D54DBADEEB83462C3547C90FB14DAC43AE5DD339D7613109F2DF3"
+    },
+    {
+      "path": "tests/Feature/Api/V1/SkillCatalogTest.php",
+      "size_bytes": 1453,
+      "sha256": "C62615AA0AAB9207F1043B47C6A222A877DFF7AC6B4872837205EA8EFC524494"
+    },
+    {
+      "path": "tests/Feature/Api/V1/TestAnswerModuleTest.php",
+      "size_bytes": 21659,
+      "sha256": "79038E327ABDB166882CF1D20D1BC937297196254CE99F028F8D2C5418259A50"
+    },
+    {
+      "path": "tests/Feature/Api/V1/TestAttemptQuestionsTest.php",
+      "size_bytes": 6849,
+      "sha256": "7D6C2BB57251249828A525419FE43660B940E175B3EF78FB57342D462480F87F"
+    },
+    {
+      "path": "tests/Feature/Api/V1/TestCatalogPrivacyTest.php",
+      "size_bytes": 6550,
+      "sha256": "F7904D24FE5C2430968C254FE0E04272F082056303767AE8B91D19D033D4F278"
+    },
+    {
+      "path": "tests/Feature/Api/V1/TestDeadlineModuleTest.php",
+      "size_bytes": 24509,
+      "sha256": "504529979973926483BC101D8F6DE4CB437566510F40BEC2C7838FEF237CE4A7"
+    },
+    {
+      "path": "tests/Feature/Api/V1/TestGradingModuleTest.php",
+      "size_bytes": 18318,
+      "sha256": "02CA984D72E09A07DA08D09B6B4DA45B9A19D4D60E44AF52A3467EC692955BD9"
+    },
+    {
+      "path": "tests/Feature/Api/V1/TestModuleTest.php",
+      "size_bytes": 24258,
+      "sha256": "CAB9BE8769C6B59BF224FC5BDD6EA0E6E2846137B467126D6E07E8232D64EB2C"
+    },
+    {
+      "path": "tests/Feature/Api/V1/TestQuestionModuleTest.php",
+      "size_bytes": 17758,
+      "sha256": "6C59BF8252C75BC6CD04A8A3A10F2AAED141842E62E2AB887CF54C5B112D5994"
+    },
+    {
+      "path": "tests/Feature/Api/V1/TestRetakeModuleTest.php",
+      "size_bytes": 23154,
+      "sha256": "7AC001E71EAA55690191DA95DC950DDDAFF2042BCFFC064EF1A95023BAC082BC"
+    },
+    {
+      "path": "tests/Feature/Api/V1/TestScoreInvariantTest.php",
+      "size_bytes": 12137,
+      "sha256": "ACC230E2FC2E673C5B99B6EBDA63D6C660872F68202804186ED48364BD643E2F"
+    },
+    {
+      "path": "tests/Feature/CandidateMatchingMigrationTest.php",
+      "size_bytes": 2171,
+      "sha256": "B1F8E59DA394F189C120CE10B6C3FC99878793635774E9CF8D1954F95B2A2A15"
+    },
+    {
+      "path": "tests/Feature/Concerns/BuildsRecommendationPersistenceScenarios.php",
+      "size_bytes": 10831,
+      "sha256": "2F482D9F206B28EE80AB17BBC854B250B23C400B9C9E76F23BADC35D49D5233F"
+    },
+    {
+      "path": "tests/Feature/PrivateFileStorageTest.php",
+      "size_bytes": 12194,
+      "sha256": "24DAE57550BD966DA68F8D1D74451A6C8A93DA44ED05A0360DAB191B6C54D3DF"
+    },
+    {
+      "path": "tests/Feature/PrivateStorageMigrationTest.php",
+      "size_bytes": 1372,
+      "sha256": "0744280716ABEC0F7954C13F9E297479B932731A54A223C3622324438C534567"
+    },
+    {
+      "path": "tests/Feature/RecommendationCacheTest.php",
+      "size_bytes": 14828,
+      "sha256": "66C03C5EAB7CB94A55CC29230F19814BEEFED8C63538162B3CB3F2433A4240A4"
+    },
+    {
+      "path": "tests/Feature/RecommendationInvalidationTest.php",
+      "size_bytes": 13379,
+      "sha256": "1DB3235D2D8B5A9607A8C5788026DF6EB99907E5B307F5DB03D0659F5F5D78AE"
+    },
+    {
+      "path": "tests/Feature/RecommendationPersistenceTest.php",
+      "size_bytes": 16717,
+      "sha256": "FAC86A1B059A2B3A648C9756194F1ED856FC4B03676B932493A0165986B52477"
+    },
+    {
+      "path": "tests/Feature/S3PrivateStorageIntegrationTest.php",
+      "size_bytes": 2017,
+      "sha256": "9E7FE7F118172C08E8574CBC55BE03EE9EBBC0C3441AE20598B7827A6A1E4017"
+    },
+    {
+      "path": "tests/Support/SyntheticDocx.php",
+      "size_bytes": 1905,
+      "sha256": "87639991B134EBA5C9B03D5E4CB2651CA2E6642BE72B97B79FB2B1DBBE95C830"
+    },
+    {
+      "path": "tests/Support/SyntheticPdf.php",
+      "size_bytes": 2051,
+      "sha256": "502278A609296C275897BFF620E02F6B4E1EA6A53BB221EF480A2B6C76B42360"
+    },
+    {
+      "path": "tests/TestCase.php",
+      "size_bytes": 142,
+      "sha256": "C7C209F5579C42647C1F7B2A79AC828E8B54AC62A98442045A6E94FA2C0D0EBC"
+    },
+    {
+      "path": "tests/Unit/CVParsedDataNormalizerTest.php",
+      "size_bytes": 13332,
+      "sha256": "2AB2273465785AB704ACBA5CC6C71FC511385CC62C6117F79C4B6F7C70863360"
+    },
+    {
+      "path": "tests/Unit/CVParsingExtractionTest.php",
+      "size_bytes": 7460,
+      "sha256": "6A773243EA0FA92DDBD960E2172DC65C6AFA7F3D5B06F99156869C5A0261B578"
+    },
+    {
+      "path": "tests/Unit/CVParsingSchemaTest.php",
+      "size_bytes": 3783,
+      "sha256": "5FEB6F903C14FB935CBF370D24C0F1235BACFFA0430684F4B28E8A4C750BB838"
+    },
+    {
+      "path": "tests/Unit/CVParsingServiceTest.php",
+      "size_bytes": 2474,
+      "sha256": "82F8BE6C3D6EE8E14F7AD7386DD0355A91A6F92E40B963AFA2A7E90D3830B62F"
+    },
+    {
+      "path": "tests/Unit/CandidateExperienceCalculatorTest.php",
+      "size_bytes": 2143,
+      "sha256": "B77E3B210A1E627C4D42C9D02E0861C6E824BBE1BB5992FEFEC1523CAF1BCDBA"
+    },
+    {
+      "path": "tests/Unit/EducationLevelNormalizerTest.php",
+      "size_bytes": 1489,
+      "sha256": "C1DEF3136F1A3CAF4CBAA0B14E3F59EF4D3BC6603A8E7B73572F01AF35753450"
+    },
+    {
+      "path": "tests/Unit/ExampleTest.php",
+      "size_bytes": 243,
+      "sha256": "FFACAE5C1A2A44C809420AF5B3B404910DA1B12167D58764DAC6D10B8BA8CFAF"
+    },
+    {
+      "path": "tests/Unit/GroqCVTextParserTest.php",
+      "size_bytes": 30841,
+      "sha256": "59FFEADDA73CE2F2FBA3E38C09CB1EFDE4D43EFAC67C846409443D45C25BDDB1"
+    },
+    {
+      "path": "tests/Unit/MatchingScoreV2Test.php",
+      "size_bytes": 12943,
+      "sha256": "E0719BC3B95E9D74560AFACE98D48E4B99128256CFDA39F9814AE076C2C1D074"
+    },
+    {
+      "path": "tests/Unit/MatchingServiceTest.php",
+      "size_bytes": 8857,
+      "sha256": "90A1AF702D9AAC757849C010698FD9FCAE09F9EFF6125FF1D58332965CF5CDD0"
+    },
+    {
+      "path": "tests/Unit/OpenAICVTextParserTest.php",
+      "size_bytes": 11387,
+      "sha256": "D045574FF4A000DB7BDA1DC0CD0C7271E40E5E5F05700AD0BE0AB14ED38761AA"
+    },
+    {
+      "path": "tests/Unit/RecommendationMlClientContractCompatibilityTest.php",
+      "size_bytes": 10651,
+      "sha256": "46F91AD80DEEC896F5A289D761DE69DFFA44CED579EC3B4DC3B4410DF492DACA"
+    },
+    {
+      "path": "tests/Unit/RecommendationMlClientTest.php",
+      "size_bytes": 33138,
+      "sha256": "79FC106C0B38F552F71939C46218B21479A499A556B15949DD8966DDCCB6760D"
+    },
+    {
+      "path": "tests/Unit/RecommendationOrchestratorTest.php",
+      "size_bytes": 29713,
+      "sha256": "A216BDD7543B3090853CB366A781125E47388D93DB7C2D2EA8528F4056B1A516"
+    },
+    {
+      "path": "vite.config.js",
+      "size_bytes": 436,
+      "sha256": "B981A284135BCB7DA21EA5E1AAA2DC31C8DAEEF92D9B4E5C79538BDB8DFAF6F0"
+    }
+  ]
+}

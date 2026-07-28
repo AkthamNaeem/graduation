@@ -1,0 +1,1159 @@
+{
+  "explanation_version": "xgbranker-tuned-explainability-v1",
+  "feature_group_mapping_version": "job-rec-feature-groups-v1",
+  "feature_groups": [
+    {
+      "combined": {
+        "feature_count": 29,
+        "mean_feature_absolute_contribution": 0.04609462662047223,
+        "mean_signed_contribution": -0.7217803025028459,
+        "normalized_importance_share": 0.30636432854799106,
+        "sum_mean_absolute_contribution": 1.3367441719936946,
+        "top_features": [
+          {
+            "feature_index": 2,
+            "feature_name": "domain_mismatch",
+            "mean_absolute_contribution": 1.0190496936618514
+          },
+          {
+            "feature_index": 1,
+            "feature_name": "domain_adjacent_match",
+            "mean_absolute_contribution": 0.06614632029930458
+          },
+          {
+            "feature_index": 17,
+            "feature_name": "job_domain__backend_engineering",
+            "mean_absolute_contribution": 0.05690871715567974
+          },
+          {
+            "feature_index": 28,
+            "feature_name": "job_domain__ui_ux_design",
+            "mean_absolute_contribution": 0.04973699767643767
+          },
+          {
+            "feature_index": 18,
+            "feature_name": "job_domain__cybersecurity",
+            "mean_absolute_contribution": 0.023743351214483194
+          }
+        ]
+      },
+      "feature_group": "domain_compatibility",
+      "feature_names": [
+        "domain_exact_match",
+        "domain_adjacent_match",
+        "domain_mismatch",
+        "candidate_domain__unknown",
+        "candidate_domain__backend_engineering",
+        "candidate_domain__cybersecurity",
+        "candidate_domain__data_analysis",
+        "candidate_domain__data_engineering",
+        "candidate_domain__devops_cloud",
+        "candidate_domain__digital_marketing",
+        "candidate_domain__finance_accounting",
+        "candidate_domain__frontend_engineering",
+        "candidate_domain__mobile_development",
+        "candidate_domain__product_management",
+        "candidate_domain__quality_assurance",
+        "candidate_domain__ui_ux_design",
+        "job_domain__unknown",
+        "job_domain__backend_engineering",
+        "job_domain__cybersecurity",
+        "job_domain__data_analysis",
+        "job_domain__data_engineering",
+        "job_domain__devops_cloud",
+        "job_domain__digital_marketing",
+        "job_domain__finance_accounting",
+        "job_domain__frontend_engineering",
+        "job_domain__mobile_development",
+        "job_domain__product_management",
+        "job_domain__quality_assurance",
+        "job_domain__ui_ux_design"
+      ],
+      "rank": 1,
+      "train": {
+        "feature_count": 29,
+        "mean_feature_absolute_contribution": 0.04615640008594933,
+        "mean_signed_contribution": -0.7206088602377448,
+        "normalized_importance_share": 0.3070465791966976,
+        "sum_mean_absolute_contribution": 1.3385356024925306,
+        "top_features": [
+          {
+            "feature_index": 2,
+            "feature_name": "domain_mismatch",
+            "mean_absolute_contribution": 1.0200454547584288
+          },
+          {
+            "feature_index": 1,
+            "feature_name": "domain_adjacent_match",
+            "mean_absolute_contribution": 0.06602131498985588
+          },
+          {
+            "feature_index": 17,
+            "feature_name": "job_domain__backend_engineering",
+            "mean_absolute_contribution": 0.05758992891765167
+          },
+          {
+            "feature_index": 28,
+            "feature_name": "job_domain__ui_ux_design",
+            "mean_absolute_contribution": 0.049520775095822055
+          },
+          {
+            "feature_index": 18,
+            "feature_name": "job_domain__cybersecurity",
+            "mean_absolute_contribution": 0.023852888793795914
+          }
+        ]
+      },
+      "validation": {
+        "feature_count": 29,
+        "mean_feature_absolute_contribution": 0.04580635044824573,
+        "mean_signed_contribution": -0.7272470330733175,
+        "normalized_importance_share": 0.30319639006989046,
+        "sum_mean_absolute_contribution": 1.3283841629991262,
+        "top_features": [
+          {
+            "feature_index": 2,
+            "feature_name": "domain_mismatch",
+            "mean_absolute_contribution": 1.0144028085444905
+          },
+          {
+            "feature_index": 1,
+            "feature_name": "domain_adjacent_match",
+            "mean_absolute_contribution": 0.06672967841006516
+          },
+          {
+            "feature_index": 17,
+            "feature_name": "job_domain__backend_engineering",
+            "mean_absolute_contribution": 0.05372972893314404
+          },
+          {
+            "feature_index": 28,
+            "feature_name": "job_domain__ui_ux_design",
+            "mean_absolute_contribution": 0.05074603638597721
+          },
+          {
+            "feature_index": 18,
+            "feature_name": "job_domain__cybersecurity",
+            "mean_absolute_contribution": 0.023232175844357158
+          }
+        ]
+      }
+    },
+    {
+      "combined": {
+        "feature_count": 5,
+        "mean_feature_absolute_contribution": 0.12665634803946157,
+        "mean_signed_contribution": -0.40986797496466915,
+        "normalized_importance_share": 0.14513991471373833,
+        "sum_mean_absolute_contribution": 0.6332817401973079,
+        "top_features": [
+          {
+            "feature_index": 36,
+            "feature_name": "nice_to_have_skill_coverage",
+            "mean_absolute_contribution": 0.6243079802889807
+          },
+          {
+            "feature_index": 39,
+            "feature_name": "candidate_skill_count_normalized",
+            "mean_absolute_contribution": 0.0057085805430608936
+          },
+          {
+            "feature_index": 37,
+            "feature_name": "transferable_skill_coverage",
+            "mean_absolute_contribution": 0.0032651793652662777
+          },
+          {
+            "feature_index": 38,
+            "feature_name": "transferable_skill_overlap_normalized",
+            "mean_absolute_contribution": 0.0
+          },
+          {
+            "feature_index": 40,
+            "feature_name": "candidate_to_required_skill_count_ratio",
+            "mean_absolute_contribution": 0.0
+          }
+        ]
+      },
+      "feature_group": "nice_transferable_skills",
+      "feature_names": [
+        "nice_to_have_skill_coverage",
+        "transferable_skill_coverage",
+        "transferable_skill_overlap_normalized",
+        "candidate_skill_count_normalized",
+        "candidate_to_required_skill_count_ratio"
+      ],
+      "rank": 2,
+      "train": {
+        "feature_count": 5,
+        "mean_feature_absolute_contribution": 0.12655447980897921,
+        "mean_signed_contribution": -0.40806028649181375,
+        "normalized_importance_share": 0.14515161208639366,
+        "sum_mean_absolute_contribution": 0.6327723990448961,
+        "top_features": [
+          {
+            "feature_index": 36,
+            "feature_name": "nice_to_have_skill_coverage",
+            "mean_absolute_contribution": 0.6238295130525278
+          },
+          {
+            "feature_index": 39,
+            "feature_name": "candidate_skill_count_normalized",
+            "mean_absolute_contribution": 0.005717747070954189
+          },
+          {
+            "feature_index": 37,
+            "feature_name": "transferable_skill_coverage",
+            "mean_absolute_contribution": 0.0032251389214141735
+          },
+          {
+            "feature_index": 38,
+            "feature_name": "transferable_skill_overlap_normalized",
+            "mean_absolute_contribution": 0.0
+          },
+          {
+            "feature_index": 40,
+            "feature_name": "candidate_to_required_skill_count_ratio",
+            "mean_absolute_contribution": 0.0
+          }
+        ]
+      },
+      "validation": {
+        "feature_count": 5,
+        "mean_feature_absolute_contribution": 0.12713173311504591,
+        "mean_signed_contribution": -0.4183038545046612,
+        "normalized_importance_share": 0.1450855995481935,
+        "sum_mean_absolute_contribution": 0.6356586655752297,
+        "top_features": [
+          {
+            "feature_index": 36,
+            "feature_name": "nice_to_have_skill_coverage",
+            "mean_absolute_contribution": 0.626540827392428
+          },
+          {
+            "feature_index": 39,
+            "feature_name": "candidate_skill_count_normalized",
+            "mean_absolute_contribution": 0.005665803412892184
+          },
+          {
+            "feature_index": 37,
+            "feature_name": "transferable_skill_coverage",
+            "mean_absolute_contribution": 0.003452034769909432
+          },
+          {
+            "feature_index": 38,
+            "feature_name": "transferable_skill_overlap_normalized",
+            "mean_absolute_contribution": 0.0
+          },
+          {
+            "feature_index": 40,
+            "feature_name": "candidate_to_required_skill_count_ratio",
+            "mean_absolute_contribution": 0.0
+          }
+        ]
+      }
+    },
+    {
+      "combined": {
+        "feature_count": 7,
+        "mean_feature_absolute_contribution": 0.07956429132202311,
+        "mean_signed_contribution": -0.3822242887783392,
+        "normalized_importance_share": 0.12764568448156544,
+        "sum_mean_absolute_contribution": 0.5569500392541618,
+        "top_features": [
+          {
+            "feature_index": 34,
+            "feature_name": "matched_required_skill_mean_proficiency",
+            "mean_absolute_contribution": 0.2272086843056544
+          },
+          {
+            "feature_index": 29,
+            "feature_name": "required_skill_overlap_ratio",
+            "mean_absolute_contribution": 0.17446979847259836
+          },
+          {
+            "feature_index": 35,
+            "feature_name": "matched_required_skill_mean_years",
+            "mean_absolute_contribution": 0.07897537224362484
+          },
+          {
+            "feature_index": 30,
+            "feature_name": "weighted_required_skill_coverage",
+            "mean_absolute_contribution": 0.0657722780235453
+          },
+          {
+            "feature_index": 31,
+            "feature_name": "critical_required_skill_coverage",
+            "mean_absolute_contribution": 0.0105239062087389
+          }
+        ]
+      },
+      "feature_group": "required_skills",
+      "feature_names": [
+        "required_skill_overlap_ratio",
+        "weighted_required_skill_coverage",
+        "critical_required_skill_coverage",
+        "missing_required_skill_ratio",
+        "matched_required_skill_count_normalized",
+        "matched_required_skill_mean_proficiency",
+        "matched_required_skill_mean_years"
+      ],
+      "rank": 3,
+      "train": {
+        "feature_count": 7,
+        "mean_feature_absolute_contribution": 0.07935025436363564,
+        "mean_signed_contribution": -0.38147120136957774,
+        "normalized_importance_share": 0.12741504133891485,
+        "sum_mean_absolute_contribution": 0.5554517805454495,
+        "top_features": [
+          {
+            "feature_index": 34,
+            "feature_name": "matched_required_skill_mean_proficiency",
+            "mean_absolute_contribution": 0.22699884404835988
+          },
+          {
+            "feature_index": 29,
+            "feature_name": "required_skill_overlap_ratio",
+            "mean_absolute_contribution": 0.17372136661910978
+          },
+          {
+            "feature_index": 35,
+            "feature_name": "matched_required_skill_mean_years",
+            "mean_absolute_contribution": 0.0785309780398459
+          },
+          {
+            "feature_index": 30,
+            "feature_name": "weighted_required_skill_coverage",
+            "mean_absolute_contribution": 0.06553454841471903
+          },
+          {
+            "feature_index": 31,
+            "feature_name": "critical_required_skill_coverage",
+            "mean_absolute_contribution": 0.010666043423414946
+          }
+        ]
+      },
+      "validation": {
+        "feature_count": 7,
+        "mean_feature_absolute_contribution": 0.08056313046116462,
+        "mean_signed_contribution": -0.38573869668589283,
+        "normalized_importance_share": 0.1287166446744184,
+        "sum_mean_absolute_contribution": 0.5639419132281523,
+        "top_features": [
+          {
+            "feature_index": 34,
+            "feature_name": "matched_required_skill_mean_proficiency",
+            "mean_absolute_contribution": 0.22818793883969551
+          },
+          {
+            "feature_index": 29,
+            "feature_name": "required_skill_overlap_ratio",
+            "mean_absolute_contribution": 0.177962480455545
+          },
+          {
+            "feature_index": 35,
+            "feature_name": "matched_required_skill_mean_years",
+            "mean_absolute_contribution": 0.08104921186125993
+          },
+          {
+            "feature_index": 30,
+            "feature_name": "weighted_required_skill_coverage",
+            "mean_absolute_contribution": 0.06688168286473453
+          },
+          {
+            "feature_index": 31,
+            "feature_name": "critical_required_skill_coverage",
+            "mean_absolute_contribution": 0.009860599206917363
+          }
+        ]
+      }
+    },
+    {
+      "combined": {
+        "feature_count": 4,
+        "mean_feature_absolute_contribution": 0.13524016339728243,
+        "mean_signed_contribution": -0.3125801092094462,
+        "normalized_importance_share": 0.12398112584290207,
+        "sum_mean_absolute_contribution": 0.5409606535891298,
+        "top_features": [
+          {
+            "feature_index": 92,
+            "feature_name": "critical_skill_experience_interaction",
+            "mean_absolute_contribution": 0.2434878410830331
+          },
+          {
+            "feature_index": 93,
+            "feature_name": "skill_career_alignment_interaction",
+            "mean_absolute_contribution": 0.16347698808007813
+          },
+          {
+            "feature_index": 94,
+            "feature_name": "skill_work_mode_interaction",
+            "mean_absolute_contribution": 0.09323350024087611
+          },
+          {
+            "feature_index": 91,
+            "feature_name": "domain_skill_coverage_interaction",
+            "mean_absolute_contribution": 0.04076232418514246
+          }
+        ]
+      },
+      "feature_group": "interactions",
+      "feature_names": [
+        "domain_skill_coverage_interaction",
+        "critical_skill_experience_interaction",
+        "skill_career_alignment_interaction",
+        "skill_work_mode_interaction"
+      ],
+      "rank": 4,
+      "train": {
+        "feature_count": 4,
+        "mean_feature_absolute_contribution": 0.135444342438659,
+        "mean_signed_contribution": -0.3117419703219504,
+        "normalized_importance_share": 0.12427826929636981,
+        "sum_mean_absolute_contribution": 0.541777369754636,
+        "top_features": [
+          {
+            "feature_index": 92,
+            "feature_name": "critical_skill_experience_interaction",
+            "mean_absolute_contribution": 0.2438074905267626
+          },
+          {
+            "feature_index": 93,
+            "feature_name": "skill_career_alignment_interaction",
+            "mean_absolute_contribution": 0.16356858258876225
+          },
+          {
+            "feature_index": 94,
+            "feature_name": "skill_work_mode_interaction",
+            "mean_absolute_contribution": 0.09361715858544885
+          },
+          {
+            "feature_index": 91,
+            "feature_name": "domain_skill_coverage_interaction",
+            "mean_absolute_contribution": 0.040784138053662246
+          }
+        ]
+      },
+      "validation": {
+        "feature_count": 4,
+        "mean_feature_absolute_contribution": 0.13428732787085862,
+        "mean_signed_contribution": -0.31649142401775965,
+        "normalized_importance_share": 0.1226013804640726,
+        "sum_mean_absolute_contribution": 0.5371493114834345,
+        "top_features": [
+          {
+            "feature_index": 92,
+            "feature_name": "critical_skill_experience_interaction",
+            "mean_absolute_contribution": 0.24199614367896208
+          },
+          {
+            "feature_index": 93,
+            "feature_name": "skill_career_alignment_interaction",
+            "mean_absolute_contribution": 0.1630495470395522
+          },
+          {
+            "feature_index": 94,
+            "feature_name": "skill_work_mode_interaction",
+            "mean_absolute_contribution": 0.09144309463287002
+          },
+          {
+            "feature_index": 91,
+            "feature_name": "domain_skill_coverage_interaction",
+            "mean_absolute_contribution": 0.04066052613205012
+          }
+        ]
+      }
+    },
+    {
+      "combined": {
+        "feature_count": 16,
+        "mean_feature_absolute_contribution": 0.02654852417481437,
+        "mean_signed_contribution": -0.23650531462167396,
+        "normalized_importance_share": 0.09735320733063027,
+        "sum_mean_absolute_contribution": 0.4247763867970299,
+        "top_features": [
+          {
+            "feature_index": 48,
+            "feature_name": "career_level_distance",
+            "mean_absolute_contribution": 0.3282069941958279
+          },
+          {
+            "feature_index": 52,
+            "feature_name": "candidate_career_level__entry",
+            "mean_absolute_contribution": 0.024476584785423926
+          },
+          {
+            "feature_index": 60,
+            "feature_name": "job_career_level__mid",
+            "mean_absolute_contribution": 0.017384169341053197
+          },
+          {
+            "feature_index": 61,
+            "feature_name": "job_career_level__senior",
+            "mean_absolute_contribution": 0.016275367641912238
+          },
+          {
+            "feature_index": 56,
+            "feature_name": "candidate_career_level__lead",
+            "mean_absolute_contribution": 0.011096253057546157
+          }
+        ]
+      },
+      "feature_group": "career_level",
+      "feature_names": [
+        "career_level_exact_match",
+        "career_level_distance",
+        "seniority_requirement_met",
+        "career_overqualification",
+        "candidate_career_level__unknown",
+        "candidate_career_level__entry",
+        "candidate_career_level__junior",
+        "candidate_career_level__mid",
+        "candidate_career_level__senior",
+        "candidate_career_level__lead",
+        "job_career_level__unknown",
+        "job_career_level__entry",
+        "job_career_level__junior",
+        "job_career_level__mid",
+        "job_career_level__senior",
+        "job_career_level__lead"
+      ],
+      "rank": 5,
+      "train": {
+        "feature_count": 16,
+        "mean_feature_absolute_contribution": 0.02647266274347518,
+        "mean_signed_contribution": -0.2348191163828904,
+        "normalized_importance_share": 0.09716099322245442,
+        "sum_mean_absolute_contribution": 0.4235626038956029,
+        "top_features": [
+          {
+            "feature_index": 48,
+            "feature_name": "career_level_distance",
+            "mean_absolute_contribution": 0.3265155389394966
+          },
+          {
+            "feature_index": 52,
+            "feature_name": "candidate_career_level__entry",
+            "mean_absolute_contribution": 0.024566132732389927
+          },
+          {
+            "feature_index": 60,
+            "feature_name": "job_career_level__mid",
+            "mean_absolute_contribution": 0.0174846170772167
+          },
+          {
+            "feature_index": 61,
+            "feature_name": "job_career_level__senior",
+            "mean_absolute_contribution": 0.016392096559059818
+          },
+          {
+            "feature_index": 56,
+            "feature_name": "candidate_career_level__lead",
+            "mean_absolute_contribution": 0.01113091428222481
+          }
+        ]
+      },
+      "validation": {
+        "feature_count": 16,
+        "mean_feature_absolute_contribution": 0.026902544187730568,
+        "mean_signed_contribution": -0.2443742397359972,
+        "normalized_importance_share": 0.09824572750701771,
+        "sum_mean_absolute_contribution": 0.430440707003689,
+        "top_features": [
+          {
+            "feature_index": 48,
+            "feature_name": "career_level_distance",
+            "mean_absolute_contribution": 0.33610045205870714
+          },
+          {
+            "feature_index": 52,
+            "feature_name": "candidate_career_level__entry",
+            "mean_absolute_contribution": 0.024058694366249255
+          },
+          {
+            "feature_index": 60,
+            "feature_name": "job_career_level__mid",
+            "mean_absolute_contribution": 0.01691541323895684
+          },
+          {
+            "feature_index": 61,
+            "feature_name": "job_career_level__senior",
+            "mean_absolute_contribution": 0.015730632695223543
+          },
+          {
+            "feature_index": 56,
+            "feature_name": "candidate_career_level__lead",
+            "mean_absolute_contribution": 0.010934500675712453
+          }
+        ]
+      }
+    },
+    {
+      "combined": {
+        "feature_count": 6,
+        "mean_feature_absolute_contribution": 0.059996879661231246,
+        "mean_signed_contribution": -0.1953701977268024,
+        "normalized_importance_share": 0.08250301353462466,
+        "sum_mean_absolute_contribution": 0.3599812779673875,
+        "top_features": [
+          {
+            "feature_index": 42,
+            "feature_name": "job_minimum_experience_normalized",
+            "mean_absolute_contribution": 0.17018304480400437
+          },
+          {
+            "feature_index": 43,
+            "feature_name": "experience_gap_signed",
+            "mean_absolute_contribution": 0.1288199140412877
+          },
+          {
+            "feature_index": 41,
+            "feature_name": "candidate_experience_normalized",
+            "mean_absolute_contribution": 0.06097831912209542
+          },
+          {
+            "feature_index": 44,
+            "feature_name": "experience_shortfall",
+            "mean_absolute_contribution": 0.0
+          },
+          {
+            "feature_index": 45,
+            "feature_name": "experience_surplus",
+            "mean_absolute_contribution": 0.0
+          }
+        ]
+      },
+      "feature_group": "experience",
+      "feature_names": [
+        "candidate_experience_normalized",
+        "job_minimum_experience_normalized",
+        "experience_gap_signed",
+        "experience_shortfall",
+        "experience_surplus",
+        "experience_requirement_met"
+      ],
+      "rank": 6,
+      "train": {
+        "feature_count": 6,
+        "mean_feature_absolute_contribution": 0.059735990362840496,
+        "mean_signed_contribution": -0.19636796103066964,
+        "normalized_importance_share": 0.08221700548726087,
+        "sum_mean_absolute_contribution": 0.358415942177043,
+        "top_features": [
+          {
+            "feature_index": 42,
+            "feature_name": "job_minimum_experience_normalized",
+            "mean_absolute_contribution": 0.17001764276757303
+          },
+          {
+            "feature_index": 43,
+            "feature_name": "experience_gap_signed",
+            "mean_absolute_contribution": 0.12681392762079624
+          },
+          {
+            "feature_index": 41,
+            "feature_name": "candidate_experience_normalized",
+            "mean_absolute_contribution": 0.061584371788673695
+          },
+          {
+            "feature_index": 44,
+            "feature_name": "experience_shortfall",
+            "mean_absolute_contribution": 0.0
+          },
+          {
+            "feature_index": 45,
+            "feature_name": "experience_surplus",
+            "mean_absolute_contribution": 0.0
+          }
+        ]
+      },
+      "validation": {
+        "feature_count": 6,
+        "mean_feature_absolute_contribution": 0.06121436305372146,
+        "mean_signed_contribution": -0.19071396897542187,
+        "normalized_importance_share": 0.08383105316347361,
+        "sum_mean_absolute_contribution": 0.36728617832232874,
+        "top_features": [
+          {
+            "feature_index": 42,
+            "feature_name": "job_minimum_experience_normalized",
+            "mean_absolute_contribution": 0.17095492097401735
+          },
+          {
+            "feature_index": 43,
+            "feature_name": "experience_gap_signed",
+            "mean_absolute_contribution": 0.13818118400358126
+          },
+          {
+            "feature_index": 41,
+            "feature_name": "candidate_experience_normalized",
+            "mean_absolute_contribution": 0.05815007334473014
+          },
+          {
+            "feature_index": 44,
+            "feature_name": "experience_shortfall",
+            "mean_absolute_contribution": 0.0
+          },
+          {
+            "feature_index": 45,
+            "feature_name": "experience_surplus",
+            "mean_absolute_contribution": 0.0
+          }
+        ]
+      }
+    },
+    {
+      "combined": {
+        "feature_count": 14,
+        "mean_feature_absolute_contribution": 0.02532370140564109,
+        "mean_signed_contribution": -0.1396942828392536,
+        "normalized_importance_share": 0.08125406877431972,
+        "sum_mean_absolute_contribution": 0.3545318196789753,
+        "top_features": [
+          {
+            "feature_index": 63,
+            "feature_name": "education_requirement_met",
+            "mean_absolute_contribution": 0.1975850507953815
+          },
+          {
+            "feature_index": 64,
+            "feature_name": "education_level_distance",
+            "mean_absolute_contribution": 0.05340674107512615
+          },
+          {
+            "feature_index": 72,
+            "feature_name": "job_education_level__high_school",
+            "mean_absolute_contribution": 0.042596608363429274
+          },
+          {
+            "feature_index": 76,
+            "feature_name": "job_education_level__doctorate",
+            "mean_absolute_contribution": 0.022478415179080943
+          },
+          {
+            "feature_index": 74,
+            "feature_name": "job_education_level__bachelor",
+            "mean_absolute_contribution": 0.016072009617320183
+          }
+        ]
+      },
+      "feature_group": "education",
+      "feature_names": [
+        "education_requirement_met",
+        "education_level_distance",
+        "candidate_education_level__unknown",
+        "candidate_education_level__high_school",
+        "candidate_education_level__diploma",
+        "candidate_education_level__bachelor",
+        "candidate_education_level__master",
+        "candidate_education_level__doctorate",
+        "job_education_level__unknown",
+        "job_education_level__high_school",
+        "job_education_level__diploma",
+        "job_education_level__bachelor",
+        "job_education_level__master",
+        "job_education_level__doctorate"
+      ],
+      "rank": 7,
+      "train": {
+        "feature_count": 14,
+        "mean_feature_absolute_contribution": 0.02515659501344309,
+        "mean_signed_contribution": -0.13692760826572495,
+        "normalized_importance_share": 0.08078937161046122,
+        "sum_mean_absolute_contribution": 0.3521923301882034,
+        "top_features": [
+          {
+            "feature_index": 63,
+            "feature_name": "education_requirement_met",
+            "mean_absolute_contribution": 0.19554196657199
+          },
+          {
+            "feature_index": 64,
+            "feature_name": "education_level_distance",
+            "mean_absolute_contribution": 0.05344367777543084
+          },
+          {
+            "feature_index": 72,
+            "feature_name": "job_education_level__high_school",
+            "mean_absolute_contribution": 0.04222771054407565
+          },
+          {
+            "feature_index": 76,
+            "feature_name": "job_education_level__doctorate",
+            "mean_absolute_contribution": 0.022402912889545348
+          },
+          {
+            "feature_index": 74,
+            "feature_name": "job_education_level__bachelor",
+            "mean_absolute_contribution": 0.016157808998133755
+          }
+        ]
+      },
+      "validation": {
+        "feature_count": 14,
+        "mean_feature_absolute_contribution": 0.026103531235898394,
+        "mean_signed_contribution": -0.15260543084905406,
+        "normalized_importance_share": 0.08341182711261153,
+        "sum_mean_absolute_contribution": 0.3654494373025775,
+        "top_features": [
+          {
+            "feature_index": 63,
+            "feature_name": "education_requirement_met",
+            "mean_absolute_contribution": 0.2071194438378752
+          },
+          {
+            "feature_index": 64,
+            "feature_name": "education_level_distance",
+            "mean_absolute_contribution": 0.05323436980703758
+          },
+          {
+            "feature_index": 72,
+            "feature_name": "job_education_level__high_school",
+            "mean_absolute_contribution": 0.04431813152041286
+          },
+          {
+            "feature_index": 76,
+            "feature_name": "job_education_level__doctorate",
+            "mean_absolute_contribution": 0.022830759196913727
+          },
+          {
+            "feature_index": 74,
+            "feature_name": "job_education_level__bachelor",
+            "mean_absolute_contribution": 0.015671612506856843
+          }
+        ]
+      }
+    },
+    {
+      "combined": {
+        "feature_count": 10,
+        "mean_feature_absolute_contribution": 0.012666189132318609,
+        "mean_signed_contribution": -0.010403192756811359,
+        "normalized_importance_share": 0.02902925339107412,
+        "sum_mean_absolute_contribution": 0.1266618913231861,
+        "top_features": [
+          {
+            "feature_index": 78,
+            "feature_name": "employment_type_match",
+            "mean_absolute_contribution": 0.06039638540419407
+          },
+          {
+            "feature_index": 77,
+            "feature_name": "work_mode_match",
+            "mean_absolute_contribution": 0.04692879366009468
+          },
+          {
+            "feature_index": 80,
+            "feature_name": "job_work_mode__remote",
+            "mean_absolute_contribution": 0.01608190565250945
+          },
+          {
+            "feature_index": 82,
+            "feature_name": "job_work_mode__onsite",
+            "mean_absolute_contribution": 0.0030696885937910507
+          },
+          {
+            "feature_index": 81,
+            "feature_name": "job_work_mode__hybrid",
+            "mean_absolute_contribution": 0.00018511801259683323
+          }
+        ]
+      },
+      "feature_group": "preferences",
+      "feature_names": [
+        "work_mode_match",
+        "employment_type_match",
+        "job_work_mode__unknown",
+        "job_work_mode__remote",
+        "job_work_mode__hybrid",
+        "job_work_mode__onsite",
+        "job_employment_type__unknown",
+        "job_employment_type__full_time",
+        "job_employment_type__part_time",
+        "job_employment_type__contract"
+      ],
+      "rank": 8,
+      "train": {
+        "feature_count": 10,
+        "mean_feature_absolute_contribution": 0.012743986173961839,
+        "mean_signed_contribution": -0.010443210188832526,
+        "normalized_importance_share": 0.029233420110443633,
+        "sum_mean_absolute_contribution": 0.12743986173961838,
+        "top_features": [
+          {
+            "feature_index": 78,
+            "feature_name": "employment_type_match",
+            "mean_absolute_contribution": 0.06084421419710409
+          },
+          {
+            "feature_index": 77,
+            "feature_name": "work_mode_match",
+            "mean_absolute_contribution": 0.047255772372637506
+          },
+          {
+            "feature_index": 80,
+            "feature_name": "job_work_mode__remote",
+            "mean_absolute_contribution": 0.016059970132019777
+          },
+          {
+            "feature_index": 82,
+            "feature_name": "job_work_mode__onsite",
+            "mean_absolute_contribution": 0.003093662843086888
+          },
+          {
+            "feature_index": 81,
+            "feature_name": "job_work_mode__hybrid",
+            "mean_absolute_contribution": 0.00018624219477012514
+          }
+        ]
+      },
+      "validation": {
+        "feature_count": 10,
+        "mean_feature_absolute_contribution": 0.012303136271316868,
+        "mean_signed_contribution": -0.010216444740712581,
+        "normalized_importance_share": 0.028081232883560514,
+        "sum_mean_absolute_contribution": 0.12303136271316867,
+        "top_features": [
+          {
+            "feature_index": 78,
+            "feature_name": "employment_type_match",
+            "mean_absolute_contribution": 0.058306517703947326
+          },
+          {
+            "feature_index": 77,
+            "feature_name": "work_mode_match",
+            "mean_absolute_contribution": 0.04540289300156148
+          },
+          {
+            "feature_index": 80,
+            "feature_name": "job_work_mode__remote",
+            "mean_absolute_contribution": 0.016184271414794588
+          },
+          {
+            "feature_index": 82,
+            "feature_name": "job_work_mode__onsite",
+            "mean_absolute_contribution": 0.0029578087637438092
+          },
+          {
+            "feature_index": 81,
+            "feature_name": "job_work_mode__hybrid",
+            "mean_absolute_contribution": 0.00017987182912147096
+          }
+        ]
+      }
+    },
+    {
+      "combined": {
+        "feature_count": 4,
+        "mean_feature_absolute_contribution": 0.007340517412764875,
+        "mean_signed_contribution": 0.002189615504295769,
+        "normalized_importance_share": 0.006729403383154321,
+        "sum_mean_absolute_contribution": 0.029362069651059496,
+        "top_features": [
+          {
+            "feature_index": 87,
+            "feature_name": "headline_title_token_jaccard",
+            "mean_absolute_contribution": 0.021816431615102938
+          },
+          {
+            "feature_index": 88,
+            "feature_name": "candidate_skills_in_job_description_ratio",
+            "mean_absolute_contribution": 0.004963712369292001
+          },
+          {
+            "feature_index": 89,
+            "feature_name": "candidate_skills_in_job_responsibilities_ratio",
+            "mean_absolute_contribution": 0.0017692132460824783
+          },
+          {
+            "feature_index": 90,
+            "feature_name": "required_skills_in_candidate_headline_ratio",
+            "mean_absolute_contribution": 0.0008127124205820781
+          }
+        ]
+      },
+      "feature_group": "text_alignment",
+      "feature_names": [
+        "headline_title_token_jaccard",
+        "candidate_skills_in_job_description_ratio",
+        "candidate_skills_in_job_responsibilities_ratio",
+        "required_skills_in_candidate_headline_ratio"
+      ],
+      "rank": 9,
+      "train": {
+        "feature_count": 4,
+        "mean_feature_absolute_contribution": 0.007310377407126605,
+        "mean_signed_contribution": 0.002388198492272754,
+        "normalized_importance_share": 0.006707707651003847,
+        "sum_mean_absolute_contribution": 0.02924150962850642,
+        "top_features": [
+          {
+            "feature_index": 87,
+            "feature_name": "headline_title_token_jaccard",
+            "mean_absolute_contribution": 0.02177049973981036
+          },
+          {
+            "feature_index": 88,
+            "feature_name": "candidate_skills_in_job_description_ratio",
+            "mean_absolute_contribution": 0.0048716833846517375
+          },
+          {
+            "feature_index": 89,
+            "feature_name": "candidate_skills_in_job_responsibilities_ratio",
+            "mean_absolute_contribution": 0.001776118031696728
+          },
+          {
+            "feature_index": 90,
+            "feature_name": "required_skills_in_candidate_headline_ratio",
+            "mean_absolute_contribution": 0.0008232084723475911
+          }
+        ]
+      },
+      "validation": {
+        "feature_count": 4,
+        "mean_feature_absolute_contribution": 0.007481170772410134,
+        "mean_signed_contribution": 0.0012628948937365042,
+        "normalized_importance_share": 0.006830144576761621,
+        "sum_mean_absolute_contribution": 0.029924683089640535,
+        "top_features": [
+          {
+            "feature_index": 87,
+            "feature_name": "headline_title_token_jaccard",
+            "mean_absolute_contribution": 0.022030780366468307
+          },
+          {
+            "feature_index": 88,
+            "feature_name": "candidate_skills_in_job_description_ratio",
+            "mean_absolute_contribution": 0.005393180964279896
+          },
+          {
+            "feature_index": 89,
+            "feature_name": "candidate_skills_in_job_responsibilities_ratio",
+            "mean_absolute_contribution": 0.0017369909132159793
+          },
+          {
+            "feature_index": 90,
+            "feature_name": "required_skills_in_candidate_headline_ratio",
+            "mean_absolute_contribution": 0.0007637308456763509
+          }
+        ]
+      }
+    },
+    {
+      "combined": {
+        "feature_count": 8,
+        "mean_feature_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "normalized_importance_share": 0.0,
+        "sum_mean_absolute_contribution": 0.0,
+        "top_features": [
+          {
+            "feature_index": 95,
+            "feature_name": "candidate_skills_missing",
+            "mean_absolute_contribution": 0.0
+          },
+          {
+            "feature_index": 96,
+            "feature_name": "candidate_experience_missing",
+            "mean_absolute_contribution": 0.0
+          },
+          {
+            "feature_index": 97,
+            "feature_name": "candidate_education_missing",
+            "mean_absolute_contribution": 0.0
+          },
+          {
+            "feature_index": 98,
+            "feature_name": "candidate_career_level_missing",
+            "mean_absolute_contribution": 0.0
+          },
+          {
+            "feature_index": 99,
+            "feature_name": "job_required_skills_missing",
+            "mean_absolute_contribution": 0.0
+          }
+        ]
+      },
+      "feature_group": "missing_indicators",
+      "feature_names": [
+        "candidate_skills_missing",
+        "candidate_experience_missing",
+        "candidate_education_missing",
+        "candidate_career_level_missing",
+        "job_required_skills_missing",
+        "job_minimum_experience_missing",
+        "job_education_missing",
+        "job_career_level_missing"
+      ],
+      "rank": 10,
+      "train": {
+        "feature_count": 8,
+        "mean_feature_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "normalized_importance_share": 0.0,
+        "sum_mean_absolute_contribution": 0.0,
+        "top_features": [
+          {
+            "feature_index": 95,
+            "feature_name": "candidate_skills_missing",
+            "mean_absolute_contribution": 0.0
+          },
+          {
+            "feature_index": 96,
+            "feature_name": "candidate_experience_missing",
+            "mean_absolute_contribution": 0.0
+          },
+          {
+            "feature_index": 97,
+            "feature_name": "candidate_education_missing",
+            "mean_absolute_contribution": 0.0
+          },
+          {
+            "feature_index": 98,
+            "feature_name": "candidate_career_level_missing",
+            "mean_absolute_contribution": 0.0
+          },
+          {
+            "feature_index": 99,
+            "feature_name": "job_required_skills_missing",
+            "mean_absolute_contribution": 0.0
+          }
+        ]
+      },
+      "validation": {
+        "feature_count": 8,
+        "mean_feature_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "normalized_importance_share": 0.0,
+        "sum_mean_absolute_contribution": 0.0,
+        "top_features": [
+          {
+            "feature_index": 95,
+            "feature_name": "candidate_skills_missing",
+            "mean_absolute_contribution": 0.0
+          },
+          {
+            "feature_index": 96,
+            "feature_name": "candidate_experience_missing",
+            "mean_absolute_contribution": 0.0
+          },
+          {
+            "feature_index": 97,
+            "feature_name": "candidate_education_missing",
+            "mean_absolute_contribution": 0.0
+          },
+          {
+            "feature_index": 98,
+            "feature_name": "candidate_career_level_missing",
+            "mean_absolute_contribution": 0.0
+          },
+          {
+            "feature_index": 99,
+            "feature_name": "job_required_skills_missing",
+            "mean_absolute_contribution": 0.0
+          }
+        ]
+      }
+    }
+  ]
+}

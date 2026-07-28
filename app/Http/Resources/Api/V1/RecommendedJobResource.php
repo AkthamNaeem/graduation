@@ -27,6 +27,12 @@ class RecommendedJobResource extends JsonResource
             'missing_required_skills' => $this->resource['missing_required_skills'],
             'matched_nice_to_have_skills' => $this->resource['matched_nice_to_have_skills'],
             'reasons' => $this->resource['reasons'],
+            'rank' => $this->resource['rank'] ?? null,
+            'recommendation_engine' => $this->resource['recommendation_engine'] ?? null,
+            'model_version' => $this->resource['model_version'] ?? null,
+            'feature_schema_version' => $this->resource['feature_schema_version'] ?? null,
+            'explanation_contract_version' => $this->resource['explanation_contract_version'] ?? null,
+            'fallback_used' => $this->resource['fallback_used'] ?? false,
         ];
     }
 }

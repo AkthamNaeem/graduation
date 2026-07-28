@@ -2088,3 +2088,403 @@ Dedicated tests cover weighted and unweighted required/nice-to-have math, missin
 ### Remaining Scope and Git Status
 
 LLM matching, embeddings, vector databases, stored scores, automatic decisions, automatic shortlist, interview/test score inclusion, notifications, and unrelated refactors remain intentionally out of scope. No commit or push was performed.
+
+## 44. Phase 13: Laravel ML Client
+
+### Architecture and Scope
+
+Phase 13 adds an internal typed Laravel client for the frozen Phase 12 FastAPI inference contract. `RecommendationMlClientContract` exposes only `live`, `ready`, `metadata`, and `rank`; `RecommendationMlClient` implements those operations with Laravel's existing HTTP client. The binding is registered in `AppServiceProvider`. No recommendation orchestrator, fallback, public endpoint, controller, route, model, migration, repository, queue, cache, persistence, or matching-workflow change was introduced.
+
+The isolated `app/Data/RecommendationMl` namespace contains readonly configuration, request, professional-fact, prediction, explanation, health, metadata, and response values. Array construction rejects unknown fields, validates OpenAPI bounds and finite numbers, emits deterministic payloads, and applies the Phase 12 skill normalization policy: NFKC/case folding, deterministic hyphens and whitespace, independent maximum candidate proficiency/experience values, maximum required weight, deduplication, sorting, and required-skill precedence over nice-to-have skills.
+
+### Configuration, Transport, and Privacy
+
+`config/recommendation_ml.php` reads the ML base URL, service token, timeouts, request limits, and six frozen contract versions. `MlClientConfiguration` rejects missing or unsafe URLs, URL credentials/query/fragment/path, tokens shorter than 32 characters, unreasonable timeout relationships, invalid limits, and missing version identities without including configuration values in exceptions.
+
+Every operation uses JSON request/response headers, explicit connect and total timeouts, and disabled redirects. Health operations are unauthenticated. Metadata and rank send only `X-ML-Service-Token`. There is no automatic retry, cookie jar, Laravel/Sanctum authorization header, request/response logging, or fallback.
+
+`MlOutboundPayloadGuard` scans the final rank payload recursively and case-insensitively against the complete Phase 13 denylist. `name` is allowed only at candidate-skill and required-job-skill paths. Exceptions contain only an internal code, optional request ID and HTTP status, operation, retryability, and a validated provider error code; they never retain the token, request, response, professional facts, or rejected value.
+
+### Response Contract and Failure Mapping
+
+Successful HTTP status is not sufficient. Health and metadata DTOs reject unknown or missing fields and validate service, Bundle, Model, Feature Schema, score-transform, explanation, reason-code, checksum, and readiness identities. Rank validation checks the echoed request ID and limit, all six configured versions, exact prediction count, complete Job-ID reconciliation, unique IDs and ranks, ranks `1..N`, finite raw/display/contribution/latency values, 0-100 display bounds, raw-score descending then Job-ID ascending order, up to three factors per direction, the twenty reason codes, ten feature groups, exact direction, 0-1 strength, and the non-probability/non-hiring-decision explanation note. Every supplied Job prediction is retained even when the requested limit is smaller.
+
+Connection and timeout failures map to `MlRecommendationTransportException`; 401 to authentication; 422 to validation with only a safe provider code; 429, 503, and other 5xx responses to unavailable; malformed successful responses, unexpected status, version mismatch, and reconciliation failures to contract exceptions. No fallback is applied.
+
+### Contract Compatibility and Verification
+
+Compatibility tests read the frozen artifacts only from their Phase 12 repository location. They verify all four published SHA-256 values, validate the request example against the actual OpenAPI schema without adding a dependency, round-trip the request through Laravel DTOs, parse the response example, and prove that runtime code has no path dependency on the contract files.
+
+- Focused client tests: 138 passed, 438 assertions.
+- Matching regression: 32 passed, 170 assertions.
+- Full Laravel regression: 672 passed, 4432 assertions; one opt-in real-S3 test skipped.
+- Pint on all Phase 13 PHP files: passed.
+- `git diff --check`: passed.
+- Static transport/security scans: passed; no retry, cookies, bearer authorization, or logging exists in the ML client.
+- Real local integration: live, ready, metadata, and rank passed through the Laravel client; request ID and versions matched, all three Job IDs were returned, and the measured database query/write count was zero.
+- The integration FastAPI process was stopped and port 8100 was no longer listening.
+
+The frozen Bundle Model, Feature Schema, Bundle manifest, OpenAPI contract, and contract manifest retained their SHA-256 values. No file under the Python service, Model, or Bundle was modified by Phase 13. No commit or push was performed.
+
+## 45. Phase 14: Recommendation Orchestrator and Fallback
+
+### Architecture and Public Cutover
+
+The existing `GET /api/v1/jobs/recommended` endpoint now delegates job recommendations to `RecommendationOrchestratorContract::recommend(User $user, int $limit): RecommendationResult`. The controller continues to use the same `RecommendedJobsRequest`, route, middleware, HTTP status, `Recommended jobs retrieved successfully.` message, `ApiResponse::success` envelope, and `RecommendedJobResource` boundary. The employer candidate-ranking action still calls `MatchingService::rankCandidatesForJob()` directly and remains outside ML.
+
+`RecommendationResult` is readonly and carries items, the selected engine, requested limit, candidate and returned counts, fallback state, an internal safe fallback code, frozen version metadata, and request ID. The closed engine values are `ml_xgbranker`, `matching_v2`, and `matching_v2_fallback`. Operational fallback codes are retained in the result/logging boundary and are not exposed by the public resource.
+
+The orchestrator follows one direction only: controller to orchestrator to either the Phase 13 client or the unchanged Matching 2.0 service. It performs no readiness, liveness, or metadata preflight, no retry, no batching, no recursion, and no partial ML acceptance. `MatchingService` and its formula, weights, rounding, recommendation output, and candidate-ranking method were not modified.
+
+### Configuration and Lazy Client Resolution
+
+`ML_RECOMMENDATION_ENABLED=false` is the safe default and is parsed as a boolean in `config/recommendation_ml.php`. A typed `RecommendationMlClientFactoryContract` defers both configuration validation and client construction until the orchestrator has confirmed that ML is enabled and eligible jobs exist. The disabled path therefore works with a missing token or invalid URL and performs no network request. The direct Phase 13 `RecommendationMlClientContract` binding remains available and unchanged for direct client consumers and tests.
+
+### Laravel Eligibility and Candidate-Pool Policy
+
+`RecommendationEligibilityProvider` is the only candidate-set authority. It captures one clock boundary and returns only jobs that are open, owned by an approved company, have no deadline or a deadline at/after that boundary, and have no prior application by the current profile in any status. It validates an active Job Seeker and an existing profile, deliberately does not require `published_at`, and eagerly loads profile skills/experience/education and job company/skills. It performs no writes and has no per-job query loop.
+
+Zero eligible jobs return an empty compatible result without ML or Matching work. A pool from one through the configured maximum produces one rank attempt containing every eligible job. A pool above the maximum is not truncated or split; it moves directly to full-list Matching 2.0 fallback with `ML_CANDIDATE_LIMIT_EXCEEDED`.
+
+### Request Mapping, Privacy, and Reconciliation
+
+`RecommendationMlRequestMapper` constructs only the Phase 13 DTOs. Candidate facts are limited to domain placeholders, headline, calculated non-overlapping experience years, normalized highest education, normalized/deduplicated skills, and empty preference lists where no local source exists. Job facts come from the actual title, department, description, responsibility lines, weighted required and nice-to-have skills, configured experience level, education level, work mode, and employment type. Missing facts become contract-safe nulls or empty lists. `profile_ref` is null.
+
+The mapper does not send name, email, phone, profile/user IDs, raw CV data, experience employer/description data, education institution/description data, applications, screening answers, tests, interviews, internal notes, auth/session data, feature vectors, labels, or unnecessary timestamps. It issues zero queries once eligibility relations are loaded. Unsafe or unrepresentable local values produce a typed mapping failure and Matching fallback.
+
+Each ML attempt receives a new UUID, the frozen Feature Schema, every eligible ID, and the contract-safe minimum of requested limit, configured maximum results, and eligible count. After the one `rank()` call, the orchestrator independently checks request/version identities, exact prediction count, missing/extra/duplicate IDs, local job existence in one bulk query, membership in the original eligibility snapshot, finite raw/display scores, and display bounds. Any failure rejects the complete response.
+
+### Final Ranking, Resource, and Fallback
+
+Laravel performs the final deterministic ML sort by raw score descending, then `published_at` descending with nulls last, then job ID ascending. It applies the public limit only after reconciliation and sorting, assigns complete ranks `1..N`, and removes the internal raw score.
+
+The public ML score is the model display score in the 0-100 range and is explicitly described as a ranking score, not a probability. Existing resource fields remain present. ML items add rank, engine, model, Feature Schema, explanation-contract, and fallback metadata. Reasons are produced only from the twenty Phase 13 allowlisted reason codes and safe local messages; raw feature names, values, and contributions are not exposed.
+
+Fallback calls the unchanged `MatchingService::recommendJobsForUser()` once, filters its complete output to the authoritative deadline-correct eligibility snapshot, and preserves its score, version, breakdown, matched/missing skills, and reasons without recalculation. Typed configuration, transport/timeout, authentication, provider validation, rate limit, unavailable/5xx, contract, mapping, reconciliation, and unexpected ML-client failures map to stable safe codes. A Matching/domain/authorization/public-validation failure is not swallowed or recursively retried.
+
+### Files and Bindings
+
+Phase 14 adds four contracts under `app/Contracts/Recommendation`, four readonly result/eligibility/client-handle values under `app/Data/Recommendation`, two safe exceptions, the eligibility provider, lazy factory, request mapper, orchestrator, one resource adapter, `RecommendationOrchestratorTest`, and `RecommendedJobsMlTest`. It modifies only `.env.example`, `config/recommendation_ml.php`, `AppServiceProvider`, the existing recommendation controller action, `RecommendedJobResource`, and this report. No route, model, migration, repository, Python, Bundle, Model, Postman, Docker, cache, queue, notification, audit, or persistence file was added or changed.
+
+`AppServiceProvider` binds the orchestrator, eligibility provider, mapper, and lazy client factory contracts. Container resolution and controller construction pass without circular dependencies or request-state singletons.
+
+### Verification and Manual Integration
+
+- `php artisan test --compact --do-not-cache-result --filter=RecommendationOrchestrator`: 17 passed, 167 assertions.
+- `php artisan test --compact --do-not-cache-result --filter=RecommendedJobsMl`: 19 passed, 289 assertions.
+- `php artisan test --compact --do-not-cache-result --filter=RecommendationMlClient`: 138 passed, 438 assertions.
+- `php artisan test --compact --do-not-cache-result --filter=Matching`: 50 passed, 392 assertions.
+- Full `php artisan test --compact --do-not-cache-result`: 708 passed, 4888 assertions; one opt-in real-S3 integration test skipped.
+- Pint on Phase 14 PHP files, PHP syntax checks, static recursion/preflight/retry/privacy scans, and `git diff --check`: passed.
+- The five frozen artifact hashes match their locked values. No file under `services/ml-recommendation` was modified by Phase 14.
+
+Manual integration used a temporary process-only service token and a fresh in-memory SQLite database. The real public endpoint returned HTTP 200 through `ml_xgbranker`, returned all three eligible fixtures, excluded a closed job, a pending-company job, an expired job, and an already-applied job, kept scores in 0-100, exposed safe reasons, issued one FastAPI rank request, performed zero recommendation/domain writes, and exposed no token or candidate PII in the response or test log. The only endpoint write observed in automated query capture is Sanctum's pre-existing `personal_access_tokens.last_used_at` authentication update; recommendation domain tables remain read-only.
+
+FastAPI was then stopped, port 8100 was verified not listening, and the same public flow with ML enabled returned HTTP 200 through `matching_v2_fallback` with all current Matching 2.0 fields and no exception details. All temporary fixtures, logs, process tokens, and integration scripts were removed. No commit or push was performed.
+
+## 46. Phase 15: Recommendation Persistence, Cache, and Invalidation
+
+### Architecture and Lookup Lifecycle
+
+`RecommendationOrchestrator` remains the only entry point for the recommendation flow. Each request captures eligibility once, builds a versioned content fingerprint, checks a deterministic cache pointer, checks the durable database store on a cache miss, and computes through the unchanged Phase 14 ML-or-Matching path only on a complete miss. Cache and persistence hits hydrate from the already eager-loaded current eligible Job models; no Job snapshot or professional fact is stored.
+
+The lookup key is `recommendations:v1:profile:{profile_id}:limit:{limit}:context:{context_hash}`. Its value contains exactly the cache schema version, run ID, context hash, requested limit, and expiry. It uses Laravel's generic cache repository with no tags or Redis-only calls. A database hit warms the cache. A corrupt pointer, missing/expired run, invalid item, stale Job, unsupported version, count mismatch, duplicate rank, or non-eligible Job rejects the complete stored result and follows one normal computation path.
+
+### Persistence Schema and Transaction
+
+Migration `2026_07_25_000001_create_recommendation_tables.php` creates exactly two tables. `recommendation_runs` stores the profile reference, optional request UUID, SHA-256 context identity and version, request/result counts, engine and fallback metadata, frozen ML versions, generation time, expiry, and timestamps. It has the profile foreign key, context and expiry indexes, and the composite profile/context/limit/expiry lookup index.
+
+`recommendation_items` stores only the run and Job references, rank, display score, optional internal raw score, score-contract version, safe numeric breakdown, safe reasons, and creation time. It has cascading run and Job foreign keys plus unique run/Job and run/rank constraints. JSON casts preserve breakdown and reasons. Candidate facts, Job text, skill names, feature vectors, request/response payloads, tokens, base URLs, and PII are not persisted.
+
+Run and item creation is one database transaction. Counts, ranks, unique eligible Job IDs, score bounds, finite raw scores, engine/fallback/version consistency, reason shape, and item score versions are validated before publication. An item-write exception rolls back the run and every item. Empty eligibility is persisted as a zero-item run; a non-empty candidate set cannot publish an empty result.
+
+### Context Fingerprint and Invalidation
+
+`recommendation-context-v1` is a canonical SHA-256 fingerprint over only state that affects eligibility, mapping, Matching 2.0 scoring, Laravel ranking, or frozen contracts. It covers candidate headline/summary, calculated experience and contributing experience fields, education, skills, all eligible Job scoring/mapping fields, required/nice-to-have pivots, current company approval, status, deadline, `published_at`, ML enabled state, Matching configuration/version, Model/Feature Schema/Explanation/score-transform versions, limits, and final-ranking policy.
+
+Associative keys are recursively sorted, unordered model collections receive deterministic ordering, meaningful lists retain order, floats use deterministic representation, enums use their values, and dates use normalized ISO-8601 values. Only the resulting hash and version leave the fingerprint service. User name/email/phone/password/auth state, unrelated timestamps, request UUID, availability, exceptions, and application facts are excluded. Prior applications still invalidate by changing the authoritative eligible Job list.
+
+### TTL, Failure Safety, and Pruning
+
+Successful `ml_xgbranker` and ML-disabled `matching_v2` results use 900 seconds. `matching_v2_fallback` uses 60 seconds. Zero-eligible results use 60 seconds. All values and the 30-day retention window are environment-configurable through validated config; success TTL is constrained to 1-86400 seconds, fallback/empty TTL cannot exceed it, and retention is constrained to 1-365 days.
+
+Cache reads/writes and database reads/writes are isolated from recommendation computation. Failures use safe codes and counts in logs, never payloads or facts, and do not fail the public result, retry ML, retry Matching, recurse, or delete a successfully written database run.
+
+`recommendations:prune` deletes expired or retention-old runs in ID chunks; items cascade. `--dry-run` performs no writes and reports only `deleted_runs`. No schedule was added because this repository has no existing scheduler convention.
+
+### Public Compatibility, Tests, and Verification
+
+The route, middleware, request validation, controller envelope, success message, HTTP status, and `RecommendedJobResource` remain the Phase 14 contract. Run IDs, hashes, cache keys, expiry, safe fallback codes, and persistence errors are never exposed. Cache/persistence metadata remains internal to the result and safe logs. `MatchingService`, the eligibility provider, request mapper, Phase 13 client, public routes, controller, and resource received no Phase 15 change.
+
+Dedicated `RecommendationPersistenceTest`, `RecommendationCacheTest`, and `RecommendationInvalidationTest` coverage verifies schema, foreign keys, uniqueness, casts, cascades, deterministic hashing and mutation matrix, all three engines and empty round trips, raw-score and version retention, atomic rollback, privacy, cache/DB hits, pointer validation, expiry, separate keys, failure isolation, bounded hydration queries, pruning, and public-equivalent hydrated results.
+
+The isolated SQLite lifecycle verification performed first computation, cache reuse with zero recommendation writes, cache flush and database reuse, scoring-field invalidation and recomputation, prior-application exclusion, dry-run counting, deletion, and item cascade. Final command results:
+
+- `php artisan migrate:fresh --env=testing` with process-scoped SQLite overrides: passed; all migrations including both recommendation tables ran.
+- `php artisan test --compact --do-not-cache-result --filter=RecommendationPersistence`: 10 passed, 82 assertions.
+- `php artisan test --compact --do-not-cache-result --filter=RecommendationCache`: 11 passed, 78 assertions.
+- `php artisan test --compact --do-not-cache-result --filter=RecommendationInvalidation`: 5 passed, 45 assertions.
+- `php artisan test --compact --do-not-cache-result --filter=RecommendationOrchestrator`: 17 passed, 167 assertions.
+- `php artisan test --compact --do-not-cache-result --filter=RecommendedJobsMl`: 19 passed, 291 assertions.
+- `php artisan test --compact --do-not-cache-result --filter=RecommendationMlClient`: 138 passed, 438 assertions.
+- `php artisan test --compact --do-not-cache-result --filter=Matching`: 52 passed, 414 assertions.
+- Full `php artisan test --compact --do-not-cache-result`: 734 passed, 5095 assertions; one opt-in real-S3 integration test skipped.
+- Pint on every Phase 15 PHP file, PHP syntax checks, privacy/Redis scans, and `git diff --check`: passed.
+
+The frozen Model, Feature Schema, Bundle manifest, OpenAPI contract, and contract manifest retain their locked SHA-256 hashes. `MatchingService`, public routes, the recommendation controller/resource, and every Python file retain their Phase 15 baseline content. No Redis dependency, Postman, Docker, Queue, notification, audit persistence, commit, or push was introduced.
+
+## 47. Phase 16: Docker and Deployment Packaging
+
+### Package and Runtime Contract
+
+Phase 16 adds a provider-neutral, production-oriented container package for
+the existing FastAPI `0.2.0` inference service. The Laravel Dockerfile and
+deployment conventions remain unchanged. The ML image uses a multi-stage
+build and the multi-architecture digest-pinned Python `3.12.10-slim` base.
+The builder creates wheels; the runtime installs only the exact closure from
+`requirements-container.lock`, including `xgboost-cpu==3.3.0` without
+GPU/NCCL packages.
+
+The runtime runs as fixed UID/GID `10001:10001`, exposes port `8100`, starts
+one Uvicorn worker without reload, and uses a standard-library readiness
+healthcheck. `/app` is immutable and the verified launch supplies only a
+bounded `/tmp` tmpfs. All capabilities are dropped and
+`no-new-privileges` is enabled. The token is a required runtime secret; it is
+absent from the Dockerfile environment, build arguments, image labels,
+history, Compose values, documentation values, and deterministic manifest.
+
+Only the installed inference package, its exact runtime dependencies, two
+container scripts, and the eight frozen Bundle files are present. Training,
+tuning, evaluation, split, synthetic-source, test, Laravel, Git, cache,
+virtualenv, local environment, and explanation artifacts are excluded. The
+installed package retains only the professional-domain catalog and schema
+types required by the frozen inference pipeline.
+
+### Compose, Manifest, and Runbook
+
+`compose.ml.yml` builds only the ML service, requires token interpolation,
+binds `127.0.0.1:8100`, enables read-only mode, tmpfs, capability dropping,
+`no-new-privileges`, init, readiness healthcheck, and a 30-second stop grace
+period. Compose configuration validation passed with a process-only token.
+
+`deployment/container/v1/container_manifest.json` is sorted,
+machine-independent, timestamp-free, secret-free, and records the base
+digest, source revision, runtime identity, exact dependency versions,
+packaging-file hashes, and all eight Bundle hashes. `DEPLOYMENT.md` documents
+build/tag policy, runtime environment, internal networking, Laravel
+configuration, rollout, rollback, coordinated token rotation, smoke checks,
+monitoring, limitations, and horizontal scaling. No provider manifest,
+production deployment, Kubernetes resource, proxy, Redis, database, or
+CI/CD pipeline was added.
+
+### Image and Runtime Verification
+
+The final local image is
+`workeyx/ml-recommendation:0.2.0-phase16`. Docker reports compressed image
+size `196154361` bytes, 11 rootfs layers, `linux/amd64`, user
+`10001:10001`, workdir `/app`, the expected entrypoint and healthcheck, and
+complete OCI revision/date/application labels. Docker's human-readable
+uncompressed listing is approximately `688MB`.
+
+Actual hardened runtime verification passed. The service became healthy,
+returned live/ready and metadata identities, and ranked the frozen three-Job
+request with matching request/version identities. Final-package startup
+observations were approximately 6.1-8.2 seconds; a prior measured warm
+five-request sample was `13.22`, `16.61`, `11.71`, `11.10`, and `11.59ms`.
+Observed memory was `70.47MiB` idle and `71.46MiB` after rank, CPU `0.17%`,
+and graceful stop `513.88ms`. These are local observations, not an SLA.
+
+Root writes and Bundle/model writes failed, `/tmp` writes succeeded, the
+process identity was `10001:10001`, and only one Uvicorn worker was present.
+The image also became ready and completed ranking under `--network none`.
+Missing token produced live `200`, ready `503` with
+`SERVICE_TOKEN_NOT_CONFIGURED`, and protected endpoint `401`. A missing
+Bundle produced ready/rank `503`; a wrong caller token produced `401`.
+No tested secret appeared in logs.
+
+The clean no-cache rebuild and final image have different BuildKit
+manifest-list IDs because provenance attestations differ, but they have the
+same size, layer count, OCI/runtime configuration, dependency versions,
+startup/healthcheck hashes, all eight Bundle hashes, ready state, and
+three-prediction rank response.
+
+### Laravel-to-Container Integration
+
+The opt-in `RecommendationContainerIntegrationTest` uses the real public
+Laravel endpoint and real container transport. It passed 29 assertions:
+the first request used `ml_xgbranker`, persisted one run/item, the second
+request reused the cache without another ML request or run, and no token or
+candidate email appeared publicly. The coordinator then stopped the
+container, changed the scoring context, and the same endpoint returned
+`matching_v2_fallback`, persisted the fallback result, and preserved the
+public contract.
+
+### Verification Results
+
+- Container packaging tests: 6 passed; one upstream
+  `StarletteDeprecationWarning`.
+- Safe Python suite: 362 passed; whole-package line coverage `91.11%`
+  with no omitted source module. The Locked Test contract unit used generated
+  temporary fixtures only; the repository Locked Test was not opened or
+  evaluated.
+- Additional branch-inclusive measurement with the real Locked Test unit
+  excluded: 355 passed and `86.07%`; recorded separately because project
+  branch coverage and the requested line-coverage gate are distinct.
+- Ruff lint: passed. Ruff formatting over `src`, `tests`, and `container`:
+  108 files formatted. The broad service-path invocation hit a Ruff
+  `Expected a ruff source file` panic, so the equivalent explicit Python
+  directories were verified.
+- Mypy strict: 106 source files passed. Compileall and pip check passed.
+- Recommendation and Matching filters passed; Matching reported 52 tests and
+  414 assertions.
+- Full Laravel: 734 passed, 5095 assertions, 2 opt-in integrations skipped.
+- The real container integration was separately enabled and passed.
+- Pint for the new PHP integration test and Compose config validation passed.
+- `composer audit --locked`: no vulnerability advisories.
+- Trivy, Syft, and Grype were unavailable. Docker Scout `1.20.4` was
+  available, but image-metadata egress was rejected by the execution safety
+  policy, so no Scout CVE result is claimed.
+- Image environment, history, and Phase 16 static secret scans found zero
+  token/private-key matches.
+
+Early image-stripping iterations exposed required imports from
+`data.catalog` and `schemas.synthetic`; the final Dockerfile retains only
+those runtime requirements and all final builds/runtime checks pass. Initial
+coverage runs also exposed a local ACL restriction for SQLite coverage files;
+the final measurement ran safely from the writable repository root.
+
+### Integrity and Repository State
+
+The Architecture, Model, Feature Schema, Bundle manifest, OpenAPI, and
+contract-manifest hashes remain respectively:
+`60eb219152ce26b525735ed65564f667d403bf438f29000b4ece90d65950553f`,
+`3abd74137bc8881667643f31a658c790ef6712359d7802ea7fcffa0c4cf9e26e`,
+`aeb260b25f34b55b7164b215e613a0b4327df33ee65af95abc904045849ce4a0`,
+`1d566e4516724fae0c08cd6131214c0722dffcd589a370cf2405b8b0450dfb00`,
+`b73b11b5fa67c40927e5a05ab72e2d2f7b292fa3149f0d945ae74be08f7ca96d`,
+and
+`a51e8f4e74189ccb086bdb7fe32816c6e56953533f3c77243e50650be0bf9cb2`.
+
+Branch `master` and HEAD
+`6cd51f733d5197e0c3f6b7dfb3711c2860ffef71` remain unchanged with zero
+staged files. Phase 16 adds 11 untracked files and modifies the already
+untracked ML README plus this already tracked report; total untracked files
+are 251. No inference, Feature Pipeline, recommendation business logic,
+Matching formula, Model, Bundle, migration, database, production environment,
+commit, or push changed. Phase gate: **READY FOR PHASE 17**.
+
+## Phase 17 — End-to-End Integration and Failure Testing
+
+Phase 17 exercised the unchanged public
+`GET /api/v1/jobs/recommended` flow through Laravel, the existing
+`workeyx/ml-recommendation:0.2.0-phase16` container, database persistence,
+cache, and MatchingService 2.0 fallback. The repeatable loopback harness
+passed cold ML, cache hit, persistence hit, content-addressed invalidation,
+eligibility, stopped-container, wrong-token, invalid-Bundle, safe
+cache/persistence corruption, 18 provider/network failure modes, bounded warm
+and cold concurrency, privacy scanning, and final cleanup. It rebuilt no
+image and used no production data or service.
+
+The deterministic Phase 17 matrix contains 35 passed scenarios and zero
+failed scenarios. Ten warm concurrent requests created no new run. Five cold
+requests produced one complete equivalent run, zero duplicate-equivalent
+runs, zero partial runs, and no HTTP failure. Runtime secret and fixture PII
+marker hits were zero across public bodies, Laravel/container/fault logs, and
+recommendation storage.
+
+Laravel verification finished with 761 passed tests, 8537 assertions, and the
+two expected opt-in integrations skipped. Python verification finished with
+362 passed tests, one upstream Starlette deprecation warning, and
+91.17823564712943% whole-package line coverage. Ruff lint/format, the
+runtime-compatible Mypy check over 106 files, compileall, pip check, and Pint
+passed. The literal protected Mypy 3.11 configuration conflicts with installed
+NumPy stubs that use Python 3.12 syntax, so the successful compatibility
+check explicitly targeted the deployed Python 3.12 runtime without changing
+configuration or dependencies. Composer advisory lookup was attempted but
+could not reach Packagist locally, and external retry was denied by the
+private-lockfile metadata policy; no advisory result is claimed.
+
+The pre-change protected baseline verified all 864 entries with zero live
+mismatches. Final comparison found no unexpected protected mismatch; this
+report is the only approved existing-file modification. Architecture, Model,
+Feature Schema, Bundle manifest, OpenAPI, contract manifest, container
+manifest, all eight Bundle files, and all stored container-input hashes remain
+exact. No application/ML behavior, model, Bundle, contract, Docker packaging,
+migration, schema, training, tuning, Locked Test, deployment, commit, or push
+changed. The detailed evidence is in
+`docs/ml-job-recommendation/phase17/PHASE_17_E2E_REPORT.md` and
+`docs/ml-job-recommendation/phase17/E2E_TEST_MATRIX.json`.
+
+## Phase 18 — Final Documentation, Demo, and Handover
+
+Phase 18 closes the ML Job Recommendation academic implementation plan with a
+new protected cryptographic baseline, a final handover, final verification
+report, repeatable demo runbook, machine-readable requirements traceability,
+completion checklist, Arabic graduation-defense guide, deterministic handover
+manifest, and a documentation contract test. Root and ML service READMEs now
+link to those sources of truth.
+
+The handover preserves the existing system boundary: Laravel owns
+authentication, eligibility, job discovery, final sorting, persistence,
+cache, fallback, and the public resource; FastAPI owns strict validation,
+frozen Feature construction, XGBRanker inference, display-score conversion,
+and attribution. AI remains decision-support only. `display_score` is not a
+probability, SHAP attribution is not causality, and the model remains trained
+on synthetic data.
+
+No production PHP source, route, controller, resource, service, model,
+migration, schema, Bundle, contract, Docker packaging, image, training, tuning,
+or Locked Test evaluation changed. A post-handover commit-safety correction in
+the Python baseline evaluator replaces only the machine-local repository label
+written to its Markdown report; it changes no ranking, metric, feature, split,
+inference, Model, or Bundle behavior. Production deployment and production load
+testing were not performed. Detailed evidence is indexed by
+`docs/ml-job-recommendation/phase18/FINAL_HANDOVER.md`.
+
+Final verification passed the Phase 18 documentation contract, 358 safe Python
+tests at 93% whole-package coverage, Ruff, explicit Python
+3.12 Mypy, compileall, pip check, Pint, the 35-scenario E2E matrix, frozen
+artifact checks, privacy checks, cleanup, and the 873-entry protected
+comparison with zero unexpected mismatches. Composer advisory lookup remained
+indeterminate because Packagist was unavailable.
+
+The previous sole failure was a stale Phase 17 assertion that fixed the root
+`README.md` byte size before Phase 18 added its explicitly required handover
+links. Final-gate test maintenance replaced the brittle size/hash check with
+semantic link, deployment-disclaimer, path, and secret-safety assertions.
+`RecommendationEndToEndTest.php` is named in exactly one explicit Phase 18
+maintenance allowlist; no wildcard or broader test exemption was introduced.
+
+The final portability audit approved the repository label in
+`services/ml-recommendation/data/baselines/v1/BASELINE_REPORT.md` and its
+report-template literal in
+`services/ml-recommendation/src/smart_recruitment_ml/baselines/evaluator.py`.
+The Phase 7 baseline manifest received one integrity-metadata update: only the
+report output's byte size and SHA-256 now identify the approved portable bytes.
+The unchanged Python baseline integrity test verifies that record and all other
+outputs. No metric, ranking result, Dataset row, split, model output, version,
+or numerical evidence changed.
+The service README uses a portable `python` command and repository-relative
+virtual environment path. The historical Phase 18 baseline remains immutable;
+the current comparison therefore reports nine total approved differences, zero
+unexpected protected mismatches, and zero missing protected paths.
+
+The trainer's current Phase 7 provenance now equals the portable manifest
+SHA-256
+`C591708A58AE66941BB004CE08522EAADC90F476105F7BED08B5E2DB477046BF`.
+Historical reproduction remains byte-faithful by reading the old manifest hash
+and recorded Locked Test hash from the frozen initial-model manifest, supplying
+those historical values only inside the test, and guarding the trainer's actual
+`Path.open` path against Locked Test access. Real synthetic Train/Validation
+training executed in an external pytest temporary directory; all eight
+historical initial-model outputs were byte-identical. No frozen Model or Bundle
+changed, and no production retraining occurred.
+
+The Phase 17 and Phase 18 integrity tests now recognize the trainer-provenance
+and historical-reproduction test paths through exact two-path maintenance
+entries. No wildcard, Python directory exemption, or broad test exemption was
+added; every other protected path retains size and SHA-256 enforcement.
+
+The final complete Laravel run reported 762 passed, two expected opt-in skips,
+zero failures, and 16,547 assertions. No production behavior changed.
+The strict Phase 18 gate is **PROJECT HANDOVER READY**.

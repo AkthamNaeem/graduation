@@ -1,0 +1,1776 @@
+{
+  "architecture_sha256": "60EB219152CE26B525735ED65564F667D403BF438F29000B4ECE90D65950553F",
+  "critical_skill_weight_threshold": 4.0,
+  "deterministic": true,
+  "excluded_input_fields": [
+    "candidate_id",
+    "job_id",
+    "pair_id",
+    "relevance_label",
+    "scenario",
+    "rationale_codes",
+    "noise_applied",
+    "hidden_affinity",
+    "latent_score",
+    "name",
+    "email",
+    "phone",
+    "birth_date",
+    "age",
+    "gender",
+    "nationality",
+    "marital_status",
+    "address",
+    "cv_file",
+    "raw_cv",
+    "application_history",
+    "application_status",
+    "cover_letter",
+    "screening_answers",
+    "tests",
+    "interviews",
+    "internal_notes",
+    "company_identity",
+    "authentication_tokens",
+    "application_outcome"
+  ],
+  "experience_cap_years": 30.0,
+  "feature_bounds": {
+    "candidate_career_level__entry": [
+      0.0,
+      1.0
+    ],
+    "candidate_career_level__junior": [
+      0.0,
+      1.0
+    ],
+    "candidate_career_level__lead": [
+      0.0,
+      1.0
+    ],
+    "candidate_career_level__mid": [
+      0.0,
+      1.0
+    ],
+    "candidate_career_level__senior": [
+      0.0,
+      1.0
+    ],
+    "candidate_career_level__unknown": [
+      0.0,
+      1.0
+    ],
+    "candidate_career_level_missing": [
+      0.0,
+      1.0
+    ],
+    "candidate_domain__backend_engineering": [
+      0.0,
+      1.0
+    ],
+    "candidate_domain__cybersecurity": [
+      0.0,
+      1.0
+    ],
+    "candidate_domain__data_analysis": [
+      0.0,
+      1.0
+    ],
+    "candidate_domain__data_engineering": [
+      0.0,
+      1.0
+    ],
+    "candidate_domain__devops_cloud": [
+      0.0,
+      1.0
+    ],
+    "candidate_domain__digital_marketing": [
+      0.0,
+      1.0
+    ],
+    "candidate_domain__finance_accounting": [
+      0.0,
+      1.0
+    ],
+    "candidate_domain__frontend_engineering": [
+      0.0,
+      1.0
+    ],
+    "candidate_domain__mobile_development": [
+      0.0,
+      1.0
+    ],
+    "candidate_domain__product_management": [
+      0.0,
+      1.0
+    ],
+    "candidate_domain__quality_assurance": [
+      0.0,
+      1.0
+    ],
+    "candidate_domain__ui_ux_design": [
+      0.0,
+      1.0
+    ],
+    "candidate_domain__unknown": [
+      0.0,
+      1.0
+    ],
+    "candidate_education_level__bachelor": [
+      0.0,
+      1.0
+    ],
+    "candidate_education_level__diploma": [
+      0.0,
+      1.0
+    ],
+    "candidate_education_level__doctorate": [
+      0.0,
+      1.0
+    ],
+    "candidate_education_level__high_school": [
+      0.0,
+      1.0
+    ],
+    "candidate_education_level__master": [
+      0.0,
+      1.0
+    ],
+    "candidate_education_level__unknown": [
+      0.0,
+      1.0
+    ],
+    "candidate_education_missing": [
+      0.0,
+      1.0
+    ],
+    "candidate_experience_missing": [
+      0.0,
+      1.0
+    ],
+    "candidate_experience_normalized": [
+      0.0,
+      1.0
+    ],
+    "candidate_skill_count_normalized": [
+      0.0,
+      1.0
+    ],
+    "candidate_skills_in_job_description_ratio": [
+      0.0,
+      1.0
+    ],
+    "candidate_skills_in_job_responsibilities_ratio": [
+      0.0,
+      1.0
+    ],
+    "candidate_skills_missing": [
+      0.0,
+      1.0
+    ],
+    "candidate_to_required_skill_count_ratio": [
+      0.0,
+      1.0
+    ],
+    "career_level_distance": [
+      -1.0,
+      1.0
+    ],
+    "career_level_exact_match": [
+      0.0,
+      1.0
+    ],
+    "career_overqualification": [
+      0.0,
+      1.0
+    ],
+    "critical_required_skill_coverage": [
+      0.0,
+      1.0
+    ],
+    "critical_skill_experience_interaction": [
+      0.0,
+      1.0
+    ],
+    "domain_adjacent_match": [
+      0.0,
+      1.0
+    ],
+    "domain_exact_match": [
+      0.0,
+      1.0
+    ],
+    "domain_mismatch": [
+      0.0,
+      1.0
+    ],
+    "domain_skill_coverage_interaction": [
+      0.0,
+      1.0
+    ],
+    "education_level_distance": [
+      -1.0,
+      1.0
+    ],
+    "education_requirement_met": [
+      0.0,
+      1.0
+    ],
+    "employment_type_match": [
+      0.0,
+      1.0
+    ],
+    "experience_gap_signed": [
+      -1.0,
+      1.0
+    ],
+    "experience_requirement_met": [
+      0.0,
+      1.0
+    ],
+    "experience_shortfall": [
+      0.0,
+      1.0
+    ],
+    "experience_surplus": [
+      0.0,
+      1.0
+    ],
+    "headline_title_token_jaccard": [
+      0.0,
+      1.0
+    ],
+    "job_career_level__entry": [
+      0.0,
+      1.0
+    ],
+    "job_career_level__junior": [
+      0.0,
+      1.0
+    ],
+    "job_career_level__lead": [
+      0.0,
+      1.0
+    ],
+    "job_career_level__mid": [
+      0.0,
+      1.0
+    ],
+    "job_career_level__senior": [
+      0.0,
+      1.0
+    ],
+    "job_career_level__unknown": [
+      0.0,
+      1.0
+    ],
+    "job_career_level_missing": [
+      0.0,
+      1.0
+    ],
+    "job_domain__backend_engineering": [
+      0.0,
+      1.0
+    ],
+    "job_domain__cybersecurity": [
+      0.0,
+      1.0
+    ],
+    "job_domain__data_analysis": [
+      0.0,
+      1.0
+    ],
+    "job_domain__data_engineering": [
+      0.0,
+      1.0
+    ],
+    "job_domain__devops_cloud": [
+      0.0,
+      1.0
+    ],
+    "job_domain__digital_marketing": [
+      0.0,
+      1.0
+    ],
+    "job_domain__finance_accounting": [
+      0.0,
+      1.0
+    ],
+    "job_domain__frontend_engineering": [
+      0.0,
+      1.0
+    ],
+    "job_domain__mobile_development": [
+      0.0,
+      1.0
+    ],
+    "job_domain__product_management": [
+      0.0,
+      1.0
+    ],
+    "job_domain__quality_assurance": [
+      0.0,
+      1.0
+    ],
+    "job_domain__ui_ux_design": [
+      0.0,
+      1.0
+    ],
+    "job_domain__unknown": [
+      0.0,
+      1.0
+    ],
+    "job_education_level__bachelor": [
+      0.0,
+      1.0
+    ],
+    "job_education_level__diploma": [
+      0.0,
+      1.0
+    ],
+    "job_education_level__doctorate": [
+      0.0,
+      1.0
+    ],
+    "job_education_level__high_school": [
+      0.0,
+      1.0
+    ],
+    "job_education_level__master": [
+      0.0,
+      1.0
+    ],
+    "job_education_level__unknown": [
+      0.0,
+      1.0
+    ],
+    "job_education_missing": [
+      0.0,
+      1.0
+    ],
+    "job_employment_type__contract": [
+      0.0,
+      1.0
+    ],
+    "job_employment_type__full_time": [
+      0.0,
+      1.0
+    ],
+    "job_employment_type__part_time": [
+      0.0,
+      1.0
+    ],
+    "job_employment_type__unknown": [
+      0.0,
+      1.0
+    ],
+    "job_minimum_experience_missing": [
+      0.0,
+      1.0
+    ],
+    "job_minimum_experience_normalized": [
+      0.0,
+      1.0
+    ],
+    "job_required_skills_missing": [
+      0.0,
+      1.0
+    ],
+    "job_work_mode__hybrid": [
+      0.0,
+      1.0
+    ],
+    "job_work_mode__onsite": [
+      0.0,
+      1.0
+    ],
+    "job_work_mode__remote": [
+      0.0,
+      1.0
+    ],
+    "job_work_mode__unknown": [
+      0.0,
+      1.0
+    ],
+    "matched_required_skill_count_normalized": [
+      0.0,
+      1.0
+    ],
+    "matched_required_skill_mean_proficiency": [
+      0.0,
+      1.0
+    ],
+    "matched_required_skill_mean_years": [
+      0.0,
+      1.0
+    ],
+    "missing_required_skill_ratio": [
+      0.0,
+      1.0
+    ],
+    "nice_to_have_skill_coverage": [
+      0.0,
+      1.0
+    ],
+    "required_skill_overlap_ratio": [
+      0.0,
+      1.0
+    ],
+    "required_skills_in_candidate_headline_ratio": [
+      0.0,
+      1.0
+    ],
+    "seniority_requirement_met": [
+      0.0,
+      1.0
+    ],
+    "skill_career_alignment_interaction": [
+      0.0,
+      1.0
+    ],
+    "skill_work_mode_interaction": [
+      0.0,
+      1.0
+    ],
+    "transferable_skill_coverage": [
+      0.0,
+      1.0
+    ],
+    "transferable_skill_overlap_normalized": [
+      0.0,
+      1.0
+    ],
+    "weighted_required_skill_coverage": [
+      0.0,
+      1.0
+    ],
+    "work_mode_match": [
+      0.0,
+      1.0
+    ]
+  },
+  "feature_count": 103,
+  "feature_definitions": [
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "domain exact match",
+      "family": "domain_compatibility",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "domain_exact_match",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "domain adjacent match",
+      "family": "domain_compatibility",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "domain_adjacent_match",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "domain mismatch",
+      "family": "domain_compatibility",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "domain_mismatch",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate domain  unknown",
+      "family": "domain_compatibility",
+      "missing_semantics": "unknown bucket",
+      "name": "candidate_domain__unknown",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate domain  backend engineering",
+      "family": "domain_compatibility",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "candidate_domain__backend_engineering",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate domain  cybersecurity",
+      "family": "domain_compatibility",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "candidate_domain__cybersecurity",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate domain  data analysis",
+      "family": "domain_compatibility",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "candidate_domain__data_analysis",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate domain  data engineering",
+      "family": "domain_compatibility",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "candidate_domain__data_engineering",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate domain  devops cloud",
+      "family": "domain_compatibility",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "candidate_domain__devops_cloud",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate domain  digital marketing",
+      "family": "domain_compatibility",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "candidate_domain__digital_marketing",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate domain  finance accounting",
+      "family": "domain_compatibility",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "candidate_domain__finance_accounting",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate domain  frontend engineering",
+      "family": "domain_compatibility",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "candidate_domain__frontend_engineering",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate domain  mobile development",
+      "family": "domain_compatibility",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "candidate_domain__mobile_development",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate domain  product management",
+      "family": "domain_compatibility",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "candidate_domain__product_management",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate domain  quality assurance",
+      "family": "domain_compatibility",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "candidate_domain__quality_assurance",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate domain  ui ux design",
+      "family": "domain_compatibility",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "candidate_domain__ui_ux_design",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job domain  unknown",
+      "family": "domain_compatibility",
+      "missing_semantics": "unknown bucket",
+      "name": "job_domain__unknown",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job domain  backend engineering",
+      "family": "domain_compatibility",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_domain__backend_engineering",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job domain  cybersecurity",
+      "family": "domain_compatibility",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_domain__cybersecurity",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job domain  data analysis",
+      "family": "domain_compatibility",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_domain__data_analysis",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job domain  data engineering",
+      "family": "domain_compatibility",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_domain__data_engineering",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job domain  devops cloud",
+      "family": "domain_compatibility",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_domain__devops_cloud",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job domain  digital marketing",
+      "family": "domain_compatibility",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_domain__digital_marketing",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job domain  finance accounting",
+      "family": "domain_compatibility",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_domain__finance_accounting",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job domain  frontend engineering",
+      "family": "domain_compatibility",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_domain__frontend_engineering",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job domain  mobile development",
+      "family": "domain_compatibility",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_domain__mobile_development",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job domain  product management",
+      "family": "domain_compatibility",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_domain__product_management",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job domain  quality assurance",
+      "family": "domain_compatibility",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_domain__quality_assurance",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job domain  ui ux design",
+      "family": "domain_compatibility",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_domain__ui_ux_design",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "required skill overlap ratio",
+      "family": "required_skills",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "required_skill_overlap_ratio",
+      "type": "float"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "weighted required skill coverage",
+      "family": "required_skills",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "weighted_required_skill_coverage",
+      "type": "float"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "critical required skill coverage",
+      "family": "required_skills",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "critical_required_skill_coverage",
+      "type": "float"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "missing required skill ratio",
+      "family": "required_skills",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "missing_required_skill_ratio",
+      "type": "float"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "matched required skill count normalized",
+      "family": "required_skills",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "matched_required_skill_count_normalized",
+      "type": "float"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "matched required skill mean proficiency",
+      "family": "required_skills",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "matched_required_skill_mean_proficiency",
+      "type": "float"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "matched required skill mean years",
+      "family": "required_skills",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "matched_required_skill_mean_years",
+      "type": "float"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "nice to have skill coverage",
+      "family": "nice_transferable_skills",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "nice_to_have_skill_coverage",
+      "type": "float"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "transferable skill coverage",
+      "family": "nice_transferable_skills",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "transferable_skill_coverage",
+      "type": "float"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "transferable skill overlap normalized",
+      "family": "nice_transferable_skills",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "transferable_skill_overlap_normalized",
+      "type": "float"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate skill count normalized",
+      "family": "nice_transferable_skills",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "candidate_skill_count_normalized",
+      "type": "float"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate to required skill count ratio",
+      "family": "nice_transferable_skills",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "candidate_to_required_skill_count_ratio",
+      "type": "float"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate experience normalized",
+      "family": "experience",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "candidate_experience_normalized",
+      "type": "float"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job minimum experience normalized",
+      "family": "experience",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_minimum_experience_normalized",
+      "type": "float"
+    },
+    {
+      "bounds": [
+        -1.0,
+        1.0
+      ],
+      "description": "experience gap signed",
+      "family": "experience",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "experience_gap_signed",
+      "type": "float"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "experience shortfall",
+      "family": "experience",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "experience_shortfall",
+      "type": "float"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "experience surplus",
+      "family": "experience",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "experience_surplus",
+      "type": "float"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "experience requirement met",
+      "family": "experience",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "experience_requirement_met",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "career level exact match",
+      "family": "career_level",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "career_level_exact_match",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        -1.0,
+        1.0
+      ],
+      "description": "career level distance",
+      "family": "career_level",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "career_level_distance",
+      "type": "float"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "seniority requirement met",
+      "family": "career_level",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "seniority_requirement_met",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "career overqualification",
+      "family": "career_level",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "career_overqualification",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate career level  unknown",
+      "family": "career_level",
+      "missing_semantics": "unknown bucket",
+      "name": "candidate_career_level__unknown",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate career level  entry",
+      "family": "career_level",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "candidate_career_level__entry",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate career level  junior",
+      "family": "career_level",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "candidate_career_level__junior",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate career level  mid",
+      "family": "career_level",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "candidate_career_level__mid",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate career level  senior",
+      "family": "career_level",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "candidate_career_level__senior",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate career level  lead",
+      "family": "career_level",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "candidate_career_level__lead",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job career level  unknown",
+      "family": "career_level",
+      "missing_semantics": "unknown bucket",
+      "name": "job_career_level__unknown",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job career level  entry",
+      "family": "career_level",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_career_level__entry",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job career level  junior",
+      "family": "career_level",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_career_level__junior",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job career level  mid",
+      "family": "career_level",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_career_level__mid",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job career level  senior",
+      "family": "career_level",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_career_level__senior",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job career level  lead",
+      "family": "career_level",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_career_level__lead",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "education requirement met",
+      "family": "education",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "education_requirement_met",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        -1.0,
+        1.0
+      ],
+      "description": "education level distance",
+      "family": "education",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "education_level_distance",
+      "type": "float"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate education level  unknown",
+      "family": "education",
+      "missing_semantics": "unknown bucket",
+      "name": "candidate_education_level__unknown",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate education level  high school",
+      "family": "education",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "candidate_education_level__high_school",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate education level  diploma",
+      "family": "education",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "candidate_education_level__diploma",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate education level  bachelor",
+      "family": "education",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "candidate_education_level__bachelor",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate education level  master",
+      "family": "education",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "candidate_education_level__master",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate education level  doctorate",
+      "family": "education",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "candidate_education_level__doctorate",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job education level  unknown",
+      "family": "education",
+      "missing_semantics": "unknown bucket",
+      "name": "job_education_level__unknown",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job education level  high school",
+      "family": "education",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_education_level__high_school",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job education level  diploma",
+      "family": "education",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_education_level__diploma",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job education level  bachelor",
+      "family": "education",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_education_level__bachelor",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job education level  master",
+      "family": "education",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_education_level__master",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job education level  doctorate",
+      "family": "education",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_education_level__doctorate",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "work mode match",
+      "family": "preferences",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "work_mode_match",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "employment type match",
+      "family": "preferences",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "employment_type_match",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job work mode  unknown",
+      "family": "preferences",
+      "missing_semantics": "unknown bucket",
+      "name": "job_work_mode__unknown",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job work mode  remote",
+      "family": "preferences",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_work_mode__remote",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job work mode  hybrid",
+      "family": "preferences",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_work_mode__hybrid",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job work mode  onsite",
+      "family": "preferences",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_work_mode__onsite",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job employment type  unknown",
+      "family": "preferences",
+      "missing_semantics": "unknown bucket",
+      "name": "job_employment_type__unknown",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job employment type  full time",
+      "family": "preferences",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_employment_type__full_time",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job employment type  part time",
+      "family": "preferences",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_employment_type__part_time",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job employment type  contract",
+      "family": "preferences",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_employment_type__contract",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "headline title token jaccard",
+      "family": "text_alignment",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "headline_title_token_jaccard",
+      "type": "float"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate skills in job description ratio",
+      "family": "text_alignment",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "candidate_skills_in_job_description_ratio",
+      "type": "float"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate skills in job responsibilities ratio",
+      "family": "text_alignment",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "candidate_skills_in_job_responsibilities_ratio",
+      "type": "float"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "required skills in candidate headline ratio",
+      "family": "text_alignment",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "required_skills_in_candidate_headline_ratio",
+      "type": "float"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "domain skill coverage interaction",
+      "family": "interactions",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "domain_skill_coverage_interaction",
+      "type": "float"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "critical skill experience interaction",
+      "family": "interactions",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "critical_skill_experience_interaction",
+      "type": "float"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "skill career alignment interaction",
+      "family": "interactions",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "skill_career_alignment_interaction",
+      "type": "float"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "skill work mode interaction",
+      "family": "interactions",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "skill_work_mode_interaction",
+      "type": "float"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate skills missing",
+      "family": "missing_indicators",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "candidate_skills_missing",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate experience missing",
+      "family": "missing_indicators",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "candidate_experience_missing",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate education missing",
+      "family": "missing_indicators",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "candidate_education_missing",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "candidate career level missing",
+      "family": "missing_indicators",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "candidate_career_level_missing",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job required skills missing",
+      "family": "missing_indicators",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_required_skills_missing",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job minimum experience missing",
+      "family": "missing_indicators",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_minimum_experience_missing",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job education missing",
+      "family": "missing_indicators",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_education_missing",
+      "type": "indicator"
+    },
+    {
+      "bounds": [
+        0.0,
+        1.0
+      ],
+      "description": "job career level missing",
+      "family": "missing_indicators",
+      "missing_semantics": "neutral zero; paired missing indicator where defined",
+      "name": "job_career_level_missing",
+      "type": "indicator"
+    }
+  ],
+  "feature_names": [
+    "domain_exact_match",
+    "domain_adjacent_match",
+    "domain_mismatch",
+    "candidate_domain__unknown",
+    "candidate_domain__backend_engineering",
+    "candidate_domain__cybersecurity",
+    "candidate_domain__data_analysis",
+    "candidate_domain__data_engineering",
+    "candidate_domain__devops_cloud",
+    "candidate_domain__digital_marketing",
+    "candidate_domain__finance_accounting",
+    "candidate_domain__frontend_engineering",
+    "candidate_domain__mobile_development",
+    "candidate_domain__product_management",
+    "candidate_domain__quality_assurance",
+    "candidate_domain__ui_ux_design",
+    "job_domain__unknown",
+    "job_domain__backend_engineering",
+    "job_domain__cybersecurity",
+    "job_domain__data_analysis",
+    "job_domain__data_engineering",
+    "job_domain__devops_cloud",
+    "job_domain__digital_marketing",
+    "job_domain__finance_accounting",
+    "job_domain__frontend_engineering",
+    "job_domain__mobile_development",
+    "job_domain__product_management",
+    "job_domain__quality_assurance",
+    "job_domain__ui_ux_design",
+    "required_skill_overlap_ratio",
+    "weighted_required_skill_coverage",
+    "critical_required_skill_coverage",
+    "missing_required_skill_ratio",
+    "matched_required_skill_count_normalized",
+    "matched_required_skill_mean_proficiency",
+    "matched_required_skill_mean_years",
+    "nice_to_have_skill_coverage",
+    "transferable_skill_coverage",
+    "transferable_skill_overlap_normalized",
+    "candidate_skill_count_normalized",
+    "candidate_to_required_skill_count_ratio",
+    "candidate_experience_normalized",
+    "job_minimum_experience_normalized",
+    "experience_gap_signed",
+    "experience_shortfall",
+    "experience_surplus",
+    "experience_requirement_met",
+    "career_level_exact_match",
+    "career_level_distance",
+    "seniority_requirement_met",
+    "career_overqualification",
+    "candidate_career_level__unknown",
+    "candidate_career_level__entry",
+    "candidate_career_level__junior",
+    "candidate_career_level__mid",
+    "candidate_career_level__senior",
+    "candidate_career_level__lead",
+    "job_career_level__unknown",
+    "job_career_level__entry",
+    "job_career_level__junior",
+    "job_career_level__mid",
+    "job_career_level__senior",
+    "job_career_level__lead",
+    "education_requirement_met",
+    "education_level_distance",
+    "candidate_education_level__unknown",
+    "candidate_education_level__high_school",
+    "candidate_education_level__diploma",
+    "candidate_education_level__bachelor",
+    "candidate_education_level__master",
+    "candidate_education_level__doctorate",
+    "job_education_level__unknown",
+    "job_education_level__high_school",
+    "job_education_level__diploma",
+    "job_education_level__bachelor",
+    "job_education_level__master",
+    "job_education_level__doctorate",
+    "work_mode_match",
+    "employment_type_match",
+    "job_work_mode__unknown",
+    "job_work_mode__remote",
+    "job_work_mode__hybrid",
+    "job_work_mode__onsite",
+    "job_employment_type__unknown",
+    "job_employment_type__full_time",
+    "job_employment_type__part_time",
+    "job_employment_type__contract",
+    "headline_title_token_jaccard",
+    "candidate_skills_in_job_description_ratio",
+    "candidate_skills_in_job_responsibilities_ratio",
+    "required_skills_in_candidate_headline_ratio",
+    "domain_skill_coverage_interaction",
+    "critical_skill_experience_interaction",
+    "skill_career_alignment_interaction",
+    "skill_work_mode_interaction",
+    "candidate_skills_missing",
+    "candidate_experience_missing",
+    "candidate_education_missing",
+    "candidate_career_level_missing",
+    "job_required_skills_missing",
+    "job_minimum_experience_missing",
+    "job_education_missing",
+    "job_career_level_missing"
+  ],
+  "feature_pipeline_version": "0.1.0",
+  "feature_release_date": "2026-07-24",
+  "feature_schema_version": "job-rec-features-v1",
+  "label_separation_policy": "transform accepts CandidateFeatureInput and JobFeatureInput only; the target and identifiers are attached by the Dataset exporter",
+  "missing_value_policy": {
+    "categorical": "__unknown__",
+    "dataset_imputation": "none",
+    "list": "empty list",
+    "numeric": "0.0 plus an indicator where defined",
+    "string": "normalized empty string"
+  },
+  "normalization_policy": {
+    "case": "casefold",
+    "hyphens": "normalize Unicode hyphens to ASCII hyphen",
+    "sorting": "lexicographic after normalization",
+    "tokenization": "Unicode-aware word tokens; no stemming or external NLP",
+    "unicode": "NFKC",
+    "whitespace": "collapse and trim"
+  },
+  "skill_merge_policy": {
+    "candidate_duplicates": "maximum proficiency and maximum years independently",
+    "nice_duplicates": "deduplicate",
+    "precedence": "required over nice-to-have",
+    "required_duplicates": "maximum weight"
+  },
+  "source_dataset_schema_version": "synthetic-job-rec-schema-v1",
+  "source_dataset_version": "synthetic-job-rec-1.0.0",
+  "source_revision": "6cd51f733d5197e0c3f6b7dfb3711c2860ffef71",
+  "text_token_limits": {
+    "candidate_headline": 32,
+    "job_description": 256,
+    "job_responsibilities": 256,
+    "job_title": 32
+  },
+  "unknown_category_policy": {
+    "bucket": "__unknown__",
+    "feature_dimensionality": "unchanged"
+  },
+  "vocabularies": {
+    "career_levels": [
+      "__unknown__",
+      "entry",
+      "junior",
+      "mid",
+      "senior",
+      "lead"
+    ],
+    "domains": [
+      "__unknown__",
+      "backend engineering",
+      "cybersecurity",
+      "data analysis",
+      "data engineering",
+      "devops / cloud",
+      "digital marketing",
+      "finance / accounting",
+      "frontend engineering",
+      "mobile development",
+      "product management",
+      "quality assurance",
+      "ui/ux design"
+    ],
+    "education_levels": [
+      "__unknown__",
+      "high_school",
+      "diploma",
+      "bachelor",
+      "master",
+      "doctorate"
+    ],
+    "employment_types": [
+      "__unknown__",
+      "full_time",
+      "part_time",
+      "contract"
+    ],
+    "work_modes": [
+      "__unknown__",
+      "remote",
+      "hybrid",
+      "onsite"
+    ]
+  }
+}

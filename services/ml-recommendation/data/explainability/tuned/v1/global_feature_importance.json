@@ -1,0 +1,3405 @@
+{
+  "explanation_version": "xgbranker-tuned-explainability-v1",
+  "feature_count": 103,
+  "features": [
+    {
+      "combined": {
+        "mean_absolute_contribution": 1.0190496936618514,
+        "mean_signed_contribution": -0.6196571541604665,
+        "negative_fraction": 0.7502178649237473,
+        "normalized_importance_share": 0.233552897926696,
+        "positive_fraction": 0.24978213507625271,
+        "standard_deviation": 0.9154950546838553,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "domain_compatibility",
+      "feature_index": 2,
+      "feature_name": "domain_mismatch",
+      "rank": 1,
+      "train": {
+        "mean_absolute_contribution": 1.0200454547584288,
+        "mean_signed_contribution": -0.6179006884595818,
+        "negative_fraction": 0.7502645502645503,
+        "normalized_importance_share": 0.23398814863459194,
+        "positive_fraction": 0.24973544973544973,
+        "standard_deviation": 0.9175354318841002,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 1.0144028085444905,
+        "mean_signed_contribution": -0.6278539940979285,
+        "negative_fraction": 0.75,
+        "normalized_importance_share": 0.23153187021821647,
+        "positive_fraction": 0.25,
+        "standard_deviation": 0.9058675028064215,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.6243079802889807,
+        "mean_signed_contribution": -0.40722206360285124,
+        "negative_fraction": 0.6986928104575163,
+        "normalized_importance_share": 0.14308324599098252,
+        "positive_fraction": 0.30130718954248364,
+        "standard_deviation": 0.5621421655566359,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "nice_transferable_skills",
+      "feature_index": 36,
+      "feature_name": "nice_to_have_skill_coverage",
+      "rank": 2,
+      "train": {
+        "mean_absolute_contribution": 0.6238295130525278,
+        "mean_signed_contribution": -0.40578422960948457,
+        "negative_fraction": 0.6981481481481482,
+        "normalized_importance_share": 0.14310020415447944,
+        "positive_fraction": 0.30185185185185187,
+        "standard_deviation": 0.5625876339582462,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.626540827392428,
+        "mean_signed_contribution": -0.41393195557189577,
+        "negative_fraction": 0.7012345679012346,
+        "normalized_importance_share": 0.14300450305572598,
+        "positive_fraction": 0.29876543209876544,
+        "standard_deviation": 0.5600098182480496,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.3282069941958279,
+        "mean_signed_contribution": -0.20523606078630244,
+        "negative_fraction": 0.39477124183006534,
+        "normalized_importance_share": 0.07522076213849656,
+        "positive_fraction": 0.6052287581699346,
+        "standard_deviation": 0.42204044246248046,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "career_level",
+      "feature_index": 48,
+      "feature_name": "career_level_distance",
+      "rank": 3,
+      "train": {
+        "mean_absolute_contribution": 0.3265155389394966,
+        "mean_signed_contribution": -0.20254056490735994,
+        "negative_fraction": 0.3904761904761905,
+        "normalized_importance_share": 0.07489937443520334,
+        "positive_fraction": 0.6095238095238096,
+        "standard_deviation": 0.4220848173238119,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.33610045205870714,
+        "mean_signed_contribution": -0.2178150415547008,
+        "negative_fraction": 0.4148148148148148,
+        "normalized_importance_share": 0.07671308240756657,
+        "positive_fraction": 0.5851851851851851,
+        "standard_deviation": 0.4216054956942981,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.2434878410830331,
+        "mean_signed_contribution": -0.13721606755418164,
+        "negative_fraction": 0.7968409586056645,
+        "normalized_importance_share": 0.055804237269833606,
+        "positive_fraction": 0.20315904139433552,
+        "standard_deviation": 0.21078350932173548,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "interactions",
+      "feature_index": 92,
+      "feature_name": "critical_skill_experience_interaction",
+      "rank": 4,
+      "train": {
+        "mean_absolute_contribution": 0.2438074905267626,
+        "mean_signed_contribution": -0.1362369348211263,
+        "negative_fraction": 0.7947089947089947,
+        "normalized_importance_share": 0.05592698155310475,
+        "positive_fraction": 0.2052910052910053,
+        "standard_deviation": 0.21181967244799943,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.24199614367896208,
+        "mean_signed_contribution": -0.14178535364177308,
+        "negative_fraction": 0.8067901234567901,
+        "normalized_importance_share": 0.05523429081587456,
+        "positive_fraction": 0.19320987654320987,
+        "standard_deviation": 0.20581756063020146,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.2272086843056544,
+        "mean_signed_contribution": -0.15676319081306173,
+        "negative_fraction": 0.813834422657952,
+        "normalized_importance_share": 0.052073266871817445,
+        "positive_fraction": 0.18616557734204792,
+        "standard_deviation": 0.19837161598755348,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "required_skills",
+      "feature_index": 34,
+      "feature_name": "matched_required_skill_mean_proficiency",
+      "rank": 5,
+      "train": {
+        "mean_absolute_contribution": 0.22699884404835988,
+        "mean_signed_contribution": -0.15556302727092683,
+        "negative_fraction": 0.8104497354497354,
+        "normalized_importance_share": 0.05207124742656404,
+        "positive_fraction": 0.18955026455026455,
+        "standard_deviation": 0.19899371031550755,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.22818793883969551,
+        "mean_signed_contribution": -0.16236395400969122,
+        "negative_fraction": 0.8296296296296296,
+        "normalized_importance_share": 0.05208264389232269,
+        "positive_fraction": 0.17037037037037037,
+        "standard_deviation": 0.19534485824590103,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.1975850507953815,
+        "mean_signed_contribution": -0.09103314208317231,
+        "negative_fraction": 0.4,
+        "normalized_importance_share": 0.045283916463810324,
+        "positive_fraction": 0.6,
+        "standard_deviation": 0.26972126978510325,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "education",
+      "feature_index": 63,
+      "feature_name": "education_requirement_met",
+      "rank": 6,
+      "train": {
+        "mean_absolute_contribution": 0.19554196657199,
+        "mean_signed_contribution": -0.08861346582305574,
+        "negative_fraction": 0.3952380952380952,
+        "normalized_importance_share": 0.04485535671484656,
+        "positive_fraction": 0.6047619047619047,
+        "standard_deviation": 0.2677418971922666,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.2071194438378752,
+        "mean_signed_contribution": -0.10232496463038303,
+        "negative_fraction": 0.4222222222222222,
+        "normalized_importance_share": 0.047273875610762225,
+        "positive_fraction": 0.5777777777777777,
+        "standard_deviation": 0.27849474247732714,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.17446979847259836,
+        "mean_signed_contribution": -0.14708014621644983,
+        "negative_fraction": 0.7285403050108933,
+        "normalized_importance_share": 0.03998620213263444,
+        "positive_fraction": 0.27145969498910677,
+        "standard_deviation": 0.20011127439564974,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "required_skills",
+      "feature_index": 29,
+      "feature_name": "required_skill_overlap_ratio",
+      "rank": 7,
+      "train": {
+        "mean_absolute_contribution": 0.17372136661910978,
+        "mean_signed_contribution": -0.14674343426465322,
+        "negative_fraction": 0.7298941798941799,
+        "normalized_importance_share": 0.03984993096518752,
+        "positive_fraction": 0.2701058201058201,
+        "standard_deviation": 0.1990138815391878,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.177962480455545,
+        "mean_signed_contribution": -0.1486514686581673,
+        "negative_fraction": 0.7222222222222222,
+        "normalized_importance_share": 0.04061895884108051,
+        "positive_fraction": 0.2777777777777778,
+        "standard_deviation": 0.20514753336592245,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.17018304480400437,
+        "mean_signed_contribution": -0.10760917293345676,
+        "negative_fraction": 0.6099128540305011,
+        "normalized_importance_share": 0.03900373410558428,
+        "positive_fraction": 0.3900871459694989,
+        "standard_deviation": 0.21485972240293244,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "experience",
+      "feature_index": 42,
+      "feature_name": "job_minimum_experience_normalized",
+      "rank": 8,
+      "train": {
+        "mean_absolute_contribution": 0.17001764276757303,
+        "mean_signed_contribution": -0.10793854884043978,
+        "negative_fraction": 0.6112433862433863,
+        "normalized_importance_share": 0.03900033403494082,
+        "positive_fraction": 0.38875661375661374,
+        "standard_deviation": 0.21485875645700064,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.17095492097401735,
+        "mean_signed_contribution": -0.10607208536753598,
+        "negative_fraction": 0.6037037037037037,
+        "normalized_importance_share": 0.03901952187308602,
+        "positive_fraction": 0.3962962962962963,
+        "standard_deviation": 0.21485755387173525,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.16347698808007813,
+        "mean_signed_contribution": -0.10987812877666371,
+        "negative_fraction": 0.7337690631808279,
+        "normalized_importance_share": 0.03746679337416055,
+        "positive_fraction": 0.2662309368191721,
+        "standard_deviation": 0.1518470011270559,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "interactions",
+      "feature_index": 93,
+      "feature_name": "skill_career_alignment_interaction",
+      "rank": 9,
+      "train": {
+        "mean_absolute_contribution": 0.16356858258876225,
+        "mean_signed_contribution": -0.10972421392976665,
+        "negative_fraction": 0.734920634920635,
+        "normalized_importance_share": 0.03752098461513445,
+        "positive_fraction": 0.2650793650793651,
+        "standard_deviation": 0.15205441284505447,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.1630495470395522,
+        "mean_signed_contribution": -0.11059639806218327,
+        "negative_fraction": 0.7283950617283951,
+        "normalized_importance_share": 0.037215163686768186,
+        "positive_fraction": 0.2716049382716049,
+        "standard_deviation": 0.15087323361394206,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.1288199140412877,
+        "mean_signed_contribution": -0.06302756414135138,
+        "negative_fraction": 0.49673202614379086,
+        "normalized_importance_share": 0.02952384405013527,
+        "positive_fraction": 0.5032679738562091,
+        "standard_deviation": 0.15320671670215713,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "experience",
+      "feature_index": 43,
+      "feature_name": "experience_gap_signed",
+      "rank": 10,
+      "train": {
+        "mean_absolute_contribution": 0.12681392762079624,
+        "mean_signed_contribution": -0.061366692217410354,
+        "negative_fraction": 0.49457671957671956,
+        "normalized_importance_share": 0.029089837130933074,
+        "positive_fraction": 0.5054232804232804,
+        "standard_deviation": 0.15187376548237605,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.13818118400358126,
+        "mean_signed_contribution": -0.07077829978640951,
+        "negative_fraction": 0.5067901234567901,
+        "normalized_importance_share": 0.03153909639428357,
+        "positive_fraction": 0.49320987654320986,
+        "standard_deviation": 0.15905057591136204,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.09323350024087611,
+        "mean_signed_contribution": -0.054197164760132255,
+        "negative_fraction": 0.8816993464052287,
+        "normalized_importance_share": 0.02136790217448557,
+        "positive_fraction": 0.11830065359477124,
+        "standard_deviation": 0.09673362666323806,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "interactions",
+      "feature_index": 94,
+      "feature_name": "skill_work_mode_interaction",
+      "rank": 11,
+      "train": {
+        "mean_absolute_contribution": 0.09361715858544885,
+        "mean_signed_contribution": -0.054198655117327466,
+        "negative_fraction": 0.8814814814814815,
+        "normalized_importance_share": 0.02147483282794282,
+        "positive_fraction": 0.11851851851851852,
+        "standard_deviation": 0.09731487400627345,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.09144309463287002,
+        "mean_signed_contribution": -0.054190209759887954,
+        "negative_fraction": 0.8827160493827161,
+        "normalized_importance_share": 0.02087138416865017,
+        "positive_fraction": 0.11728395061728394,
+        "standard_deviation": 0.0939736150026124,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.07897537224362484,
+        "mean_signed_contribution": -0.05633776087207343,
+        "negative_fraction": 0.7406318082788671,
+        "normalized_importance_share": 0.018100125211811965,
+        "positive_fraction": 0.2593681917211329,
+        "standard_deviation": 0.0728471706075933,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "required_skills",
+      "feature_index": 35,
+      "feature_name": "matched_required_skill_mean_years",
+      "rank": 12,
+      "train": {
+        "mean_absolute_contribution": 0.0785309780398459,
+        "mean_signed_contribution": -0.05694413472107121,
+        "negative_fraction": 0.7439153439153439,
+        "normalized_importance_share": 0.018014215029622437,
+        "positive_fraction": 0.2560846560846561,
+        "standard_deviation": 0.07236835470261191,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.08104921186125993,
+        "mean_signed_contribution": -0.05350801624341711,
+        "negative_fraction": 0.7253086419753086,
+        "normalized_importance_share": 0.01849903750648669,
+        "positive_fraction": 0.27469135802469136,
+        "standard_deviation": 0.07497644480666639,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.06614632029930458,
+        "mean_signed_contribution": -0.043557394117292626,
+        "negative_fraction": 0.8270152505446623,
+        "normalized_importance_share": 0.015159873840476628,
+        "positive_fraction": 0.17298474945533768,
+        "standard_deviation": 0.06093464806420593,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "domain_compatibility",
+      "feature_index": 1,
+      "feature_name": "domain_adjacent_match",
+      "rank": 13,
+      "train": {
+        "mean_absolute_contribution": 0.06602131498985588,
+        "mean_signed_contribution": -0.043368129520242396,
+        "negative_fraction": 0.8269841269841269,
+        "normalized_importance_share": 0.015144624382014539,
+        "positive_fraction": 0.173015873015873,
+        "standard_deviation": 0.06088974755814735,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.06672967841006516,
+        "mean_signed_contribution": -0.04444062890352704,
+        "negative_fraction": 0.8271604938271605,
+        "normalized_importance_share": 0.015230682635343776,
+        "positive_fraction": 0.1728395061728395,
+        "standard_deviation": 0.061136001057825906,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0657722780235453,
+        "mean_signed_contribution": -0.02101555521572715,
+        "negative_fraction": 0.7857298474945533,
+        "normalized_importance_share": 0.015074148229651151,
+        "positive_fraction": 0.21427015250544662,
+        "standard_deviation": 0.10849670125134687,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "required_skills",
+      "feature_index": 30,
+      "feature_name": "weighted_required_skill_coverage",
+      "rank": 14,
+      "train": {
+        "mean_absolute_contribution": 0.06553454841471903,
+        "mean_signed_contribution": -0.02109687752950228,
+        "negative_fraction": 0.7854497354497354,
+        "normalized_importance_share": 0.01503296503467649,
+        "positive_fraction": 0.21455026455026455,
+        "standard_deviation": 0.10859495813251724,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.06688168286473453,
+        "mean_signed_contribution": -0.020636051084776553,
+        "negative_fraction": 0.7870370370370371,
+        "normalized_importance_share": 0.015265376817353777,
+        "positive_fraction": 0.21296296296296297,
+        "standard_deviation": 0.10803617819870269,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.06097831912209542,
+        "mean_signed_contribution": -0.02473346065199425,
+        "negative_fraction": 0.7019607843137254,
+        "normalized_importance_share": 0.013975435378905105,
+        "positive_fraction": 0.2980392156862745,
+        "standard_deviation": 0.06950255191675528,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "experience",
+      "feature_index": 41,
+      "feature_name": "candidate_experience_normalized",
+      "rank": 15,
+      "train": {
+        "mean_absolute_contribution": 0.061584371788673695,
+        "mean_signed_contribution": -0.02706271997281951,
+        "negative_fraction": 0.7142857142857143,
+        "normalized_importance_share": 0.014126834321386969,
+        "positive_fraction": 0.2857142857142857,
+        "standard_deviation": 0.06912675249094585,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.05815007334473014,
+        "mean_signed_contribution": -0.013863583821476363,
+        "negative_fraction": 0.6444444444444445,
+        "normalized_importance_share": 0.013272434896104026,
+        "positive_fraction": 0.35555555555555557,
+        "standard_deviation": 0.07021574039600052,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.06039638540419407,
+        "mean_signed_contribution": -0.007583766978098108,
+        "negative_fraction": 0.33420479302832246,
+        "normalized_importance_share": 0.01384206376114942,
+        "positive_fraction": 0.6657952069716776,
+        "standard_deviation": 0.07307217398190409,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "preferences",
+      "feature_index": 78,
+      "feature_name": "employment_type_match",
+      "rank": 16,
+      "train": {
+        "mean_absolute_contribution": 0.06084421419710409,
+        "mean_signed_contribution": -0.007637994522542974,
+        "negative_fraction": 0.3341269841269841,
+        "normalized_importance_share": 0.013957049628223247,
+        "positive_fraction": 0.6658730158730158,
+        "standard_deviation": 0.07359069781484465,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.058306517703947326,
+        "mean_signed_contribution": -0.007330705104022069,
+        "negative_fraction": 0.3345679012345679,
+        "normalized_importance_share": 0.013308142461944285,
+        "positive_fraction": 0.6654320987654321,
+        "standard_deviation": 0.07060151041712658,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.05690871715567974,
+        "mean_signed_contribution": -0.014535101076819724,
+        "negative_fraction": 0.09901960784313725,
+        "normalized_importance_share": 0.013042735689600302,
+        "positive_fraction": 0.9009803921568628,
+        "standard_deviation": 0.14411704123377383,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "domain_compatibility",
+      "feature_index": 17,
+      "feature_name": "job_domain__backend_engineering",
+      "rank": 17,
+      "train": {
+        "mean_absolute_contribution": 0.05758992891765167,
+        "mean_signed_contribution": -0.015086266507175601,
+        "negative_fraction": 0.09907407407407408,
+        "normalized_importance_share": 0.01321054937755725,
+        "positive_fraction": 0.9009259259259259,
+        "standard_deviation": 0.146267757644592,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.05372972893314404,
+        "mean_signed_contribution": -0.011962995735158962,
+        "negative_fraction": 0.09876543209876543,
+        "normalized_importance_share": 0.012263515559522473,
+        "positive_fraction": 0.9012345679012346,
+        "standard_deviation": 0.13359337514016895,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.05340674107512615,
+        "mean_signed_contribution": -0.01716174441629537,
+        "negative_fraction": 0.31623093681917214,
+        "normalized_importance_share": 0.012240128449570392,
+        "positive_fraction": 0.6837690631808279,
+        "standard_deviation": 0.08312341114158307,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "education",
+      "feature_index": 64,
+      "feature_name": "education_level_distance",
+      "rank": 18,
+      "train": {
+        "mean_absolute_contribution": 0.05344367777543084,
+        "mean_signed_contribution": -0.016987773246680344,
+        "negative_fraction": 0.316005291005291,
+        "normalized_importance_share": 0.012259441146040181,
+        "positive_fraction": 0.683994708994709,
+        "standard_deviation": 0.08334285244857512,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.05323436980703758,
+        "mean_signed_contribution": -0.017973609874498822,
+        "negative_fraction": 0.3172839506172839,
+        "normalized_importance_share": 0.012150452559370044,
+        "positive_fraction": 0.682716049382716,
+        "standard_deviation": 0.08208672100689003,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.04973699767643767,
+        "mean_signed_contribution": -0.024924569413905293,
+        "negative_fraction": 0.9173202614379085,
+        "normalized_importance_share": 0.011399071128478199,
+        "positive_fraction": 0.0826797385620915,
+        "standard_deviation": 0.05987021599304657,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "domain_compatibility",
+      "feature_index": 28,
+      "feature_name": "job_domain__ui_ux_design",
+      "rank": 19,
+      "train": {
+        "mean_absolute_contribution": 0.049520775095822055,
+        "mean_signed_contribution": -0.02495934969536768,
+        "negative_fraction": 0.9173280423280423,
+        "normalized_importance_share": 0.011359566801231964,
+        "positive_fraction": 0.08267195767195767,
+        "standard_deviation": 0.059350971092108386,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.05074603638597721,
+        "mean_signed_contribution": -0.024762261433747487,
+        "negative_fraction": 0.917283950617284,
+        "normalized_importance_share": 0.011582504121282363,
+        "positive_fraction": 0.08271604938271605,
+        "standard_deviation": 0.06223584773761256,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.04692879366009468,
+        "mean_signed_contribution": -0.0012620561544287316,
+        "negative_fraction": 0.3333333333333333,
+        "normalized_importance_share": 0.010755467396427104,
+        "positive_fraction": 0.6666666666666666,
+        "standard_deviation": 0.05557408499514384,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "preferences",
+      "feature_index": 77,
+      "feature_name": "work_mode_match",
+      "rank": 20,
+      "train": {
+        "mean_absolute_contribution": 0.047255772372637506,
+        "mean_signed_contribution": -0.0012232947799256416,
+        "negative_fraction": 0.3333333333333333,
+        "normalized_importance_share": 0.010839998000275174,
+        "positive_fraction": 0.6666666666666666,
+        "standard_deviation": 0.05588397324286965,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.04540289300156148,
+        "mean_signed_contribution": -0.0014429425687764851,
+        "negative_fraction": 0.3333333333333333,
+        "normalized_importance_share": 0.010362960986920461,
+        "positive_fraction": 0.6666666666666666,
+        "standard_deviation": 0.054104109462428655,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.042596608363429274,
+        "mean_signed_contribution": -0.01468731023244152,
+        "negative_fraction": 0.7997821350762527,
+        "normalized_importance_share": 0.009762587032805338,
+        "positive_fraction": 0.20021786492374727,
+        "standard_deviation": 0.06037650420930512,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "education",
+      "feature_index": 72,
+      "feature_name": "job_education_level__high_school",
+      "rank": 21,
+      "train": {
+        "mean_absolute_contribution": 0.04222771054407565,
+        "mean_signed_contribution": -0.014523861289105043,
+        "negative_fraction": 0.7998677248677248,
+        "normalized_importance_share": 0.009686611283048856,
+        "positive_fraction": 0.20013227513227513,
+        "standard_deviation": 0.05984768145106086,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.04431813152041286,
+        "mean_signed_contribution": -0.015450071968011741,
+        "negative_fraction": 0.7993827160493827,
+        "normalized_importance_share": 0.010115370136071583,
+        "positive_fraction": 0.2006172839506173,
+        "standard_deviation": 0.06277985171473954,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.04076232418514246,
+        "mean_signed_contribution": -0.011288748118468568,
+        "negative_fraction": 0.8690631808278867,
+        "normalized_importance_share": 0.00934219302442234,
+        "positive_fraction": 0.13093681917211328,
+        "standard_deviation": 0.0542898117527237,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "interactions",
+      "feature_index": 91,
+      "feature_name": "domain_skill_coverage_interaction",
+      "rank": 22,
+      "train": {
+        "mean_absolute_contribution": 0.040784138053662246,
+        "mean_signed_contribution": -0.011582166453729977,
+        "negative_fraction": 0.8705026455026456,
+        "normalized_importance_share": 0.0093554703001878,
+        "positive_fraction": 0.1294973544973545,
+        "standard_deviation": 0.05411529993852625,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.04066052613205012,
+        "mean_signed_contribution": -0.009919462553915325,
+        "negative_fraction": 0.8623456790123457,
+        "normalized_importance_share": 0.00928054179277968,
+        "positive_fraction": 0.13765432098765432,
+        "standard_deviation": 0.05507622732488538,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.024476584785423926,
+        "mean_signed_contribution": -0.01583477731821923,
+        "negative_fraction": 0.8380174291938998,
+        "normalized_importance_share": 0.005609713975225581,
+        "positive_fraction": 0.1619825708061002,
+        "standard_deviation": 0.03266572851874498,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "career_level",
+      "feature_index": 52,
+      "feature_name": "candidate_career_level__entry",
+      "rank": 23,
+      "train": {
+        "mean_absolute_contribution": 0.024566132732389927,
+        "mean_signed_contribution": -0.01643777926446953,
+        "negative_fraction": 0.8461640211640211,
+        "normalized_importance_share": 0.005635223303381981,
+        "positive_fraction": 0.15383597883597883,
+        "standard_deviation": 0.03263025735071527,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.024058694366249255,
+        "mean_signed_contribution": -0.013020768235717831,
+        "negative_fraction": 0.8,
+        "normalized_importance_share": 0.005491264865106936,
+        "positive_fraction": 0.2,
+        "standard_deviation": 0.032683985411724605,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.023743351214483194,
+        "mean_signed_contribution": 0.0036562586136774855,
+        "negative_fraction": 0.08660130718954248,
+        "normalized_importance_share": 0.005441666404615965,
+        "positive_fraction": 0.9133986928104575,
+        "standard_deviation": 0.04687645754617918,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "domain_compatibility",
+      "feature_index": 18,
+      "feature_name": "job_domain__cybersecurity",
+      "rank": 24,
+      "train": {
+        "mean_absolute_contribution": 0.023852888793795914,
+        "mean_signed_contribution": 0.0036666420401382663,
+        "negative_fraction": 0.08743386243386243,
+        "normalized_importance_share": 0.005471612331010185,
+        "positive_fraction": 0.9125661375661376,
+        "standard_deviation": 0.04710366685814587,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.023232175844357158,
+        "mean_signed_contribution": 0.0036078026235271763,
+        "negative_fraction": 0.08271604938271605,
+        "normalized_importance_share": 0.005302616551506293,
+        "positive_fraction": 0.917283950617284,
+        "standard_deviation": 0.04580121552683708,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.022478415179080943,
+        "mean_signed_contribution": -0.0038391388342978307,
+        "negative_fraction": 0.19978213507625273,
+        "normalized_importance_share": 0.0051517595643533415,
+        "positive_fraction": 0.8002178649237472,
+        "standard_deviation": 0.034299543269161716,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "education",
+      "feature_index": 76,
+      "feature_name": "job_education_level__doctorate",
+      "rank": 25,
+      "train": {
+        "mean_absolute_contribution": 0.022402912889545348,
+        "mean_signed_contribution": -0.0038185754594874752,
+        "negative_fraction": 0.19973544973544974,
+        "normalized_importance_share": 0.005139002469540132,
+        "positive_fraction": 0.8002645502645502,
+        "standard_deviation": 0.03415707585088916,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.022830759196913727,
+        "mean_signed_contribution": -0.003935101250079489,
+        "negative_fraction": 0.2,
+        "normalized_importance_share": 0.005210995406201442,
+        "positive_fraction": 0.8,
+        "standard_deviation": 0.03495655488453256,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.021816431615102938,
+        "mean_signed_contribution": 0.004917353734647711,
+        "negative_fraction": 0.42135076252723314,
+        "normalized_importance_share": 0.005000041565998093,
+        "positive_fraction": 0.5786492374727669,
+        "standard_deviation": 0.04049227996190831,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "text_alignment",
+      "feature_index": 87,
+      "feature_name": "headline_title_token_jaccard",
+      "rank": 26,
+      "train": {
+        "mean_absolute_contribution": 0.02177049973981036,
+        "mean_signed_contribution": 0.004963440259845772,
+        "negative_fraction": 0.41904761904761906,
+        "normalized_importance_share": 0.004993933265625385,
+        "positive_fraction": 0.580952380952381,
+        "standard_deviation": 0.04049467561598427,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.022030780366468307,
+        "mean_signed_contribution": 0.004702283283723425,
+        "negative_fraction": 0.43209876543209874,
+        "normalized_importance_share": 0.005028404631424534,
+        "positive_fraction": 0.5679012345679012,
+        "standard_deviation": 0.04048040461701447,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.019693431789510173,
+        "mean_signed_contribution": 0.0023278537443759597,
+        "negative_fraction": 0.8976034858387799,
+        "normalized_importance_share": 0.004513477697082794,
+        "positive_fraction": 0.10239651416122005,
+        "standard_deviation": 0.04613903851786766,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "domain_compatibility",
+      "feature_index": 20,
+      "feature_name": "job_domain__data_engineering",
+      "rank": 27,
+      "train": {
+        "mean_absolute_contribution": 0.019769380080396855,
+        "mean_signed_contribution": 0.002429114971097011,
+        "negative_fraction": 0.8972222222222223,
+        "normalized_importance_share": 0.004534896580428507,
+        "positive_fraction": 0.10277777777777777,
+        "standard_deviation": 0.0462274088569139,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.019339006432038994,
+        "mean_signed_contribution": 0.0018553013530110524,
+        "negative_fraction": 0.8993827160493827,
+        "normalized_importance_share": 0.004414022013401912,
+        "positive_fraction": 0.10061728395061728,
+        "standard_deviation": 0.04572142019984899,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.017391850263726444,
+        "mean_signed_contribution": -0.007044682934366137,
+        "negative_fraction": 0.08442265795206971,
+        "normalized_importance_share": 0.003985985231794141,
+        "positive_fraction": 0.9155773420479303,
+        "standard_deviation": 0.047123698787981935,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "domain_compatibility",
+      "feature_index": 21,
+      "feature_name": "job_domain__devops_cloud",
+      "rank": 28,
+      "train": {
+        "mean_absolute_contribution": 0.01752426816265816,
+        "mean_signed_contribution": -0.007112385849810168,
+        "negative_fraction": 0.08439153439153439,
+        "normalized_importance_share": 0.004019890529807414,
+        "positive_fraction": 0.9156084656084656,
+        "standard_deviation": 0.04734128414243981,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.016773900068711767,
+        "mean_signed_contribution": -0.0067287359956273215,
+        "negative_fraction": 0.08456790123456791,
+        "normalized_importance_share": 0.003828550572858524,
+        "positive_fraction": 0.9154320987654321,
+        "standard_deviation": 0.046093407222955456,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.017384169341053197,
+        "mean_signed_contribution": -0.0029981440720981555,
+        "negative_fraction": 0.24498910675381264,
+        "normalized_importance_share": 0.003984224864502688,
+        "positive_fraction": 0.7550108932461873,
+        "standard_deviation": 0.027533443642263355,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "career_level",
+      "feature_index": 60,
+      "feature_name": "job_career_level__mid",
+      "rank": 29,
+      "train": {
+        "mean_absolute_contribution": 0.0174846170772167,
+        "mean_signed_contribution": -0.0030266437328974323,
+        "negative_fraction": 0.24391534391534392,
+        "normalized_importance_share": 0.0040107949703590395,
+        "positive_fraction": 0.7560846560846561,
+        "standard_deviation": 0.02765747459360287,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.01691541323895684,
+        "mean_signed_contribution": -0.002865145655034863,
+        "negative_fraction": 0.25,
+        "normalized_importance_share": 0.003860850176814041,
+        "positive_fraction": 0.75,
+        "standard_deviation": 0.02694668668637879,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.016275367641912238,
+        "mean_signed_contribution": -0.0013356899104133976,
+        "negative_fraction": 0.7998910675381263,
+        "normalized_importance_share": 0.0037301019775904166,
+        "positive_fraction": 0.20010893246187364,
+        "standard_deviation": 0.022663638589569362,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "career_level",
+      "feature_index": 61,
+      "feature_name": "job_career_level__senior",
+      "rank": 30,
+      "train": {
+        "mean_absolute_contribution": 0.016392096559059818,
+        "mean_signed_contribution": -0.0013326921445849904,
+        "negative_fraction": 0.8,
+        "normalized_importance_share": 0.0037601817724899557,
+        "positive_fraction": 0.2,
+        "standard_deviation": 0.02282674392847911,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.015730632695223543,
+        "mean_signed_contribution": -0.0013496794842792973,
+        "negative_fraction": 0.7993827160493827,
+        "normalized_importance_share": 0.003590430524208461,
+        "positive_fraction": 0.2006172839506173,
+        "standard_deviation": 0.021886408947187283,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.01608190565250945,
+        "mean_signed_contribution": -0.00034827921965291614,
+        "negative_fraction": 0.6619825708061002,
+        "normalized_importance_share": 0.003685763013019099,
+        "positive_fraction": 0.33801742919389977,
+        "standard_deviation": 0.020899335774041444,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "preferences",
+      "feature_index": 80,
+      "feature_name": "job_work_mode__remote",
+      "rank": 31,
+      "train": {
+        "mean_absolute_contribution": 0.016059970132019777,
+        "mean_signed_contribution": -0.000362865244890614,
+        "negative_fraction": 0.6617724867724868,
+        "normalized_importance_share": 0.003683995316863696,
+        "positive_fraction": 0.3382275132275132,
+        "standard_deviation": 0.02090709630783993,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.016184271414794588,
+        "mean_signed_contribution": -0.0002802111018769929,
+        "negative_fraction": 0.662962962962963,
+        "normalized_importance_share": 0.003693971070686625,
+        "positive_fraction": 0.337037037037037,
+        "standard_deviation": 0.02086294694623496,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.016072009617320183,
+        "mean_signed_contribution": -0.005628947799525918,
+        "negative_fraction": 0.7917211328976035,
+        "normalized_importance_share": 0.003683494970831546,
+        "positive_fraction": 0.20827886710239651,
+        "standard_deviation": 0.029065966684683645,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "education",
+      "feature_index": 74,
+      "feature_name": "job_education_level__bachelor",
+      "rank": 32,
+      "train": {
+        "mean_absolute_contribution": 0.016157808998133755,
+        "mean_signed_contribution": -0.005663627151951668,
+        "negative_fraction": 0.7921957671957672,
+        "normalized_importance_share": 0.003706438566857824,
+        "positive_fraction": 0.2078042328042328,
+        "standard_deviation": 0.029350019113920493,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.015671612506856843,
+        "mean_signed_contribution": -0.005467110821539083,
+        "negative_fraction": 0.7895061728395062,
+        "normalized_importance_share": 0.0035769594903370338,
+        "positive_fraction": 0.21049382716049383,
+        "standard_deviation": 0.027701329749702634,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.015480241620655588,
+        "mean_signed_contribution": -0.004314380763197829,
+        "negative_fraction": 0.20468409586056646,
+        "normalized_importance_share": 0.0035478694646556394,
+        "positive_fraction": 0.7953159041394335,
+        "standard_deviation": 0.028424238894412982,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "education",
+      "feature_index": 75,
+      "feature_name": "job_education_level__master",
+      "rank": 33,
+      "train": {
+        "mean_absolute_contribution": 0.015490252297652577,
+        "mean_signed_contribution": -0.004307460194778051,
+        "negative_fraction": 0.2048941798941799,
+        "normalized_importance_share": 0.0035533077865327455,
+        "positive_fraction": 0.7951058201058201,
+        "standard_deviation": 0.028461294829591803,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.015433525128002971,
+        "mean_signed_contribution": -0.004346676749156796,
+        "negative_fraction": 0.2037037037037037,
+        "normalized_importance_share": 0.003522617353626583,
+        "positive_fraction": 0.7962962962962963,
+        "standard_deviation": 0.028250646113343186,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.011096253057546157,
+        "mean_signed_contribution": -0.006285510868223323,
+        "negative_fraction": 0.3962962962962963,
+        "normalized_importance_share": 0.002543116468055009,
+        "positive_fraction": 0.6037037037037037,
+        "standard_deviation": 0.028513960596006548,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "career_level",
+      "feature_index": 56,
+      "feature_name": "candidate_career_level__lead",
+      "rank": 34,
+      "train": {
+        "mean_absolute_contribution": 0.01113091428222481,
+        "mean_signed_contribution": -0.006339405038956842,
+        "negative_fraction": 0.39735449735449735,
+        "normalized_importance_share": 0.0025533195735134464,
+        "positive_fraction": 0.6026455026455027,
+        "standard_deviation": 0.028687380925028063,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.010934500675712453,
+        "mean_signed_contribution": -0.0060340047381335655,
+        "negative_fraction": 0.391358024691358,
+        "normalized_importance_share": 0.002495739729844231,
+        "positive_fraction": 0.608641975308642,
+        "standard_deviation": 0.02768892173132172,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0105239062087389,
+        "mean_signed_contribution": -0.0010276356610270866,
+        "negative_fraction": 0.43736383442265797,
+        "normalized_importance_share": 0.002411942035650436,
+        "positive_fraction": 0.5626361655773421,
+        "standard_deviation": 0.018881398770153913,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "required_skills",
+      "feature_index": 31,
+      "feature_name": "critical_required_skill_coverage",
+      "rank": 35,
+      "train": {
+        "mean_absolute_contribution": 0.010666043423414946,
+        "mean_signed_contribution": -0.001123727583424182,
+        "negative_fraction": 0.43756613756613755,
+        "normalized_importance_share": 0.002446682882864349,
+        "positive_fraction": 0.5624338624338624,
+        "standard_deviation": 0.019200280664309732,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.009860599206917363,
+        "mean_signed_contribution": -0.0005792066898406412,
+        "negative_fraction": 0.4364197530864197,
+        "normalized_importance_share": 0.0022506276171747287,
+        "positive_fraction": 0.5635802469135802,
+        "standard_deviation": 0.017308757982888914,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.008467679816919703,
+        "mean_signed_contribution": -8.328710450778902e-05,
+        "negative_fraction": 0.2111111111111111,
+        "normalized_importance_share": 0.0019406817668042302,
+        "positive_fraction": 0.7888888888888889,
+        "standard_deviation": 0.012761408325527935,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "career_level",
+      "feature_index": 54,
+      "feature_name": "candidate_career_level__mid",
+      "rank": 36,
+      "train": {
+        "mean_absolute_contribution": 0.008619712465607485,
+        "mean_signed_contribution": -0.00038688432811733234,
+        "negative_fraction": 0.22288359788359788,
+        "normalized_importance_share": 0.001977275181396364,
+        "positive_fraction": 0.7771164021164021,
+        "standard_deviation": 0.012916128658795635,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.007758194123043386,
+        "mean_signed_contribution": 0.0013334999390034131,
+        "negative_fraction": 0.15617283950617283,
+        "normalized_importance_share": 0.0017707652026334355,
+        "positive_fraction": 0.8438271604938271,
+        "standard_deviation": 0.01191118037557003,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.007900113460016968,
+        "mean_signed_contribution": -0.0012013014040543118,
+        "negative_fraction": 0.279520697167756,
+        "normalized_importance_share": 0.0018106029607903625,
+        "positive_fraction": 0.720479302832244,
+        "standard_deviation": 0.02046102684006467,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "domain_compatibility",
+      "feature_index": 12,
+      "feature_name": "candidate_domain__mobile_development",
+      "rank": 37,
+      "train": {
+        "mean_absolute_contribution": 0.00818410382591643,
+        "mean_signed_contribution": -0.001618809774928681,
+        "negative_fraction": 0.2894179894179894,
+        "normalized_importance_share": 0.0018773509489466626,
+        "positive_fraction": 0.7105820105820105,
+        "standard_deviation": 0.021198683693395705,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.006574825085819477,
+        "mean_signed_contribution": 0.0007470709933594112,
+        "negative_fraction": 0.23333333333333334,
+        "normalized_importance_share": 0.001500667718637003,
+        "positive_fraction": 0.7666666666666667,
+        "standard_deviation": 0.016450977822375867,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0070740481122789816,
+        "mean_signed_contribution": -0.002243409259616523,
+        "negative_fraction": 0.9163398692810457,
+        "normalized_importance_share": 0.0016212795577797044,
+        "positive_fraction": 0.08366013071895424,
+        "standard_deviation": 0.013475835274702641,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "domain_compatibility",
+      "feature_index": 10,
+      "feature_name": "candidate_domain__finance_accounting",
+      "rank": 38,
+      "train": {
+        "mean_absolute_contribution": 0.007093945600876944,
+        "mean_signed_contribution": -0.002240773774570294,
+        "negative_fraction": 0.9166666666666666,
+        "normalized_importance_share": 0.0016272796373146016,
+        "positive_fraction": 0.08333333333333333,
+        "standard_deviation": 0.013625753913262708,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.006981193165488492,
+        "mean_signed_contribution": -0.002255708189832261,
+        "negative_fraction": 0.9148148148148149,
+        "normalized_importance_share": 0.001593419001155387,
+        "positive_fraction": 0.08518518518518518,
+        "standard_deviation": 0.012752926344784962,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0069127530279816584,
+        "mean_signed_contribution": -0.003029618710322819,
+        "negative_fraction": 0.6197167755991285,
+        "normalized_importance_share": 0.0015843128282931336,
+        "positive_fraction": 0.3802832244008715,
+        "standard_deviation": 0.012724815607307762,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "education",
+      "feature_index": 73,
+      "feature_name": "job_education_level__diploma",
+      "rank": 39,
+      "train": {
+        "mean_absolute_contribution": 0.00692800111137523,
+        "mean_signed_contribution": -0.003012845100666618,
+        "negative_fraction": 0.6153439153439153,
+        "normalized_importance_share": 0.0015892136435949255,
+        "positive_fraction": 0.38465608465608464,
+        "standard_deviation": 0.012820811641043138,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.006841595305478323,
+        "mean_signed_contribution": -0.0031078955553850932,
+        "negative_fraction": 0.6401234567901235,
+        "normalized_importance_share": 0.0015615565562426099,
+        "positive_fraction": 0.35987654320987655,
+        "standard_deviation": 0.01226660196684561,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0069112795715847745,
+        "mean_signed_contribution": -0.000861486731256127,
+        "negative_fraction": 0.08333333333333333,
+        "normalized_importance_share": 0.0015839751313058313,
+        "positive_fraction": 0.9166666666666666,
+        "standard_deviation": 0.014567785758601336,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "domain_compatibility",
+      "feature_index": 27,
+      "feature_name": "job_domain__quality_assurance",
+      "rank": 40,
+      "train": {
+        "mean_absolute_contribution": 0.006926048566740026,
+        "mean_signed_contribution": -0.0008717488904025347,
+        "negative_fraction": 0.08333333333333333,
+        "normalized_importance_share": 0.0015887657495308068,
+        "positive_fraction": 0.9166666666666666,
+        "standard_deviation": 0.014613094173995927,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0068423575941936035,
+        "mean_signed_contribution": -0.000813596655239558,
+        "negative_fraction": 0.08333333333333333,
+        "normalized_importance_share": 0.0015617305444555845,
+        "positive_fraction": 0.9166666666666666,
+        "standard_deviation": 0.014354358675639436,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.006524405205644635,
+        "mean_signed_contribution": -0.0008030340021216435,
+        "negative_fraction": 0.9166666666666666,
+        "normalized_importance_share": 0.0014953085727848342,
+        "positive_fraction": 0.08333333333333333,
+        "standard_deviation": 0.012160935005856,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "domain_compatibility",
+      "feature_index": 22,
+      "feature_name": "job_domain__digital_marketing",
+      "rank": 41,
+      "train": {
+        "mean_absolute_contribution": 0.0065067753059020825,
+        "mean_signed_contribution": -0.0008312035924828951,
+        "negative_fraction": 0.9166666666666666,
+        "normalized_importance_share": 0.0014925886883833774,
+        "positive_fraction": 0.08333333333333333,
+        "standard_deviation": 0.012019778567289405,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.006606678071109877,
+        "mean_signed_contribution": -0.0006715759137691355,
+        "negative_fraction": 0.9166666666666666,
+        "normalized_importance_share": 0.001507937987601362,
+        "positive_fraction": 0.08333333333333333,
+        "standard_deviation": 0.012798277948501028,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.006128438528967526,
+        "mean_signed_contribution": -0.0012761339645559872,
+        "negative_fraction": 0.9166666666666666,
+        "normalized_importance_share": 0.001404558175237461,
+        "positive_fraction": 0.08333333333333333,
+        "standard_deviation": 0.009679118761610395,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "domain_compatibility",
+      "feature_index": 26,
+      "feature_name": "job_domain__product_management",
+      "rank": 42,
+      "train": {
+        "mean_absolute_contribution": 0.006131977779654017,
+        "mean_signed_contribution": -0.0012709261184600158,
+        "negative_fraction": 0.9166666666666666,
+        "normalized_importance_share": 0.0014066139125824511,
+        "positive_fraction": 0.08333333333333333,
+        "standard_deviation": 0.009703074147789988,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.006111922025763901,
+        "mean_signed_contribution": -0.001300437246337188,
+        "negative_fraction": 0.9166666666666666,
+        "normalized_importance_share": 0.0013950126373205535,
+        "positive_fraction": 0.08333333333333333,
+        "standard_deviation": 0.009566496354921454,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.00596135201562238,
+        "mean_signed_contribution": -0.0007882440681660902,
+        "negative_fraction": 0.6717864923747277,
+        "normalized_importance_share": 0.0013662641257529856,
+        "positive_fraction": 0.32821350762527235,
+        "standard_deviation": 0.011872761867071275,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "career_level",
+      "feature_index": 59,
+      "feature_name": "job_career_level__junior",
+      "rank": 43,
+      "train": {
+        "mean_absolute_contribution": 0.005980015720668417,
+        "mean_signed_contribution": -0.0007666692354105758,
+        "negative_fraction": 0.6724867724867725,
+        "normalized_importance_share": 0.0013717553475264832,
+        "positive_fraction": 0.32751322751322753,
+        "standard_deviation": 0.011977837561033735,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.005874254725407539,
+        "mean_signed_contribution": -0.0008889266210251572,
+        "negative_fraction": 0.6685185185185185,
+        "normalized_importance_share": 0.0013407663812201993,
+        "positive_fraction": 0.3314814814814815,
+        "standard_deviation": 0.011369034545508147,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0057085805430608936,
+        "mean_signed_contribution": -0.0022871647279843746,
+        "negative_fraction": 0.735838779956427,
+        "normalized_importance_share": 0.0013083322012382985,
+        "positive_fraction": 0.264161220043573,
+        "standard_deviation": 0.00942307930319388,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "nice_transferable_skills",
+      "feature_index": 39,
+      "feature_name": "candidate_skill_count_normalized",
+      "rank": 44,
+      "train": {
+        "mean_absolute_contribution": 0.005717747070954189,
+        "mean_signed_contribution": -0.00200177477464571,
+        "negative_fraction": 0.7247354497354498,
+        "normalized_importance_share": 0.0013115935620832454,
+        "positive_fraction": 0.27526455026455027,
+        "standard_deviation": 0.009501849670432284,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.005665803412892184,
+        "mean_signed_contribution": -0.0036189845102314764,
+        "negative_fraction": 0.7876543209876543,
+        "normalized_importance_share": 0.0012931885138980728,
+        "positive_fraction": 0.2123456790123457,
+        "standard_deviation": 0.00892658285564657,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.005461288408592986,
+        "mean_signed_contribution": -0.0021780517238539194,
+        "negative_fraction": 0.8760348583877996,
+        "normalized_importance_share": 0.0012516560695455265,
+        "positive_fraction": 0.12396514161220043,
+        "standard_deviation": 0.011979680550719917,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "domain_compatibility",
+      "feature_index": 6,
+      "feature_name": "candidate_domain__data_analysis",
+      "rank": 45,
+      "train": {
+        "mean_absolute_contribution": 0.005442252712241762,
+        "mean_signed_contribution": -0.0019839367549928035,
+        "negative_fraction": 0.8723544973544973,
+        "normalized_importance_share": 0.0012483979322672571,
+        "positive_fraction": 0.12764550264550265,
+        "standard_deviation": 0.012268033338222122,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0055501216582320295,
+        "mean_signed_contribution": -0.0030839215785391266,
+        "negative_fraction": 0.8932098765432098,
+        "normalized_importance_share": 0.0012667847886905083,
+        "positive_fraction": 0.10679012345679012,
+        "standard_deviation": 0.010482721760895453,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.005413127666208929,
+        "mean_signed_contribution": -0.0021265029425178517,
+        "negative_fraction": 0.7149237472766885,
+        "normalized_importance_share": 0.0012406182555703526,
+        "positive_fraction": 0.28507625272331155,
+        "standard_deviation": 0.008545633989076318,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "career_level",
+      "feature_index": 47,
+      "feature_name": "career_level_exact_match",
+      "rank": 46,
+      "train": {
+        "mean_absolute_contribution": 0.005405229182200683,
+        "mean_signed_contribution": -0.002145004878207026,
+        "negative_fraction": 0.7125661375661375,
+        "normalized_importance_share": 0.0012399051075506558,
+        "positive_fraction": 0.28743386243386243,
+        "standard_deviation": 0.008595164517381407,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.005449987258247415,
+        "mean_signed_contribution": -0.002040160575968373,
+        "negative_fraction": 0.725925925925926,
+        "normalized_importance_share": 0.0012439296618056738,
+        "positive_fraction": 0.2740740740740741,
+        "standard_deviation": 0.008310044605413838,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.005265843091920449,
+        "mean_signed_contribution": -0.0016960254917664705,
+        "negative_fraction": 0.9107843137254902,
+        "normalized_importance_share": 0.0012068625522332896,
+        "positive_fraction": 0.0892156862745098,
+        "standard_deviation": 0.009327667388864891,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "domain_compatibility",
+      "feature_index": 13,
+      "feature_name": "candidate_domain__product_management",
+      "rank": 47,
+      "train": {
+        "mean_absolute_contribution": 0.005344781777312068,
+        "mean_signed_contribution": -0.0016259729520777275,
+        "negative_fraction": 0.9082010582010582,
+        "normalized_importance_share": 0.0012260390819792736,
+        "positive_fraction": 0.0917989417989418,
+        "standard_deviation": 0.009650071630514881,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.004897462560092893,
+        "mean_signed_contribution": -0.0020229373436472715,
+        "negative_fraction": 0.9228395061728395,
+        "normalized_importance_share": 0.0011178189337714846,
+        "positive_fraction": 0.07716049382716049,
+        "standard_deviation": 0.007636922806643631,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.00507114292255301,
+        "mean_signed_contribution": -0.0008862001176196457,
+        "negative_fraction": 0.9228758169934641,
+        "normalized_importance_share": 0.001162239812964136,
+        "positive_fraction": 0.07712418300653595,
+        "standard_deviation": 0.010493763459545297,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "domain_compatibility",
+      "feature_index": 9,
+      "feature_name": "candidate_domain__digital_marketing",
+      "rank": 48,
+      "train": {
+        "mean_absolute_contribution": 0.0049572161913919634,
+        "mean_signed_contribution": -0.0009472125857697661,
+        "negative_fraction": 0.9224867724867725,
+        "normalized_importance_share": 0.0011371354419494255,
+        "positive_fraction": 0.07751322751322752,
+        "standard_deviation": 0.010155100485769362,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.005602801001304563,
+        "mean_signed_contribution": -0.0006014752662524166,
+        "negative_fraction": 0.9246913580246914,
+        "normalized_importance_share": 0.001278808559445788,
+        "positive_fraction": 0.07530864197530865,
+        "standard_deviation": 0.011943812540074728,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.005034239087159967,
+        "mean_signed_contribution": -0.00032650756243931346,
+        "negative_fraction": 0.09161220043572985,
+        "normalized_importance_share": 0.001153781935243096,
+        "positive_fraction": 0.9083877995642702,
+        "standard_deviation": 0.01108258801451921,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "domain_compatibility",
+      "feature_index": 5,
+      "feature_name": "candidate_domain__cybersecurity",
+      "rank": 49,
+      "train": {
+        "mean_absolute_contribution": 0.005071861255910046,
+        "mean_signed_contribution": -0.0003828294037890691,
+        "negative_fraction": 0.09272486772486772,
+        "normalized_importance_share": 0.0011634338645065186,
+        "positive_fraction": 0.9072751322751322,
+        "standard_deviation": 0.01110982924771298,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.004858668966326262,
+        "mean_signed_contribution": -6.367230280712075e-05,
+        "negative_fraction": 0.08641975308641975,
+        "normalized_importance_share": 0.0011089645090384128,
+        "positive_fraction": 0.9135802469135802,
+        "standard_deviation": 0.010950737124159862,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.004963712369292001,
+        "mean_signed_contribution": -0.0014887242981329939,
+        "negative_fraction": 0.3618736383442266,
+        "normalized_importance_share": 0.0011376181314151075,
+        "positive_fraction": 0.6381263616557734,
+        "standard_deviation": 0.012841694558148962,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "text_alignment",
+      "feature_index": 88,
+      "feature_name": "candidate_skills_in_job_description_ratio",
+      "rank": 50,
+      "train": {
+        "mean_absolute_contribution": 0.0048716833846517375,
+        "mean_signed_contribution": -0.0013463400028678023,
+        "negative_fraction": 0.3544973544973545,
+        "normalized_importance_share": 0.0011175150779712283,
+        "positive_fraction": 0.6455026455026455,
+        "standard_deviation": 0.012513687531189163,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.005393180964279896,
+        "mean_signed_contribution": -0.0021531843427038877,
+        "negative_fraction": 0.3962962962962963,
+        "normalized_importance_share": 0.0012309639371727373,
+        "positive_fraction": 0.6037037037037037,
+        "standard_deviation": 0.014254279110125723,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.004840855067303771,
+        "mean_signed_contribution": -0.000906645035381282,
+        "negative_fraction": 0.9002178649237472,
+        "normalized_importance_share": 0.0011094608402748703,
+        "positive_fraction": 0.09978213507625272,
+        "standard_deviation": 0.010571973387334368,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "domain_compatibility",
+      "feature_index": 11,
+      "feature_name": "candidate_domain__frontend_engineering",
+      "rank": 51,
+      "train": {
+        "mean_absolute_contribution": 0.004953994841261187,
+        "mean_signed_contribution": -0.0008001876847234723,
+        "negative_fraction": 0.8988095238095238,
+        "normalized_importance_share": 0.0011363964966899882,
+        "positive_fraction": 0.10119047619047619,
+        "standard_deviation": 0.01089742464439745,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.004312869455502495,
+        "mean_signed_contribution": -0.0014034460051177266,
+        "negative_fraction": 0.9067901234567901,
+        "normalized_importance_share": 0.0009843887680795174,
+        "positive_fraction": 0.09320987654320988,
+        "standard_deviation": 0.008880303483222315,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.004760550386918172,
+        "mean_signed_contribution": -0.0005162782016730069,
+        "negative_fraction": 0.12287581699346405,
+        "normalized_importance_share": 0.0010910560549755998,
+        "positive_fraction": 0.8771241830065359,
+        "standard_deviation": 0.01221905037214945,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "domain_compatibility",
+      "feature_index": 15,
+      "feature_name": "candidate_domain__ui_ux_design",
+      "rank": 52,
+      "train": {
+        "mean_absolute_contribution": 0.004831571710661429,
+        "mean_signed_contribution": -0.0005976131692424859,
+        "negative_fraction": 0.12764550264550265,
+        "normalized_importance_share": 0.0011083138641509586,
+        "positive_fraction": 0.8723544973544973,
+        "standard_deviation": 0.01238772864321871,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.004429117542782972,
+        "mean_signed_contribution": -0.00013671501968210464,
+        "negative_fraction": 0.10061728395061728,
+        "normalized_importance_share": 0.0010109217555975215,
+        "positive_fraction": 0.8993827160493827,
+        "standard_deviation": 0.011391253236792047,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.004367489861149109,
+        "mean_signed_contribution": -0.0016844634065686505,
+        "negative_fraction": 0.31666666666666665,
+        "normalized_importance_share": 0.0010009717093102967,
+        "positive_fraction": 0.6833333333333333,
+        "standard_deviation": 0.01307591987288958,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "domain_compatibility",
+      "feature_index": 8,
+      "feature_name": "candidate_domain__devops_cloud",
+      "rank": 53,
+      "train": {
+        "mean_absolute_contribution": 0.004218028054766898,
+        "mean_signed_contribution": -0.0015123009955704985,
+        "negative_fraction": 0.31097883597883597,
+        "normalized_importance_share": 0.0009675731319810777,
+        "positive_fraction": 0.689021164021164,
+        "standard_deviation": 0.01274078085320378,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.005064978290932759,
+        "mean_signed_contribution": -0.0024878879912266934,
+        "negative_fraction": 0.3432098765432099,
+        "normalized_importance_share": 0.0011560534793835736,
+        "positive_fraction": 0.6567901234567901,
+        "standard_deviation": 0.014511124269061553,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.00371014390167704,
+        "mean_signed_contribution": -0.0017918883367144026,
+        "negative_fraction": 0.8392156862745098,
+        "normalized_importance_share": 0.0008503165894177333,
+        "positive_fraction": 0.1607843137254902,
+        "standard_deviation": 0.007647258159220648,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "domain_compatibility",
+      "feature_index": 4,
+      "feature_name": "candidate_domain__backend_engineering",
+      "rank": 54,
+      "train": {
+        "mean_absolute_contribution": 0.003704399770103726,
+        "mean_signed_contribution": -0.0017967413891946543,
+        "negative_fraction": 0.8380952380952381,
+        "normalized_importance_share": 0.0008497519791549432,
+        "positive_fraction": 0.1619047619047619,
+        "standard_deviation": 0.007569104925106996,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0037369498490191708,
+        "mean_signed_contribution": -0.0017692407584732274,
+        "negative_fraction": 0.8444444444444444,
+        "normalized_importance_share": 0.0008529382806979311,
+        "positive_fraction": 0.15555555555555556,
+        "standard_deviation": 0.008001848024135243,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0036736464466269876,
+        "mean_signed_contribution": -0.0006635181551951609,
+        "negative_fraction": 0.703921568627451,
+        "normalized_importance_share": 0.0008419518487707305,
+        "positive_fraction": 0.296078431372549,
+        "standard_deviation": 0.007476016926624686,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "career_level",
+      "feature_index": 58,
+      "feature_name": "job_career_level__entry",
+      "rank": 55,
+      "train": {
+        "mean_absolute_contribution": 0.0036709828802919393,
+        "mean_signed_contribution": -0.0006507801598071296,
+        "negative_fraction": 0.7038359788359788,
+        "normalized_importance_share": 0.0008420864813639276,
+        "positive_fraction": 0.2961640211640212,
+        "standard_deviation": 0.007499698859460864,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0036860764228572127,
+        "mean_signed_contribution": -0.0007229621336726403,
+        "negative_fraction": 0.7043209876543209,
+        "normalized_importance_share": 0.000841326700559872,
+        "positive_fraction": 0.295679012345679,
+        "standard_deviation": 0.007364203065608591,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0032651793652662777,
+        "mean_signed_contribution": -0.0003587466338335527,
+        "negative_fraction": 0.32189542483660133,
+        "normalized_importance_share": 0.0007483365215175051,
+        "positive_fraction": 0.6781045751633987,
+        "standard_deviation": 0.005107391405271833,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "nice_transferable_skills",
+      "feature_index": 37,
+      "feature_name": "transferable_skill_coverage",
+      "rank": 56,
+      "train": {
+        "mean_absolute_contribution": 0.0032251389214141735,
+        "mean_signed_contribution": -0.00027428210768347427,
+        "negative_fraction": 0.3146825396825397,
+        "normalized_importance_share": 0.0007398143698309846,
+        "positive_fraction": 0.6853174603174603,
+        "standard_deviation": 0.005012184350432733,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.003452034769909432,
+        "mean_signed_contribution": -0.0007529144225339189,
+        "negative_fraction": 0.35555555555555557,
+        "normalized_importance_share": 0.0007879079785694293,
+        "positive_fraction": 0.6444444444444445,
+        "standard_deviation": 0.005512976408178662,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0030696885937910507,
+        "mean_signed_contribution": -0.0012552403828557741,
+        "negative_fraction": 0.3591503267973856,
+        "normalized_importance_share": 0.0007035325865573763,
+        "positive_fraction": 0.6408496732026144,
+        "standard_deviation": 0.004502774673625644,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "preferences",
+      "feature_index": 82,
+      "feature_name": "job_work_mode__onsite",
+      "rank": 57,
+      "train": {
+        "mean_absolute_contribution": 0.003093662843086888,
+        "mean_signed_contribution": -0.0012679623358881193,
+        "negative_fraction": 0.3599206349206349,
+        "normalized_importance_share": 0.000709655082307054,
+        "positive_fraction": 0.640079365079365,
+        "standard_deviation": 0.004527030792454484,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0029578087637438092,
+        "mean_signed_contribution": -0.0011958712687048297,
+        "negative_fraction": 0.35555555555555557,
+        "normalized_importance_share": 0.0006751036068207014,
+        "positive_fraction": 0.6444444444444445,
+        "standard_deviation": 0.0043873191075542335,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.002581183821713122,
+        "mean_signed_contribution": -0.0009341411886300415,
+        "negative_fraction": 0.8107843137254902,
+        "normalized_importance_share": 0.0005915736645544233,
+        "positive_fraction": 0.1892156862745098,
+        "standard_deviation": 0.004436298337895068,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "career_level",
+      "feature_index": 55,
+      "feature_name": "candidate_career_level__senior",
+      "rank": 58,
+      "train": {
+        "mean_absolute_contribution": 0.0025724521604513543,
+        "mean_signed_contribution": -0.0009664563803997504,
+        "negative_fraction": 0.812962962962963,
+        "normalized_importance_share": 0.0005900946037915717,
+        "positive_fraction": 0.18703703703703703,
+        "standard_deviation": 0.0043594423696539045,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.002621931574268038,
+        "mean_signed_contribution": -0.0007833369603713997,
+        "negative_fraction": 0.8006172839506173,
+        "normalized_importance_share": 0.0005984414828715909,
+        "positive_fraction": 0.1993827160493827,
+        "standard_deviation": 0.004775753191510167,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0024643597672605773,
+        "mean_signed_contribution": -0.0007114515043462697,
+        "negative_fraction": 0.6160130718954249,
+        "normalized_importance_share": 0.0005647991150553763,
+        "positive_fraction": 0.3839869281045752,
+        "standard_deviation": 0.00731582332533568,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "domain_compatibility",
+      "feature_index": 23,
+      "feature_name": "job_domain__finance_accounting",
+      "rank": 59,
+      "train": {
+        "mean_absolute_contribution": 0.002451824882117998,
+        "mean_signed_contribution": -0.0007329533908887242,
+        "negative_fraction": 0.6145502645502645,
+        "normalized_importance_share": 0.0005624239216661991,
+        "positive_fraction": 0.38544973544973543,
+        "standard_deviation": 0.007246299400653377,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0025228558979259463,
+        "mean_signed_contribution": -0.0006111093671481488,
+        "negative_fraction": 0.6228395061728395,
+        "normalized_importance_share": 0.0005758280038439319,
+        "positive_fraction": 0.3771604938271605,
+        "standard_deviation": 0.007631097724529577,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.002095327439049575,
+        "mean_signed_contribution": -0.00023596456935345186,
+        "negative_fraction": 0.2770152505446623,
+        "normalized_importance_share": 0.00048022171886127576,
+        "positive_fraction": 0.7229847494553376,
+        "standard_deviation": 0.004939852352913729,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "domain_compatibility",
+      "feature_index": 0,
+      "feature_name": "domain_exact_match",
+      "rank": 60,
+      "train": {
+        "mean_absolute_contribution": 0.002089238565726451,
+        "mean_signed_contribution": -0.00024888122701254337,
+        "negative_fraction": 0.2804232804232804,
+        "normalized_importance_share": 0.00047925027435772027,
+        "positive_fraction": 0.7195767195767195,
+        "standard_deviation": 0.004959068559590927,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.002123742181224153,
+        "mean_signed_contribution": -0.00017568683361102478,
+        "negative_fraction": 0.2611111111111111,
+        "normalized_importance_share": 0.00048473248983377254,
+        "positive_fraction": 0.7388888888888889,
+        "standard_deviation": 0.004848715014893089,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0020272975877938847,
+        "mean_signed_contribution": -0.00021120671596031124,
+        "negative_fraction": 0.9166666666666666,
+        "normalized_importance_share": 0.0004646301642932207,
+        "positive_fraction": 0.08333333333333333,
+        "standard_deviation": 0.004429761546627466,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "domain_compatibility",
+      "feature_index": 25,
+      "feature_name": "job_domain__mobile_development",
+      "rank": 61,
+      "train": {
+        "mean_absolute_contribution": 0.002040393471858888,
+        "mean_signed_contribution": -0.00020973820797667874,
+        "negative_fraction": 0.9166666666666666,
+        "normalized_importance_share": 0.0004680457020216172,
+        "positive_fraction": 0.08333333333333333,
+        "standard_deviation": 0.004473170070603517,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0019661834621572017,
+        "mean_signed_contribution": -0.000218059753217263,
+        "negative_fraction": 0.9166666666666666,
+        "normalized_importance_share": 0.0004487705774775748,
+        "positive_fraction": 0.08333333333333333,
+        "standard_deviation": 0.004221283663708136,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0018999122724271888,
+        "mean_signed_contribution": -3.3029115585481424e-05,
+        "negative_fraction": 0.22037037037037038,
+        "normalized_importance_share": 0.00043543511154727464,
+        "positive_fraction": 0.7796296296296297,
+        "standard_deviation": 0.005636175480676533,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "domain_compatibility",
+      "feature_index": 7,
+      "feature_name": "candidate_domain__data_engineering",
+      "rank": 62,
+      "train": {
+        "mean_absolute_contribution": 0.0017602542157802085,
+        "mean_signed_contribution": -0.0001153698540523663,
+        "negative_fraction": 0.22380952380952382,
+        "normalized_importance_share": 0.00040378457955502503,
+        "positive_fraction": 0.7761904761904762,
+        "standard_deviation": 0.005038043327025271,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.002551649870113096,
+        "mean_signed_contribution": 0.000351227663926648,
+        "negative_fraction": 0.204320987654321,
+        "normalized_importance_share": 0.0005824000698667653,
+        "positive_fraction": 0.7956790123456791,
+        "standard_deviation": 0.0078346633866026,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0017692132460824783,
+        "mean_signed_contribution": -0.000689802328029413,
+        "negative_fraction": 0.44313725490196076,
+        "normalized_importance_share": 0.00040548059946718585,
+        "positive_fraction": 0.5568627450980392,
+        "standard_deviation": 0.004646936295492236,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "text_alignment",
+      "feature_index": 89,
+      "feature_name": "candidate_skills_in_job_responsibilities_ratio",
+      "rank": 63,
+      "train": {
+        "mean_absolute_contribution": 0.001776118031696728,
+        "mean_signed_contribution": -0.0006707728749112359,
+        "negative_fraction": 0.44047619047619047,
+        "normalized_importance_share": 0.0004074235790714392,
+        "positive_fraction": 0.5595238095238095,
+        "standard_deviation": 0.004699479658405127,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0017369909132159793,
+        "mean_signed_contribution": -0.0007786064425809058,
+        "negative_fraction": 0.45555555555555555,
+        "normalized_importance_share": 0.00039645863684663167,
+        "positive_fraction": 0.5444444444444444,
+        "standard_deviation": 0.0043923430669744416,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0012400280081753898,
+        "mean_signed_contribution": -0.00021943820740047304,
+        "negative_fraction": 0.7474945533769063,
+        "normalized_importance_share": 0.0002841982453072914,
+        "positive_fraction": 0.25250544662309365,
+        "standard_deviation": 0.002299076477059978,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "career_level",
+      "feature_index": 53,
+      "feature_name": "candidate_career_level__junior",
+      "rank": 64,
+      "train": {
+        "mean_absolute_contribution": 0.0012249118959952135,
+        "mean_signed_contribution": -0.00022623631267985425,
+        "negative_fraction": 0.7492063492063492,
+        "normalized_importance_share": 0.00028098244587765466,
+        "positive_fraction": 0.2507936507936508,
+        "standard_deviation": 0.0022831504465641466,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0013105698650162122,
+        "mean_signed_contribution": -0.00018771371609669406,
+        "negative_fraction": 0.7395061728395061,
+        "normalized_importance_share": 0.00029913037438670566,
+        "positive_fraction": 0.26049382716049385,
+        "standard_deviation": 0.002371726882316839,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0011148418758690907,
+        "mean_signed_contribution": -0.0002963628643710703,
+        "negative_fraction": 0.9131808278867103,
+        "normalized_importance_share": 0.00025550721663399024,
+        "positive_fraction": 0.08681917211328977,
+        "standard_deviation": 0.002588707403491998,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "domain_compatibility",
+      "feature_index": 19,
+      "feature_name": "job_domain__data_analysis",
+      "rank": 65,
+      "train": {
+        "mean_absolute_contribution": 0.0010813041043206194,
+        "mean_signed_contribution": -0.00028562014462266464,
+        "negative_fraction": 0.9133597883597884,
+        "normalized_importance_share": 0.00024804026555942725,
+        "positive_fraction": 0.08664021164021164,
+        "standard_deviation": 0.0025093882402825456,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0012713514764286235,
+        "mean_signed_contribution": -0.0003464955565302969,
+        "negative_fraction": 0.9123456790123456,
+        "normalized_importance_share": 0.0002901789925686111,
+        "positive_fraction": 0.08765432098765433,
+        "standard_deviation": 0.0029300930613088316,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.000860580360899694,
+        "mean_signed_contribution": -1.3752221581292763e-05,
+        "negative_fraction": 0.5485838779956427,
+        "normalized_importance_share": 0.00019723379383461135,
+        "positive_fraction": 0.4514161220043573,
+        "standard_deviation": 0.002639284601348798,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "domain_compatibility",
+      "feature_index": 14,
+      "feature_name": "candidate_domain__quality_assurance",
+      "rank": 66,
+      "train": {
+        "mean_absolute_contribution": 0.0008547116929228785,
+        "mean_signed_contribution": -2.9068431294271486e-05,
+        "negative_fraction": 0.546031746031746,
+        "normalized_importance_share": 0.00019606224968741733,
+        "positive_fraction": 0.45396825396825397,
+        "standard_deviation": 0.002666736474457663,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0008879674781248334,
+        "mean_signed_contribution": 5.772342374594127e-05,
+        "negative_fraction": 0.5604938271604938,
+        "normalized_importance_share": 0.00020267370039934074,
+        "positive_fraction": 0.43950617283950616,
+        "standard_deviation": 0.002505967282787371,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0008127124205820781,
+        "mean_signed_contribution": -0.0005492116041895353,
+        "negative_fraction": 0.3790849673202614,
+        "normalized_importance_share": 0.00018626308627393468,
+        "positive_fraction": 0.6209150326797386,
+        "standard_deviation": 0.00740449495376819,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "text_alignment",
+      "feature_index": 90,
+      "feature_name": "required_skills_in_candidate_headline_ratio",
+      "rank": 67,
+      "train": {
+        "mean_absolute_contribution": 0.0008232084723475911,
+        "mean_signed_contribution": -0.0005581288897939798,
+        "negative_fraction": 0.37156084656084654,
+        "normalized_importance_share": 0.0001888357283357934,
+        "positive_fraction": 0.6284391534391535,
+        "standard_deviation": 0.007527877335815445,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0007637308456763509,
+        "mean_signed_contribution": -0.0005075976047021273,
+        "negative_fraction": 0.4141975308641975,
+        "normalized_importance_share": 0.00017431737131771763,
+        "positive_fraction": 0.5858024691358025,
+        "standard_deviation": 0.006799015734076172,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0005616530236338824,
+        "mean_signed_contribution": -0.00017232092922985032,
+        "negative_fraction": 0.12135076252723312,
+        "normalized_importance_share": 0.00012872354715854712,
+        "positive_fraction": 0.8786492374727669,
+        "standard_deviation": 0.0015474865056037497,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "domain_compatibility",
+      "feature_index": 24,
+      "feature_name": "job_domain__frontend_engineering",
+      "rank": 68,
+      "train": {
+        "mean_absolute_contribution": 0.0005669073684556578,
+        "mean_signed_contribution": -0.00017590887475028578,
+        "negative_fraction": 0.1205026455026455,
+        "normalized_importance_share": 0.00013004283777105053,
+        "positive_fraction": 0.8794973544973544,
+        "standard_deviation": 0.0015710803581842347,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0005371327477989303,
+        "mean_signed_contribution": -0.0001555771834678182,
+        "negative_fraction": 0.12530864197530864,
+        "normalized_importance_share": 0.00012259759989404788,
+        "positive_fraction": 0.8746913580246913,
+        "standard_deviation": 0.0014321331494447343,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.00018511801259683323,
+        "mean_signed_contribution": 4.6149978224170776e-05,
+        "negative_fraction": 0.32799564270152504,
+        "normalized_importance_share": 4.242663392112017e-05,
+        "positive_fraction": 0.672004357298475,
+        "standard_deviation": 0.0005569984648325485,
+        "zero_fraction": 0.0
+      },
+      "feature_group": "preferences",
+      "feature_index": 81,
+      "feature_name": "job_work_mode__hybrid",
+      "rank": 69,
+      "train": {
+        "mean_absolute_contribution": 0.00018624219477012514,
+        "mean_signed_contribution": 4.8906694414822765e-05,
+        "negative_fraction": 0.32685185185185184,
+        "normalized_importance_share": 4.272208277446331e-05,
+        "positive_fraction": 0.6731481481481482,
+        "standard_deviation": 0.0005706570039661354,
+        "zero_fraction": 0.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.00017987182912147096,
+        "mean_signed_contribution": 3.328530266779485e-05,
+        "negative_fraction": 0.3333333333333333,
+        "normalized_importance_share": 4.1054757188439977e-05,
+        "positive_fraction": 0.6666666666666666,
+        "standard_deviation": 0.00048802636819837643,
+        "zero_fraction": 0.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "domain_compatibility",
+      "feature_index": 3,
+      "feature_name": "candidate_domain__unknown",
+      "rank": 70,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "domain_compatibility",
+      "feature_index": 16,
+      "feature_name": "job_domain__unknown",
+      "rank": 71,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "required_skills",
+      "feature_index": 32,
+      "feature_name": "missing_required_skill_ratio",
+      "rank": 72,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "required_skills",
+      "feature_index": 33,
+      "feature_name": "matched_required_skill_count_normalized",
+      "rank": 73,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "nice_transferable_skills",
+      "feature_index": 38,
+      "feature_name": "transferable_skill_overlap_normalized",
+      "rank": 74,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "nice_transferable_skills",
+      "feature_index": 40,
+      "feature_name": "candidate_to_required_skill_count_ratio",
+      "rank": 75,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "experience",
+      "feature_index": 44,
+      "feature_name": "experience_shortfall",
+      "rank": 76,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "experience",
+      "feature_index": 45,
+      "feature_name": "experience_surplus",
+      "rank": 77,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "experience",
+      "feature_index": 46,
+      "feature_name": "experience_requirement_met",
+      "rank": 78,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "career_level",
+      "feature_index": 49,
+      "feature_name": "seniority_requirement_met",
+      "rank": 79,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "career_level",
+      "feature_index": 50,
+      "feature_name": "career_overqualification",
+      "rank": 80,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "career_level",
+      "feature_index": 51,
+      "feature_name": "candidate_career_level__unknown",
+      "rank": 81,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "career_level",
+      "feature_index": 57,
+      "feature_name": "job_career_level__unknown",
+      "rank": 82,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "career_level",
+      "feature_index": 62,
+      "feature_name": "job_career_level__lead",
+      "rank": 83,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "education",
+      "feature_index": 65,
+      "feature_name": "candidate_education_level__unknown",
+      "rank": 84,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "education",
+      "feature_index": 66,
+      "feature_name": "candidate_education_level__high_school",
+      "rank": 85,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "education",
+      "feature_index": 67,
+      "feature_name": "candidate_education_level__diploma",
+      "rank": 86,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "education",
+      "feature_index": 68,
+      "feature_name": "candidate_education_level__bachelor",
+      "rank": 87,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "education",
+      "feature_index": 69,
+      "feature_name": "candidate_education_level__master",
+      "rank": 88,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "education",
+      "feature_index": 70,
+      "feature_name": "candidate_education_level__doctorate",
+      "rank": 89,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "education",
+      "feature_index": 71,
+      "feature_name": "job_education_level__unknown",
+      "rank": 90,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "preferences",
+      "feature_index": 79,
+      "feature_name": "job_work_mode__unknown",
+      "rank": 91,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "preferences",
+      "feature_index": 83,
+      "feature_name": "job_employment_type__unknown",
+      "rank": 92,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "preferences",
+      "feature_index": 84,
+      "feature_name": "job_employment_type__full_time",
+      "rank": 93,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "preferences",
+      "feature_index": 85,
+      "feature_name": "job_employment_type__part_time",
+      "rank": 94,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "preferences",
+      "feature_index": 86,
+      "feature_name": "job_employment_type__contract",
+      "rank": 95,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "missing_indicators",
+      "feature_index": 95,
+      "feature_name": "candidate_skills_missing",
+      "rank": 96,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "missing_indicators",
+      "feature_index": 96,
+      "feature_name": "candidate_experience_missing",
+      "rank": 97,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "missing_indicators",
+      "feature_index": 97,
+      "feature_name": "candidate_education_missing",
+      "rank": 98,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "missing_indicators",
+      "feature_index": 98,
+      "feature_name": "candidate_career_level_missing",
+      "rank": 99,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "missing_indicators",
+      "feature_index": 99,
+      "feature_name": "job_required_skills_missing",
+      "rank": 100,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "missing_indicators",
+      "feature_index": 100,
+      "feature_name": "job_minimum_experience_missing",
+      "rank": 101,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "missing_indicators",
+      "feature_index": 101,
+      "feature_name": "job_education_missing",
+      "rank": 102,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    },
+    {
+      "combined": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "feature_group": "missing_indicators",
+      "feature_index": 102,
+      "feature_name": "job_career_level_missing",
+      "rank": 103,
+      "train": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      },
+      "validation": {
+        "mean_absolute_contribution": 0.0,
+        "mean_signed_contribution": 0.0,
+        "negative_fraction": 0.0,
+        "normalized_importance_share": 0.0,
+        "positive_fraction": 0.0,
+        "standard_deviation": 0.0,
+        "zero_fraction": 1.0
+      }
+    }
+  ]
+}

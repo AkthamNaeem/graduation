@@ -1,0 +1,117 @@
+{
+  "architecture_sha256": "60EB219152CE26B525735ED65564F667D403BF438F29000B4ECE90D65950553F",
+  "candidate_count": 180,
+  "deterministic": true,
+  "excluded_fields": [
+    "candidate_id",
+    "job_id",
+    "pair_id",
+    "relevance_label",
+    "scenario",
+    "rationale_codes",
+    "noise_applied",
+    "hidden_affinity",
+    "latent_score",
+    "name",
+    "email",
+    "phone",
+    "birth_date",
+    "age",
+    "gender",
+    "nationality",
+    "marital_status",
+    "address",
+    "cv_file",
+    "raw_cv",
+    "application_history",
+    "application_status",
+    "cover_letter",
+    "screening_answers",
+    "tests",
+    "interviews",
+    "internal_notes",
+    "company_identity",
+    "authentication_tokens",
+    "application_outcome"
+  ],
+  "feature_count": 103,
+  "feature_pipeline_version": "0.1.0",
+  "feature_release_date": "2026-07-24",
+  "feature_schema_sha256": "aeb260b25f34b55b7164b215e613a0b4327df33ee65af95abc904045849ce4a0",
+  "feature_schema_version": "job-rec-features-v1",
+  "generation_config": {
+    "architecture_sha256": "60EB219152CE26B525735ED65564F667D403BF438F29000B4ECE90D65950553F",
+    "feature_schema_version": "job-rec-features-v1",
+    "pipeline_version": "0.1.0",
+    "source_revision": "6cd51f733d5197e0c3f6b7dfb3711c2860ffef71"
+  },
+  "intended_use": [
+    "shared_offline_and_inference_feature_transformation",
+    "future_candidate_grouped_ranking_research"
+  ],
+  "job_count": 180,
+  "label_distribution": {
+    "0": 5534,
+    "1": 2058,
+    "2": 2450,
+    "3": 758
+  },
+  "limitations": [
+    "fully_synthetic_source_dataset",
+    "handcrafted_features",
+    "static_vocabularies",
+    "no_learned_text_representation",
+    "no_split_evaluation_or_model",
+    "no_production_quality_guarantee"
+  ],
+  "output_files": [
+    {
+      "bytes": 3872,
+      "path": "FEATURE_SCHEMA_CARD.md",
+      "record_count": 1,
+      "sha256": "578959a86aafdc45cffcff570b1be8730fc3d93f66c729eb2a6c4813a3b4d771"
+    },
+    {
+      "bytes": 45406,
+      "path": "feature_schema.json",
+      "record_count": 1,
+      "sha256": "aeb260b25f34b55b7164b215e613a0b4327df33ee65af95abc904045849ce4a0"
+    },
+    {
+      "bytes": 7337280,
+      "path": "features.jsonl",
+      "record_count": 10800,
+      "sha256": "4e405d74714a6a9a79b3d6339b19b595cb67b8cbd6f589b721e662d274ebd18e"
+    }
+  ],
+  "record_count": 10800,
+  "source_dataset_schema_version": "synthetic-job-rec-schema-v1",
+  "source_dataset_version": "synthetic-job-rec-1.0.0",
+  "source_files": [
+    {
+      "bytes": 131908,
+      "path": "candidates.jsonl",
+      "record_count": 180,
+      "sha256": "5d0ddbe461437afd80576e4b36044c94e083adfe2d232c05e4653a9fa54ef320"
+    },
+    {
+      "bytes": 120346,
+      "path": "jobs.jsonl",
+      "record_count": 180,
+      "sha256": "7aa398a1957c8851fb4fea4743f953be3f915177ae19266970ccf2d61440e74d"
+    },
+    {
+      "bytes": 3026,
+      "path": "manifest.json",
+      "record_count": 1,
+      "sha256": "05916dbbc0eb066c146386f16cf677c714ea0f08dc0eee59c508c274c1ce6dc1"
+    },
+    {
+      "bytes": 3912080,
+      "path": "pairs.jsonl",
+      "record_count": 10800,
+      "sha256": "31a2e7c6f26e0c9840674cd7caff465be70ec4f753c13333f61ae3593998ecb1"
+    }
+  ],
+  "source_revision": "6cd51f733d5197e0c3f6b7dfb3711c2860ffef71"
+}

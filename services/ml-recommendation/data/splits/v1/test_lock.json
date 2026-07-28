@@ -1,0 +1,26 @@
+{
+  "allowed_future_use": [
+    "phase_10_final_locked_evaluation_only",
+    "phases_7_to_9_structural_integrity_checks_only",
+    "phases_7_to_9_no_baseline_comparison",
+    "phases_7_to_9_no_feature_decisions",
+    "phases_7_to_9_no_hyperparameter_tuning",
+    "phases_7_to_9_no_early_stopping",
+    "phases_7_to_9_no_calibration",
+    "phases_7_to_9_no_threshold_selection",
+    "phases_7_to_9_no_promotion_decision"
+  ],
+  "created_for_phase": 6,
+  "feature_schema_sha256": "aeb260b25f34b55b7164b215e613a0b4327df33ee65af95abc904045849ce4a0",
+  "group_key": "candidate_id",
+  "prohibited_before_phase": 10,
+  "source_features_sha256": "4e405d74714a6a9a79b3d6339b19b595cb67b8cbd6f589b721e662d274ebd18e",
+  "source_revision": "6cd51f733d5197e0c3f6b7dfb3711c2860ffef71",
+  "split_seed": 20260724,
+  "split_version": "candidate-group-split-v1",
+  "test_candidate_count": 27,
+  "test_candidate_ids_sha256": "cc2df03e81f463053993007630b8893b4d1c8560bc9236fbd2cd7ddf69d2098f",
+  "test_file_sha256": "79fcb93b232b63482a9c26d1d0caa660289b7b798776c09f0945865ca6741a05",
+  "test_locked": true,
+  "test_record_count": 1620
+}

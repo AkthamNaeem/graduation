@@ -1,0 +1,364 @@
+{
+  "architecture_sha256": "60EB219152CE26B525735ED65564F667D403BF438F29000B4ECE90D65950553F",
+  "attribution_contract": {
+    "additivity_tolerance": 1e-05,
+    "approximate": false,
+    "exact": true,
+    "expected_shape": [
+      9180,
+      1,
+      104
+    ],
+    "interactions": false,
+    "strict_shape": true
+  },
+  "attribution_method_version": "xgboost-exact-tree-shap-v1",
+  "data_contract": {
+    "feature_count": 103,
+    "source_candidate_count": 153,
+    "source_record_count": 9180,
+    "source_training_contract": "train-plus-validation-v1",
+    "supported_source_splits": [
+      "train",
+      "validation"
+    ]
+  },
+  "dependencies": {
+    "numpy": "2.5.1",
+    "python": "3.12.10",
+    "scipy": "1.18.0",
+    "xgboost": "3.3.0"
+  },
+  "deterministic": true,
+  "explainability_release_date": "2026-07-25",
+  "explanation_contract_version": "recommendation-explanation-contract-v1",
+  "explanation_pipeline_version": "0.1.0",
+  "explanation_version": "xgbranker-tuned-explainability-v1",
+  "feature_group_contract": {
+    "all_features_mapped_once": true,
+    "groups": [
+      {
+        "feature_group": "career_level",
+        "feature_names": [
+          "career_level_exact_match",
+          "career_level_distance",
+          "seniority_requirement_met",
+          "career_overqualification",
+          "candidate_career_level__unknown",
+          "candidate_career_level__entry",
+          "candidate_career_level__junior",
+          "candidate_career_level__mid",
+          "candidate_career_level__senior",
+          "candidate_career_level__lead",
+          "job_career_level__unknown",
+          "job_career_level__entry",
+          "job_career_level__junior",
+          "job_career_level__mid",
+          "job_career_level__senior",
+          "job_career_level__lead"
+        ]
+      },
+      {
+        "feature_group": "domain_compatibility",
+        "feature_names": [
+          "domain_exact_match",
+          "domain_adjacent_match",
+          "domain_mismatch",
+          "candidate_domain__unknown",
+          "candidate_domain__backend_engineering",
+          "candidate_domain__cybersecurity",
+          "candidate_domain__data_analysis",
+          "candidate_domain__data_engineering",
+          "candidate_domain__devops_cloud",
+          "candidate_domain__digital_marketing",
+          "candidate_domain__finance_accounting",
+          "candidate_domain__frontend_engineering",
+          "candidate_domain__mobile_development",
+          "candidate_domain__product_management",
+          "candidate_domain__quality_assurance",
+          "candidate_domain__ui_ux_design",
+          "job_domain__unknown",
+          "job_domain__backend_engineering",
+          "job_domain__cybersecurity",
+          "job_domain__data_analysis",
+          "job_domain__data_engineering",
+          "job_domain__devops_cloud",
+          "job_domain__digital_marketing",
+          "job_domain__finance_accounting",
+          "job_domain__frontend_engineering",
+          "job_domain__mobile_development",
+          "job_domain__product_management",
+          "job_domain__quality_assurance",
+          "job_domain__ui_ux_design"
+        ]
+      },
+      {
+        "feature_group": "education",
+        "feature_names": [
+          "education_requirement_met",
+          "education_level_distance",
+          "candidate_education_level__unknown",
+          "candidate_education_level__high_school",
+          "candidate_education_level__diploma",
+          "candidate_education_level__bachelor",
+          "candidate_education_level__master",
+          "candidate_education_level__doctorate",
+          "job_education_level__unknown",
+          "job_education_level__high_school",
+          "job_education_level__diploma",
+          "job_education_level__bachelor",
+          "job_education_level__master",
+          "job_education_level__doctorate"
+        ]
+      },
+      {
+        "feature_group": "experience",
+        "feature_names": [
+          "candidate_experience_normalized",
+          "job_minimum_experience_normalized",
+          "experience_gap_signed",
+          "experience_shortfall",
+          "experience_surplus",
+          "experience_requirement_met"
+        ]
+      },
+      {
+        "feature_group": "interactions",
+        "feature_names": [
+          "domain_skill_coverage_interaction",
+          "critical_skill_experience_interaction",
+          "skill_career_alignment_interaction",
+          "skill_work_mode_interaction"
+        ]
+      },
+      {
+        "feature_group": "missing_indicators",
+        "feature_names": [
+          "candidate_skills_missing",
+          "candidate_experience_missing",
+          "candidate_education_missing",
+          "candidate_career_level_missing",
+          "job_required_skills_missing",
+          "job_minimum_experience_missing",
+          "job_education_missing",
+          "job_career_level_missing"
+        ]
+      },
+      {
+        "feature_group": "nice_transferable_skills",
+        "feature_names": [
+          "nice_to_have_skill_coverage",
+          "transferable_skill_coverage",
+          "transferable_skill_overlap_normalized",
+          "candidate_skill_count_normalized",
+          "candidate_to_required_skill_count_ratio"
+        ]
+      },
+      {
+        "feature_group": "preferences",
+        "feature_names": [
+          "work_mode_match",
+          "employment_type_match",
+          "job_work_mode__unknown",
+          "job_work_mode__remote",
+          "job_work_mode__hybrid",
+          "job_work_mode__onsite",
+          "job_employment_type__unknown",
+          "job_employment_type__full_time",
+          "job_employment_type__part_time",
+          "job_employment_type__contract"
+        ]
+      },
+      {
+        "feature_group": "required_skills",
+        "feature_names": [
+          "required_skill_overlap_ratio",
+          "weighted_required_skill_coverage",
+          "critical_required_skill_coverage",
+          "missing_required_skill_ratio",
+          "matched_required_skill_count_normalized",
+          "matched_required_skill_mean_proficiency",
+          "matched_required_skill_mean_years"
+        ]
+      },
+      {
+        "feature_group": "text_alignment",
+        "feature_names": [
+          "headline_title_token_jaccard",
+          "candidate_skills_in_job_description_ratio",
+          "candidate_skills_in_job_responsibilities_ratio",
+          "required_skills_in_candidate_headline_ratio"
+        ]
+      }
+    ],
+    "mapping_source": "frozen_schema_family_metadata"
+  },
+  "feature_group_mapping_version": "job-rec-feature-groups-v1",
+  "feature_schema_sha256": "aeb260b25f34b55b7164b215e613a0b4327df33ee65af95abc904045849ce4a0",
+  "feature_schema_version": "job-rec-features-v1",
+  "intended_use": [
+    "phase_12_explanation_contract_input",
+    "offline_human_assisted_recruitment_research"
+  ],
+  "limitations": [
+    "synthetic development data",
+    "in-sample final model explanations",
+    "handcrafted features",
+    "feature importance may hide interactions",
+    "no fairness guarantee",
+    "no Test explanations",
+    "no Production traffic validation"
+  ],
+  "local_selection_contract": {
+    "candidate_count": 27,
+    "contributions_used_for_selection": false,
+    "labels_used_for_selection": false,
+    "policy": "validation-origin-ranks-1-5-10-60-v1",
+    "ranks": [
+      1,
+      5,
+      10,
+      60
+    ],
+    "record_count": 108
+  },
+  "local_selection_policy_version": "validation-origin-ranks-1-5-10-60-v1",
+  "model_contract": {
+    "feature_count": 103,
+    "model_modified": false,
+    "objective": "rank:ndcg",
+    "selected_config_id": "T06",
+    "training_executed": false,
+    "tuning_executed": false
+  },
+  "model_sha256": "3abd74137bc8881667643f31a658c790ef6712359d7802ea7fcffa0c4cf9e26e",
+  "model_version": "xgbranker-tuned-v1",
+  "output_files": [
+    {
+      "path": "global_feature_importance.json",
+      "record_count": 103,
+      "sha256": "0b59d1f0e8eead6ebb1eb65580975c1f39247e665dce1bcfb430b613b50fbf6a",
+      "size_bytes": 125538
+    },
+    {
+      "path": "feature_group_importance.json",
+      "record_count": 10,
+      "sha256": "dfc251c8f8622dacdc900145573dcca916462825d7436c32e428dc71aec051bf",
+      "size_bytes": 40928
+    },
+    {
+      "path": "local_explanations.jsonl",
+      "record_count": 108,
+      "sha256": "cabe7ea92496c3a91e3dd1ee25cb323e7846aa3ecd87e85cbfd780806c2322a6",
+      "size_bytes": 281410
+    },
+    {
+      "path": "explainability_checks.json",
+      "record_count": 1,
+      "sha256": "d37be7694a91c123e0a0bb19f65605aec7622fd887be52236848b46b9fcb8c0f",
+      "size_bytes": 1796
+    },
+    {
+      "path": "explanation_contract.json",
+      "record_count": 1,
+      "sha256": "d6d38967faab739c038bdad04df23d3ecd3683f3279c2ca7d39c95b17cd3b8a1",
+      "size_bytes": 1903
+    },
+    {
+      "path": "MODEL_EXPLAINABILITY_REPORT.md",
+      "record_count": 1,
+      "sha256": "5a2a11cb87722d1e77972cdeaf08624e08740c4794ddac5aacc9a72a509fb8d5",
+      "size_bytes": 6807
+    }
+  ],
+  "phase_10_aggregate_disposition": "PROMOTE_TO_EXPLAINABILITY",
+  "source_files": [
+    {
+      "path": "services/ml-recommendation/data/splits/v1/train.jsonl",
+      "record_count": 7560,
+      "records_parsed": true,
+      "sha256": "d87095055d16ced57461eb8d4543bf4c3863b0ebe1771e5b3528eaf290b98c3d",
+      "size_bytes": 5137764,
+      "usage": "parsed_source"
+    },
+    {
+      "path": "services/ml-recommendation/data/splits/v1/validation.jsonl",
+      "record_count": 1620,
+      "records_parsed": true,
+      "sha256": "a8cc27158bc126b11e93a0eefdf6a82a0e3f88e8d82cf9e9a0bae0491b04da7e",
+      "size_bytes": 1100505,
+      "usage": "parsed_source"
+    },
+    {
+      "path": "services/ml-recommendation/data/features/v1/feature_schema.json",
+      "record_count": 1,
+      "records_parsed": true,
+      "sha256": "aeb260b25f34b55b7164b215e613a0b4327df33ee65af95abc904045849ce4a0",
+      "size_bytes": 45406,
+      "usage": "parsed_source"
+    },
+    {
+      "path": "services/ml-recommendation/data/models/tuned/v1/model.json",
+      "record_count": 1,
+      "records_parsed": true,
+      "sha256": "3abd74137bc8881667643f31a658c790ef6712359d7802ea7fcffa0c4cf9e26e",
+      "size_bytes": 920863,
+      "usage": "model_loading"
+    },
+    {
+      "path": "services/ml-recommendation/data/models/tuned/v1/model_metadata.json",
+      "record_count": 1,
+      "records_parsed": true,
+      "sha256": "5485a2058d22777c3cafe9ea5871ac7534f555bfce6fb8275ddf89526358cb11",
+      "size_bytes": 6000,
+      "usage": "contract_validation"
+    },
+    {
+      "path": "services/ml-recommendation/data/models/tuned/v1/manifest.json",
+      "record_count": 1,
+      "records_parsed": true,
+      "sha256": "8d71babf225363b0b3d773147c2f95cad4bf910f78695a58dea7d31a6d7a042b",
+      "size_bytes": 14973,
+      "usage": "integrity_validation"
+    },
+    {
+      "path": "services/ml-recommendation/data/models/tuned/v1/final_train_validation_predictions.jsonl",
+      "record_count": 9180,
+      "records_parsed": true,
+      "sha256": "55e64d1b7ad8098da6d4938b0c01cc18c456566beaa3b58089ce8f84f80cac5c",
+      "size_bytes": 2397494,
+      "usage": "local_selection_and_score_validation"
+    },
+    {
+      "path": "services/ml-recommendation/data/evaluations/final-test/v1/comparison.json",
+      "record_count": 1,
+      "records_parsed": true,
+      "sha256": "c1dacc745fdfc9ade72f53829e2336a4f0cec427979066d337f5052b30cc0886",
+      "size_bytes": 2449,
+      "usage": "aggregate_disposition_validation"
+    },
+    {
+      "path": "services/ml-recommendation/data/evaluations/final-test/v1/evaluation_receipt.json",
+      "record_count": 1,
+      "records_parsed": true,
+      "sha256": "a9f58db9b33dfb81a8476dae6581e2beb6e26331ad8e3e9f7f47b0816584036c",
+      "size_bytes": 2624,
+      "usage": "aggregate_recovery_validation"
+    },
+    {
+      "path": "services/ml-recommendation/data/evaluations/final-test/v1/manifest.json",
+      "record_count": 1,
+      "records_parsed": true,
+      "sha256": "0a4051fa80a7f22cdf741679922150e3f4dab5caee21bc8a41933cffb5c13386",
+      "size_bytes": 7273,
+      "usage": "aggregate_integrity_validation"
+    }
+  ],
+  "source_revision": "6cd51f733d5197e0c3f6b7dfb3711c2860ffef71",
+  "test_non_usage": {
+    "test_evaluation_rerun": false,
+    "test_explanations_generated": false,
+    "test_features_read": false,
+    "test_predictions_read": false
+  }
+}

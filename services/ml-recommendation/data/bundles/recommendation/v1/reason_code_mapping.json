@@ -1,0 +1,56 @@
+{
+  "explanation_contract_version": "recommendation-explanation-contract-v1",
+  "groups": [
+    {
+      "feature_group": "domain_compatibility",
+      "negative": "DOMAIN_MISMATCH",
+      "positive": "DOMAIN_ALIGNMENT"
+    },
+    {
+      "feature_group": "nice_transferable_skills",
+      "negative": "OPTIONAL_SKILLS_GAP",
+      "positive": "OPTIONAL_SKILLS_ALIGNMENT"
+    },
+    {
+      "feature_group": "required_skills",
+      "negative": "REQUIRED_SKILLS_GAP",
+      "positive": "REQUIRED_SKILLS_ALIGNMENT"
+    },
+    {
+      "feature_group": "interactions",
+      "negative": "COMBINED_PROFILE_GAP",
+      "positive": "COMBINED_PROFILE_ALIGNMENT"
+    },
+    {
+      "feature_group": "career_level",
+      "negative": "CAREER_LEVEL_GAP",
+      "positive": "CAREER_LEVEL_ALIGNMENT"
+    },
+    {
+      "feature_group": "experience",
+      "negative": "EXPERIENCE_GAP",
+      "positive": "EXPERIENCE_ALIGNMENT"
+    },
+    {
+      "feature_group": "education",
+      "negative": "EDUCATION_GAP",
+      "positive": "EDUCATION_ALIGNMENT"
+    },
+    {
+      "feature_group": "preferences",
+      "negative": "WORK_PREFERENCE_MISMATCH",
+      "positive": "WORK_PREFERENCE_ALIGNMENT"
+    },
+    {
+      "feature_group": "text_alignment",
+      "negative": "TEXT_MISMATCH",
+      "positive": "TEXT_ALIGNMENT"
+    },
+    {
+      "feature_group": "missing_indicators",
+      "negative": "PROFILE_DATA_MISSING",
+      "positive": "PROFILE_DATA_COMPLETENESS"
+    }
+  ],
+  "reason_code_mapping_version": "recommendation-reason-codes-v1"
+}

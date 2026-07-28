@@ -1,0 +1,203 @@
+{
+  "manifest_version": "smart-recruitment-ml-handover-v1",
+  "source_revision": "6cd51f733d5197e0c3f6b7dfb3711c2860ffef71",
+  "branch": "master",
+  "handover_release_date": "2026-07-26",
+  "completion_scope": "ml_job_recommendation_implementation_plan_phases_1_through_18",
+  "implementation_status": "complete_with_documented_production_limitations",
+  "production_deployment_status": "not_deployed",
+  "phase_count": 18,
+  "completed_phases": 18,
+  "final_progress_percent": 100,
+  "model_version": "xgbranker-tuned-v1",
+  "bundle_version": "job-rec-inference-bundle-v1",
+  "feature_schema_version": "job-rec-features-v1",
+  "api_contract_version": "recommendation-ranking-api-v1",
+  "explanation_contract_version": "recommendation-explanation-contract-v1",
+  "matching_fallback_version": "MatchingService 2.0",
+  "container_image_tag": "workeyx/ml-recommendation:0.2.0-phase16",
+  "protected_baseline": {
+    "path": "docs/ml-job-recommendation/PHASE_18_PROTECTED_BASELINE.json",
+    "sha256": "F425D51C0094D2D2AAAFC220C02FE3DA4AA1796DDC59534F0F5E471A27995521",
+    "file_count": 873,
+    "aggregate_sha256": "5CC89EC6F445E1DB25CABED4666314890186080D0799B1954CB8F0AF59D233A4"
+  },
+  "source_documents": [
+    "docs/ml-job-recommendation/ARCHITECTURE.md",
+    "docs/ml-job-recommendation/PHASE_16_INTEGRITY_EXCEPTION.md",
+    "docs/ml-job-recommendation/phase17/PHASE_17_E2E_REPORT.md",
+    "services/ml-recommendation/data/bundles/recommendation/v1/BUNDLE_CARD.md",
+    "services/ml-recommendation/data/contracts/inference/v1/INFERENCE_CONTRACT.md",
+    "services/ml-recommendation/data/explainability/tuned/v1/MODEL_EXPLAINABILITY_REPORT.md",
+    "services/ml-recommendation/deployment/container/v1/CONTAINER_CARD.md",
+    "services/ml-recommendation/DEPLOYMENT.md"
+  ],
+  "source_hashes": [
+    {
+      "name": "architecture",
+      "path": "docs/ml-job-recommendation/ARCHITECTURE.md",
+      "sha256": "60EB219152CE26B525735ED65564F667D403BF438F29000B4ECE90D65950553F"
+    },
+    {
+      "name": "phase_16_integrity_exception",
+      "path": "docs/ml-job-recommendation/PHASE_16_INTEGRITY_EXCEPTION.md",
+      "sha256": "B53A3950A53552542C10A6B2DDA2FF5B3BC3C5B25870D8C5310507515514E422"
+    },
+    {
+      "name": "phase_17_protected_baseline",
+      "path": "docs/ml-job-recommendation/PHASE_17_PROTECTED_BASELINE.json",
+      "sha256": "CB3959FF2550064CA4F7D82953A1E6E0A539A1C32A2BC97ABB1E64F09FDBCAC0"
+    },
+    {
+      "name": "phase_17_e2e_matrix",
+      "path": "docs/ml-job-recommendation/phase17/E2E_TEST_MATRIX.json",
+      "sha256": "039755B90097B2A0AFE34E444F49E143FF9466789247222DBA81FED82FA0006C"
+    },
+    {
+      "name": "phase_17_e2e_report",
+      "path": "docs/ml-job-recommendation/phase17/PHASE_17_E2E_REPORT.md",
+      "sha256": "6FB97968B6FD59890308CC16BDAD7BF7E69E0382BC4A1B20BF7C5F245D223C10"
+    },
+    {
+      "name": "phase_18_protected_baseline",
+      "path": "docs/ml-job-recommendation/PHASE_18_PROTECTED_BASELINE.json",
+      "sha256": "F425D51C0094D2D2AAAFC220C02FE3DA4AA1796DDC59534F0F5E471A27995521"
+    },
+    {
+      "name": "frozen_model",
+      "path": "services/ml-recommendation/data/bundles/recommendation/v1/model.json",
+      "sha256": "3ABD74137BC8881667643F31A658C790EF6712359D7802EA7FCFFA0C4CF9E26E"
+    },
+    {
+      "name": "frozen_feature_schema",
+      "path": "services/ml-recommendation/data/bundles/recommendation/v1/feature_schema.json",
+      "sha256": "AEB260B25F34B55B7164B215E613A0B4327DF33EE65AF95ABC904045849CE4A0"
+    },
+    {
+      "name": "frozen_bundle_manifest",
+      "path": "services/ml-recommendation/data/bundles/recommendation/v1/bundle_manifest.json",
+      "sha256": "1D566E4516724FAE0C08CD6131214C0722DFFCD589A370CF2405B8B0450DFB00"
+    },
+    {
+      "name": "frozen_openapi",
+      "path": "services/ml-recommendation/data/contracts/inference/v1/openapi.json",
+      "sha256": "B73B11B5FA67C40927E5A05AB72E2D2F7B292FA3149F0D945AE74BE08F7CA96D"
+    },
+    {
+      "name": "frozen_contract_manifest",
+      "path": "services/ml-recommendation/data/contracts/inference/v1/contract_manifest.json",
+      "sha256": "A51E8F4E74189CCB086BDB7FE32816C6E56953533F3C77243E50650BE0BF9CB2"
+    },
+    {
+      "name": "frozen_container_manifest",
+      "path": "services/ml-recommendation/deployment/container/v1/container_manifest.json",
+      "sha256": "1DD6BB89D805544266F04B6EA1C5BD4E71C00DF7AC97E78473DDE6A19B431FD1"
+    }
+  ],
+  "verification_summary": {
+    "phase_18_baseline_entries": 873,
+    "phase_18_baseline_initial_mismatches": 0,
+    "python_tests_passed": 358,
+    "python_tests_failed": 0,
+    "python_coverage_percent": 93.0,
+    "ruff_lint": "passed",
+    "ruff_format_check": "passed_no_rewrite",
+    "mypy_python_3_12": "passed",
+    "compileall": "passed",
+    "pip_check": "passed",
+    "e2e_matrix_passed": 35,
+    "e2e_matrix_failed": 0,
+    "privacy_sensitive_hits": 0,
+    "production_source_changes_in_phase_18": 0,
+    "phase_18_baseline_current_differences": 9,
+    "phase_18_baseline_approved_documentation_differences": 3,
+    "phase_18_baseline_approved_final_gate_test_differences": 1,
+    "phase_18_baseline_approved_commit_safety_portability_differences": 2,
+    "phase_18_baseline_approved_integrity_metadata_differences": 1,
+    "phase_18_baseline_approved_trainer_provenance_differences": 1,
+    "phase_18_baseline_approved_historical_reproduction_test_differences": 1,
+    "phase_18_baseline_unexpected_mismatches": 0,
+    "phase_18_baseline_missing_paths": 0,
+    "phase_17_integrity_test_maintenance_paths": 2,
+    "phase_17_integrity_test_maintenance": "passed_explicit_allowlist_no_wildcard",
+    "current_phase_7_manifest_sha256": "C591708A58AE66941BB004CE08522EAADC90F476105F7BED08B5E2DB477046BF",
+    "historical_reproduction_phase_7_manifest_sha256": "CB5853921B6CDFEF7A53989E79950116290B06CFD27596ACF70F79FBB33636D4",
+    "historical_reproduction_locked_test_hash_source": "frozen_initial_model_manifest",
+    "historical_reproduction_locked_test_filesystem_opens": 0,
+    "historical_reproduction_artifacts_byte_identical": 8,
+    "docker_image_rebuilt": false,
+    "documentation_test": "passed",
+    "full_laravel_passed": 762,
+    "full_laravel_skipped": 2,
+    "full_laravel_failed": 0,
+    "full_laravel_assertions": 16547,
+    "final_gate_maintenance": "semantic_readme_contract_explicit_test_allowlist_commit_safety_portability_integrity_metadata_current_provenance_and_locked_test_safe_historical_reproduction",
+    "composer_audit": "external_verification_unavailable",
+    "strict_phase_gate": "project_handover_ready"
+  },
+  "known_limitations": [
+    "The model was trained on synthetic data and has no established external validity.",
+    "The system has no completed production fairness assessment or production drift monitoring.",
+    "No production load test, production deployment, or live rollback rehearsal was performed.",
+    "AI output is decision support only; display_score is not a Probability and SHAP Attribution is not Causality.",
+    "The real Locked Test was not parsed, predicted, or evaluated after Phase 10; historical reproduction used its frozen metadata SHA-256 under a zero-open guard.",
+    "External Composer advisory verification depends on Packagist availability."
+  ],
+  "output_files": [
+    {
+      "path": "BACKEND_IMPLEMENTATION_REPORT.md",
+      "size_bytes": 223098,
+      "sha256": "7B492CF5B356CC0FE71D8D214039EF33E3B5314678655149927540787CD4726B"
+    },
+    {
+      "path": "README.md",
+      "size_bytes": 8057,
+      "sha256": "9F21822AEF57474A912FD0861BCD49D8669540537E89C56E6E9276E630A0D59E"
+    },
+    {
+      "path": "docs/ml-job-recommendation/PHASE_18_PROTECTED_BASELINE.json",
+      "size_bytes": 169875,
+      "sha256": "F425D51C0094D2D2AAAFC220C02FE3DA4AA1796DDC59534F0F5E471A27995521"
+    },
+    {
+      "path": "docs/ml-job-recommendation/phase18/DEMO_RUNBOOK.md",
+      "size_bytes": 9405,
+      "sha256": "8B310E6A914999B224114EC3DF1D0F661E725EE4EE88C0C52DF34AA33FF6781E"
+    },
+    {
+      "path": "docs/ml-job-recommendation/phase18/FINAL_HANDOVER.md",
+      "size_bytes": 17967,
+      "sha256": "2470D29D3C48D49C16D253E889F4A79749DA9F1DB5735EB8165A39425726B1A2"
+    },
+    {
+      "path": "docs/ml-job-recommendation/phase18/FINAL_VERIFICATION_REPORT.md",
+      "size_bytes": 12453,
+      "sha256": "C0CB23AAAF5ED1335569CAB0825685368D928E970ABCEB38B57BA6F818759A98"
+    },
+    {
+      "path": "docs/ml-job-recommendation/phase18/GRADUATION_DEFENSE_GUIDE_AR.md",
+      "size_bytes": 11470,
+      "sha256": "C8D3F97E40C206DAF31D337BD31AEBDAEF9BF569DF8F1904B696B058A82EFC69"
+    },
+    {
+      "path": "docs/ml-job-recommendation/phase18/PROJECT_COMPLETION_CHECKLIST.md",
+      "size_bytes": 5563,
+      "sha256": "15910B5FBA6A34FF7DF52DD6681F7319C41453260B3D0E188C01F2559E545235"
+    },
+    {
+      "path": "docs/ml-job-recommendation/phase18/REQUIREMENTS_TRACEABILITY_MATRIX.json",
+      "size_bytes": 18219,
+      "sha256": "7B52B01D90FA09B8EB4FAA0ADA32AC600D8887BFF5B8F30D8F85FE4B49990AC0"
+    },
+    {
+      "path": "services/ml-recommendation/README.md",
+      "size_bytes": 24617,
+      "sha256": "046E318773E050F1FDF751BEB7C2E4194C1DA4851E032F122B5F30F3C29D8B61"
+    },
+    {
+      "path": "tests/Unit/FinalHandoverDocumentationTest.php",
+      "size_bytes": 21884,
+      "sha256": "66DDFCDFBCD034653066BEF56C60753C6A91B6882D0A3BBBA599F901900C339C"
+    }
+  ]
+}

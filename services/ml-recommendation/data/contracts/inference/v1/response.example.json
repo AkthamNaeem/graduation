@@ -1,0 +1,166 @@
+{
+  "api_contract_version": "recommendation-ranking-api-v1",
+  "bundle_version": "job-rec-inference-bundle-v1",
+  "dataset_version": "synthetic-job-rec-1.0.0",
+  "explanation_contract_version": "recommendation-explanation-contract-v1",
+  "explanation_note": "Model attribution only; not a probability or hiring decision.",
+  "feature_schema_version": "job-rec-features-v1",
+  "latency_ms": 0.0,
+  "model_source_revision": "6cd51f733d5197e0c3f6b7dfb3711c2860ffef71",
+  "model_version": "xgbranker-tuned-v1",
+  "prediction_count": 3,
+  "predictions": [
+    {
+      "display_score": 71.35,
+      "job_id": 123,
+      "rank": 1,
+      "raw_score": 1.9289647340774536,
+      "top_negative_factors": [
+        {
+          "code": "OPTIONAL_SKILLS_GAP",
+          "contribution": -0.29273352,
+          "direction": "decreases_model_score",
+          "feature_group": "nice_transferable_skills",
+          "strength": 0.110539
+        },
+        {
+          "code": "WORK_PREFERENCE_MISMATCH",
+          "contribution": -0.07971154,
+          "direction": "decreases_model_score",
+          "feature_group": "preferences",
+          "strength": 0.0301
+        }
+      ],
+      "top_positive_factors": [
+        {
+          "code": "DOMAIN_ALIGNMENT",
+          "contribution": 0.89008033,
+          "direction": "increases_model_score",
+          "feature_group": "domain_compatibility",
+          "strength": 0.336104
+        },
+        {
+          "code": "REQUIRED_SKILLS_ALIGNMENT",
+          "contribution": 0.4910413,
+          "direction": "increases_model_score",
+          "feature_group": "required_skills",
+          "strength": 0.185422
+        },
+        {
+          "code": "COMBINED_PROFILE_ALIGNMENT",
+          "contribution": 0.46156668,
+          "direction": "increases_model_score",
+          "feature_group": "interactions",
+          "strength": 0.174292
+        }
+      ]
+    },
+    {
+      "display_score": 33.92,
+      "job_id": 122,
+      "rank": 2,
+      "raw_score": -1.6979461908340454,
+      "top_negative_factors": [
+        {
+          "code": "CAREER_LEVEL_GAP",
+          "contribution": -1.2637193,
+          "direction": "decreases_model_score",
+          "feature_group": "career_level",
+          "strength": 0.317905
+        },
+        {
+          "code": "EXPERIENCE_GAP",
+          "contribution": -0.68603697,
+          "direction": "decreases_model_score",
+          "feature_group": "experience",
+          "strength": 0.172582
+        },
+        {
+          "code": "COMBINED_PROFILE_GAP",
+          "contribution": -0.37471066,
+          "direction": "decreases_model_score",
+          "feature_group": "interactions",
+          "strength": 0.094263
+        }
+      ],
+      "top_positive_factors": [
+        {
+          "code": "DOMAIN_ALIGNMENT",
+          "contribution": 0.97383501,
+          "direction": "increases_model_score",
+          "feature_group": "domain_compatibility",
+          "strength": 0.244981
+        },
+        {
+          "code": "WORK_PREFERENCE_ALIGNMENT",
+          "contribution": 0.07108933,
+          "direction": "increases_model_score",
+          "feature_group": "preferences",
+          "strength": 0.017883
+        },
+        {
+          "code": "EDUCATION_ALIGNMENT",
+          "contribution": 0.06775386,
+          "direction": "increases_model_score",
+          "feature_group": "education",
+          "strength": 0.017044
+        }
+      ]
+    },
+    {
+      "display_score": 29.79,
+      "job_id": 121,
+      "rank": 3,
+      "raw_score": -2.0980405807495117,
+      "top_negative_factors": [
+        {
+          "code": "DOMAIN_MISMATCH",
+          "contribution": -1.90491787,
+          "direction": "decreases_model_score",
+          "feature_group": "domain_compatibility",
+          "strength": 0.641384
+        },
+        {
+          "code": "REQUIRED_SKILLS_GAP",
+          "contribution": -0.35513026,
+          "direction": "decreases_model_score",
+          "feature_group": "required_skills",
+          "strength": 0.119572
+        },
+        {
+          "code": "COMBINED_PROFILE_GAP",
+          "contribution": -0.19128504,
+          "direction": "decreases_model_score",
+          "feature_group": "interactions",
+          "strength": 0.064405
+        }
+      ],
+      "top_positive_factors": [
+        {
+          "code": "OPTIONAL_SKILLS_ALIGNMENT",
+          "contribution": 0.3410527,
+          "direction": "increases_model_score",
+          "feature_group": "nice_transferable_skills",
+          "strength": 0.114832
+        },
+        {
+          "code": "EDUCATION_ALIGNMENT",
+          "contribution": 0.05976347,
+          "direction": "increases_model_score",
+          "feature_group": "education",
+          "strength": 0.020122
+        },
+        {
+          "code": "CAREER_LEVEL_ALIGNMENT",
+          "contribution": 0.02235901,
+          "direction": "increases_model_score",
+          "feature_group": "career_level",
+          "strength": 0.007528
+        }
+      ]
+    }
+  ],
+  "request_id": "00000000-0000-4000-8000-000000000012",
+  "requested_limit": 3,
+  "score_transform_version": "validation-minmax-selected-trial-t06-v1"
+}

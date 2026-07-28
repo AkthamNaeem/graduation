@@ -1,0 +1,77 @@
+{
+  "api_contract_version": "recommendation-ranking-api-v1",
+  "architecture_sha256": "60eb219152ce26b525735ed65564f667d403bf438f29000b4ece90d65950553f",
+  "authentication": {
+    "header": "X-ML-Service-Token",
+    "health_routes_unauthenticated": true,
+    "protected_routes": [
+      "/v1/model/metadata",
+      "/v1/recommendations/rank"
+    ]
+  },
+  "bundle_version": "job-rec-inference-bundle-v1",
+  "contract_release_date": "2026-07-25",
+  "deterministic": true,
+  "error_schema": "ErrorEnvelope",
+  "limits": {
+    "maximum_jobs": 500,
+    "maximum_limit": 100,
+    "minimum_jobs": 1,
+    "minimum_limit": 1,
+    "prediction_policy": "one_prediction_per_job_without_limit_truncation"
+  },
+  "output_files": [
+    {
+      "bytes": 3723,
+      "path": "INFERENCE_CONTRACT.md",
+      "records": 1,
+      "sha256": "5d1e909df798ef716a4997aae17d3e97c5417779cac59bf7b2e9200a5bbf4b80"
+    },
+    {
+      "bytes": 27118,
+      "path": "openapi.json",
+      "records": 1,
+      "sha256": "b73b11b5fa67c40927e5a05ab72e2d2f7b292fa3149f0d945ae74be08f7ca96d"
+    },
+    {
+      "bytes": 4704,
+      "path": "request.example.json",
+      "records": 1,
+      "sha256": "a21d59ab86e6b01b69f7bd2c7e7e4a4535c3cbf0f4d06e3f014d32b940b0ab91"
+    },
+    {
+      "bytes": 5145,
+      "path": "response.example.json",
+      "records": 1,
+      "sha256": "748a4716bad9e57c85cc50375ce8762cdaaf37106b70228233ce2fa684b66bc0"
+    }
+  ],
+  "request_schema": "RankRequest",
+  "response_schema": "RankResponse",
+  "routes": [
+    "/health/live",
+    "/health/ready",
+    "/v1/model/metadata",
+    "/v1/recommendations/rank"
+  ],
+  "service_version": "0.2.0",
+  "source_files": {
+    "candidates": {
+      "bytes": 131908,
+      "path": "services/ml-recommendation/data/synthetic/v1/candidates.jsonl",
+      "sha256": "5d0ddbe461437afd80576e4b36044c94e083adfe2d232c05e4653a9fa54ef320"
+    },
+    "jobs": {
+      "bytes": 120346,
+      "path": "services/ml-recommendation/data/synthetic/v1/jobs.jsonl",
+      "sha256": "7aa398a1957c8851fb4fea4743f953be3f915177ae19266970ccf2d61440e74d"
+    }
+  },
+  "source_revision": "6cd51f733d5197e0c3f6b7dfb3711c2860ffef71",
+  "test_non_usage": {
+    "test_evaluation_rerun": false,
+    "test_features_read": false,
+    "test_inference_run": false,
+    "test_predictions_read": false
+  }
+}

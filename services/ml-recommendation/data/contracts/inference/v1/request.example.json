@@ -1,0 +1,182 @@
+{
+  "candidate": {
+    "professional_facts": {
+      "adjacent_domains": [
+        "Frontend Engineering",
+        "Quality Assurance"
+      ],
+      "career_level": "mid",
+      "education_level": "doctorate",
+      "headline": "Mid iOS Engineer",
+      "preferred_employment_types": [
+        "contract",
+        "full_time"
+      ],
+      "preferred_work_modes": [
+        "onsite",
+        "remote"
+      ],
+      "primary_domain": "Mobile Development",
+      "skills": [
+        {
+          "name": "app lifecycle",
+          "proficiency": 1,
+          "years_experience": 3.4
+        },
+        {
+          "name": "communication",
+          "proficiency": 4,
+          "years_experience": 2.4
+        },
+        {
+          "name": "kotlin",
+          "proficiency": 5,
+          "years_experience": 2.2
+        },
+        {
+          "name": "mobile ui",
+          "proficiency": 1,
+          "years_experience": 2.1
+        },
+        {
+          "name": "problem solving",
+          "proficiency": 5,
+          "years_experience": 1.3
+        },
+        {
+          "name": "rest api",
+          "proficiency": 2,
+          "years_experience": 0.4
+        }
+      ],
+      "total_experience_years": 3.9
+    },
+    "profile_ref": "contract-example-profile"
+  },
+  "feature_schema_version": "job-rec-features-v1",
+  "jobs": [
+    {
+      "job_id": 121,
+      "professional_facts": {
+        "career_level": "entry",
+        "department": "Backend Engineering",
+        "description": "Synthetic entry role focused on python.",
+        "domain": "Backend Engineering",
+        "education_level": "diploma",
+        "employment_type": "part_time",
+        "minimum_experience_years": 0.5,
+        "nice_to_have_skills": [],
+        "required_skills": [
+          {
+            "name": "communication",
+            "weight": 3
+          },
+          {
+            "name": "php",
+            "weight": 5
+          },
+          {
+            "name": "rest api",
+            "weight": 1
+          },
+          {
+            "name": "system design",
+            "weight": 5
+          }
+        ],
+        "responsibilities": [
+          "Design reliable service interfaces.",
+          "Review backend changes and automated tests.",
+          "Improve application performance and observability."
+        ],
+        "title": "Backend Engineer",
+        "work_mode": "remote"
+      }
+    },
+    {
+      "job_id": 122,
+      "professional_facts": {
+        "career_level": "senior",
+        "department": "Frontend Engineering",
+        "description": "Synthetic senior role focused on typescript.",
+        "domain": "Frontend Engineering",
+        "education_level": "bachelor",
+        "employment_type": "full_time",
+        "minimum_experience_years": 5.0,
+        "nice_to_have_skills": [
+          "communication",
+          "user empathy"
+        ],
+        "required_skills": [
+          {
+            "name": "html",
+            "weight": 5
+          },
+          {
+            "name": "react",
+            "weight": 4
+          },
+          {
+            "name": "typescript",
+            "weight": 5
+          },
+          {
+            "name": "web testing",
+            "weight": 2
+          }
+        ],
+        "responsibilities": [
+          "Build accessible web interfaces.",
+          "Translate product requirements into UI components.",
+          "Maintain browser-based automated tests."
+        ],
+        "title": "Web UI Developer",
+        "work_mode": "onsite"
+      }
+    },
+    {
+      "job_id": 123,
+      "professional_facts": {
+        "career_level": "junior",
+        "department": "Mobile Development",
+        "description": "Synthetic junior role focused on mobile ui.",
+        "domain": "Mobile Development",
+        "education_level": "master",
+        "employment_type": "contract",
+        "minimum_experience_years": 1.5,
+        "nice_to_have_skills": [
+          "app lifecycle",
+          "communication",
+          "user empathy"
+        ],
+        "required_skills": [
+          {
+            "name": "kotlin",
+            "weight": 5
+          },
+          {
+            "name": "mobile ui",
+            "weight": 1
+          },
+          {
+            "name": "rest api",
+            "weight": 2
+          },
+          {
+            "name": "testing",
+            "weight": 5
+          }
+        ],
+        "responsibilities": [
+          "Build reliable mobile application flows.",
+          "Integrate mobile clients with service APIs.",
+          "Diagnose device and lifecycle issues."
+        ],
+        "title": "iOS Engineer",
+        "work_mode": "hybrid"
+      }
+    }
+  ],
+  "limit": 3,
+  "request_id": "00000000-0000-4000-8000-000000000012"
+}

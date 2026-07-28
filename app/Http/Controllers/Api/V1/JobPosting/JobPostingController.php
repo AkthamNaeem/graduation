@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1\JobPosting;
 
+use App\Contracts\Recommendation\RecommendationOrchestratorContract;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\JobPosting\AttachJobPostingSkillsRequest;
 use App\Http\Requests\Api\V1\JobPosting\CloseJobPostingRequest;
@@ -30,6 +31,7 @@ class JobPostingController extends Controller
     public function __construct(
         private readonly JobPostingService $jobPostingService,
         private readonly MatchingService $matchingService,
+        private readonly RecommendationOrchestratorContract $recommendationOrchestrator,
     ) {}
 
     public function index(IndexJobPostingRequest $request): JsonResponse
@@ -50,12 +52,14 @@ class JobPostingController extends Controller
 
     public function recommended(RecommendedJobsRequest $request): JsonResponse
     {
+        $result = $this->recommendationOrchestrator->recommend(
+            $request->user('sanctum'),
+            $request->integer('limit', 10),
+        );
+
         return ApiResponse::success(
             data: RecommendedJobResource::collection(
-                $this->matchingService->recommendJobsForUser(
-                    $request->user('sanctum'),
-                    $request->integer('limit', 10),
-                ),
+                $result->items,
             ),
             message: 'Recommended jobs retrieved successfully.',
         );

@@ -1,0 +1,216 @@
+{
+  "architecture_sha256": "60EB219152CE26B525735ED65564F667D403BF438F29000B4ECE90D65950553F",
+  "baseline_contracts": {
+    "adapter_version": "synthetic-to-laravel-matching-v1",
+    "database_query_count": 0,
+    "database_write_count": 0,
+    "laravel_matching_version": "2.0",
+    "python_parity_version": "matching-v2-parity-v1",
+    "skills_baseline_version": "skills-weighted-v1"
+  },
+  "evaluation_attempt_number": 2,
+  "evaluation_release_date": "2026-07-24",
+  "evaluation_session_version": "locked-final-test-v1",
+  "feature_changed_between_attempts": false,
+  "hyperparameters_changed_between_attempts": false,
+  "intended_use": [
+    "locked_final_test_evaluation",
+    "phase_11_explainability_gate",
+    "human_assisted_recruitment_research"
+  ],
+  "limitations": [
+    "synthetic_test_data",
+    "test_has_27_candidate_groups",
+    "selection_overfit_remains_possible",
+    "handcrafted_features",
+    "no_fairness_guarantee",
+    "no_production_traffic_evaluation",
+    "one_shot_test_not_for_further_improvement",
+    "existing_bridge_guard_uses_locked_validation_authorization"
+  ],
+  "metric_contract": {
+    "aggregation": "candidate_macro",
+    "gain_definition": "2^relevance_label - 1",
+    "metrics": [
+      "NDCG@5",
+      "NDCG@10",
+      "Precision@5",
+      "Recall@5",
+      "MRR",
+      "HitRate@5"
+    ],
+    "ranking_metrics_version": "ranking-metrics-v1",
+    "relevant_label_threshold": 2
+  },
+  "metrics_contract_changed_between_attempts": false,
+  "model_changed_between_attempts": false,
+  "model_contracts": {
+    "initial": {
+      "feature_count": 103,
+      "loaded_only": true,
+      "model_sha256": "14064405827cb46ff475236e25d4fc6306b3a33278217ba77c6bf3f57fa2b789",
+      "model_version": "xgbranker-initial-v1"
+    },
+    "tuned": {
+      "feature_count": 103,
+      "loaded_only": true,
+      "model_sha256": "3abd74137bc8881667643f31a658c790ef6712359d7802ea7fcffa0c4cf9e26e",
+      "model_version": "xgbranker-tuned-v1",
+      "selected_config_id": "T06"
+    }
+  },
+  "output_files": [
+    {
+      "path": "test_predictions.jsonl",
+      "record_count": 1620,
+      "sha256": "6e28e38322f668c6dd570d2f522c8693f80aa35aef878e25013956cf2b165901",
+      "size_bytes": 584163
+    },
+    {
+      "path": "metrics.json",
+      "record_count": 1,
+      "sha256": "3dd3260058fef9abaf106339816af50bf370208414e3325a7d293faacd1034e0",
+      "size_bytes": 6914
+    },
+    {
+      "path": "comparison.json",
+      "record_count": 1,
+      "sha256": "c1dacc745fdfc9ade72f53829e2336a4f0cec427979066d337f5052b30cc0886",
+      "size_bytes": 2449
+    },
+    {
+      "path": "matching_parity.json",
+      "record_count": 1,
+      "sha256": "05adc3db5187058774ca0bb85065330d3a4b8c5da74ea9eb9d1d6be96fb291fa",
+      "size_bytes": 775
+    },
+    {
+      "path": "evaluation_receipt.json",
+      "record_count": 1,
+      "sha256": "a9f58db9b33dfb81a8476dae6581e2beb6e26331ad8e3e9f7f47b0816584036c",
+      "size_bytes": 2624
+    },
+    {
+      "path": "FINAL_TEST_REPORT.md",
+      "record_count": 1,
+      "sha256": "6cdcc62c8ade910058d75086012f93da64684fa28315899132e9280e8557d064",
+      "size_bytes": 3468
+    }
+  ],
+  "prior_attempt_failure_stage": "system_score_conversion",
+  "prior_attempt_status": "failed_before_artifact_publication",
+  "prior_metrics_published": false,
+  "prior_predictions_artifact_published": false,
+  "prior_test_results_observed": false,
+  "quality_disposition_contract": {
+    "all_conditions_required_for": "PROMOTE_TO_EXPLAINABILITY",
+    "otherwise": "HOLD_MODEL_CANDIDATE",
+    "predeclared": true,
+    "primary_metric": "NDCG@10"
+  },
+  "recovery_authorized_by_user": true,
+  "recovery_execution": true,
+  "selection_changed_between_attempts": false,
+  "source_files": [
+    {
+      "key": "candidates",
+      "path": "services/ml-recommendation/data/synthetic/v1/candidates.jsonl",
+      "record_count": 180,
+      "records_parsed": true,
+      "sha256": "5d0ddbe461437afd80576e4b36044c94e083adfe2d232c05e4653a9fa54ef320",
+      "size_bytes": 131908
+    },
+    {
+      "key": "jobs",
+      "path": "services/ml-recommendation/data/synthetic/v1/jobs.jsonl",
+      "record_count": 180,
+      "records_parsed": true,
+      "sha256": "7aa398a1957c8851fb4fea4743f953be3f915177ae19266970ccf2d61440e74d",
+      "size_bytes": 120346
+    },
+    {
+      "key": "test",
+      "path": "services/ml-recommendation/data/splits/v1/test.jsonl",
+      "record_count": 1620,
+      "records_parsed": true,
+      "sha256": "79fcb93b232b63482a9c26d1d0caa660289b7b798776c09f0945865ca6741a05",
+      "size_bytes": 1099011
+    },
+    {
+      "key": "feature_schema",
+      "path": "services/ml-recommendation/data/features/v1/feature_schema.json",
+      "record_count": 1,
+      "records_parsed": true,
+      "sha256": "aeb260b25f34b55b7164b215e613a0b4327df33ee65af95abc904045849ce4a0",
+      "size_bytes": 45406
+    },
+    {
+      "key": "test_lock",
+      "path": "services/ml-recommendation/data/splits/v1/test_lock.json",
+      "record_count": 1,
+      "records_parsed": true,
+      "sha256": "00f938c9f888156022d221a9fb3eab7c76e8d4316803d175470355a84f33ec73",
+      "size_bytes": 1116
+    },
+    {
+      "key": "split_manifest",
+      "path": "services/ml-recommendation/data/splits/v1/manifest.json",
+      "record_count": 1,
+      "records_parsed": true,
+      "sha256": "f032847615dea42b28d41f8d47f2627df3d030399c8690df8747bb1ae26dbd0a",
+      "size_bytes": 6057
+    },
+    {
+      "key": "baseline_manifest",
+      "path": "services/ml-recommendation/data/baselines/v1/manifest.json",
+      "record_count": 1,
+      "records_parsed": true,
+      "sha256": "cb5853921b6cdfef7a53989e79950116290b06cfd27596acf70f79fbb33636d4",
+      "size_bytes": 8546
+    },
+    {
+      "key": "initial_model",
+      "path": "services/ml-recommendation/data/models/initial/v1/model.json",
+      "record_count": 1,
+      "records_parsed": true,
+      "sha256": "14064405827cb46ff475236e25d4fc6306b3a33278217ba77c6bf3f57fa2b789",
+      "size_bytes": 571399
+    },
+    {
+      "key": "initial_manifest",
+      "path": "services/ml-recommendation/data/models/initial/v1/manifest.json",
+      "record_count": 1,
+      "records_parsed": true,
+      "sha256": "1d94c2ca7895636889613edd642b1e3b282654b7c84455db95c4f5b829eaf4ed",
+      "size_bytes": 6629
+    },
+    {
+      "key": "tuned_model",
+      "path": "services/ml-recommendation/data/models/tuned/v1/model.json",
+      "record_count": 1,
+      "records_parsed": true,
+      "sha256": "3abd74137bc8881667643f31a658c790ef6712359d7802ea7fcffa0c4cf9e26e",
+      "size_bytes": 920863
+    },
+    {
+      "key": "tuned_manifest",
+      "path": "services/ml-recommendation/data/models/tuned/v1/manifest.json",
+      "record_count": 1,
+      "records_parsed": true,
+      "sha256": "8d71babf225363b0b3d773147c2f95cad4bf910f78695a58dea7d31a6d7a042b",
+      "size_bytes": 14973
+    }
+  ],
+  "source_revision": "6cd51f733d5197e0c3f6b7dfb3711c2860ffef71",
+  "test_contract": {
+    "candidate_count": 27,
+    "feature_count": 103,
+    "opened_for_phase": 10,
+    "record_count": 1620,
+    "records_per_group": 60,
+    "sha256": "79fcb93b232b63482a9c26d1d0caa660289b7b798776c09f0945865ca6741a05",
+    "test_opened": true
+  },
+  "training_run_between_attempts": false,
+  "tuning_run_between_attempts": false
+}

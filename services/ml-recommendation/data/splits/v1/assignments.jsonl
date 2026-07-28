@@ -1,0 +1,180 @@
+{"candidate_id":"cand_0001","primary_domain":"Backend Engineering","split":"train"}
+{"candidate_id":"cand_0002","primary_domain":"Frontend Engineering","split":"train"}
+{"candidate_id":"cand_0003","primary_domain":"Mobile Development","split":"validation"}
+{"candidate_id":"cand_0004","primary_domain":"Data Engineering","split":"train"}
+{"candidate_id":"cand_0005","primary_domain":"Data Analysis","split":"validation"}
+{"candidate_id":"cand_0006","primary_domain":"DevOps / Cloud","split":"train"}
+{"candidate_id":"cand_0007","primary_domain":"Cybersecurity","split":"validation"}
+{"candidate_id":"cand_0008","primary_domain":"Quality Assurance","split":"train"}
+{"candidate_id":"cand_0009","primary_domain":"Product Management","split":"train"}
+{"candidate_id":"cand_0010","primary_domain":"UI/UX Design","split":"train"}
+{"candidate_id":"cand_0011","primary_domain":"Digital Marketing","split":"validation"}
+{"candidate_id":"cand_0012","primary_domain":"Finance / Accounting","split":"train"}
+{"candidate_id":"cand_0013","primary_domain":"Backend Engineering","split":"validation"}
+{"candidate_id":"cand_0014","primary_domain":"Frontend Engineering","split":"test"}
+{"candidate_id":"cand_0015","primary_domain":"Mobile Development","split":"train"}
+{"candidate_id":"cand_0016","primary_domain":"Data Engineering","split":"train"}
+{"candidate_id":"cand_0017","primary_domain":"Data Analysis","split":"train"}
+{"candidate_id":"cand_0018","primary_domain":"DevOps / Cloud","split":"train"}
+{"candidate_id":"cand_0019","primary_domain":"Cybersecurity","split":"train"}
+{"candidate_id":"cand_0020","primary_domain":"Quality Assurance","split":"train"}
+{"candidate_id":"cand_0021","primary_domain":"Product Management","split":"test"}
+{"candidate_id":"cand_0022","primary_domain":"UI/UX Design","split":"train"}
+{"candidate_id":"cand_0023","primary_domain":"Digital Marketing","split":"train"}
+{"candidate_id":"cand_0024","primary_domain":"Finance / Accounting","split":"test"}
+{"candidate_id":"cand_0025","primary_domain":"Backend Engineering","split":"test"}
+{"candidate_id":"cand_0026","primary_domain":"Frontend Engineering","split":"train"}
+{"candidate_id":"cand_0027","primary_domain":"Mobile Development","split":"train"}
+{"candidate_id":"cand_0028","primary_domain":"Data Engineering","split":"test"}
+{"candidate_id":"cand_0029","primary_domain":"Data Analysis","split":"train"}
+{"candidate_id":"cand_0030","primary_domain":"DevOps / Cloud","split":"test"}
+{"candidate_id":"cand_0031","primary_domain":"Cybersecurity","split":"train"}
+{"candidate_id":"cand_0032","primary_domain":"Quality Assurance","split":"train"}
+{"candidate_id":"cand_0033","primary_domain":"Product Management","split":"train"}
+{"candidate_id":"cand_0034","primary_domain":"UI/UX Design","split":"train"}
+{"candidate_id":"cand_0035","primary_domain":"Digital Marketing","split":"test"}
+{"candidate_id":"cand_0036","primary_domain":"Finance / Accounting","split":"validation"}
+{"candidate_id":"cand_0037","primary_domain":"Backend Engineering","split":"train"}
+{"candidate_id":"cand_0038","primary_domain":"Frontend Engineering","split":"train"}
+{"candidate_id":"cand_0039","primary_domain":"Mobile Development","split":"train"}
+{"candidate_id":"cand_0040","primary_domain":"Data Engineering","split":"validation"}
+{"candidate_id":"cand_0041","primary_domain":"Data Analysis","split":"train"}
+{"candidate_id":"cand_0042","primary_domain":"DevOps / Cloud","split":"train"}
+{"candidate_id":"cand_0043","primary_domain":"Cybersecurity","split":"train"}
+{"candidate_id":"cand_0044","primary_domain":"Quality Assurance","split":"train"}
+{"candidate_id":"cand_0045","primary_domain":"Product Management","split":"train"}
+{"candidate_id":"cand_0046","primary_domain":"UI/UX Design","split":"train"}
+{"candidate_id":"cand_0047","primary_domain":"Digital Marketing","split":"train"}
+{"candidate_id":"cand_0048","primary_domain":"Finance / Accounting","split":"test"}
+{"candidate_id":"cand_0049","primary_domain":"Backend Engineering","split":"test"}
+{"candidate_id":"cand_0050","primary_domain":"Frontend Engineering","split":"test"}
+{"candidate_id":"cand_0051","primary_domain":"Mobile Development","split":"train"}
+{"candidate_id":"cand_0052","primary_domain":"Data Engineering","split":"train"}
+{"candidate_id":"cand_0053","primary_domain":"Data Analysis","split":"train"}
+{"candidate_id":"cand_0054","primary_domain":"DevOps / Cloud","split":"validation"}
+{"candidate_id":"cand_0055","primary_domain":"Cybersecurity","split":"train"}
+{"candidate_id":"cand_0056","primary_domain":"Quality Assurance","split":"test"}
+{"candidate_id":"cand_0057","primary_domain":"Product Management","split":"train"}
+{"candidate_id":"cand_0058","primary_domain":"UI/UX Design","split":"train"}
+{"candidate_id":"cand_0059","primary_domain":"Digital Marketing","split":"train"}
+{"candidate_id":"cand_0060","primary_domain":"Finance / Accounting","split":"train"}
+{"candidate_id":"cand_0061","primary_domain":"Backend Engineering","split":"train"}
+{"candidate_id":"cand_0062","primary_domain":"Frontend Engineering","split":"train"}
+{"candidate_id":"cand_0063","primary_domain":"Mobile Development","split":"test"}
+{"candidate_id":"cand_0064","primary_domain":"Data Engineering","split":"train"}
+{"candidate_id":"cand_0065","primary_domain":"Data Analysis","split":"train"}
+{"candidate_id":"cand_0066","primary_domain":"DevOps / Cloud","split":"validation"}
+{"candidate_id":"cand_0067","primary_domain":"Cybersecurity","split":"train"}
+{"candidate_id":"cand_0068","primary_domain":"Quality Assurance","split":"train"}
+{"candidate_id":"cand_0069","primary_domain":"Product Management","split":"validation"}
+{"candidate_id":"cand_0070","primary_domain":"UI/UX Design","split":"test"}
+{"candidate_id":"cand_0071","primary_domain":"Digital Marketing","split":"train"}
+{"candidate_id":"cand_0072","primary_domain":"Finance / Accounting","split":"validation"}
+{"candidate_id":"cand_0073","primary_domain":"Backend Engineering","split":"train"}
+{"candidate_id":"cand_0074","primary_domain":"Frontend Engineering","split":"validation"}
+{"candidate_id":"cand_0075","primary_domain":"Mobile Development","split":"train"}
+{"candidate_id":"cand_0076","primary_domain":"Data Engineering","split":"test"}
+{"candidate_id":"cand_0077","primary_domain":"Data Analysis","split":"train"}
+{"candidate_id":"cand_0078","primary_domain":"DevOps / Cloud","split":"train"}
+{"candidate_id":"cand_0079","primary_domain":"Cybersecurity","split":"train"}
+{"candidate_id":"cand_0080","primary_domain":"Quality Assurance","split":"train"}
+{"candidate_id":"cand_0081","primary_domain":"Product Management","split":"test"}
+{"candidate_id":"cand_0082","primary_domain":"UI/UX Design","split":"train"}
+{"candidate_id":"cand_0083","primary_domain":"Digital Marketing","split":"train"}
+{"candidate_id":"cand_0084","primary_domain":"Finance / Accounting","split":"train"}
+{"candidate_id":"cand_0085","primary_domain":"Backend Engineering","split":"train"}
+{"candidate_id":"cand_0086","primary_domain":"Frontend Engineering","split":"train"}
+{"candidate_id":"cand_0087","primary_domain":"Mobile Development","split":"train"}
+{"candidate_id":"cand_0088","primary_domain":"Data Engineering","split":"train"}
+{"candidate_id":"cand_0089","primary_domain":"Data Analysis","split":"validation"}
+{"candidate_id":"cand_0090","primary_domain":"DevOps / Cloud","split":"train"}
+{"candidate_id":"cand_0091","primary_domain":"Cybersecurity","split":"train"}
+{"candidate_id":"cand_0092","primary_domain":"Quality Assurance","split":"test"}
+{"candidate_id":"cand_0093","primary_domain":"Product Management","split":"train"}
+{"candidate_id":"cand_0094","primary_domain":"UI/UX Design","split":"validation"}
+{"candidate_id":"cand_0095","primary_domain":"Digital Marketing","split":"train"}
+{"candidate_id":"cand_0096","primary_domain":"Finance / Accounting","split":"test"}
+{"candidate_id":"cand_0097","primary_domain":"Backend Engineering","split":"validation"}
+{"candidate_id":"cand_0098","primary_domain":"Frontend Engineering","split":"train"}
+{"candidate_id":"cand_0099","primary_domain":"Mobile Development","split":"train"}
+{"candidate_id":"cand_0100","primary_domain":"Data Engineering","split":"train"}
+{"candidate_id":"cand_0101","primary_domain":"Data Analysis","split":"train"}
+{"candidate_id":"cand_0102","primary_domain":"DevOps / Cloud","split":"validation"}
+{"candidate_id":"cand_0103","primary_domain":"Cybersecurity","split":"train"}
+{"candidate_id":"cand_0104","primary_domain":"Quality Assurance","split":"validation"}
+{"candidate_id":"cand_0105","primary_domain":"Product Management","split":"train"}
+{"candidate_id":"cand_0106","primary_domain":"UI/UX Design","split":"train"}
+{"candidate_id":"cand_0107","primary_domain":"Digital Marketing","split":"train"}
+{"candidate_id":"cand_0108","primary_domain":"Finance / Accounting","split":"train"}
+{"candidate_id":"cand_0109","primary_domain":"Backend Engineering","split":"train"}
+{"candidate_id":"cand_0110","primary_domain":"Frontend Engineering","split":"train"}
+{"candidate_id":"cand_0111","primary_domain":"Mobile Development","split":"train"}
+{"candidate_id":"cand_0112","primary_domain":"Data Engineering","split":"train"}
+{"candidate_id":"cand_0113","primary_domain":"Data Analysis","split":"validation"}
+{"candidate_id":"cand_0114","primary_domain":"DevOps / Cloud","split":"train"}
+{"candidate_id":"cand_0115","primary_domain":"Cybersecurity","split":"validation"}
+{"candidate_id":"cand_0116","primary_domain":"Quality Assurance","split":"train"}
+{"candidate_id":"cand_0117","primary_domain":"Product Management","split":"train"}
+{"candidate_id":"cand_0118","primary_domain":"UI/UX Design","split":"train"}
+{"candidate_id":"cand_0119","primary_domain":"Digital Marketing","split":"train"}
+{"candidate_id":"cand_0120","primary_domain":"Finance / Accounting","split":"train"}
+{"candidate_id":"cand_0121","primary_domain":"Backend Engineering","split":"train"}
+{"candidate_id":"cand_0122","primary_domain":"Frontend Engineering","split":"train"}
+{"candidate_id":"cand_0123","primary_domain":"Mobile Development","split":"test"}
+{"candidate_id":"cand_0124","primary_domain":"Data Engineering","split":"train"}
+{"candidate_id":"cand_0125","primary_domain":"Data Analysis","split":"train"}
+{"candidate_id":"cand_0126","primary_domain":"DevOps / Cloud","split":"train"}
+{"candidate_id":"cand_0127","primary_domain":"Cybersecurity","split":"train"}
+{"candidate_id":"cand_0128","primary_domain":"Quality Assurance","split":"train"}
+{"candidate_id":"cand_0129","primary_domain":"Product Management","split":"train"}
+{"candidate_id":"cand_0130","primary_domain":"UI/UX Design","split":"train"}
+{"candidate_id":"cand_0131","primary_domain":"Digital Marketing","split":"validation"}
+{"candidate_id":"cand_0132","primary_domain":"Finance / Accounting","split":"train"}
+{"candidate_id":"cand_0133","primary_domain":"Backend Engineering","split":"train"}
+{"candidate_id":"cand_0134","primary_domain":"Frontend Engineering","split":"train"}
+{"candidate_id":"cand_0135","primary_domain":"Mobile Development","split":"train"}
+{"candidate_id":"cand_0136","primary_domain":"Data Engineering","split":"train"}
+{"candidate_id":"cand_0137","primary_domain":"Data Analysis","split":"test"}
+{"candidate_id":"cand_0138","primary_domain":"DevOps / Cloud","split":"train"}
+{"candidate_id":"cand_0139","primary_domain":"Cybersecurity","split":"train"}
+{"candidate_id":"cand_0140","primary_domain":"Quality Assurance","split":"train"}
+{"candidate_id":"cand_0141","primary_domain":"Product Management","split":"train"}
+{"candidate_id":"cand_0142","primary_domain":"UI/UX Design","split":"train"}
+{"candidate_id":"cand_0143","primary_domain":"Digital Marketing","split":"test"}
+{"candidate_id":"cand_0144","primary_domain":"Finance / Accounting","split":"train"}
+{"candidate_id":"cand_0145","primary_domain":"Backend Engineering","split":"train"}
+{"candidate_id":"cand_0146","primary_domain":"Frontend Engineering","split":"test"}
+{"candidate_id":"cand_0147","primary_domain":"Mobile Development","split":"validation"}
+{"candidate_id":"cand_0148","primary_domain":"Data Engineering","split":"train"}
+{"candidate_id":"cand_0149","primary_domain":"Data Analysis","split":"train"}
+{"candidate_id":"cand_0150","primary_domain":"DevOps / Cloud","split":"train"}
+{"candidate_id":"cand_0151","primary_domain":"Cybersecurity","split":"test"}
+{"candidate_id":"cand_0152","primary_domain":"Quality Assurance","split":"train"}
+{"candidate_id":"cand_0153","primary_domain":"Product Management","split":"validation"}
+{"candidate_id":"cand_0154","primary_domain":"UI/UX Design","split":"test"}
+{"candidate_id":"cand_0155","primary_domain":"Digital Marketing","split":"train"}
+{"candidate_id":"cand_0156","primary_domain":"Finance / Accounting","split":"train"}
+{"candidate_id":"cand_0157","primary_domain":"Backend Engineering","split":"train"}
+{"candidate_id":"cand_0158","primary_domain":"Frontend Engineering","split":"train"}
+{"candidate_id":"cand_0159","primary_domain":"Mobile Development","split":"train"}
+{"candidate_id":"cand_0160","primary_domain":"Data Engineering","split":"validation"}
+{"candidate_id":"cand_0161","primary_domain":"Data Analysis","split":"test"}
+{"candidate_id":"cand_0162","primary_domain":"DevOps / Cloud","split":"test"}
+{"candidate_id":"cand_0163","primary_domain":"Cybersecurity","split":"train"}
+{"candidate_id":"cand_0164","primary_domain":"Quality Assurance","split":"train"}
+{"candidate_id":"cand_0165","primary_domain":"Product Management","split":"train"}
+{"candidate_id":"cand_0166","primary_domain":"UI/UX Design","split":"validation"}
+{"candidate_id":"cand_0167","primary_domain":"Digital Marketing","split":"test"}
+{"candidate_id":"cand_0168","primary_domain":"Finance / Accounting","split":"train"}
+{"candidate_id":"cand_0169","primary_domain":"Backend Engineering","split":"train"}
+{"candidate_id":"cand_0170","primary_domain":"Frontend Engineering","split":"validation"}
+{"candidate_id":"cand_0171","primary_domain":"Mobile Development","split":"train"}
+{"candidate_id":"cand_0172","primary_domain":"Data Engineering","split":"validation"}
+{"candidate_id":"cand_0173","primary_domain":"Data Analysis","split":"train"}
+{"candidate_id":"cand_0174","primary_domain":"DevOps / Cloud","split":"train"}
+{"candidate_id":"cand_0175","primary_domain":"Cybersecurity","split":"test"}
+{"candidate_id":"cand_0176","primary_domain":"Quality Assurance","split":"validation"}
+{"candidate_id":"cand_0177","primary_domain":"Product Management","split":"train"}
+{"candidate_id":"cand_0178","primary_domain":"UI/UX Design","split":"train"}
+{"candidate_id":"cand_0179","primary_domain":"Digital Marketing","split":"train"}
+{"candidate_id":"cand_0180","primary_domain":"Finance / Accounting","split":"train"}

@@ -1,0 +1,47 @@
+{
+  "database_query_count": 0,
+  "database_write_count": 0,
+  "laravel_matching_version": "2.0",
+  "matching_adapter_version": "synthetic-to-laravel-matching-v1",
+  "parity_passed": true,
+  "python_parity_version": "matching-v2-parity-v1",
+  "tolerance": 0.01,
+  "train": {
+    "component_mismatch_counts": {
+      "cosine_similarity": 0,
+      "education": 0,
+      "experience": 0,
+      "nice_to_have_skills": 0,
+      "required_skills": 0,
+      "text_similarity": 0
+    },
+    "extra_count": 0,
+    "missing_count": 0,
+    "pair_count": 7560,
+    "rank_match_count": 7560,
+    "rank_match_rate": 1.0,
+    "score_exact_match_count": 7560,
+    "score_max_absolute_error": 0.0,
+    "score_mean_absolute_error": 0.0,
+    "score_tolerance_match_count": 7560
+  },
+  "validation": {
+    "component_mismatch_counts": {
+      "cosine_similarity": 0,
+      "education": 0,
+      "experience": 0,
+      "nice_to_have_skills": 0,
+      "required_skills": 0,
+      "text_similarity": 0
+    },
+    "extra_count": 0,
+    "missing_count": 0,
+    "pair_count": 1620,
+    "rank_match_count": 1620,
+    "rank_match_rate": 1.0,
+    "score_exact_match_count": 1620,
+    "score_max_absolute_error": 0.0,
+    "score_mean_absolute_error": 0.0,
+    "score_tolerance_match_count": 1620
+  }
+}

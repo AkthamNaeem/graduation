@@ -1,0 +1,206 @@
+{
+  "architecture_sha256": "60EB219152CE26B525735ED65564F667D403BF438F29000B4ECE90D65950553F",
+  "baseline_evaluation_version": "job-rec-baselines-v1",
+  "dependencies": {
+    "numpy": "2.5.1",
+    "python": "3.12.10",
+    "scipy": "1.18.0",
+    "xgboost": "3.3.0"
+  },
+  "deterministic": true,
+  "feature_pipeline_version": "0.1.0",
+  "feature_schema_version": "job-rec-features-v1",
+  "hyperparameters": {
+    "colsample_bytree": 1.0,
+    "device": "cpu",
+    "eval_metric": [
+      "ndcg@5",
+      "ndcg@10"
+    ],
+    "gamma": 0.0,
+    "lambdarank_num_pair_per_sample": 10,
+    "lambdarank_pair_method": "topk",
+    "learning_rate": 0.05,
+    "max_bin": 256,
+    "max_depth": 4,
+    "min_child_weight": 1.0,
+    "n_estimators": 300,
+    "n_jobs": 1,
+    "ndcg_exp_gain": true,
+    "objective": "rank:ndcg",
+    "random_state": 20260724,
+    "reg_alpha": 0.0,
+    "reg_lambda": 1.0,
+    "subsample": 1.0,
+    "tree_method": "hist",
+    "validate_parameters": true,
+    "verbosity": 0
+  },
+  "intended_use": [
+    "offline_initial_ranking_model",
+    "phase_9_bounded_tuning_reference",
+    "human_assisted_recruitment_research"
+  ],
+  "limitations": [
+    "synthetic_training_data",
+    "handcrafted_features",
+    "initial_fixed_configuration",
+    "validation_has_27_candidate_groups",
+    "no_hyperparameter_tuning",
+    "locked_test_not_evaluated",
+    "no_fairness_guarantee",
+    "no_production_quality_guarantee",
+    "dependency_and_platform_reproducibility_boundary"
+  ],
+  "model_format": "xgboost-json-v1",
+  "model_version": "xgbranker-initial-v1",
+  "output_files": [
+    {
+      "path": "model.json",
+      "record_count": 1,
+      "sha256": "14064405827cb46ff475236e25d4fc6306b3a33278217ba77c6bf3f57fa2b789",
+      "size_bytes": 571399
+    },
+    {
+      "path": "model_metadata.json",
+      "record_count": 1,
+      "sha256": "8f02244ef31ff6b74a22d7451069bf2aefc7e7d30b1fe5d87d258e7679715b71",
+      "size_bytes": 5743
+    },
+    {
+      "path": "train_predictions.jsonl",
+      "record_count": 7560,
+      "sha256": "a2de6137a9b89d44d8997e00749f3e72eb13692b07b620104b4cde3fa1225897",
+      "size_bytes": 1809493
+    },
+    {
+      "path": "validation_predictions.jsonl",
+      "record_count": 1620,
+      "sha256": "9ff94d6a74d29a9dce4bb6521c352f296ccb5f72751b3b95635725028dff948b",
+      "size_bytes": 387766
+    },
+    {
+      "path": "metrics.json",
+      "record_count": 1,
+      "sha256": "c487fa5446cec543df19a7542165a70b760bb02bf5f938e9c2e859089deed1fe",
+      "size_bytes": 10662
+    },
+    {
+      "path": "training_history.json",
+      "record_count": 300,
+      "sha256": "34be7f56dc8493375b8e291aed216b9ef91ff9830723d27ae0782e2e27f52e72",
+      "size_bytes": 62762
+    },
+    {
+      "path": "MODEL_CARD.md",
+      "record_count": 1,
+      "sha256": "628de4d0b5d470a9196fa292ee72a9e95bfbe09f04e4e98d6e5166cd4dd331f0",
+      "size_bytes": 3658
+    }
+  ],
+  "source_dataset_version": "synthetic-job-rec-1.0.0",
+  "source_files": [
+    {
+      "path": "services/ml-recommendation/data/features/v1/feature_schema.json",
+      "record_count": 1,
+      "records_parsed": true,
+      "sha256": "aeb260b25f34b55b7164b215e613a0b4327df33ee65af95abc904045849ce4a0",
+      "size_bytes": 45406,
+      "usage": "parsed_schema_verification"
+    },
+    {
+      "path": "services/ml-recommendation/data/splits/v1/train.jsonl",
+      "record_count": 7560,
+      "records_parsed": true,
+      "sha256": "d87095055d16ced57461eb8d4543bf4c3863b0ebe1771e5b3528eaf290b98c3d",
+      "size_bytes": 5137764,
+      "usage": "parsed_training_source"
+    },
+    {
+      "path": "services/ml-recommendation/data/splits/v1/validation.jsonl",
+      "record_count": 1620,
+      "records_parsed": true,
+      "sha256": "a8cc27158bc126b11e93a0eefdf6a82a0e3f88e8d82cf9e9a0bae0491b04da7e",
+      "size_bytes": 1100505,
+      "usage": "parsed_validation_evaluation"
+    },
+    {
+      "path": "services/ml-recommendation/data/splits/v1/assignments.jsonl",
+      "record_count": 180,
+      "records_parsed": false,
+      "sha256": "ba5c075f244c8d65200316e44a4b0bb68f579aa6e2b0546e3527e17db98bc502",
+      "size_bytes": 14763,
+      "usage": "hash_verification_only"
+    },
+    {
+      "path": "services/ml-recommendation/data/splits/v1/manifest.json",
+      "record_count": 1,
+      "records_parsed": true,
+      "sha256": "f032847615dea42b28d41f8d47f2627df3d030399c8690df8747bb1ae26dbd0a",
+      "size_bytes": 6057,
+      "usage": "parsed_split_verification"
+    },
+    {
+      "path": "services/ml-recommendation/data/splits/v1/test_lock.json",
+      "record_count": 1,
+      "records_parsed": true,
+      "sha256": "00f938c9f888156022d221a9fb3eab7c76e8d4316803d175470355a84f33ec73",
+      "size_bytes": 1116,
+      "usage": "parsed_lock_verification"
+    },
+    {
+      "path": "services/ml-recommendation/data/baselines/v1/metrics.json",
+      "record_count": 1,
+      "records_parsed": true,
+      "sha256": "4bffef2b5e2c2ba16ccf92686465e45533dfc075b8ab56bc2544af1fccd75778",
+      "size_bytes": 9747,
+      "usage": "parsed_baseline_comparison"
+    },
+    {
+      "path": "services/ml-recommendation/data/baselines/v1/manifest.json",
+      "record_count": 1,
+      "records_parsed": true,
+      "sha256": "cb5853921b6cdfef7a53989e79950116290b06cfd27596acf70f79fbb33636d4",
+      "size_bytes": 8546,
+      "usage": "parsed_baseline_verification"
+    },
+    {
+      "path": "services/ml-recommendation/data/splits/v1/test.jsonl",
+      "record_count": 1620,
+      "records_parsed": false,
+      "sha256": "79fcb93b232b63482a9c26d1d0caa660289b7b798776c09f0945865ca6741a05",
+      "size_bytes": 1099011,
+      "usage": "hash_verification_only"
+    }
+  ],
+  "source_revision": "6cd51f733d5197e0c3f6b7dfb3711c2860ffef71",
+  "split_version": "candidate-group-split-v1",
+  "test_lock_verification": {
+    "created_for_phase": 6,
+    "locked": true,
+    "metrics_run": false,
+    "predictions_run": false,
+    "prohibited_before_phase": 10,
+    "records_parsed": false,
+    "sha256": "79fcb93b232b63482a9c26d1d0caa660289b7b798776c09f0945865ca6741a05"
+  },
+  "training_config_version": "xgbranker-fixed-config-v1",
+  "training_contract": {
+    "candidate_count": 126,
+    "feature_count": 103,
+    "fit_source": "train_only",
+    "qid_policy": "candidate_id_ascending_zero_based_contiguous",
+    "record_count": 7560,
+    "records_per_group": 60
+  },
+  "training_pipeline_version": "0.1.0",
+  "training_release_date": "2026-07-24",
+  "training_seed": 20260724,
+  "validation_contract": {
+    "candidate_count": 27,
+    "feature_count": 103,
+    "record_count": 1620,
+    "records_per_group": 60,
+    "usage": "evaluation_history_only"
+  }
+}

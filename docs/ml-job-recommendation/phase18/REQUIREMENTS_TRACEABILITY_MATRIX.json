@@ -1,0 +1,483 @@
+{
+  "matrix_version": "recommendation-requirements-traceability-v1",
+  "source_revision": "6cd51f733d5197e0c3f6b7dfb3711c2860ffef71",
+  "branch": "master",
+  "requirement_count": 25,
+  "status_counts": {
+    "completed": 23,
+    "completed_with_limitation": 2,
+    "out_of_scope": 0,
+    "future_work": 0
+  },
+  "requirements": [
+    {
+      "requirement_id": "REQ-001",
+      "category": "architecture",
+      "requirement": "Maintain an explicit Laravel-owned recommendation boundary and a database-free ML inference boundary.",
+      "implementation_status": "completed",
+      "implementation_files": [
+        "docs/ml-job-recommendation/ARCHITECTURE.md"
+      ],
+      "test_files": [
+        "tests/Unit/RecommendationOrchestratorTest.php"
+      ],
+      "evidence_artifacts": [
+        "docs/ml-job-recommendation/ARCHITECTURE.md"
+      ],
+      "limitations": [],
+      "phase_completed": 3
+    },
+    {
+      "requirement_id": "REQ-002",
+      "category": "dataset",
+      "requirement": "Generate a deterministic versioned synthetic recommendation dataset without sensitive demographic features.",
+      "implementation_status": "completed",
+      "implementation_files": [
+        "services/ml-recommendation/src/smart_recruitment_ml/data/generator.py"
+      ],
+      "test_files": [
+        "services/ml-recommendation/tests/test_synthetic_generator.py"
+      ],
+      "evidence_artifacts": [
+        "services/ml-recommendation/data/synthetic/v1/manifest.json",
+        "services/ml-recommendation/data/synthetic/v1/DATASET_CARD.md"
+      ],
+      "limitations": [
+        "Synthetic data does not establish real-world representativeness."
+      ],
+      "phase_completed": 4
+    },
+    {
+      "requirement_id": "REQ-003",
+      "category": "feature_engineering",
+      "requirement": "Use one versioned 103-feature pipeline for training, evaluation, and inference.",
+      "implementation_status": "completed",
+      "implementation_files": [
+        "services/ml-recommendation/src/smart_recruitment_ml/features/pipeline.py"
+      ],
+      "test_files": [
+        "services/ml-recommendation/tests/test_feature_pipeline.py"
+      ],
+      "evidence_artifacts": [
+        "services/ml-recommendation/data/features/v1/feature_schema.json",
+        "services/ml-recommendation/data/features/v1/FEATURE_SCHEMA_CARD.md"
+      ],
+      "limitations": [],
+      "phase_completed": 5
+    },
+    {
+      "requirement_id": "REQ-004",
+      "category": "group_split",
+      "requirement": "Prevent candidate leakage with deterministic candidate-grouped Train, Validation, and Locked Test partitions.",
+      "implementation_status": "completed",
+      "implementation_files": [
+        "services/ml-recommendation/src/smart_recruitment_ml/splits/splitter.py"
+      ],
+      "test_files": [
+        "services/ml-recommendation/tests/test_splitter.py"
+      ],
+      "evidence_artifacts": [
+        "services/ml-recommendation/data/splits/v1/manifest.json",
+        "services/ml-recommendation/data/splits/v1/SPLIT_CARD.md"
+      ],
+      "limitations": [],
+      "phase_completed": 6
+    },
+    {
+      "requirement_id": "REQ-005",
+      "category": "baselines",
+      "requirement": "Evaluate skills-only and MatchingService 2.0 baselines with ranking metrics and parity evidence.",
+      "implementation_status": "completed",
+      "implementation_files": [
+        "services/ml-recommendation/src/smart_recruitment_ml/baselines/evaluator.py"
+      ],
+      "test_files": [
+        "services/ml-recommendation/tests/test_baseline_metrics.py",
+        "services/ml-recommendation/tests/test_matching_v2_parity.py"
+      ],
+      "evidence_artifacts": [
+        "services/ml-recommendation/data/baselines/v1/BASELINE_REPORT.md",
+        "services/ml-recommendation/data/baselines/v1/manifest.json"
+      ],
+      "limitations": [],
+      "phase_completed": 7
+    },
+    {
+      "requirement_id": "REQ-006",
+      "category": "model",
+      "requirement": "Train a deterministic initial XGBRanker without using Locked Test for fitting or selection.",
+      "implementation_status": "completed",
+      "implementation_files": [
+        "services/ml-recommendation/src/smart_recruitment_ml/training/trainer.py"
+      ],
+      "test_files": [
+        "services/ml-recommendation/tests/test_xgbranker_training.py"
+      ],
+      "evidence_artifacts": [
+        "services/ml-recommendation/data/models/initial/v1/MODEL_CARD.md"
+      ],
+      "limitations": [
+        "Model quality evidence is based on synthetic data."
+      ],
+      "phase_completed": 8
+    },
+    {
+      "requirement_id": "REQ-007",
+      "category": "tuning",
+      "requirement": "Perform bounded validation-only tuning and freeze selected configuration T06.",
+      "implementation_status": "completed",
+      "implementation_files": [
+        "services/ml-recommendation/src/smart_recruitment_ml/tuning/tuner.py"
+      ],
+      "test_files": [
+        "services/ml-recommendation/tests/test_tuning_selection.py"
+      ],
+      "evidence_artifacts": [
+        "services/ml-recommendation/data/models/tuned/v1/MODEL_CARD.md",
+        "services/ml-recommendation/data/models/tuned/v1/model_metadata.json"
+      ],
+      "limitations": [],
+      "phase_completed": 9
+    },
+    {
+      "requirement_id": "REQ-008",
+      "category": "locked_test",
+      "requirement": "Evaluate Locked Test once under the Phase 10 gate and prohibit later reruns or model changes from its results.",
+      "implementation_status": "completed_with_limitation",
+      "implementation_files": [
+        "services/ml-recommendation/src/smart_recruitment_ml/evaluation/final_evaluator.py"
+      ],
+      "test_files": [
+        "services/ml-recommendation/tests/test_final_evaluation_cli.py"
+      ],
+      "evidence_artifacts": [
+        "services/ml-recommendation/data/evaluations/final-test/v1/evaluation_receipt.json",
+        "services/ml-recommendation/data/evaluations/final-test/v1/FINAL_TEST_REPORT.md"
+      ],
+      "limitations": [
+        "Locked Test is a one-time synthetic benchmark and was not reused after Phase 10."
+      ],
+      "phase_completed": 10
+    },
+    {
+      "requirement_id": "REQ-009",
+      "category": "explainability",
+      "requirement": "Publish deterministic SHAP-based attribution and allowlisted reason-code contracts.",
+      "implementation_status": "completed",
+      "implementation_files": [
+        "services/ml-recommendation/src/smart_recruitment_ml/explainability/explainer.py"
+      ],
+      "test_files": [
+        "services/ml-recommendation/tests/test_shap_contributions.py"
+      ],
+      "evidence_artifacts": [
+        "services/ml-recommendation/data/explainability/tuned/v1/MODEL_EXPLAINABILITY_REPORT.md",
+        "services/ml-recommendation/data/explainability/tuned/v1/explanation_contract.json"
+      ],
+      "limitations": [
+        "SHAP attribution is not causality or fairness certification."
+      ],
+      "phase_completed": 11
+    },
+    {
+      "requirement_id": "REQ-010",
+      "category": "fastapi",
+      "requirement": "Expose strict health, metadata, and ranking APIs backed by the frozen Bundle and no database.",
+      "implementation_status": "completed",
+      "implementation_files": [
+        "services/ml-recommendation/src/smart_recruitment_ml/main.py"
+      ],
+      "test_files": [
+        "services/ml-recommendation/tests/test_inference_api.py",
+        "services/ml-recommendation/tests/test_health.py"
+      ],
+      "evidence_artifacts": [
+        "services/ml-recommendation/data/contracts/inference/v1/INFERENCE_CONTRACT.md"
+      ],
+      "limitations": [],
+      "phase_completed": 12
+    },
+    {
+      "requirement_id": "REQ-011",
+      "category": "laravel_client",
+      "requirement": "Provide a version-coupled Laravel ML client with bounded transport and safe error mapping.",
+      "implementation_status": "completed",
+      "implementation_files": [
+        "app/Services/RecommendationMl/RecommendationMlClient.php"
+      ],
+      "test_files": [
+        "tests/Unit/RecommendationMlClientTest.php",
+        "tests/Unit/RecommendationMlClientContractCompatibilityTest.php"
+      ],
+      "evidence_artifacts": [
+        "BACKEND_IMPLEMENTATION_REPORT.md"
+      ],
+      "limitations": [],
+      "phase_completed": 13
+    },
+    {
+      "requirement_id": "REQ-012",
+      "category": "orchestrator",
+      "requirement": "Coordinate cache, persistence, ML inference, reconciliation, deterministic sorting, and fallback without recursion.",
+      "implementation_status": "completed",
+      "implementation_files": [
+        "app/Services/Recommendation/RecommendationOrchestrator.php"
+      ],
+      "test_files": [
+        "tests/Unit/RecommendationOrchestratorTest.php"
+      ],
+      "evidence_artifacts": [
+        "docs/ml-job-recommendation/ARCHITECTURE.md"
+      ],
+      "limitations": [],
+      "phase_completed": 14
+    },
+    {
+      "requirement_id": "REQ-013",
+      "category": "eligibility",
+      "requirement": "Keep Laravel as the only authority for eligible-job discovery and prior-application exclusion.",
+      "implementation_status": "completed",
+      "implementation_files": [
+        "app/Services/Recommendation/RecommendationEligibilityProvider.php"
+      ],
+      "test_files": [
+        "tests/Feature/Api/V1/RecommendedJobsMlTest.php"
+      ],
+      "evidence_artifacts": [
+        "docs/ml-job-recommendation/phase17/PHASE_17_E2E_REPORT.md"
+      ],
+      "limitations": [],
+      "phase_completed": 14
+    },
+    {
+      "requirement_id": "REQ-014",
+      "category": "fallback",
+      "requirement": "Preserve MatchingService 2.0 as fail-open fallback with stable safe codes.",
+      "implementation_status": "completed",
+      "implementation_files": [
+        "app/Services/Recommendation/RecommendationOrchestrator.php"
+      ],
+      "test_files": [
+        "tests/Feature/Api/V1/RecommendationFailureMatrixTest.php"
+      ],
+      "evidence_artifacts": [
+        "docs/ml-job-recommendation/phase17/E2E_TEST_MATRIX.json"
+      ],
+      "limitations": [
+        "Fallback keeps public availability and therefore requires operational outage monitoring."
+      ],
+      "phase_completed": 14
+    },
+    {
+      "requirement_id": "REQ-015",
+      "category": "persistence",
+      "requirement": "Persist complete recommendation runs and ranked items atomically with expiry metadata.",
+      "implementation_status": "completed",
+      "implementation_files": [
+        "app/Services/Recommendation/RecommendationResultStore.php",
+        "database/migrations/2026_07_25_000001_create_recommendation_tables.php"
+      ],
+      "test_files": [
+        "tests/Feature/RecommendationPersistenceTest.php"
+      ],
+      "evidence_artifacts": [
+        "BACKEND_IMPLEMENTATION_REPORT.md"
+      ],
+      "limitations": [],
+      "phase_completed": 15
+    },
+    {
+      "requirement_id": "REQ-016",
+      "category": "cache",
+      "requirement": "Use compact versioned cache pointers and separate success, fallback, and empty-result TTLs.",
+      "implementation_status": "completed",
+      "implementation_files": [
+        "app/Services/Recommendation/RecommendationResultCache.php"
+      ],
+      "test_files": [
+        "tests/Feature/RecommendationCacheTest.php"
+      ],
+      "evidence_artifacts": [
+        "config/recommendation_ml.php"
+      ],
+      "limitations": [
+        "Production behavior depends on the selected Laravel cache driver."
+      ],
+      "phase_completed": 15
+    },
+    {
+      "requirement_id": "REQ-017",
+      "category": "invalidation",
+      "requirement": "Invalidate cached or persisted results through a content-addressed context fingerprint.",
+      "implementation_status": "completed",
+      "implementation_files": [
+        "app/Services/Recommendation/RecommendationContextFingerprint.php"
+      ],
+      "test_files": [
+        "tests/Feature/RecommendationInvalidationTest.php"
+      ],
+      "evidence_artifacts": [
+        "docs/ml-job-recommendation/phase17/PHASE_17_E2E_REPORT.md"
+      ],
+      "limitations": [],
+      "phase_completed": 15
+    },
+    {
+      "requirement_id": "REQ-018",
+      "category": "docker",
+      "requirement": "Package the frozen service as a non-root read-only single-worker container with health checks.",
+      "implementation_status": "completed",
+      "implementation_files": [
+        "services/ml-recommendation/Dockerfile",
+        "services/ml-recommendation/container/start.py",
+        "services/ml-recommendation/container/healthcheck.py"
+      ],
+      "test_files": [
+        "services/ml-recommendation/tests/test_container_packaging.py"
+      ],
+      "evidence_artifacts": [
+        "services/ml-recommendation/deployment/container/v1/CONTAINER_CARD.md",
+        "services/ml-recommendation/deployment/container/v1/container_manifest.json"
+      ],
+      "limitations": [
+        "No production deployment or production vulnerability scan was performed."
+      ],
+      "phase_completed": 16
+    },
+    {
+      "requirement_id": "REQ-019",
+      "category": "e2e",
+      "requirement": "Prove cold ML, cache, persistence, invalidation, fallback, corruption safety, and bounded concurrency through public HTTP.",
+      "implementation_status": "completed",
+      "implementation_files": [
+        "scripts/phase17/run-e2e.ps1",
+        "scripts/phase17/fault_server.py"
+      ],
+      "test_files": [
+        "tests/Feature/Api/V1/RecommendationEndToEndTest.php",
+        "tests/Feature/Api/V1/RecommendationConcurrencyTest.php"
+      ],
+      "evidence_artifacts": [
+        "docs/ml-job-recommendation/phase17/E2E_TEST_MATRIX.json",
+        "docs/ml-job-recommendation/phase17/PHASE_17_E2E_REPORT.md"
+      ],
+      "limitations": [
+        "Local concurrency through the development server is not a production load test."
+      ],
+      "phase_completed": 17
+    },
+    {
+      "requirement_id": "REQ-020",
+      "category": "privacy",
+      "requirement": "Reject sensitive outbound fields and prevent secrets or PII from public payloads, logs, and handover artifacts.",
+      "implementation_status": "completed",
+      "implementation_files": [
+        "app/Support/RecommendationMl/MlOutboundPayloadGuard.php",
+        "services/ml-recommendation/src/smart_recruitment_ml/core/security.py"
+      ],
+      "test_files": [
+        "services/ml-recommendation/tests/test_inference_security.py",
+        "tests/Feature/Api/V1/RecommendationEndToEndTest.php"
+      ],
+      "evidence_artifacts": [
+        "docs/ml-job-recommendation/phase17/PHASE_17_E2E_REPORT.md"
+      ],
+      "limitations": [],
+      "phase_completed": 17
+    },
+    {
+      "requirement_id": "REQ-021",
+      "category": "authentication",
+      "requirement": "Authenticate the public endpoint with Sanctum and the internal ML endpoint with a rotatable service token.",
+      "implementation_status": "completed",
+      "implementation_files": [
+        "app/Services/RecommendationMl/RecommendationMlClient.php",
+        "services/ml-recommendation/src/smart_recruitment_ml/core/security.py"
+      ],
+      "test_files": [
+        "tests/Unit/RecommendationMlClientTest.php",
+        "services/ml-recommendation/tests/test_inference_security.py"
+      ],
+      "evidence_artifacts": [
+        "services/ml-recommendation/DEPLOYMENT.md"
+      ],
+      "limitations": [],
+      "phase_completed": 16
+    },
+    {
+      "requirement_id": "REQ-022",
+      "category": "error_handling",
+      "requirement": "Map provider transport, authentication, validation, rate-limit, availability, and contract faults to stable safe behavior.",
+      "implementation_status": "completed",
+      "implementation_files": [
+        "app/Services/RecommendationMl/RecommendationMlClient.php"
+      ],
+      "test_files": [
+        "tests/Feature/Api/V1/RecommendationFailureMatrixTest.php"
+      ],
+      "evidence_artifacts": [
+        "docs/ml-job-recommendation/phase17/E2E_TEST_MATRIX.json"
+      ],
+      "limitations": [],
+      "phase_completed": 17
+    },
+    {
+      "requirement_id": "REQ-023",
+      "category": "monitoring",
+      "requirement": "Define safe structured log events, health probes, and recommended operational indicators.",
+      "implementation_status": "completed_with_limitation",
+      "implementation_files": [
+        "services/ml-recommendation/DEPLOYMENT.md"
+      ],
+      "test_files": [
+        "services/ml-recommendation/tests/test_health.py"
+      ],
+      "evidence_artifacts": [
+        "services/ml-recommendation/deployment/container/v1/CONTAINER_CARD.md"
+      ],
+      "limitations": [
+        "Production dashboards, alerting, drift detection, and SLOs remain operational future work."
+      ],
+      "phase_completed": 16
+    },
+    {
+      "requirement_id": "REQ-024",
+      "category": "rollback",
+      "requirement": "Document disabling ML, reverting the image or Bundle versions, and preserving MatchingService 2.0 continuity.",
+      "implementation_status": "completed",
+      "implementation_files": [
+        "services/ml-recommendation/DEPLOYMENT.md"
+      ],
+      "test_files": [
+        "tests/Feature/Api/V1/RecommendedJobsMlTest.php"
+      ],
+      "evidence_artifacts": [
+        "services/ml-recommendation/DEPLOYMENT.md"
+      ],
+      "limitations": [
+        "Rollback was documented and locally testable but not exercised in production."
+      ],
+      "phase_completed": 16
+    },
+    {
+      "requirement_id": "REQ-025",
+      "category": "documentation",
+      "requirement": "Provide final handover, verification, demo, checklist, Arabic defense guide, traceability, and deterministic manifest artifacts.",
+      "implementation_status": "completed",
+      "implementation_files": [
+        "docs/ml-job-recommendation/phase18/FINAL_HANDOVER.md"
+      ],
+      "test_files": [
+        "tests/Unit/FinalHandoverDocumentationTest.php"
+      ],
+      "evidence_artifacts": [
+        "docs/ml-job-recommendation/phase18/FINAL_VERIFICATION_REPORT.md",
+        "docs/ml-job-recommendation/phase18/FINAL_HANDOVER_MANIFEST.json"
+      ],
+      "limitations": [
+        "Completion applies to the academic implementation plan, not future production operations."
+      ],
+      "phase_completed": 18
+    }
+  ]
+}

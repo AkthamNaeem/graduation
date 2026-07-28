@@ -1,0 +1,209 @@
+{
+  "adapter_policy": [
+    "global_normalized_skill_registry",
+    "fixed_experience_start_2000-01-01",
+    "fixed_published_at_2026-01-01T00:00:00Z",
+    "source_education_level_for_jobs",
+    "lead_maps_to_senior"
+  ],
+  "architecture_sha256": "60EB219152CE26B525735ED65564F667D403BF438F29000B4ECE90D65950553F",
+  "baseline_evaluation_version": "job-rec-baselines-v1",
+  "baseline_evaluator_version": "0.1.0",
+  "deterministic": true,
+  "evaluation_release_date": "2026-07-24",
+  "evaluation_splits": {
+    "train": {
+      "candidate_count": 126,
+      "record_count": 7560
+    },
+    "validation": {
+      "candidate_count": 27,
+      "record_count": 1620
+    }
+  },
+  "feature_pipeline_version": "0.1.0",
+  "feature_schema_version": "job-rec-features-v1",
+  "intended_use": [
+    "existing_baseline_reference_for_phase_8",
+    "laravel_python_matching_parity_evidence",
+    "train_and_validation_model_comparison_only"
+  ],
+  "laravel_matching_version": "2.0",
+  "limitations": [
+    "synthetic_data",
+    "adapter_mapping_gap",
+    "candidate_local_dynamic_tfidf",
+    "validation_has_27_candidate_groups",
+    "parity_does_not_establish_production_quality",
+    "locked_test_not_evaluated",
+    "no_trained_model"
+  ],
+  "matching_adapter_version": "synthetic-to-laravel-matching-v1",
+  "metric_definitions": {
+    "HitRate@5": "one when a relevance >= 2 occurs in top 5, else zero",
+    "MRR": "first rank with relevance >= 2; zero when none",
+    "NDCG@10": "graded gain 2^relevance_label - 1, cutoff 10",
+    "NDCG@5": "graded gain 2^relevance_label - 1, cutoff 5",
+    "Precision@5": "binary relevance >= 2, fixed denominator 5",
+    "Recall@5": "binary relevance >= 2; zero when no relevant jobs"
+  },
+  "output_files": [
+    {
+      "path": "services/ml-recommendation/data/baselines/v1/train_predictions.jsonl",
+      "record_count": 7560,
+      "sha256": "2669fada65567136970ec22f60005442362e98d7b5376b6d8e47294468c39f5e",
+      "size_bytes": 5014918
+    },
+    {
+      "path": "services/ml-recommendation/data/baselines/v1/validation_predictions.jsonl",
+      "record_count": 1620,
+      "sha256": "8a963a733021e2fe03e6b5bfc20fea156afb1b538c5514776f59e144cb8e271b",
+      "size_bytes": 1074589
+    },
+    {
+      "path": "services/ml-recommendation/data/baselines/v1/metrics.json",
+      "record_count": 1,
+      "sha256": "4bffef2b5e2c2ba16ccf92686465e45533dfc075b8ab56bc2544af1fccd75778",
+      "size_bytes": 9747
+    },
+    {
+      "path": "services/ml-recommendation/data/baselines/v1/parity.json",
+      "record_count": 1,
+      "sha256": "ee246b0125d9ca10e7c93a1f61fc33d5adb1117b8546fe576480f456f8ab96ef",
+      "size_bytes": 1271
+    },
+    {
+      "path": "services/ml-recommendation/data/baselines/v1/BASELINE_REPORT.md",
+      "record_count": 1,
+      "sha256": "8bee97d1cee75115fda0596b28d066565b0b63fd1bf08814c099c5c93abcca21",
+      "size_bytes": 9655
+    }
+  ],
+  "parity_policy": {
+    "pair_coverage_required": "100%",
+    "rank_match_required": true,
+    "score_and_component_tolerance": 0.01
+  },
+  "production_matching_sources": [
+    {
+      "git_blob": "3bda9b59b7335f37a293a15d94fb1370a463e6ba",
+      "path": "app/Services/MatchingService.php",
+      "sha256": "b8f7df3f8f9189467ab73384498aa1f2aee725f15971bba4c07e67bd3b7eabee",
+      "size_bytes": 21584
+    },
+    {
+      "git_blob": "7e94cf855400e8aada1b12b78c755b041dde05cc",
+      "path": "app/Services/CandidateExperienceCalculator.php",
+      "sha256": "86e819ec94ab76a368735338c92f0708f85128ec489e7b58c94ead7ee22c4e87",
+      "size_bytes": 1675
+    },
+    {
+      "git_blob": "e3d408534854922685f1d502144464d6322fa442",
+      "path": "app/Services/EducationLevelNormalizer.php",
+      "sha256": "6ddbc82ba8fd1ceeed128cd68a86f941b8cdbf611dea6966d0a4afbb8ec04d56",
+      "size_bytes": 1330
+    },
+    {
+      "git_blob": "badf24fc55abf5091aaabefc6887d78240c83af6",
+      "path": "app/Enums/EducationLevel.php",
+      "sha256": "00935de9c5a8ffee30739b4007e23cf1734ab898a5161784591dcd24535fd40a",
+      "size_bytes": 476
+    },
+    {
+      "git_blob": "0e324632205ee7e448bd0ee4f5ea055fb99c27b6",
+      "path": "app/Enums/JobSkillRequirementType.php",
+      "sha256": "3109acb30206414eb5f8b5dfe05e5ab38ac9f203234a31b4090a9d0298736c43",
+      "size_bytes": 887
+    },
+    {
+      "git_blob": "156a4a5f806ee3bc5424ef9c633274085f14168c",
+      "path": "config/matching.php",
+      "sha256": "766f9d734c6297d971e22aa2da5b29549e602f45d1b9bb84a146644a087838fc",
+      "size_bytes": 410
+    }
+  ],
+  "python_parity_version": "matching-v2-parity-v1",
+  "ranking_metrics_version": "ranking-metrics-v1",
+  "relevance_threshold": 2,
+  "reproducibility_command": "evaluate-existing-baselines --candidates-file services/ml-recommendation/data/synthetic/v1/candidates.jsonl --jobs-file services/ml-recommendation/data/synthetic/v1/jobs.jsonl --train-file services/ml-recommendation/data/splits/v1/train.jsonl --validation-file services/ml-recommendation/data/splits/v1/validation.jsonl --assignments-file services/ml-recommendation/data/splits/v1/assignments.jsonl --feature-schema-file services/ml-recommendation/data/features/v1/feature_schema.json --split-manifest services/ml-recommendation/data/splits/v1/manifest.json --test-lock-file services/ml-recommendation/data/splits/v1/test_lock.json --output-dir services/ml-recommendation/data/baselines/v1 --php-executable php --laravel-root . --source-revision 6cd51f733d5197e0c3f6b7dfb3711c2860ffef71 --architecture-sha256 60EB219152CE26B525735ED65564F667D403BF438F29000B4ECE90D65950553F",
+  "skills_baseline_version": "skills-weighted-v1",
+  "source_dataset_schema_version": "synthetic-job-rec-schema-v1",
+  "source_dataset_version": "synthetic-job-rec-1.0.0",
+  "source_files": [
+    {
+      "path": "services/ml-recommendation/data/synthetic/v1/candidates.jsonl",
+      "record_count": 180,
+      "records_parsed": true,
+      "sha256": "5d0ddbe461437afd80576e4b36044c94e083adfe2d232c05e4653a9fa54ef320",
+      "size_bytes": 131908,
+      "usage": "parsed_adapter_source"
+    },
+    {
+      "path": "services/ml-recommendation/data/synthetic/v1/jobs.jsonl",
+      "record_count": 180,
+      "records_parsed": true,
+      "sha256": "7aa398a1957c8851fb4fea4743f953be3f915177ae19266970ccf2d61440e74d",
+      "size_bytes": 120346,
+      "usage": "parsed_adapter_source"
+    },
+    {
+      "path": "services/ml-recommendation/data/splits/v1/train.jsonl",
+      "record_count": 7560,
+      "records_parsed": true,
+      "sha256": "d87095055d16ced57461eb8d4543bf4c3863b0ebe1771e5b3528eaf290b98c3d",
+      "size_bytes": 5137764,
+      "usage": "parsed_train_evaluation"
+    },
+    {
+      "path": "services/ml-recommendation/data/splits/v1/validation.jsonl",
+      "record_count": 1620,
+      "records_parsed": true,
+      "sha256": "a8cc27158bc126b11e93a0eefdf6a82a0e3f88e8d82cf9e9a0bae0491b04da7e",
+      "size_bytes": 1100505,
+      "usage": "parsed_validation_evaluation"
+    },
+    {
+      "path": "services/ml-recommendation/data/splits/v1/assignments.jsonl",
+      "record_count": 180,
+      "records_parsed": true,
+      "sha256": "ba5c075f244c8d65200316e44a4b0bb68f579aa6e2b0546e3527e17db98bc502",
+      "size_bytes": 14763,
+      "usage": "parsed_structural_verification"
+    },
+    {
+      "path": "services/ml-recommendation/data/features/v1/feature_schema.json",
+      "record_count": 1,
+      "records_parsed": true,
+      "sha256": "aeb260b25f34b55b7164b215e613a0b4327df33ee65af95abc904045849ce4a0",
+      "size_bytes": 45406,
+      "usage": "parsed_schema_verification"
+    },
+    {
+      "path": "services/ml-recommendation/data/splits/v1/manifest.json",
+      "record_count": 1,
+      "records_parsed": true,
+      "sha256": "f032847615dea42b28d41f8d47f2627df3d030399c8690df8747bb1ae26dbd0a",
+      "size_bytes": 6057,
+      "usage": "parsed_split_verification"
+    },
+    {
+      "path": "services/ml-recommendation/data/splits/v1/test_lock.json",
+      "record_count": 1,
+      "records_parsed": true,
+      "sha256": "00f938c9f888156022d221a9fb3eab7c76e8d4316803d175470355a84f33ec73",
+      "size_bytes": 1116,
+      "usage": "parsed_lock_verification"
+    },
+    {
+      "path": "services/ml-recommendation/data/splits/v1/test.jsonl",
+      "record_count": 1620,
+      "records_parsed": false,
+      "sha256": "79fcb93b232b63482a9c26d1d0caa660289b7b798776c09f0945865ca6741a05",
+      "size_bytes": 1099011,
+      "usage": "hash_verification_only"
+    }
+  ],
+  "source_revision": "6cd51f733d5197e0c3f6b7dfb3711c2860ffef71",
+  "split_version": "candidate-group-split-v1",
+  "test_evaluated": false
+}
