@@ -18,14 +18,13 @@ class EducationController extends Controller
 {
     public function __construct(
         private readonly ProfileService $profileService,
-    ) {
-    }
+    ) {}
 
     public function index(EducationIndexRequest $request): JsonResponse
     {
         return ApiResponse::success(
             data: EducationResource::collection($this->profileService->getEducation($request->user())),
-            message: 'Education records retrieved successfully.',
+            message: __('profile.education_retrieved'),
         );
     }
 
@@ -33,7 +32,7 @@ class EducationController extends Controller
     {
         return ApiResponse::success(
             data: new EducationResource($this->profileService->createEducation($request->user(), $request->validated())),
-            message: 'Education record created successfully.',
+            message: __('profile.education_created'),
             status: 201,
         );
     }
@@ -42,7 +41,7 @@ class EducationController extends Controller
     {
         return ApiResponse::success(
             data: new EducationResource($this->profileService->getEducationRecord($request->user(), $education)),
-            message: 'Education record retrieved successfully.',
+            message: __('profile.education_item_retrieved'),
         );
     }
 
@@ -50,7 +49,7 @@ class EducationController extends Controller
     {
         return ApiResponse::success(
             data: new EducationResource($this->profileService->updateEducation($request->user(), $education, $request->validated())),
-            message: 'Education record updated successfully.',
+            message: __('profile.education_updated'),
         );
     }
 
@@ -60,7 +59,7 @@ class EducationController extends Controller
 
         return ApiResponse::success(
             data: null,
-            message: 'Education record deleted successfully.',
+            message: __('profile.education_deleted'),
         );
     }
 }

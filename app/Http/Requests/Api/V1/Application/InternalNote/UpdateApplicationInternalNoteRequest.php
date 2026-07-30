@@ -32,6 +32,6 @@ class UpdateApplicationInternalNoteRequest extends InternalNoteRequest
 
     private function plainTextRule(): \Closure
     {
-        return fn (string $attribute, mixed $value, \Closure $fail) => is_string($value) && strip_tags($value) !== $value ? $fail('The body must contain plain text only.') : null;
+        return fn (string $attribute, mixed $value, \Closure $fail) => is_string($value) && strip_tags($value) !== $value ? $fail(__('validation.custom_messages.plain_text_only')) : null;
     }
 }

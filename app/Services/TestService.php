@@ -138,7 +138,7 @@ class TestService
 
             if (! $test->is_active) {
                 throw ValidationException::withMessages([
-                    'test_id' => ['Only active tests can be assigned.'],
+                    'test_id' => [__('tests.active_only')],
                 ]);
             }
 
@@ -151,7 +151,7 @@ class TestService
 
             if ($duplicateAssignmentExists) {
                 throw ValidationException::withMessages([
-                    'test_id' => ['This test has already been assigned to the application.'],
+                    'test_id' => [__('tests.duplicate_assignment')],
                 ]);
             }
 
@@ -338,12 +338,12 @@ class TestService
 
             if (! $attempt instanceof TestAttempt) {
                 throw ValidationException::withMessages([
-                    'assignment_id' => ['You must start the test before submitting it.'],
+                    'assignment_id' => [__('tests.must_start')],
                 ]);
             }
 
             if ($attempt->submitted_at !== null) {
-                throw new ConflictHttpException('This test attempt has already been submitted and can no longer be modified.');
+                throw new ConflictHttpException(__('tests.already_submitted'));
             }
 
             $lockedTest = Test::query()->lockForUpdate()->findOrFail($lockedAssignment->test_id);
@@ -476,9 +476,7 @@ class TestService
     public function ensureTestIsMutable(Test $test): void
     {
         if ($test->applicationTestAssignments()->exists()) {
-            throw new TestScorePolicyException(
-                'This test score configuration can no longer be modified because the test has already been assigned.',
-                'TEST_SCORE_CONFIGURATION_IMMUTABLE',
+            throw new TestScorePolicyException(__('domain_errors.TEST_SCORE_CONFIGURATION_IMMUTABLE'), 'TEST_SCORE_CONFIGURATION_IMMUTABLE',
                 409,
             );
         }

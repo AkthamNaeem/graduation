@@ -70,7 +70,7 @@ class ApplicationWorkflowService
     {
         if ($user->role !== UserRole::JOB_SEEKER) {
             throw ValidationException::withMessages([
-                'user' => ['Only job seekers can apply to jobs.'],
+                'user' => [__('jobs.job_seeker_only')],
             ]);
         }
 
@@ -86,7 +86,7 @@ class ApplicationWorkflowService
 
         if (! $profile instanceof JobSeekerProfile) {
             throw ValidationException::withMessages([
-                'job_seeker_profile' => ['A job seeker profile is required before applying.'],
+                'job_seeker_profile' => [__('jobs.profile_required')],
             ]);
         }
 
@@ -127,16 +127,14 @@ class ApplicationWorkflowService
     {
         if ($jobPosting->status !== 'open') {
             throw ValidationException::withMessages([
-                'job_posting_id' => ['Applications are only allowed for open jobs.'],
+                'job_posting_id' => [__('jobs.open_only')],
             ]);
         }
 
         $this->companyAccessService->assertRecruitmentAvailable($jobPosting);
 
         if ($jobPosting->isApplicationDeadlinePassed()) {
-            throw new JobPostingOperationException(
-                'The application deadline for this job has passed.',
-                'JOB_APPLICATION_DEADLINE_PASSED',
+            throw new JobPostingOperationException(__('domain_errors.JOB_APPLICATION_DEADLINE_PASSED'), 'JOB_APPLICATION_DEADLINE_PASSED',
                 409,
             );
         }
@@ -145,9 +143,7 @@ class ApplicationWorkflowService
     public function changeStatus(User $user, JobApplication $jobApplication, string $targetStatusSlug, ?string $note = null): JobApplication
     {
         if ($targetStatusSlug === 'need_more_information') {
-            throw new ApplicationInformationRequestException(
-                'Use the information request endpoint to request additional information.',
-                'INFORMATION_REQUEST_ENDPOINT_REQUIRED',
+            throw new ApplicationInformationRequestException(__('domain_errors.INFORMATION_REQUEST_ENDPOINT_REQUIRED'), 'INFORMATION_REQUEST_ENDPOINT_REQUIRED',
             );
         }
         if ($targetStatusSlug === self::STATUS_WITHDRAWN) {
@@ -164,9 +160,7 @@ class ApplicationWorkflowService
 
             $fromStatus = $application->applicationStatus;
             if ($fromStatus->slug === 'need_more_information') {
-                throw new ApplicationInformationRequestException(
-                    'Submit or cancel the open information request before changing this application status.',
-                    'INFORMATION_RESPONSE_REQUIRED',
+                throw new ApplicationInformationRequestException(__('domain_errors.INFORMATION_RESPONSE_REQUIRED'), 'INFORMATION_RESPONSE_REQUIRED',
                 );
             }
             $this->validateTransition($fromStatus->slug, $targetStatusSlug);
@@ -273,7 +267,7 @@ class ApplicationWorkflowService
     {
         if (in_array($currentSlug, self::TERMINAL_STATUSES, true)) {
             throw ValidationException::withMessages([
-                'status' => ['Terminal application states cannot be changed.'],
+                'status' => [__('applications.terminal_immutable')],
             ]);
         }
 
@@ -281,7 +275,10 @@ class ApplicationWorkflowService
 
         if (! in_array($targetSlug, $allowedTransitions, true)) {
             throw ValidationException::withMessages([
-                'status' => ["The transition from {$currentSlug} to {$targetSlug} is not allowed."],
+                'status' => [__('validation_domain.application_transition', [
+                    'from' => $currentSlug,
+                    'to' => $targetSlug,
+                ])],
             ]);
         }
     }
@@ -313,7 +310,7 @@ class ApplicationWorkflowService
     {
         $from = $application->applicationStatus;
         if ($from->slug !== 'need_more_information') {
-            throw new ApplicationInformationRequestException('The application is not awaiting requested information.', 'APPLICATION_INFORMATION_REQUEST_NOT_PENDING');
+            throw new ApplicationInformationRequestException(__('domain_errors.APPLICATION_INFORMATION_REQUEST_NOT_PENDING'), 'APPLICATION_INFORMATION_REQUEST_NOT_PENDING');
         }
         $this->transitionInformationStatus($actor, $application, $from, $this->statusBySlug('under_review'));
     }
@@ -322,7 +319,7 @@ class ApplicationWorkflowService
     {
         $from = $application->applicationStatus;
         if ($from->slug !== 'need_more_information') {
-            throw new ApplicationInformationRequestException('The information request is no longer pending.', 'APPLICATION_INFORMATION_REQUEST_NOT_PENDING');
+            throw new ApplicationInformationRequestException(__('domain_errors.APPLICATION_INFORMATION_REQUEST_NOT_PENDING'), 'APPLICATION_INFORMATION_REQUEST_NOT_PENDING');
         }
         $target = ApplicationStatus::query()->where('slug', $targetStatus)->first() ?? $this->statusBySlug('under_review');
         $this->transitionInformationStatus($actor, $application, $from, $target, $note);
@@ -344,7 +341,7 @@ class ApplicationWorkflowService
 
         if ($exists) {
             throw ValidationException::withMessages([
-                'job_posting_id' => ['You have already applied to this job.'],
+                'job_posting_id' => [__('jobs.already_applied')],
             ]);
         }
     }
@@ -386,21 +383,21 @@ class ApplicationWorkflowService
     {
         $cvId = $requestedId === null ? $profile->primary_cv_file_id : (int) $requestedId;
         if ($cvId === null) {
-            throw new CVLifecycleException('Select a CV or set a primary CV before applying.', 'PRIMARY_CV_REQUIRED', 422);
+            throw new CVLifecycleException(__('domain_errors.PRIMARY_CV_REQUIRED'), 'PRIMARY_CV_REQUIRED', 422);
         }
 
         $cvFile = CVFile::query()->lockForUpdate()->find($cvId);
         if (! $cvFile instanceof CVFile || $cvFile->user_id !== $user->id) {
-            throw new CVLifecycleException('The selected CV does not belong to the authenticated job seeker.', 'CV_NOT_OWNED', 403);
+            throw new CVLifecycleException(__('domain_errors.CV_NOT_OWNED'), 'CV_NOT_OWNED', 403);
         }
         if ($cvFile->archived_at !== null) {
-            throw new CVLifecycleException('Archived CVs cannot be used for new applications.', 'CV_ARCHIVED');
+            throw new CVLifecycleException(__('domain_errors.CV_ARCHIVED'), 'CV_ARCHIVED');
         }
         if (! $this->privateStorage->exists($cvFile->disk, $cvFile->stored_path)) {
-            throw new CVLifecycleException('The selected CV file is unavailable.', 'CV_FILE_UNAVAILABLE', 404);
+            throw new CVLifecycleException(__('domain_errors.CV_FILE_UNAVAILABLE'), 'CV_FILE_UNAVAILABLE', 404);
         }
         if (! $cvFile->isUsableForApplication()) {
-            throw new CVLifecycleException('The selected CV cannot be used for an application.', 'CV_NOT_USABLE_FOR_APPLICATION');
+            throw new CVLifecycleException(__('domain_errors.CV_NOT_USABLE_FOR_APPLICATION'), 'CV_NOT_USABLE_FOR_APPLICATION');
         }
 
         return $cvFile;

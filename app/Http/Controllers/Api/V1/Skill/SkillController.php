@@ -31,7 +31,7 @@ class SkillController extends Controller
 
         return ApiResponse::success(
             data: SkillResource::collection($skills),
-            message: 'Skills retrieved successfully.',
+            message: __('admin.skills'),
         );
     }
 }

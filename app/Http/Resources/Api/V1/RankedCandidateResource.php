@@ -4,6 +4,7 @@ namespace App\Http\Resources\Api\V1;
 
 use App\Models\ApplicationStatus;
 use App\Models\JobSeekerProfile;
+use App\Support\Recommendation\RecommendationReasonTranslator;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -30,7 +31,10 @@ class RankedCandidateResource extends JsonResource
             'matched_required_skills' => $this->resource['matched_required_skills'],
             'missing_required_skills' => $this->resource['missing_required_skills'],
             'matched_nice_to_have_skills' => $this->resource['matched_nice_to_have_skills'],
-            'reasons' => $this->resource['reasons'],
+            'reasons' => collect($this->resource['reasons'])
+                ->map(fn (array $reason): array => RecommendationReasonTranslator::translate($reason))
+                ->values()
+                ->all(),
             'job_seeker_profile' => new JobSeekerProfileResource($jobSeekerProfile),
         ];
     }

@@ -102,9 +102,7 @@ class CompanyMembershipService
             $profile = $this->lockedMember($company, $target);
             $this->assertCanManageTarget($actor, $profile);
             if ($profile->membership_status === CompanyMembershipStatus::REMOVED) {
-                throw new CompanyManagementException(
-                    'A removed member can only return through a new invitation.',
-                    'COMPANY_MEMBER_INACTIVE',
+                throw new CompanyManagementException(__('domain_errors.COMPANY_MEMBER_INACTIVE'), 'COMPANY_MEMBER_INACTIVE',
                 );
             }
             if ($profile->company_role === CompanyRole::OWNER && $status !== CompanyMembershipStatus::ACTIVE) {
@@ -180,17 +178,13 @@ class CompanyMembershipService
 
             if (! $target instanceof EmployerProfile
                 || $target->membership_status !== CompanyMembershipStatus::ACTIVE) {
-                throw new CompanyManagementException(
-                    'The ownership target must be an active member of this company.',
-                    'COMPANY_OWNERSHIP_TARGET_INVALID',
+                throw new CompanyManagementException(__('domain_errors.COMPANY_OWNERSHIP_TARGET_INVALID'), 'COMPANY_OWNERSHIP_TARGET_INVALID',
                 );
             }
 
             $currentOwner = $this->currentOwnerForTransfer($actor, $company, $data);
             if ($currentOwner->id === $target->id) {
-                throw new CompanyManagementException(
-                    'The selected member already owns the company.',
-                    'COMPANY_OWNERSHIP_TARGET_INVALID',
+                throw new CompanyManagementException(__('domain_errors.COMPANY_OWNERSHIP_TARGET_INVALID'), 'COMPANY_OWNERSHIP_TARGET_INVALID',
                 );
             }
 
@@ -198,9 +192,7 @@ class CompanyMembershipService
                 $data['previous_owner_role'] ?? CompanyRole::COMPANY_ADMIN->value,
             );
             if ($previousRole === CompanyRole::OWNER) {
-                throw new CompanyManagementException(
-                    'The previous owner must receive a non-owner role.',
-                    'COMPANY_OWNERSHIP_TARGET_INVALID',
+                throw new CompanyManagementException(__('domain_errors.COMPANY_OWNERSHIP_TARGET_INVALID'), 'COMPANY_OWNERSHIP_TARGET_INVALID',
                 );
             }
 
@@ -249,9 +241,7 @@ class CompanyMembershipService
             ->first();
 
         if (! $profile instanceof EmployerProfile) {
-            throw new CompanyManagementException(
-                'The company member could not be found.',
-                'COMPANY_MEMBER_NOT_FOUND',
+            throw new CompanyManagementException(__('domain_errors.COMPANY_MEMBER_NOT_FOUND'), 'COMPANY_MEMBER_NOT_FOUND',
                 404,
             );
         }
@@ -270,18 +260,14 @@ class CompanyMembershipService
 
         $actorMembership = $this->permissionService->activeMembership($actor);
         if (! $actorMembership instanceof EmployerProfile) {
-            throw new CompanyManagementException(
-                'An active company membership is required.',
-                'COMPANY_MEMBER_INACTIVE',
+            throw new CompanyManagementException(__('domain_errors.COMPANY_MEMBER_INACTIVE'), 'COMPANY_MEMBER_INACTIVE',
                 403,
             );
         }
 
         if ($actorMembership->company_role === CompanyRole::COMPANY_ADMIN
             && ($target->company_role === CompanyRole::OWNER || $newRole === CompanyRole::OWNER)) {
-            throw new CompanyManagementException(
-                'Company administrators cannot manage owner memberships.',
-                'COMPANY_MEMBER_ROLE_FORBIDDEN',
+            throw new CompanyManagementException(__('domain_errors.COMPANY_MEMBER_ROLE_FORBIDDEN'), 'COMPANY_MEMBER_ROLE_FORBIDDEN',
                 403,
             );
         }
@@ -289,17 +275,13 @@ class CompanyMembershipService
         if ($actorMembership->company_role === CompanyRole::OWNER
             && $target->company_role === CompanyRole::OWNER
             && $actorMembership->id !== $target->id) {
-            throw new CompanyManagementException(
-                'Ownership changes must use the ownership transfer operation.',
-                'COMPANY_OWNER_TRANSFER_REQUIRED',
+            throw new CompanyManagementException(__('domain_errors.COMPANY_OWNER_TRANSFER_REQUIRED'), 'COMPANY_OWNER_TRANSFER_REQUIRED',
                 409,
             );
         }
 
         if ($newRole !== null && ! $actorMembership->company_role->canAssign($newRole)) {
-            throw new CompanyManagementException(
-                'Your company role cannot assign the requested role.',
-                'COMPANY_MEMBER_ROLE_FORBIDDEN',
+            throw new CompanyManagementException(__('domain_errors.COMPANY_MEMBER_ROLE_FORBIDDEN'), 'COMPANY_MEMBER_ROLE_FORBIDDEN',
                 403,
             );
         }
@@ -316,9 +298,7 @@ class CompanyMembershipService
             ->exists();
 
         if (! $exists) {
-            throw new CompanyManagementException(
-                'The company must retain at least one active owner.',
-                'COMPANY_LAST_OWNER_REQUIRED',
+            throw new CompanyManagementException(__('domain_errors.COMPANY_LAST_OWNER_REQUIRED'), 'COMPANY_LAST_OWNER_REQUIRED',
             );
         }
     }
@@ -343,9 +323,7 @@ class CompanyMembershipService
 
         $owner = $query->orderBy('id')->lockForUpdate()->first();
         if (! $owner instanceof EmployerProfile) {
-            throw new CompanyManagementException(
-                'An active current owner is required for ownership transfer.',
-                'COMPANY_LAST_OWNER_REQUIRED',
+            throw new CompanyManagementException(__('domain_errors.COMPANY_LAST_OWNER_REQUIRED'), 'COMPANY_LAST_OWNER_REQUIRED',
             );
         }
 

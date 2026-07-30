@@ -3,10 +3,12 @@
 namespace App\Http\Resources\Api\V1;
 
 use App\Http\Resources\Api\V1\Concerns\ResolvesResourceViewer;
+use App\Models\ApplicationStatusHistory;
+use App\Support\SystemGeneratedText;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin \App\Models\ApplicationStatusHistory */
+/** @mixin ApplicationStatusHistory */
 class ApplicationStatusHistoryResource extends JsonResource
 {
     use ResolvesResourceViewer;
@@ -26,7 +28,7 @@ class ApplicationStatusHistoryResource extends JsonResource
             'from_application_status_id' => $this->when($manager, $this->from_application_status_id),
             'to_application_status_id' => $this->when($manager, $this->to_application_status_id),
             'changed_by_user_id' => $this->when($manager, $this->changed_by_user_id),
-            'note' => $this->when($manager, $this->note),
+            'note' => $this->when($manager, SystemGeneratedText::resolve($this->note)),
             'changed_by' => $this->when(
                 $manager && $this->relationLoaded('changedBy'),
                 fn (): ?array => $this->changedBy === null ? null : [

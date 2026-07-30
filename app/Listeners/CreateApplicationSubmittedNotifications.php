@@ -40,8 +40,8 @@ class CreateApplicationSubmittedNotifications extends IdempotentNotificationList
             fn () => $this->notificationService->createForUser(
                 $candidate,
                 'application.submitted',
-                'Application submitted',
-                "Your application for {$job->title} was submitted successfully.",
+                __('notifications.application_submitted_title'),
+                __('notifications.application_submitted_body', ['job' => $job->title]),
                 $data,
             ),
         );
@@ -61,8 +61,8 @@ class CreateApplicationSubmittedNotifications extends IdempotentNotificationList
                 fn () => $this->notificationService->createForUser(
                     $employer,
                     'application.received',
-                    'New application received',
-                    "A candidate applied for {$job->title}.",
+                    __('notifications.application_received_title'),
+                    __('notifications.application_received_body', ['job' => $job->title]),
                     $data,
                 ),
             );

@@ -176,7 +176,7 @@ class AppServiceProvider extends ServiceProvider
                 ->by($this->otpRateLimitKey($request))
                 ->response(
                     fn (Request $request, array $headers) => ApiResponse::error(
-                        message: 'Too many email verification attempts. Please try again later.',
+                        message: __('auth.verify_rate_limit'),
                         status: 429,
                         code: 'OTP_RATE_LIMIT_EXCEEDED',
                     )->withHeaders($headers),
@@ -188,7 +188,7 @@ class AppServiceProvider extends ServiceProvider
                 ->by($this->otpRateLimitKey($request))
                 ->response(
                     fn (Request $request, array $headers) => ApiResponse::error(
-                        message: 'Too many verification code requests. Please try again later.',
+                        message: __('auth.resend_rate_limit'),
                         status: 429,
                         code: 'OTP_RATE_LIMIT_EXCEEDED',
                     )->withHeaders($headers),
@@ -200,7 +200,7 @@ class AppServiceProvider extends ServiceProvider
                 ->by($this->otpRateLimitKey($request))
                 ->response(
                     fn (Request $request, array $headers) => ApiResponse::error(
-                        message: 'Too many password reset requests. Please try again later.',
+                        message: __('auth.forgot_rate_limit'),
                         status: 429,
                         code: 'PASSWORD_RESET_RATE_LIMIT_EXCEEDED',
                     )->withHeaders($headers),
@@ -212,7 +212,7 @@ class AppServiceProvider extends ServiceProvider
                 ->by($this->otpRateLimitKey($request))
                 ->response(
                     fn (Request $request, array $headers) => ApiResponse::error(
-                        message: 'Too many password reset attempts. Please try again later.',
+                        message: __('auth.reset_rate_limit'),
                         status: 429,
                         code: 'PASSWORD_RESET_RATE_LIMIT_EXCEEDED',
                     )->withHeaders($headers),

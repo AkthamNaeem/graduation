@@ -18,7 +18,7 @@ class HomeController extends Controller
     {
         return ApiResponse::success(
             data: $this->homeService->get($request->user('sanctum')),
-            message: 'Home data retrieved successfully.',
+            message: __('home.retrieved'),
         );
     }
 }

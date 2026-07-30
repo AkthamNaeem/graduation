@@ -25,7 +25,7 @@ class CreateInterviewEvaluatedNotification extends IdempotentNotificationListene
             'interview',
             $interview->id,
             $candidate,
-            fn () => $this->notificationService->createForUser($candidate, 'interview.evaluated', 'Interview evaluated', "Your interview for {$interview->jobApplication->jobPosting->title} has been evaluated.", [
+            fn () => $this->notificationService->createForUser($candidate, 'interview.evaluated', __('notifications.interview_evaluated_title'), __('notifications.interview_evaluated_body', ['job' => $interview->jobApplication->jobPosting->title]), [
                 'interview_id' => $interview->id,
                 'application_id' => $interview->job_application_id,
                 'job_id' => $interview->jobApplication->job_posting_id,

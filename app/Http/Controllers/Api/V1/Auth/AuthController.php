@@ -28,7 +28,7 @@ class AuthController extends Controller
 
         if ($result['status'] === AuthService::LOGIN_INVALID) {
             return ApiResponse::error(
-                message: 'Invalid credentials.',
+                message: __('auth.failed'),
                 errors: ['email' => [trans('auth.failed')]],
                 status: 401,
             );
@@ -36,8 +36,8 @@ class AuthController extends Controller
 
         if ($result['status'] === AuthService::LOGIN_BLOCKED) {
             return ApiResponse::error(
-                message: 'Your account is not active. Please contact support.',
-                errors: ['status' => ['Only active users can login.']],
+                message: __('auth.inactive_support'),
+                errors: ['status' => [__('auth.inactive')]],
                 status: 403,
                 code: 'USER_SUSPENDED',
             );
@@ -45,8 +45,8 @@ class AuthController extends Controller
 
         if ($result['status'] === AuthService::LOGIN_UNVERIFIED) {
             return ApiResponse::error(
-                message: 'Email verification is required before login.',
-                errors: ['email' => ['Complete OTP verification to continue.']],
+                message: __('auth.email_verification_required'),
+                errors: ['email' => [__('auth.verification_pending')]],
                 status: 403,
                 code: 'EMAIL_NOT_VERIFIED',
             );
@@ -58,7 +58,7 @@ class AuthController extends Controller
                 'token_type' => 'Bearer',
                 'user' => new UserResource($result['user']),
             ],
-            message: 'Login successful.',
+            message: __('auth.login_success'),
         );
     }
 
@@ -70,7 +70,7 @@ class AuthController extends Controller
 
         return ApiResponse::success(
             data: $this->passwordResetOtpService->getMetadata(),
-            message: 'If an account with that email exists, a password reset code is available.',
+            message: __('auth.forgot_password'),
         );
     }
 
@@ -85,7 +85,7 @@ class AuthController extends Controller
 
         return ApiResponse::success(
             data: null,
-            message: 'Password reset successfully.',
+            message: __('auth.password_reset'),
         );
     }
 
@@ -95,7 +95,7 @@ class AuthController extends Controller
 
         return ApiResponse::success(
             data: new UserResource($user),
-            message: 'Authenticated user retrieved successfully.',
+            message: __('auth.user_retrieved'),
         );
     }
 
@@ -105,7 +105,7 @@ class AuthController extends Controller
 
         return ApiResponse::success(
             data: null,
-            message: 'Logout successful.',
+            message: __('auth.logout_success'),
         );
     }
 
@@ -115,15 +115,15 @@ class AuthController extends Controller
 
         if (! $this->authService->changePassword($request->user(), $data['current_password'], $data['password'])) {
             return ApiResponse::error(
-                message: 'Current password is incorrect.',
-                errors: ['current_password' => ['The current password is incorrect.']],
+                message: __('auth.current_password_incorrect_short'),
+                errors: ['current_password' => [__('auth.current_password_incorrect')]],
                 status: 422,
             );
         }
 
         return ApiResponse::success(
             data: null,
-            message: 'Password changed successfully.',
+            message: __('auth.password_changed'),
         );
     }
 
@@ -133,7 +133,7 @@ class AuthController extends Controller
 
         return ApiResponse::success(
             data: null,
-            message: 'Logged out from all devices successfully.',
+            message: __('auth.logout_all_success'),
         );
     }
 }

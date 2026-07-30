@@ -26,7 +26,7 @@ class CreateInterviewCancelledNotification extends IdempotentNotificationListene
             'interview',
             $event->interviewId,
             $candidate,
-            fn () => $this->notificationService->createForUser($candidate, 'interview.cancelled', 'Interview cancelled', $event->candidateMessage ?: "Your interview for {$job->title} has been cancelled.", [
+            fn () => $this->notificationService->createForUser($candidate, 'interview.cancelled', __('notifications.interview_cancelled_title'), $event->candidateMessage ?: __('notifications.interview_cancelled_body', ['job' => $job->title]), [
                 'application_id' => $application->id,
                 'job_id' => $job->id,
                 'job_title' => $job->title,

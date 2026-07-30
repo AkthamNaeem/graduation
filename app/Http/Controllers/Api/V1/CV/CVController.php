@@ -36,7 +36,7 @@ class CVController extends Controller
     {
         return ApiResponse::success(
             data: CVFileResource::collection($this->cvService->list($request->user(), $request->integer('per_page', 15))),
-            message: 'CV files retrieved successfully.',
+            message: __('cv.list_retrieved'),
         );
     }
 
@@ -49,29 +49,29 @@ class CVController extends Controller
                 $request->validated('version_label'),
                 $request->boolean('make_primary'),
             )),
-            message: 'CV uploaded successfully. Parsing has been queued.',
+            message: __('cv.uploaded'),
             status: 201,
         );
     }
 
     public function update(UpdateCVMetadataRequest $request, CVFile $cvFile): JsonResponse
     {
-        return ApiResponse::success(new CVFileResource($this->cvService->updateLabel($request->user(), $cvFile, $request->validated('version_label'))), 'CV metadata updated successfully.');
+        return ApiResponse::success(new CVFileResource($this->cvService->updateLabel($request->user(), $cvFile, $request->validated('version_label'))), __('cv.metadata_updated'));
     }
 
     public function makePrimary(CVLifecycleRequest $request, CVFile $cvFile): JsonResponse
     {
-        return ApiResponse::success(new CVFileResource($this->cvService->makePrimary($request->user(), $cvFile)), 'Primary CV updated successfully.');
+        return ApiResponse::success(new CVFileResource($this->cvService->makePrimary($request->user(), $cvFile)), __('cv.primary_updated'));
     }
 
     public function archive(ArchiveCVRequest $request, CVFile $cvFile): JsonResponse
     {
-        return ApiResponse::success(new CVFileResource($this->cvService->archive($request->user(), $cvFile, $request->validated('replacement_cv_file_id'))), 'CV archived successfully.');
+        return ApiResponse::success(new CVFileResource($this->cvService->archive($request->user(), $cvFile, $request->validated('replacement_cv_file_id'))), __('cv.archived'));
     }
 
     public function restore(CVLifecycleRequest $request, CVFile $cvFile): JsonResponse
     {
-        return ApiResponse::success(new CVFileResource($this->cvService->restore($request->user(), $cvFile)), 'CV restored successfully.');
+        return ApiResponse::success(new CVFileResource($this->cvService->restore($request->user(), $cvFile)), __('cv.restored'));
     }
 
     public function download(CVLifecycleRequest $request, CVFile $cvFile): StreamedResponse
@@ -85,7 +85,7 @@ class CVController extends Controller
     {
         return ApiResponse::success(
             data: new CVFileResource($this->cvService->get($request->user(), $cvFile)),
-            message: 'CV file retrieved successfully.',
+            message: __('cv.retrieved'),
         );
     }
 
@@ -93,7 +93,7 @@ class CVController extends Controller
     {
         return ApiResponse::success(
             data: new CVParsingResultResource($this->cvService->getParsedResult($request->user(), $cvFile)),
-            message: 'CV parsing result retrieved successfully.',
+            message: __('cv.parsing_retrieved'),
         );
     }
 
@@ -101,7 +101,7 @@ class CVController extends Controller
     {
         return ApiResponse::success(
             new CVReviewResource($this->cvService->getReview($request->user(), $cvFile)),
-            'CV review retrieved successfully.',
+            __('cv.review_retrieved'),
         );
     }
 
@@ -109,7 +109,7 @@ class CVController extends Controller
     {
         return ApiResponse::success(
             new CVReviewResource($this->cvService->updateReviewDraft($request->user(), $cvFile, $request->validated())),
-            'CV review draft updated successfully.',
+            __('cv.review_updated'),
         );
     }
 
@@ -122,7 +122,7 @@ class CVController extends Controller
                 'profile' => new JobSeekerProfileResource($review['profile']),
                 'suggestions' => ProfileChangeSuggestionResource::collection($review['suggestions']),
             ],
-            message: 'CV review suggestions are ready. Accept suggestions to apply parsed data.',
+            message: __('cv.review_ready'),
         );
     }
 }

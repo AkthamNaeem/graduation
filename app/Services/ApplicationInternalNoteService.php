@@ -182,7 +182,7 @@ class ApplicationInternalNoteService
             );
 
         if (! $owned) {
-            throw new ApplicationInternalNoteException('The internal note is not available to this user.', 'APPLICATION_INTERNAL_NOTE_NOT_OWNED', 403);
+            throw new ApplicationInternalNoteException(__('domain_errors.APPLICATION_INTERNAL_NOTE_NOT_OWNED'), 'APPLICATION_INTERNAL_NOTE_NOT_OWNED', 403);
         }
     }
 
@@ -193,21 +193,21 @@ class ApplicationInternalNoteService
         }
 
         if ($note->author_user_id !== $actor->id) {
-            throw new ApplicationInternalNoteException('Only the note author can change it.', 'APPLICATION_INTERNAL_NOTE_AUTHOR_ONLY', 403);
+            throw new ApplicationInternalNoteException(__('domain_errors.APPLICATION_INTERNAL_NOTE_AUTHOR_ONLY'), 'APPLICATION_INTERNAL_NOTE_AUTHOR_ONLY', 403);
         }
     }
 
     private function assertCompanyApproved(JobApplication $application): void
     {
         if ($application->jobPosting?->company?->approval_status !== CompanyApprovalStatus::APPROVED->value) {
-            throw new ApplicationInternalNoteException('Internal note changes are unavailable while the company is not approved.', 'APPLICATION_INTERNAL_NOTE_COMPANY_UNAVAILABLE', 403);
+            throw new ApplicationInternalNoteException(__('domain_errors.APPLICATION_INTERNAL_NOTE_COMPANY_UNAVAILABLE'), 'APPLICATION_INTERNAL_NOTE_COMPANY_UNAVAILABLE', 403);
         }
     }
 
     private function assertApplicationMutable(JobApplication $application): void
     {
         if (in_array($application->applicationStatus?->slug, self::FINAL_STATUSES, true)) {
-            throw new ApplicationInternalNoteException('Internal notes are read-only for final applications.', 'APPLICATION_INTERNAL_NOTES_READ_ONLY');
+            throw new ApplicationInternalNoteException(__('domain_errors.APPLICATION_INTERNAL_NOTES_READ_ONLY'), 'APPLICATION_INTERNAL_NOTES_READ_ONLY');
         }
     }
 
@@ -224,14 +224,14 @@ class ApplicationInternalNoteService
     private function assertWithinWindow(ApplicationInternalNote $note): void
     {
         if (! $note->isWithinEditWindow()) {
-            throw new ApplicationInternalNoteException('The internal note edit window has expired.', 'APPLICATION_INTERNAL_NOTE_EDIT_WINDOW_EXPIRED');
+            throw new ApplicationInternalNoteException(__('domain_errors.APPLICATION_INTERNAL_NOTE_EDIT_WINDOW_EXPIRED'), 'APPLICATION_INTERNAL_NOTE_EDIT_WINDOW_EXPIRED');
         }
     }
 
     private function assertVersion(ApplicationInternalNote $note, int $expectedVersion): void
     {
         if ($note->version !== $expectedVersion) {
-            throw new ApplicationInternalNoteException('The note was changed by another request.', 'APPLICATION_INTERNAL_NOTE_VERSION_CONFLICT', errors: [
+            throw new ApplicationInternalNoteException(__('domain_errors.APPLICATION_INTERNAL_NOTE_VERSION_CONFLICT'), 'APPLICATION_INTERNAL_NOTE_VERSION_CONFLICT', errors: [
                 'current_version' => [$note->version],
             ]);
         }

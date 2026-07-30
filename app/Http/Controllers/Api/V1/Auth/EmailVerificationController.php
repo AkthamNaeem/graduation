@@ -27,7 +27,7 @@ class EmailVerificationController extends Controller
                 'token_type' => 'Bearer',
                 'user' => new UserResource($result['user']),
             ],
-            message: 'Email verified successfully.',
+            message: __('auth.email_verified'),
         );
     }
 
@@ -42,7 +42,7 @@ class EmailVerificationController extends Controller
 
         return ApiResponse::success(
             data: $metadata,
-            message: 'If the account exists and requires verification, a new verification code is available.',
+            message: __('auth.verification_resend'),
         );
     }
 }

@@ -35,7 +35,7 @@ class TestAssignmentController extends Controller
                     (int) $request->validated('max_attempts', 1),
                 ),
             ),
-            message: 'Test assigned successfully.',
+            message: __('tests.assigned'),
             status: 201,
         );
     }
@@ -46,7 +46,7 @@ class TestAssignmentController extends Controller
             data: ApplicationTestAssignmentResource::collection(
                 $this->testService->getApplicationAssignments($jobApplication),
             ),
-            message: 'Application tests retrieved successfully.',
+            message: __('tests.application_list'),
         );
     }
 
@@ -59,7 +59,7 @@ class TestAssignmentController extends Controller
                     $request->integer('per_page', 15),
                 ),
             ),
-            message: 'Assigned tests retrieved successfully.',
+            message: __('tests.assigned_list'),
         );
     }
 
@@ -71,6 +71,6 @@ class TestAssignmentController extends Controller
 
         return $tokenable instanceof User
             ? $tokenable->withAccessToken($accessToken)
-            : throw new \RuntimeException('Authenticated user could not be resolved.');
+            : throw new \RuntimeException(__('auth.user_unresolved'));
     }
 }

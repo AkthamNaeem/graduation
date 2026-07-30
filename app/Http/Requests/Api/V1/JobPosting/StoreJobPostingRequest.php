@@ -82,7 +82,7 @@ class StoreJobPostingRequest extends FormRequest
                 : $jobPosting?->salary_max;
 
             if ($salaryMin !== null && $salaryMax !== null && $salaryMax < $salaryMin) {
-                $validator->errors()->add('salary_max', 'The salary max field must be greater than or equal to salary min.');
+                $validator->errors()->add('salary_max', __('validation.custom_messages.salary_range'));
             }
 
             $workModeValue = $this->filled('work_mode')
@@ -91,7 +91,7 @@ class StoreJobPostingRequest extends FormRequest
             $location = $this->exists('location') ? $this->input('location') : $jobPosting?->location;
             $workMode = JobWorkMode::tryFrom((string) $workModeValue);
             if ($workMode?->requiresLocation() && blank($location)) {
-                $validator->errors()->add('location', 'The location field is required for on-site and hybrid jobs.');
+                $validator->errors()->add('location', __('validation.custom_messages.job_location_required'));
             }
         });
     }

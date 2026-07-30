@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'users' => 'Users retrieved successfully.',
+    'user' => 'User retrieved successfully.',
+    'user_activated' => 'User activated successfully.',
+    'user_suspended' => 'User suspended successfully.',
+    'user_role' => 'User role updated successfully.',
+    'user_status' => 'User status updated successfully.',
+    'companies' => 'Companies retrieved successfully.',
+    'company_created' => 'Company created successfully.',
+    'company_approved' => 'Company approved successfully.',
+    'company_rejected' => 'Company rejected successfully.',
+    'company_suspended' => 'Company suspended successfully.',
+    'skills' => 'Skills retrieved successfully.',
+    'skill_created' => 'Skill created successfully.',
+    'skill_updated' => 'Skill updated successfully.',
+    'skill_deleted' => 'Skill deleted successfully.',
+    'skill_in_use' => 'Skill is used by profiles or jobs and cannot be hard-deleted.',
+    'skill_detach_first' => 'Detach the skill from related profiles and jobs before deleting it.',
+    'audit_logs' => 'Audit logs retrieved successfully.',
+    'overview_report' => 'Admin overview report retrieved successfully.',
+    'applications_report' => 'Applications report retrieved successfully.',
+    'jobs_report' => 'Jobs report retrieved successfully.',
+    'cv_report' => 'CV parsing report retrieved successfully.',
+];

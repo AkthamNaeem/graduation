@@ -27,9 +27,7 @@ class ApplicationScreeningAnswerService
         foreach ($submittedAnswers as $index => $submittedAnswer) {
             $questionId = (int) ($submittedAnswer['question_id'] ?? 0);
             if (isset($answersByQuestion[$questionId])) {
-                $this->fail(
-                    'A screening question cannot be answered more than once.',
-                    'APPLICATION_SCREENING_DUPLICATE_ANSWER',
+                $this->fail(__('domain_errors.APPLICATION_SCREENING_DUPLICATE_ANSWER'), 'APPLICATION_SCREENING_DUPLICATE_ANSWER',
                     "screening_answers.{$index}.question_id",
                 );
             }
@@ -39,9 +37,7 @@ class ApplicationScreeningAnswerService
         $questionMap = $questions->keyBy('id');
         foreach ($answersByQuestion as $questionId => $entry) {
             if (! $questionMap->has($questionId)) {
-                $this->fail(
-                    'The screening question is not active for this job.',
-                    'APPLICATION_SCREENING_QUESTION_INVALID',
+                $this->fail(__('domain_errors.APPLICATION_SCREENING_QUESTION_INVALID'), 'APPLICATION_SCREENING_QUESTION_INVALID',
                     "screening_answers.{$entry['index']}.question_id",
                 );
             }
@@ -52,9 +48,7 @@ class ApplicationScreeningAnswerService
             $entry = $answersByQuestion[$question->id] ?? null;
             if ($entry === null) {
                 if ($question->is_required) {
-                    $this->fail(
-                        'A required screening answer is missing.',
-                        'APPLICATION_SCREENING_REQUIRED_ANSWER_MISSING',
+                    $this->fail(__('domain_errors.APPLICATION_SCREENING_REQUIRED_ANSWER_MISSING'), 'APPLICATION_SCREENING_REQUIRED_ANSWER_MISSING',
                         'screening_answers',
                     );
                 }
@@ -139,25 +133,25 @@ class ApplicationScreeningAnswerService
 
         if ($type->isChoice()) {
             if ($hasValue) {
-                $this->fail('Choice questions do not accept a value field.', 'APPLICATION_SCREENING_ANSWER_TYPE_INVALID', "{$field}.value");
+                $this->fail(__('domain_errors.APPLICATION_SCREENING_ANSWER_TYPE_INVALID'), 'APPLICATION_SCREENING_ANSWER_TYPE_INVALID', "{$field}.value");
             }
             if (! $hasOptions || ! is_array($payload['selected_option_ids'])) {
-                $this->fail('A choice answer is required.', 'APPLICATION_SCREENING_REQUIRED_ANSWER_MISSING', "{$field}.selected_option_ids");
+                $this->fail(__('domain_errors.APPLICATION_SCREENING_REQUIRED_ANSWER_MISSING'), 'APPLICATION_SCREENING_REQUIRED_ANSWER_MISSING', "{$field}.selected_option_ids");
             }
 
             $optionIds = array_map('intval', array_values($payload['selected_option_ids']));
             if ($optionIds === []
                 || ($type === ScreeningQuestionType::SINGLE_CHOICE && count($optionIds) !== 1)) {
-                $this->fail('The number of selected options is invalid.', 'APPLICATION_SCREENING_ANSWER_TYPE_INVALID', "{$field}.selected_option_ids");
+                $this->fail(__('domain_errors.APPLICATION_SCREENING_ANSWER_TYPE_INVALID'), 'APPLICATION_SCREENING_ANSWER_TYPE_INVALID', "{$field}.selected_option_ids");
             }
             if (count($optionIds) !== count(array_unique($optionIds))) {
-                $this->fail('Duplicate selected options are not allowed.', 'APPLICATION_SCREENING_ANSWER_TYPE_INVALID', "{$field}.selected_option_ids");
+                $this->fail(__('domain_errors.APPLICATION_SCREENING_ANSWER_TYPE_INVALID'), 'APPLICATION_SCREENING_ANSWER_TYPE_INVALID', "{$field}.selected_option_ids");
             }
 
             $validOptionIds = $question->options->pluck('id')->map(static fn (mixed $id): int => (int) $id)->all();
             foreach ($optionIds as $optionId) {
                 if (! in_array($optionId, $validOptionIds, true)) {
-                    $this->fail('A selected option does not belong to this question.', 'APPLICATION_SCREENING_OPTION_INVALID', "{$field}.selected_option_ids");
+                    $this->fail(__('domain_errors.APPLICATION_SCREENING_OPTION_INVALID'), 'APPLICATION_SCREENING_OPTION_INVALID', "{$field}.selected_option_ids");
                 }
             }
 
@@ -172,21 +166,21 @@ class ApplicationScreeningAnswerService
         }
 
         if ($hasOptions) {
-            $this->fail('This question type does not accept selected options.', 'APPLICATION_SCREENING_ANSWER_TYPE_INVALID', "{$field}.selected_option_ids");
+            $this->fail(__('domain_errors.APPLICATION_SCREENING_ANSWER_TYPE_INVALID'), 'APPLICATION_SCREENING_ANSWER_TYPE_INVALID', "{$field}.selected_option_ids");
         }
         if (! $hasValue) {
-            $this->fail('A screening answer value is required.', 'APPLICATION_SCREENING_REQUIRED_ANSWER_MISSING', "{$field}.value");
+            $this->fail(__('domain_errors.APPLICATION_SCREENING_REQUIRED_ANSWER_MISSING'), 'APPLICATION_SCREENING_REQUIRED_ANSWER_MISSING', "{$field}.value");
         }
 
         $value = $payload['value'];
         if ($type === ScreeningQuestionType::SHORT_TEXT || $type === ScreeningQuestionType::LONG_TEXT) {
             if (! is_string($value)) {
-                $this->fail('The screening answer must be text.', 'APPLICATION_SCREENING_ANSWER_TYPE_INVALID', "{$field}.value");
+                $this->fail(__('domain_errors.APPLICATION_SCREENING_ANSWER_TYPE_INVALID'), 'APPLICATION_SCREENING_ANSWER_TYPE_INVALID', "{$field}.value");
             }
             $value = trim($value);
             $max = $type === ScreeningQuestionType::SHORT_TEXT ? 1000 : 10000;
             if ($value === '' || mb_strlen($value) > $max) {
-                $this->fail('The screening text answer is empty or too long.', 'APPLICATION_SCREENING_ANSWER_TYPE_INVALID', "{$field}.value");
+                $this->fail(__('domain_errors.APPLICATION_SCREENING_ANSWER_TYPE_INVALID'), 'APPLICATION_SCREENING_ANSWER_TYPE_INVALID', "{$field}.value");
             }
 
             return [
@@ -201,7 +195,7 @@ class ApplicationScreeningAnswerService
 
         if ($type === ScreeningQuestionType::NUMBER) {
             if ((! is_int($value) && ! is_float($value)) || $value < self::NUMBER_MIN || $value > self::NUMBER_MAX) {
-                $this->fail('The screening answer must be a number within the supported range.', 'APPLICATION_SCREENING_ANSWER_TYPE_INVALID', "{$field}.value");
+                $this->fail(__('domain_errors.APPLICATION_SCREENING_ANSWER_TYPE_INVALID'), 'APPLICATION_SCREENING_ANSWER_TYPE_INVALID', "{$field}.value");
             }
 
             return [
@@ -215,7 +209,7 @@ class ApplicationScreeningAnswerService
         }
 
         if (! is_bool($value)) {
-            $this->fail('The screening answer must be a boolean.', 'APPLICATION_SCREENING_ANSWER_TYPE_INVALID', "{$field}.value");
+            $this->fail(__('domain_errors.APPLICATION_SCREENING_ANSWER_TYPE_INVALID'), 'APPLICATION_SCREENING_ANSWER_TYPE_INVALID', "{$field}.value");
         }
 
         return [

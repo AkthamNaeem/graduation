@@ -208,7 +208,7 @@ class AuthTest extends TestCase
 
         $response->assertStatus(403)
             ->assertJsonPath('success', false)
-            ->assertJsonPath('message', 'Your account is not active. Please contact support.')
+            ->assertJsonPath('message', 'Your account is suspended.')
             ->assertJsonValidationErrors(['status']);
 
         $this->assertDatabaseCount('personal_access_tokens', 0);

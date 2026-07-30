@@ -177,3 +177,19 @@ MatchingService 2.0 fallback. Production deployment has not been performed.
 - [ML deployment runbook](services/ml-recommendation/DEPLOYMENT.md)
 - [Phase 17 E2E report](docs/ml-job-recommendation/phase17/PHASE_17_E2E_REPORT.md)
 - [Final verification](docs/ml-job-recommendation/phase18/FINAL_VERIFICATION_REPORT.md)
+
+## API localization
+
+All `/api/*` routes negotiate human-readable response text from the
+`Accept-Language` header. Supported base locales are `en` and `ar`; regional
+tags and weighted lists are accepted, for example `en-US` and
+`ar-SA,ar;q=0.9,en;q=0.8`.
+
+When the header is absent the API uses `APP_LOCALE`. When no supported
+language can be selected it uses `APP_FALLBACK_LOCALE`. Responses include
+`Content-Language` and `Vary: Accept-Language`.
+
+Machine-readable error codes, enum values, statuses, field names, pagination,
+and business rules remain stable. Only human-readable messages, labels,
+notification text, Home copy, validation text, and structured recommendation
+reasons are localized.

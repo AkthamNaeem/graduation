@@ -105,7 +105,7 @@ class TestRetakeService
                     if ($latest->isExpired()) {
                         throw new ConflictHttpException('An expired unsubmitted assignment should be extended instead of creating a retake.');
                     }
-                    throw new ConflictHttpException('A retake can only be granted after the current attempt has been submitted.');
+                    throw new ConflictHttpException(__('errors.test_retake_state'));
                 }
 
                 if ($application->applicationStatus?->slug !== 'test_completed'
@@ -114,7 +114,7 @@ class TestRetakeService
                 }
 
                 if ($series->count() >= $root->max_attempts) {
-                    throw new ConflictHttpException('The maximum number of test attempts has been reached.');
+                    throw new ConflictHttpException(__('errors.test_max_attempts'));
                 }
 
                 $deadline = $this->deadlineService->normalizeInitialDeadline($data['deadline_at'] ?? null);
@@ -188,12 +188,12 @@ class TestRetakeService
     public function assertLatestCanStart(ApplicationTestAssignment $assignment): void
     {
         if ($assignment->nextAssignment()->exists()) {
-            throw new ConflictHttpException('This test assignment has been superseded by a newer retake assignment.');
+            throw new ConflictHttpException(__('errors.test_superseded'));
         }
 
         $assignment->loadMissing('jobApplication.applicationStatus');
         if ($assignment->jobApplication->applicationStatus?->slug !== 'test_pending') {
-            throw new ConflictHttpException('Only the current pending test assignment can be started.');
+            throw new ConflictHttpException(__('errors.test_current_only'));
         }
     }
 

@@ -22,7 +22,7 @@ class StoreAdminSkillRequest extends FormRequest
                 'max:255',
                 function (string $attribute, mixed $value, \Closure $fail): void {
                     if (Skill::query()->whereRaw('LOWER(name) = ?', [strtolower((string) $value)])->exists()) {
-                        $fail('The name has already been taken.');
+                        $fail(__('validation.custom_messages.name_taken'));
                     }
                 },
             ],

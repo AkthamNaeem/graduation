@@ -44,7 +44,7 @@ class AdminCompanyController extends Controller
                         'token' => $result['owner_invitation']['token'],
                     ],
             ],
-            message: 'Company created successfully.',
+            message: __('admin.company_created'),
             status: 201,
         );
     }
@@ -80,7 +80,7 @@ class AdminCompanyController extends Controller
 
         return ApiResponse::success(
             data: CompanyResource::collection($companies),
-            message: 'Companies retrieved successfully.',
+            message: __('admin.companies'),
         );
     }
 
@@ -97,7 +97,7 @@ class AdminCompanyController extends Controller
 
         return ApiResponse::success(
             data: new CompanyResource($company),
-            message: 'Company retrieved successfully.',
+            message: __('companies.retrieved'),
         );
     }
 
@@ -111,23 +111,23 @@ class AdminCompanyController extends Controller
                     $request->validated(),
                 ),
             ),
-            message: 'Company updated successfully.',
+            message: __('companies.updated'),
         );
     }
 
     public function approve(CompanyApprovalRequest $request, Company $company): JsonResponse
     {
-        return $this->setApprovalStatus($request, $company, CompanyApprovalStatus::APPROVED, 'Company approved successfully.');
+        return $this->setApprovalStatus($request, $company, CompanyApprovalStatus::APPROVED, __('admin.company_approved'));
     }
 
     public function reject(CompanyApprovalRequest $request, Company $company): JsonResponse
     {
-        return $this->setApprovalStatus($request, $company, CompanyApprovalStatus::REJECTED, 'Company rejected successfully.');
+        return $this->setApprovalStatus($request, $company, CompanyApprovalStatus::REJECTED, __('admin.company_rejected'));
     }
 
     public function suspend(CompanyApprovalRequest $request, Company $company): JsonResponse
     {
-        return $this->setApprovalStatus($request, $company, CompanyApprovalStatus::SUSPENDED, 'Company suspended successfully.');
+        return $this->setApprovalStatus($request, $company, CompanyApprovalStatus::SUSPENDED, __('admin.company_suspended'));
     }
 
     private function setApprovalStatus(

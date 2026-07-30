@@ -36,9 +36,7 @@ trait AuthorizesTestCatalog
         $user = $this->authenticatedUser();
 
         if ($user?->role === UserRole::JOB_SEEKER) {
-            throw new TestContentAccessException(
-                'Test catalog access is not available for job seekers.',
-                'TEST_CATALOG_FORBIDDEN',
+            throw new TestContentAccessException(__('domain_errors.TEST_CATALOG_FORBIDDEN'), 'TEST_CATALOG_FORBIDDEN',
                 403,
             );
         }

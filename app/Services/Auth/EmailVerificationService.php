@@ -19,9 +19,7 @@ class EmailVerificationService
     public function issueOtp(User $user): EmailVerificationOtp
     {
         if ($user->email_verified_at !== null) {
-            throw new EmailVerificationException(
-                'The email address is already verified.',
-                'EMAIL_ALREADY_VERIFIED',
+            throw new EmailVerificationException(__('domain_errors.EMAIL_ALREADY_VERIFIED'), 'EMAIL_ALREADY_VERIFIED',
                 409,
             );
         }

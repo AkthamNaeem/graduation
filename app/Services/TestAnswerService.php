@@ -102,7 +102,7 @@ class TestAnswerService
 
         $questionIds = array_map(fn (array $answer): int => (int) $answer['question_id'], $answers);
         if (count($questionIds) !== count(array_unique($questionIds))) {
-            throw ValidationException::withMessages(['answers' => ['Question IDs must not be duplicated.']]);
+            throw ValidationException::withMessages(['answers' => [__('errors.test_duplicate_questions')]]);
         }
 
         $questions = TestQuestion::query()->whereIn('id', $questionIds)->get()->keyBy('id');
@@ -179,7 +179,7 @@ class TestAnswerService
     {
         $attempt->refresh();
         if ($attempt->submitted_at !== null) {
-            throw new ConflictHttpException('This test attempt has already been submitted and can no longer be modified.');
+            throw new ConflictHttpException(__('tests.already_submitted'));
         }
         if ($attempt->started_at === null) {
             throw new ConflictHttpException('This test attempt has not been started yet.');
@@ -191,7 +191,7 @@ class TestAnswerService
     {
         $testId = $attempt->applicationTestAssignment()->value('test_id');
         if ($question->test_id !== $testId) {
-            throw ValidationException::withMessages(['question_id' => ['The question must belong to the assigned test.']]);
+            throw ValidationException::withMessages(['question_id' => [__('errors.test_question_belongs')]]);
         }
     }
 
@@ -268,10 +268,10 @@ class TestAnswerService
             }
             $optionIds = array_map('intval', $payload['selected_option_ids']);
             if ($optionIds === [] || count($optionIds) !== count(array_unique($optionIds))) {
-                throw ValidationException::withMessages(['selected_option_ids' => ['Select valid, non-duplicated options.']]);
+                throw ValidationException::withMessages(['selected_option_ids' => [__('errors.test_selected_options')]]);
             }
             if (in_array($type, [TestQuestionType::SINGLE_CHOICE, TestQuestionType::TRUE_FALSE], true) && count($optionIds) !== 1) {
-                throw ValidationException::withMessages(['selected_option_ids' => ['Exactly one option must be selected.']]);
+                throw ValidationException::withMessages(['selected_option_ids' => [__('errors.test_single_option')]]);
             }
             if ($question->options()->whereIn('id', $optionIds)->count() !== count($optionIds)) {
                 throw ValidationException::withMessages(['selected_option_ids' => ['Every selected option must belong to the question.']]);
@@ -301,7 +301,7 @@ class TestAnswerService
             return ['answer_text' => null, 'selected_option_ids' => []];
         }
 
-        throw ValidationException::withMessages(['question_type' => ['The question type is not supported.']]);
+        throw ValidationException::withMessages(['question_type' => [__('errors.test_question_type')]]);
     }
 
     private function isComplete(TestQuestion $question, TestAnswer $answer): bool

@@ -18,7 +18,7 @@ class AdminReportController extends Controller
     {
         return ApiResponse::success(
             data: $this->adminReportService->overview(),
-            message: 'Admin overview report retrieved successfully.',
+            message: __('admin.overview_report'),
         );
     }
 
@@ -26,7 +26,7 @@ class AdminReportController extends Controller
     {
         return ApiResponse::success(
             data: $this->adminReportService->applications($request->validated()),
-            message: 'Applications report retrieved successfully.',
+            message: __('admin.applications_report'),
         );
     }
 
@@ -34,7 +34,7 @@ class AdminReportController extends Controller
     {
         return ApiResponse::success(
             data: $this->adminReportService->jobs($request->validated()),
-            message: 'Jobs report retrieved successfully.',
+            message: __('admin.jobs_report'),
         );
     }
 
@@ -42,7 +42,7 @@ class AdminReportController extends Controller
     {
         return ApiResponse::success(
             data: $this->adminReportService->cvParsing($request->validated()),
-            message: 'CV parsing report retrieved successfully.',
+            message: __('admin.cv_report'),
         );
     }
 }

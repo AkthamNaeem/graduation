@@ -8,32 +8,10 @@ use App\Data\RecommendationMl\MlRankResponse;
 use App\Enums\JobSkillRequirementType;
 use App\Models\JobPosting;
 use App\Models\JobSeekerProfile;
+use App\Support\SystemGeneratedText;
 
 final class MlRecommendationResourceAdapter
 {
-    private const REASON_MESSAGES = [
-        'DOMAIN_MISMATCH' => 'The professional domain is not closely aligned.',
-        'DOMAIN_ALIGNMENT' => 'The professional domain is aligned.',
-        'OPTIONAL_SKILLS_GAP' => 'Some optional skill alignment is missing.',
-        'OPTIONAL_SKILLS_ALIGNMENT' => 'Optional skills support this ranking.',
-        'REQUIRED_SKILLS_GAP' => 'Some required skill alignment is missing.',
-        'REQUIRED_SKILLS_ALIGNMENT' => 'Required skills support this ranking.',
-        'COMBINED_PROFILE_GAP' => 'Combined professional factors reduce the ranking score.',
-        'COMBINED_PROFILE_ALIGNMENT' => 'Combined professional factors support the ranking.',
-        'CAREER_LEVEL_GAP' => 'Career-level alignment is limited.',
-        'CAREER_LEVEL_ALIGNMENT' => 'Career level supports this ranking.',
-        'EXPERIENCE_GAP' => 'Experience alignment is limited.',
-        'EXPERIENCE_ALIGNMENT' => 'Experience supports this ranking.',
-        'EDUCATION_GAP' => 'Education alignment is limited.',
-        'EDUCATION_ALIGNMENT' => 'Education supports this ranking.',
-        'WORK_PREFERENCE_MISMATCH' => 'Work preferences are not fully aligned.',
-        'WORK_PREFERENCE_ALIGNMENT' => 'Work preferences support this ranking.',
-        'TEXT_MISMATCH' => 'Professional text alignment is limited.',
-        'TEXT_ALIGNMENT' => 'Professional text supports this ranking.',
-        'PROFILE_DATA_MISSING' => 'Some professional profile data is missing.',
-        'PROFILE_DATA_COMPLETENESS' => 'Professional profile completeness supports this ranking.',
-    ];
-
     /**
      * @return array<string, mixed>
      */
@@ -71,7 +49,7 @@ final class MlRecommendationResourceAdapter
                 'model' => [
                     'display_score' => $prediction->displayScore,
                     'score_semantics' => 'ranking_score_not_probability',
-                    'explanation_note' => $response->explanationNote,
+                    'explanation_note' => SystemGeneratedText::resolve($response->explanationNote),
                     'positive_reason_codes' => $positiveCodes,
                     'negative_reason_codes' => $negativeCodes,
                 ],
@@ -89,7 +67,7 @@ final class MlRecommendationResourceAdapter
             'reasons' => array_map(
                 fn (string $code): array => [
                     'code' => $code,
-                    'message' => self::REASON_MESSAGES[$code],
+                    'message' => __('ai.reasons.'.$code),
                 ],
                 array_values(array_unique([...$positiveCodes, ...$negativeCodes])),
             ),

@@ -33,7 +33,7 @@ class NotificationController extends Controller
                     $request->safe()->only(['is_read', 'type', 'date_from', 'date_to']),
                 ),
             ),
-            message: 'Notifications retrieved successfully.',
+            message: __('notifications.retrieved'),
         );
     }
 
@@ -45,7 +45,7 @@ class NotificationController extends Controller
             data: [
                 'unread_count' => $this->notificationService->unreadCount($user),
             ],
-            message: 'Unread notification count retrieved successfully.',
+            message: __('notifications.unread_count'),
         );
     }
 
@@ -57,7 +57,7 @@ class NotificationController extends Controller
             data: new NotificationResource(
                 $this->notificationService->markAsRead($notification, $user),
             ),
-            message: 'Notification marked as read successfully.',
+            message: __('notifications.read'),
         );
     }
 
@@ -69,7 +69,7 @@ class NotificationController extends Controller
             data: [
                 'updated_count' => $this->notificationService->markAllAsRead($user),
             ],
-            message: 'Notifications marked as read successfully.',
+            message: __('notifications.all_read'),
         );
     }
 
@@ -81,7 +81,7 @@ class NotificationController extends Controller
 
         return ApiResponse::success(
             data: null,
-            message: 'Notification deleted successfully.',
+            message: __('notifications.deleted'),
         );
     }
 

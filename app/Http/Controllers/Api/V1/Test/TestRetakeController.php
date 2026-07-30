@@ -30,7 +30,7 @@ class TestRetakeController extends Controller
                 $applicationTestAssignment,
                 $request->validated(),
             )),
-            'Test retake policy updated successfully.',
+            __('tests.retake_policy'),
         );
     }
 
@@ -42,7 +42,7 @@ class TestRetakeController extends Controller
                 $applicationTestAssignment,
                 $request->validated(),
             )),
-            'Test retake granted successfully.',
+            __('tests.retake_granted'),
             201,
         );
     }
@@ -51,7 +51,7 @@ class TestRetakeController extends Controller
     {
         return ApiResponse::success(
             new TestAssignmentSeriesResource($this->retakeService->getSeries($applicationTestAssignment)),
-            'Test assignment series retrieved successfully.',
+            __('tests.series'),
         );
     }
 
@@ -63,6 +63,6 @@ class TestRetakeController extends Controller
 
         return $tokenable instanceof User
             ? $tokenable->withAccessToken($accessToken)
-            : throw new \RuntimeException('Authenticated user could not be resolved.');
+            : throw new \RuntimeException(__('auth.user_unresolved'));
     }
 }

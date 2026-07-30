@@ -22,7 +22,7 @@ class PrivateFileStorageService
     {
         $stream = @fopen($file->getRealPath(), 'rb');
         if (! is_resource($stream)) {
-            throw new PrivateFileStorageException('Private file storage is unavailable.', 'PRIVATE_FILE_WRITE_FAILED');
+            throw new PrivateFileStorageException(__('domain_errors.PRIVATE_FILE_WRITE_FAILED'), 'PRIVATE_FILE_WRITE_FAILED');
         }
 
         try {
@@ -61,7 +61,7 @@ class PrivateFileStorageService
                 'ContentType' => $mimeType,
             ]);
             if (! $written) {
-                throw new PrivateFileStorageException('Private file storage is unavailable.', 'PRIVATE_FILE_WRITE_FAILED');
+                throw new PrivateFileStorageException(__('domain_errors.PRIVATE_FILE_WRITE_FAILED'), 'PRIVATE_FILE_WRITE_FAILED');
             }
             $this->verifyObject($disk, $path, $expectedSize);
 
@@ -77,7 +77,7 @@ class PrivateFileStorageService
                 $this->cleanupFailedWrite($disk, $path);
             }
             $this->logFailure('write', $disk, $path, $exception, true);
-            throw new PrivateFileStorageException('Private file storage is unavailable.', 'PRIVATE_FILE_WRITE_FAILED', 503, $exception);
+            throw new PrivateFileStorageException(__('domain_errors.PRIVATE_FILE_WRITE_FAILED'), 'PRIVATE_FILE_WRITE_FAILED', 503, $exception);
         }
     }
 
@@ -87,7 +87,7 @@ class PrivateFileStorageService
             return Storage::disk($disk)->exists($path);
         } catch (Throwable $exception) {
             $this->logFailure('exists', $disk, $path, $exception, true);
-            throw new PrivateFileStorageException('Private file storage is unavailable.', 'PRIVATE_FILE_STORAGE_UNAVAILABLE', 503, $exception);
+            throw new PrivateFileStorageException(__('domain_errors.PRIVATE_FILE_STORAGE_UNAVAILABLE'), 'PRIVATE_FILE_STORAGE_UNAVAILABLE', 503, $exception);
         }
     }
 
@@ -97,7 +97,7 @@ class PrivateFileStorageService
             return (int) Storage::disk($disk)->size($path);
         } catch (Throwable $exception) {
             $this->logFailure('size', $disk, $path, $exception, true);
-            throw new PrivateFileStorageException('The private file could not be read.', 'PRIVATE_FILE_READ_FAILED', 503, $exception);
+            throw new PrivateFileStorageException(__('domain_errors.PRIVATE_FILE_READ_FAILED'), 'PRIVATE_FILE_READ_FAILED', 503, $exception);
         }
     }
 
@@ -107,7 +107,7 @@ class PrivateFileStorageService
         try {
             $stream = Storage::disk($disk)->readStream($path);
             if (! is_resource($stream)) {
-                throw new PrivateFileStorageException('The private file could not be read.', 'PRIVATE_FILE_READ_FAILED');
+                throw new PrivateFileStorageException(__('domain_errors.PRIVATE_FILE_READ_FAILED'), 'PRIVATE_FILE_READ_FAILED');
             }
 
             return $stream;
@@ -116,7 +116,7 @@ class PrivateFileStorageService
             throw $exception;
         } catch (Throwable $exception) {
             $this->logFailure('read', $disk, $path, $exception, true);
-            throw new PrivateFileStorageException('The private file could not be read.', 'PRIVATE_FILE_READ_FAILED', 503, $exception);
+            throw new PrivateFileStorageException(__('domain_errors.PRIVATE_FILE_READ_FAILED'), 'PRIVATE_FILE_READ_FAILED', 503, $exception);
         }
     }
 
@@ -145,14 +145,14 @@ class PrivateFileStorageService
                 return;
             }
             if (! Storage::disk($disk)->delete($path)) {
-                throw new PrivateFileStorageException('The private file could not be deleted.', 'PRIVATE_FILE_DELETE_FAILED');
+                throw new PrivateFileStorageException(__('domain_errors.PRIVATE_FILE_DELETE_FAILED'), 'PRIVATE_FILE_DELETE_FAILED');
             }
         } catch (PrivateFileStorageException $exception) {
             $this->logFailure('delete', $disk, $path, $exception, true);
             throw $exception;
         } catch (Throwable $exception) {
             $this->logFailure('delete', $disk, $path, $exception, true);
-            throw new PrivateFileStorageException('The private file could not be deleted.', 'PRIVATE_FILE_DELETE_FAILED', 503, $exception);
+            throw new PrivateFileStorageException(__('domain_errors.PRIVATE_FILE_DELETE_FAILED'), 'PRIVATE_FILE_DELETE_FAILED', 503, $exception);
         }
     }
 
@@ -160,17 +160,17 @@ class PrivateFileStorageService
     {
         try {
             if (! Storage::disk($disk)->exists($path)) {
-                throw new PrivateFileStorageException('Private file verification failed.', 'PRIVATE_FILE_VERIFICATION_FAILED');
+                throw new PrivateFileStorageException(__('domain_errors.PRIVATE_FILE_VERIFICATION_FAILED'), 'PRIVATE_FILE_VERIFICATION_FAILED');
             }
             if ($expectedSize !== null && (int) Storage::disk($disk)->size($path) !== $expectedSize) {
-                throw new PrivateFileStorageException('Private file verification failed.', 'PRIVATE_FILE_VERIFICATION_FAILED');
+                throw new PrivateFileStorageException(__('domain_errors.PRIVATE_FILE_VERIFICATION_FAILED'), 'PRIVATE_FILE_VERIFICATION_FAILED');
             }
         } catch (PrivateFileStorageException $exception) {
             $this->logFailure('verify', $disk, $path, $exception, true);
             throw $exception;
         } catch (Throwable $exception) {
             $this->logFailure('verify', $disk, $path, $exception, true);
-            throw new PrivateFileStorageException('Private file verification failed.', 'PRIVATE_FILE_VERIFICATION_FAILED', 503, $exception);
+            throw new PrivateFileStorageException(__('domain_errors.PRIVATE_FILE_VERIFICATION_FAILED'), 'PRIVATE_FILE_VERIFICATION_FAILED', 503, $exception);
         }
     }
 
@@ -183,7 +183,7 @@ class PrivateFileStorageService
             while (! feof($source)) {
                 $chunk = fread($source, 1024 * 1024);
                 if ($chunk === false) {
-                    throw new PrivateFileStorageException('The private file could not be read.', 'PRIVATE_FILE_READ_FAILED');
+                    throw new PrivateFileStorageException(__('domain_errors.PRIVATE_FILE_READ_FAILED'), 'PRIVATE_FILE_READ_FAILED');
                 }
                 hash_update($sourceHash, $chunk);
                 fwrite($hashingStream, $chunk);
@@ -209,7 +209,7 @@ class PrivateFileStorageService
                 $this->delete($targetDisk, $targetPath);
             } catch (Throwable) {
             }
-            throw new PrivateFileStorageException('Private file verification failed.', 'PRIVATE_FILE_VERIFICATION_FAILED');
+            throw new PrivateFileStorageException(__('domain_errors.PRIVATE_FILE_VERIFICATION_FAILED'), 'PRIVATE_FILE_VERIFICATION_FAILED');
         }
 
         return $sourceDigest;

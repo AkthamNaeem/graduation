@@ -40,12 +40,12 @@ class UpdateCVReviewDraftRequest extends CVIndexRequest
         return [function (Validator $validator): void {
             $unexpected = array_diff(array_keys($this->all()), ['profile', 'experience', 'education', 'skills']);
             if ($unexpected !== []) {
-                $validator->errors()->add('payload', 'The payload contains unexpected fields.');
+                $validator->errors()->add('payload', __('validation.custom_messages.unexpected_fields'));
             }
 
             foreach ($this->input('experience', []) as $index => $item) {
                 if (($item['is_current'] ?? false) && ($item['end_date'] ?? null) !== null) {
-                    $validator->errors()->add("experience.{$index}.end_date", 'The end date must be null for a current experience.');
+                    $validator->errors()->add("experience.{$index}.end_date", __('validation.custom_messages.current_end_date'));
                 }
                 $this->validateDateOrder($validator, "experience.{$index}", $item);
             }
@@ -62,7 +62,7 @@ class UpdateCVReviewDraftRequest extends CVIndexRequest
             return;
         }
         if (strtotime($item['end_date']) < strtotime($item['start_date'])) {
-            $validator->errors()->add("{$path}.end_date", 'The end date must be after or equal to the start date.');
+            $validator->errors()->add("{$path}.end_date", __('validation.custom_messages.end_date_order'));
         }
     }
 }

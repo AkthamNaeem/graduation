@@ -24,7 +24,7 @@ class JobScreeningQuestionController extends Controller
     {
         return ApiResponse::success(
             data: JobScreeningQuestionResource::collection($this->service->activeForJob($jobPosting)),
-            message: 'Screening questions retrieved successfully.',
+            message: __('jobs.questions_retrieved'),
         );
     }
 
@@ -34,7 +34,7 @@ class JobScreeningQuestionController extends Controller
             data: new JobScreeningQuestionResource(
                 $this->service->create($request->user('sanctum'), $jobPosting, $request->validated()),
             ),
-            message: 'Screening question created successfully.',
+            message: __('jobs.question_created'),
             status: 201,
         );
     }
@@ -48,7 +48,7 @@ class JobScreeningQuestionController extends Controller
             data: new JobScreeningQuestionResource(
                 $this->service->update($request->user('sanctum'), $jobPosting, $question, $request->validated()),
             ),
-            message: 'Screening question updated successfully.',
+            message: __('jobs.question_updated'),
         );
     }
 
@@ -59,6 +59,6 @@ class JobScreeningQuestionController extends Controller
     ): JsonResponse {
         $this->service->deactivate($request->user('sanctum'), $jobPosting, $question);
 
-        return ApiResponse::success(message: 'Screening question disabled successfully.');
+        return ApiResponse::success(message: __('jobs.question_disabled'));
     }
 }

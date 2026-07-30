@@ -38,11 +38,11 @@ trait NormalizesJobSkillInput
         ])->filter();
 
         if ($families->count() > 1) {
-            $validator->errors()->add('skills', 'Legacy and separated skill contracts cannot be combined in one request.');
+            $validator->errors()->add('skills', __('validation.custom_messages.skill_contract_conflict'));
         }
 
         if ($requireAContract && $families->isEmpty()) {
-            $validator->errors()->add('skills', 'At least one skill contract is required.');
+            $validator->errors()->add('skills', __('validation.custom_messages.skill_contract_required'));
         }
 
         $requiredIds = collect($this->input('required_skills', []))->pluck('skill_id')->filter();
@@ -50,7 +50,7 @@ trait NormalizesJobSkillInput
         if ($requiredIds->intersect($niceIds)->isNotEmpty()) {
             $validator->errors()->add(
                 'nice_to_have_skills',
-                'A skill cannot be both required and nice-to-have in the same request.',
+                __('validation.custom_messages.skill_contract_duplicate'),
             );
         }
     }

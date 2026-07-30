@@ -78,7 +78,7 @@ class TestManualGradingService
             $questionIds = array_map(fn (array $item): int => (int) $item['question_id'], $items);
 
             if (count($questionIds) !== count(array_unique($questionIds))) {
-                throw ValidationException::withMessages(['gradings' => ['Question IDs must not be duplicated.']]);
+                throw ValidationException::withMessages(['gradings' => [__('errors.test_duplicate_questions')]]);
             }
 
             $testId = $lockedAttempt->applicationTestAssignment()->value('test_id');
@@ -189,7 +189,7 @@ class TestManualGradingService
     {
         $locked = TestAttempt::query()->lockForUpdate()->findOrFail($attempt->id);
         if ($locked->submitted_at === null) {
-            throw new ConflictHttpException('This test attempt has not been submitted yet.');
+            throw new ConflictHttpException(__('errors.test_not_submitted'));
         }
 
         return $locked;
@@ -255,7 +255,7 @@ class TestManualGradingService
         );
         $maxScoreMinor = $this->scorePolicyService->toMinorUnits((string) $attempt->objective_max_score) + $manualMaxMinor;
         if ($maxScoreMinor !== $this->scorePolicyService->toMinorUnits((string) $attempt->applicationTestAssignment->test->max_score)) {
-            throw new TestScorePolicyException('The test score configuration is invalid.', 'TEST_SCORE_CONFIGURATION_INVALID', 409);
+            throw new TestScorePolicyException(__('domain_errors.TEST_SCORE_CONFIGURATION_INVALID'), 'TEST_SCORE_CONFIGURATION_INVALID', 409);
         }
 
         $attributes = ['manual_max_score' => $this->scorePolicyService->fromMinorUnits($manualMaxMinor)];

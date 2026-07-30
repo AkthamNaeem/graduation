@@ -26,7 +26,7 @@ class ProfileSuggestionController extends Controller
     {
         return ApiResponse::success(
             data: ProfileChangeSuggestionResource::collection($this->profileSyncService->suggestionsForCV($request->user(), $cvFile)),
-            message: 'Profile suggestions retrieved successfully.',
+            message: __('profile.suggestions_retrieved'),
         );
     }
 
@@ -34,7 +34,7 @@ class ProfileSuggestionController extends Controller
     {
         return ApiResponse::success(
             data: ProfileChangeSuggestionResource::collection($this->profileSyncService->generateSuggestionsFromParsedCV($request->user(), $cvFile)),
-            message: 'Profile suggestions generated successfully.',
+            message: __('profile.suggestions_generated'),
             status: 201,
         );
     }
@@ -47,7 +47,7 @@ class ProfileSuggestionController extends Controller
                 $suggestion,
                 $request->validated('edited_value'),
             )),
-            message: 'Profile suggestion decision saved successfully.',
+            message: __('profile.suggestion_saved'),
         );
     }
 
@@ -59,7 +59,7 @@ class ProfileSuggestionController extends Controller
                 $suggestion,
                 $request->validated('reason'),
             )),
-            message: 'Profile suggestion rejected successfully.',
+            message: __('profile.suggestion_rejected'),
         );
     }
 
@@ -70,7 +70,7 @@ class ProfileSuggestionController extends Controller
                 $request->user(),
                 $request->validated('suggestion_ids'),
             )),
-            message: 'Accepted profile suggestions applied successfully.',
+            message: __('profile.suggestions_applied'),
         );
     }
 
@@ -84,6 +84,6 @@ class ProfileSuggestionController extends Controller
             'ignored_count' => $result['ignored_count'],
             'already_applied' => $result['already_applied'],
             'profile' => new JobSeekerProfileResource($result['profile']),
-        ], 'Reviewed CV changes applied successfully.');
+        ], __('cv.changes_applied'));
     }
 }

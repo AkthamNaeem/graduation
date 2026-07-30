@@ -38,9 +38,7 @@ class JobScreeningQuestionService
             $this->assertQuestionsAreEditable($lockedJob);
 
             if ($lockedJob->screeningQuestions()->where('is_active', true)->count() >= self::MAX_ACTIVE_QUESTIONS) {
-                throw new JobPostingOperationException(
-                    'The maximum number of active screening questions has been reached.',
-                    'JOB_SCREENING_QUESTION_LIMIT_REACHED',
+                throw new JobPostingOperationException(__('domain_errors.JOB_SCREENING_QUESTION_LIMIT_REACHED'), 'JOB_SCREENING_QUESTION_LIMIT_REACHED',
                     422,
                 );
             }
@@ -130,9 +128,7 @@ class JobScreeningQuestionService
     private function assertQuestionsAreEditable(JobPosting $jobPosting): void
     {
         if ($jobPosting->status === 'closed') {
-            throw new JobPostingOperationException(
-                'Screening questions cannot be changed for a closed job.',
-                'JOB_SCREENING_QUESTION_JOB_CLOSED',
+            throw new JobPostingOperationException(__('domain_errors.JOB_SCREENING_QUESTION_JOB_CLOSED'), 'JOB_SCREENING_QUESTION_JOB_CLOSED',
                 409,
             );
         }
@@ -141,9 +137,7 @@ class JobScreeningQuestionService
     private function assertActorOwnsJob(int $companyId, JobPosting $jobPosting): void
     {
         if ($companyId !== $jobPosting->company_id) {
-            throw new JobPostingOperationException(
-                'The screening question cannot be managed by this company.',
-                'JOB_SCREENING_QUESTION_FORBIDDEN',
+            throw new JobPostingOperationException(__('domain_errors.JOB_SCREENING_QUESTION_FORBIDDEN'), 'JOB_SCREENING_QUESTION_FORBIDDEN',
                 403,
             );
         }
@@ -152,9 +146,7 @@ class JobScreeningQuestionService
     private function assertQuestionBelongsToJob(JobScreeningQuestion $question, JobPosting $jobPosting): void
     {
         if ($question->job_posting_id !== $jobPosting->id) {
-            throw new JobPostingOperationException(
-                'The screening question does not belong to this job.',
-                'JOB_SCREENING_QUESTION_NOT_FOUND',
+            throw new JobPostingOperationException(__('domain_errors.JOB_SCREENING_QUESTION_NOT_FOUND'), 'JOB_SCREENING_QUESTION_NOT_FOUND',
                 404,
             );
         }
@@ -169,9 +161,7 @@ class JobScreeningQuestionService
         $hasOptions = array_key_exists('options', $data);
         if (! $type->isChoice()) {
             if ($hasOptions) {
-                throw new JobPostingOperationException(
-                    'Options are not allowed for this question type.',
-                    'JOB_SCREENING_QUESTION_OPTIONS_NOT_ALLOWED',
+                throw new JobPostingOperationException(__('domain_errors.JOB_SCREENING_QUESTION_OPTIONS_NOT_ALLOWED'), 'JOB_SCREENING_QUESTION_OPTIONS_NOT_ALLOWED',
                     422,
                     ['options' => ['Options are only allowed for choice questions.']],
                 );
@@ -182,9 +172,7 @@ class JobScreeningQuestionService
 
         if (! $hasOptions) {
             if ($requireChoiceOptions) {
-                throw new JobPostingOperationException(
-                    'Choice questions require at least two options.',
-                    'JOB_SCREENING_QUESTION_OPTIONS_REQUIRED',
+                throw new JobPostingOperationException(__('domain_errors.JOB_SCREENING_QUESTION_OPTIONS_REQUIRED'), 'JOB_SCREENING_QUESTION_OPTIONS_REQUIRED',
                     422,
                     ['options' => ['At least two options are required.']],
                 );
@@ -195,9 +183,7 @@ class JobScreeningQuestionService
 
         $options = is_array($data['options']) ? array_values($data['options']) : [];
         if (count($options) < 2 || count($options) > 50) {
-            throw new JobPostingOperationException(
-                'Choice questions require between two and fifty options.',
-                'JOB_SCREENING_QUESTION_OPTIONS_REQUIRED',
+            throw new JobPostingOperationException(__('domain_errors.JOB_SCREENING_QUESTION_OPTIONS_REQUIRED'), 'JOB_SCREENING_QUESTION_OPTIONS_REQUIRED',
                 422,
                 ['options' => ['Provide between 2 and 50 options.']],
             );
@@ -209,17 +195,13 @@ class JobScreeningQuestionService
             $text = trim((string) ($option['option_text'] ?? ''));
             $key = mb_strtolower((string) preg_replace('/\s+/u', ' ', $text));
             if ($text === '' || mb_strlen($text) > 1000) {
-                throw new JobPostingOperationException(
-                    'Every option must contain valid text.',
-                    'JOB_SCREENING_QUESTION_OPTIONS_REQUIRED',
+                throw new JobPostingOperationException(__('domain_errors.JOB_SCREENING_QUESTION_OPTIONS_REQUIRED'), 'JOB_SCREENING_QUESTION_OPTIONS_REQUIRED',
                     422,
                     ["options.{$index}.option_text" => ['The option text is invalid.']],
                 );
             }
             if (isset($normalized[$key])) {
-                throw new JobPostingOperationException(
-                    'Duplicate options are not allowed.',
-                    'JOB_SCREENING_QUESTION_DUPLICATE_OPTION',
+                throw new JobPostingOperationException(__('domain_errors.JOB_SCREENING_QUESTION_DUPLICATE_OPTION'), 'JOB_SCREENING_QUESTION_DUPLICATE_OPTION',
                     422,
                     ['options' => ['Option text must be unique within a question.']],
                 );

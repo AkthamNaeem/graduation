@@ -1,0 +1,25 @@
+<?php
+
+return [
+    'list_retrieved' => 'Job applications retrieved successfully.',
+    'retrieved' => 'Job application retrieved successfully.',
+    'created' => 'Job application created successfully.',
+    'withdrawn' => 'Job application withdrawn successfully.',
+    'status_updated' => 'Application status updated successfully.',
+    'information_list' => 'Information requests retrieved successfully.',
+    'information_created' => 'Information request created successfully.',
+    'information_retrieved' => 'Information request retrieved successfully.',
+    'information_updated' => 'Information request updated successfully.',
+    'information_submitted' => 'Requested information submitted successfully.',
+    'information_cancelled' => 'Information request cancelled successfully.',
+    'notes_list' => 'Internal notes retrieved successfully.',
+    'note_retrieved' => 'Internal note retrieved successfully.',
+    'note_created' => 'Internal note created successfully.',
+    'note_updated' => 'Internal note updated successfully.',
+    'note_deleted' => 'Internal note deleted successfully.',
+    'note_revisions' => 'Internal note revisions retrieved successfully.',
+    'response_required' => 'Provide a non-empty message or at least one attachment.',
+    'terminal_immutable' => 'Terminal application states cannot be changed.',
+    'information_open' => 'Submit or cancel the open information request before changing this application status.',
+    'additional_information_endpoint' => 'Use the information request endpoint to request additional information.',
+];

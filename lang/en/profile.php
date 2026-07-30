@@ -1,0 +1,25 @@
+<?php
+
+return [
+    'retrieved' => 'Profile retrieved successfully.',
+    'updated' => 'Profile updated successfully.',
+    'employer_retrieved' => 'Employer profile retrieved successfully.',
+    'employer_updated' => 'Employer profile updated successfully.',
+    'experiences_retrieved' => 'Experiences retrieved successfully.',
+    'experience_retrieved' => 'Experience retrieved successfully.',
+    'experience_created' => 'Experience created successfully.',
+    'experience_updated' => 'Experience updated successfully.',
+    'experience_deleted' => 'Experience deleted successfully.',
+    'education_retrieved' => 'Education records retrieved successfully.',
+    'education_item_retrieved' => 'Education record retrieved successfully.',
+    'education_created' => 'Education record created successfully.',
+    'education_updated' => 'Education record updated successfully.',
+    'education_deleted' => 'Education record deleted successfully.',
+    'skill_attached' => 'Skill attached successfully.',
+    'skill_detached' => 'Skill detached successfully.',
+    'suggestions_retrieved' => 'Profile suggestions retrieved successfully.',
+    'suggestions_generated' => 'Profile suggestions generated successfully.',
+    'suggestion_saved' => 'Profile suggestion decision saved successfully.',
+    'suggestion_rejected' => 'Profile suggestion rejected successfully.',
+    'suggestions_applied' => 'Accepted profile suggestions applied successfully.',
+];

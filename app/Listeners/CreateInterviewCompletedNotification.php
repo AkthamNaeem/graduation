@@ -17,7 +17,7 @@ class CreateInterviewCompletedNotification extends IdempotentNotificationListene
 
         $this->notificationOnce(
             'interview.completed', InterviewCompleted::class, 'interview', $interview->id, $candidate,
-            fn () => $this->notificationService->createForUser($candidate, 'interview.completed', 'Interview completed', 'Your interview has been marked as completed.', [
+            fn () => $this->notificationService->createForUser($candidate, 'interview.completed', __('notifications.interview_completed_title'), __('notifications.interview_completed_body'), [
                 'interview_id' => $interview->id,
                 'application_id' => $interview->job_application_id,
                 'status' => 'completed',

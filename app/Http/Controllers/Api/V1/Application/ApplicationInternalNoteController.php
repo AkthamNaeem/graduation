@@ -25,39 +25,39 @@ class ApplicationInternalNoteController extends Controller
     {
         return ApiResponse::success(ApplicationInternalNoteResource::collection(
             $this->service->listForApplication($request->user(), $jobApplication, $request->validated())
-        ), 'Internal notes retrieved successfully.');
+        ), __('applications.notes_list'));
     }
 
     public function store(StoreApplicationInternalNoteRequest $request, JobApplication $jobApplication): JsonResponse
     {
         return ApiResponse::success(new ApplicationInternalNoteResource(
             $this->service->create($request->user(), $jobApplication, $request->validated('body'))
-        ), 'Internal note created successfully.', 201);
+        ), __('applications.note_created'), 201);
     }
 
     public function show(ShowApplicationInternalNoteRequest $request, ApplicationInternalNote $note): JsonResponse
     {
-        return ApiResponse::success(new ApplicationInternalNoteResource($this->service->show($request->user(), $note)), 'Internal note retrieved successfully.');
+        return ApiResponse::success(new ApplicationInternalNoteResource($this->service->show($request->user(), $note)), __('applications.note_retrieved'));
     }
 
     public function update(UpdateApplicationInternalNoteRequest $request, ApplicationInternalNote $note): JsonResponse
     {
         return ApiResponse::success(new ApplicationInternalNoteResource(
             $this->service->update($request->user(), $note, $request->validated('body'), $request->integer('version'))
-        ), 'Internal note updated successfully.');
+        ), __('applications.note_updated'));
     }
 
     public function destroy(DeleteApplicationInternalNoteRequest $request, ApplicationInternalNote $note): JsonResponse
     {
         return ApiResponse::success(new ApplicationInternalNoteResource(
             $this->service->softDelete($request->user(), $note, $request->integer('version'))
-        ), 'Internal note deleted successfully.');
+        ), __('applications.note_deleted'));
     }
 
     public function revisions(IndexApplicationInternalNoteRevisionRequest $request, ApplicationInternalNote $note): JsonResponse
     {
         return ApiResponse::success(ApplicationInternalNoteRevisionResource::collection(
             $this->service->listRevisions($request->user(), $note, $request->integer('per_page', 15))
-        ), 'Internal note revisions retrieved successfully.');
+        ), __('applications.note_revisions'));
     }
 }

@@ -130,12 +130,12 @@ class CVService
             if ($lockedCV->review_mode !== CVFile::REVIEW_MODE_INITIAL_IMPORT
                 || $lockedCV->review_status !== CVFile::REVIEW_STATUS_DRAFT
                 || $lockedCV->confirmed_at !== null) {
-                throw new CVLifecycleException('This CV review draft cannot be edited.', 'CV_REVIEW_DRAFT_NOT_EDITABLE');
+                throw new CVLifecycleException(__('domain_errors.CV_REVIEW_DRAFT_NOT_EDITABLE'), 'CV_REVIEW_DRAFT_NOT_EDITABLE');
             }
 
             $result = CVParsingResult::query()->where('cv_file_id', $lockedCV->id)->lockForUpdate()->first();
             if (! $result instanceof CVParsingResult) {
-                throw new CVLifecycleException('This CV review draft cannot be edited.', 'CV_REVIEW_DRAFT_NOT_EDITABLE');
+                throw new CVLifecycleException(__('domain_errors.CV_REVIEW_DRAFT_NOT_EDITABLE'), 'CV_REVIEW_DRAFT_NOT_EDITABLE');
             }
             $result->forceFill(['reviewed_json' => $normalized, 'reviewed_at' => now()])->save();
             $this->auditLogService->record('cv.review_draft_updated', $user, CVFile::class, $lockedCV->id, null, null, [
@@ -169,7 +169,7 @@ class CVService
         }
 
         if ($cvFile->confirmed_at !== null || $cvFile->review_status === CVFile::REVIEW_STATUS_APPLIED) {
-            throw ValidationException::withMessages(['cv' => ['This CV has already been confirmed.']]);
+            throw ValidationException::withMessages(['cv' => [__('cv.already_confirmed')]]);
         }
 
         return DB::transaction(function () use ($user, $cvFile): array {
@@ -195,18 +195,18 @@ class CVService
             if ($lockedCV->review_mode !== CVFile::REVIEW_MODE_INITIAL_IMPORT
                 || $lockedCV->review_status !== CVFile::REVIEW_STATUS_DRAFT
                 || $lockedCV->confirmed_at !== null) {
-                throw new CVLifecycleException('This initial CV review cannot be confirmed.', 'CV_REVIEW_NOT_CONFIRMABLE');
+                throw new CVLifecycleException(__('domain_errors.CV_REVIEW_NOT_CONFIRMABLE'), 'CV_REVIEW_NOT_CONFIRMABLE');
             }
 
             $profile = JobSeekerProfile::query()->where('user_id', $user->id)->lockForUpdate()->firstOrFail();
             if ($this->profileDataStateService->hasMeaningfulData($profile)) {
-                throw new CVLifecycleException('The profile changed after this review was created.', 'CV_REVIEW_MODE_STALE');
+                throw new CVLifecycleException(__('domain_errors.CV_REVIEW_MODE_STALE'), 'CV_REVIEW_MODE_STALE');
             }
 
             $result = CVParsingResult::query()->where('cv_file_id', $lockedCV->id)->lockForUpdate()->firstOrFail();
             $draft = $result->reviewed_json;
             if (! is_array($draft)) {
-                throw new CVLifecycleException('The CV review draft is unavailable.', 'CV_REVIEW_DRAFT_INVALID', 422);
+                throw new CVLifecycleException(__('domain_errors.CV_REVIEW_DRAFT_INVALID'), 'CV_REVIEW_DRAFT_INVALID', 422);
             }
             $this->validateStoredDraft($draft);
             $this->reviewDraftService->apply($profile, $lockedCV, $draft);
@@ -324,7 +324,7 @@ class CVService
             $target = CVFile::query()->lockForUpdate()->findOrFail($cvFile->id);
             $this->assertOwned($user, $target);
             if ($target->archived_at !== null) {
-                throw new CVLifecycleException('This CV is already archived.', 'CV_ALREADY_ARCHIVED');
+                throw new CVLifecycleException(__('domain_errors.CV_ALREADY_ARCHIVED'), 'CV_ALREADY_ARCHIVED');
             }
 
             $previousPrimary = $profile->primary_cv_file_id;
@@ -334,18 +334,18 @@ class CVService
                     ->get()->contains(fn (CVFile $candidate): bool => $candidate->isUsableForApplication());
 
                 if ($otherUsableExists && $replacementId === null) {
-                    throw new CVLifecycleException('Select an active replacement before archiving the primary CV.', 'CV_PRIMARY_REPLACEMENT_REQUIRED');
+                    throw new CVLifecycleException(__('domain_errors.CV_PRIMARY_REPLACEMENT_REQUIRED'), 'CV_PRIMARY_REPLACEMENT_REQUIRED');
                 }
 
                 if ($replacementId !== null) {
                     $replacement = CVFile::query()->lockForUpdate()->find($replacementId);
                     if (! $replacement instanceof CVFile) {
-                        throw new CVLifecycleException('The replacement CV could not be found.', 'CV_NOT_USABLE', 422);
+                        throw new CVLifecycleException(__('domain_errors.CV_NOT_USABLE'), 'CV_NOT_USABLE', 422);
                     }
                     $this->assertOwned($user, $replacement);
                     $this->assertAvailableAndUsable($replacement);
                     if ($replacement->id === $target->id) {
-                        throw new CVLifecycleException('The replacement must be a different active CV.', 'CV_NOT_USABLE', 422);
+                        throw new CVLifecycleException(__('domain_errors.CV_NOT_USABLE'), 'CV_NOT_USABLE', 422);
                     }
                     $profile->forceFill(['primary_cv_file_id' => $replacement->id])->save();
                 } else {
@@ -373,7 +373,7 @@ class CVService
             $target = CVFile::query()->lockForUpdate()->findOrFail($cvFile->id);
             $this->assertOwned($user, $target);
             if ($target->archived_at === null) {
-                throw new CVLifecycleException('This CV is not archived.', 'CV_NOT_ARCHIVED');
+                throw new CVLifecycleException(__('domain_errors.CV_NOT_ARCHIVED'), 'CV_NOT_ARCHIVED');
             }
 
             $target->forceFill(['archived_at' => null])->save();
@@ -400,32 +400,32 @@ class CVService
     public function assertMutable(CVFile $cvFile): void
     {
         if ($cvFile->archived_at !== null) {
-            throw new CVLifecycleException('Archived CV data is read-only.', 'CV_ARCHIVED_READ_ONLY');
+            throw new CVLifecycleException(__('domain_errors.CV_ARCHIVED_READ_ONLY'), 'CV_ARCHIVED_READ_ONLY');
         }
     }
 
     private function assertOwned(User $user, CVFile $cvFile): void
     {
         if ($cvFile->user_id !== $user->id) {
-            throw new CVLifecycleException('The CV does not belong to the authenticated user.', 'CV_NOT_OWNED', 403);
+            throw new CVLifecycleException(__('domain_errors.CV_NOT_OWNED'), 'CV_NOT_OWNED', 403);
         }
     }
 
     private function assertAvailableAndUsable(CVFile $cvFile): void
     {
         if ($cvFile->archived_at !== null) {
-            throw new CVLifecycleException('Archived CVs cannot be used for this operation.', 'CV_ARCHIVED');
+            throw new CVLifecycleException(__('domain_errors.CV_ARCHIVED'), 'CV_ARCHIVED');
         }
         $this->assertFileExists($cvFile);
         if (! $cvFile->isUsableForApplication()) {
-            throw new CVLifecycleException('This CV is not usable.', 'CV_NOT_USABLE');
+            throw new CVLifecycleException(__('domain_errors.CV_NOT_USABLE'), 'CV_NOT_USABLE');
         }
     }
 
     private function assertFileExists(CVFile $cvFile): void
     {
         if (! $this->privateStorage->exists($cvFile->disk, $cvFile->stored_path)) {
-            throw new CVLifecycleException('The CV file is unavailable.', 'CV_FILE_UNAVAILABLE', 404);
+            throw new CVLifecycleException(__('domain_errors.CV_FILE_UNAVAILABLE'), 'CV_FILE_UNAVAILABLE', 404);
         }
     }
 

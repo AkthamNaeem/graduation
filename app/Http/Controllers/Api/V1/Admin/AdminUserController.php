@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Api\V1\Admin;
 
+use App\Enums\UserStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Admin\AdminUserStatusActionRequest;
 use App\Http\Requests\Api\V1\Admin\IndexAdminUserRequest;
 use App\Http\Requests\Api\V1\Admin\UpdateUserRoleRequest;
 use App\Http\Requests\Api\V1\Admin\UpdateUserStatusRequest;
 use App\Http\Resources\Api\V1\UserResource;
-use App\Enums\UserStatus;
 use App\Models\User;
 use App\Services\AdminUserStatusService;
 use App\Support\ApiResponse;
@@ -44,7 +44,7 @@ class AdminUserController extends Controller
 
         return ApiResponse::success(
             data: UserResource::collection($users),
-            message: 'Users retrieved successfully.',
+            message: __('admin.users'),
         );
     }
 
@@ -52,7 +52,7 @@ class AdminUserController extends Controller
     {
         return ApiResponse::success(
             data: new UserResource($user->load(['jobSeekerProfile.skills', 'employerProfile.company'])),
-            message: 'User retrieved successfully.',
+            message: __('admin.user'),
         );
     }
 
@@ -62,23 +62,23 @@ class AdminUserController extends Controller
 
         return ApiResponse::success(
             data: new UserResource($user->refresh()->load(['jobSeekerProfile.skills', 'employerProfile.company'])),
-            message: 'User role updated successfully.',
+            message: __('admin.user_role'),
         );
     }
 
     public function updateStatus(UpdateUserStatusRequest $request, User $user): JsonResponse
     {
-        return $this->setStatus($request, $user, UserStatus::from((string) $request->validated('status')), 'User status updated successfully.');
+        return $this->setStatus($request, $user, UserStatus::from((string) $request->validated('status')), __('admin.user_status'));
     }
 
     public function activate(AdminUserStatusActionRequest $request, User $user): JsonResponse
     {
-        return $this->setStatus($request, $user, UserStatus::ACTIVE, 'User activated successfully.');
+        return $this->setStatus($request, $user, UserStatus::ACTIVE, __('admin.user_activated'));
     }
 
     public function suspend(AdminUserStatusActionRequest $request, User $user): JsonResponse
     {
-        return $this->setStatus($request, $user, UserStatus::SUSPENDED, 'User suspended successfully.');
+        return $this->setStatus($request, $user, UserStatus::SUSPENDED, __('admin.user_suspended'));
     }
 
     private function setStatus(UpdateUserStatusRequest|AdminUserStatusActionRequest $request, User $user, UserStatus $status, string $message): JsonResponse

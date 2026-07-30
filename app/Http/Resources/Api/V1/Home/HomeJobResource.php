@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Api\V1\Home;
 
 use App\Models\JobPosting;
+use App\Support\Recommendation\RecommendationReasonTranslator;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -43,10 +44,10 @@ class HomeJobResource extends JsonResource
                     ->values()
                     ->all(),
                 'reasons' => collect($recommendation['reasons'] ?? [])
-                    ->map(static fn (array $reason): array => [
+                    ->map(static fn (array $reason): array => RecommendationReasonTranslator::translate([
                         'code' => $reason['code'] ?? null,
                         'message' => $reason['message'] ?? null,
-                    ])
+                    ]))
                     ->values()
                     ->all(),
             ];

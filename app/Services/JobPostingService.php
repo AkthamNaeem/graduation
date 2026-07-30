@@ -212,9 +212,7 @@ class JobPostingService
         }
 
         if (blank($jobPosting->requirements)) {
-            throw new JobPostingOperationException(
-                'Job requirements are required before publishing this job.',
-                'JOB_REQUIREMENTS_MISSING',
+            throw new JobPostingOperationException(__('domain_errors.JOB_REQUIREMENTS_MISSING'), 'JOB_REQUIREMENTS_MISSING',
                 422,
                 ['requirements' => ['Job requirements are required before publishing this job.']],
             );
@@ -223,9 +221,7 @@ class JobPostingService
         $workMode = JobWorkMode::tryFrom((string) $jobPosting->getRawOriginal('work_mode'));
         if (! $workMode instanceof JobWorkMode
             || ($workMode->requiresLocation() && blank($jobPosting->location))) {
-            throw new JobPostingOperationException(
-                'A valid work mode and location for on-site or hybrid jobs are required before publishing.',
-                'INVALID_JOB_WORK_MODE',
+            throw new JobPostingOperationException(__('domain_errors.INVALID_JOB_WORK_MODE'), 'INVALID_JOB_WORK_MODE',
                 422,
                 ['work_mode' => ['A valid work mode and location for on-site or hybrid jobs are required before publishing.']],
             );
@@ -240,9 +236,7 @@ class JobPostingService
             ])
             ->exists();
         if ($invalidTypeExists) {
-            throw new JobPostingOperationException(
-                'The job contains an invalid skill requirement type.',
-                'JOB_SKILL_TYPE_INVALID',
+            throw new JobPostingOperationException(__('domain_errors.JOB_SKILL_TYPE_INVALID'), 'JOB_SKILL_TYPE_INVALID',
                 422,
                 ['skills' => ['Every job skill must have a valid requirement type.']],
             );
@@ -253,27 +247,21 @@ class JobPostingService
             ->where(fn ($query) => $query->whereNull('weight')->orWhereNotBetween('weight', [1, 5]))
             ->exists();
         if ($invalidWeightExists) {
-            throw new JobPostingOperationException(
-                'The job contains an invalid skill weight.',
-                'JOB_SKILL_WEIGHT_INVALID',
+            throw new JobPostingOperationException(__('domain_errors.JOB_SKILL_WEIGHT_INVALID'), 'JOB_SKILL_WEIGHT_INVALID',
                 422,
                 ['skills' => ['Every job skill weight must be between 1 and 5.']],
             );
         }
 
         if ($jobPosting->requiredSkillsCount() < 1) {
-            throw new JobPostingOperationException(
-                'At least one required skill is needed before publishing this job.',
-                'JOB_REQUIRED_SKILL_MISSING',
+            throw new JobPostingOperationException(__('domain_errors.JOB_REQUIRED_SKILL_MISSING'), 'JOB_REQUIRED_SKILL_MISSING',
                 422,
                 ['skills' => ['At least one required skill is needed before publishing this job.']],
             );
         }
 
         if ($jobPosting->isApplicationDeadlinePassed()) {
-            throw new JobPostingOperationException(
-                'The application deadline must be in the future before publishing this job.',
-                'JOB_APPLICATION_DEADLINE_PASSED',
+            throw new JobPostingOperationException(__('domain_errors.JOB_APPLICATION_DEADLINE_PASSED'), 'JOB_APPLICATION_DEADLINE_PASSED',
                 422,
                 ['application_deadline' => ['The application deadline must be in the future before publishing this job.']],
             );

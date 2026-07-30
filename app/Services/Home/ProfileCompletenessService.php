@@ -35,7 +35,7 @@ class ProfileCompletenessService
             'basic_information',
             [
                 'key' => 'basic_information',
-                'label' => 'أكمل بياناتك الأساسية',
+                'label' => __('home.completeness.basic'),
                 'target' => ['type' => 'profile_section', 'value' => 'basic_information'],
             ],
             $percentage,
@@ -49,14 +49,14 @@ class ProfileCompletenessService
             if (blank($profile?->headline)) {
                 $missing[] = [
                     'key' => 'professional_headline',
-                    'label' => 'أضف مسماك المهني',
+                    'label' => __('home.completeness.headline'),
                     'target' => ['type' => 'profile_section', 'value' => 'professional_headline'],
                 ];
             }
             if (blank($profile?->summary)) {
                 $missing[] = [
                     'key' => 'professional_summary',
-                    'label' => 'أضف ملخصك المهني',
+                    'label' => __('home.completeness.summary'),
                     'target' => ['type' => 'profile_section', 'value' => 'professional_summary'],
                 ];
             }
@@ -67,7 +67,7 @@ class ProfileCompletenessService
             'location',
             [
                 'key' => 'location',
-                'label' => 'أضف موقعك',
+                'label' => __('home.completeness.location'),
                 'target' => ['type' => 'profile_section', 'value' => 'location'],
             ],
             $percentage,
@@ -78,7 +78,7 @@ class ProfileCompletenessService
             'experience',
             [
                 'key' => 'experience',
-                'label' => 'أضف خبرة عملية',
+                'label' => __('home.completeness.experience'),
                 'target' => ['type' => 'profile_section', 'value' => 'experiences'],
             ],
             $percentage,
@@ -89,7 +89,7 @@ class ProfileCompletenessService
             'education',
             [
                 'key' => 'education',
-                'label' => 'أضف مؤهلك التعليمي',
+                'label' => __('home.completeness.education'),
                 'target' => ['type' => 'profile_section', 'value' => 'education'],
             ],
             $percentage,
@@ -100,7 +100,7 @@ class ProfileCompletenessService
             'skills',
             [
                 'key' => 'skills',
-                'label' => 'أضف ثلاث مهارات على الأقل',
+                'label' => __('home.completeness.skills'),
                 'target' => ['type' => 'profile_section', 'value' => 'skills'],
             ],
             $percentage,
@@ -118,7 +118,7 @@ class ProfileCompletenessService
             'confirmed_primary_cv',
             [
                 'key' => 'confirmed_primary_cv',
-                'label' => 'اختر سيرة ذاتية أساسية وأكّدها',
+                'label' => __('home.completeness.cv'),
                 'target' => ['type' => 'cv', 'value' => 'primary'],
             ],
             $percentage,

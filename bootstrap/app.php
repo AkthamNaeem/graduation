@@ -17,6 +17,7 @@ use App\Http\Middleware\AdminMiddleware;
 use App\Http\Middleware\AuthenticateSanctumOptionally;
 use App\Http\Middleware\EnsureCompanyApproved;
 use App\Http\Middleware\EnsureUserIsActive;
+use App\Http\Middleware\SetRequestLocale;
 use App\Support\ApiResponse;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\AuthenticationException;
@@ -28,7 +29,11 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
+use Symfony\Component\HttpKernel\Exception\MethodNotAllowedHttpException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\HttpKernel\Exception\RequestEntityTooLargeHttpException;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
+use Symfony\Component\HttpKernel\Exception\UnsupportedMediaTypeHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -38,6 +43,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->api(prepend: [
+            SetRequestLocale::class,
+        ]);
+
         $middleware->alias([
             'admin' => AdminMiddleware::class,
             'auth.sanctum.optional' => AuthenticateSanctumOptionally::class,
@@ -206,8 +215,8 @@ return Application::configure(basePath: dirname(__DIR__))
 
             return ApiResponse::error(
                 message: array_key_exists('unanswered_question_ids', $errors)
-                    ? 'Some required questions have not been answered.'
-                    : 'The given data was invalid.',
+                    ? __('api.required_questions_unanswered')
+                    : __('api.validation_failed'),
                 errors: $errors,
                 status: 422,
                 code: array_key_exists('max_score', $errors) ? 'TEST_MAX_SCORE_IS_SYSTEM_MANAGED' : null,
@@ -220,7 +229,7 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             return ApiResponse::error(
-                message: $exception->getMessage() ?: 'Unauthenticated.',
+                message: __('api.unauthenticated'),
                 status: 401,
             );
         });
@@ -231,7 +240,7 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             return ApiResponse::error(
-                message: $exception->getMessage() ?: 'This action is unauthorized.',
+                message: $exception->getMessage() ?: __('api.unauthorized'),
                 status: 403,
             );
         });
@@ -242,7 +251,7 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             return ApiResponse::error(
-                message: $exception->getMessage() ?: 'This action is unauthorized.',
+                message: $exception->getMessage() ?: __('api.unauthorized'),
                 status: 403,
             );
         });
@@ -253,7 +262,7 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             return ApiResponse::error(
-                message: $exception->getMessage() ?: 'The requested operation conflicts with the current resource state.',
+                message: $exception->getMessage() ?: __('api.conflict'),
                 status: 409,
             );
         });
@@ -264,9 +273,33 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             return ApiResponse::error(
-                message: 'The requested resource could not be found.',
+                message: __('api.not_found'),
                 status: 404,
             );
+        });
+
+        $exceptions->render(function (MethodNotAllowedHttpException $exception, Request $request) {
+            return $request->is('api/*')
+                ? ApiResponse::error(__('api.method_not_allowed'), status: 405)
+                : null;
+        });
+
+        $exceptions->render(function (TooManyRequestsHttpException $exception, Request $request) {
+            return $request->is('api/*')
+                ? ApiResponse::error(__('api.rate_limited'), status: 429)
+                : null;
+        });
+
+        $exceptions->render(function (RequestEntityTooLargeHttpException $exception, Request $request) {
+            return $request->is('api/*')
+                ? ApiResponse::error(__('api.payload_too_large'), status: 413)
+                : null;
+        });
+
+        $exceptions->render(function (UnsupportedMediaTypeHttpException $exception, Request $request) {
+            return $request->is('api/*')
+                ? ApiResponse::error(__('api.unsupported_media_type'), status: 415)
+                : null;
         });
 
         $exceptions->render(function (HttpResponseException $exception) {
@@ -278,13 +311,8 @@ return Application::configure(basePath: dirname(__DIR__))
                 return null;
             }
 
-            $errors = config('app.debug')
-                ? ['exception' => [$exception->getMessage()]]
-                : [];
-
             return ApiResponse::error(
-                message: 'An unexpected server error occurred.',
-                errors: $errors,
+                message: __('api.server_error'),
                 status: 500,
             );
         });

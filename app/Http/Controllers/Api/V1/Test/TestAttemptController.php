@@ -4,16 +4,16 @@ namespace App\Http\Controllers\Api\V1\Test;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Test\EvaluateTestAttemptRequest;
-use App\Http\Requests\Api\V1\Test\StartTestAttemptRequest;
 use App\Http\Requests\Api\V1\Test\ShowTestAttemptResultRequest;
+use App\Http\Requests\Api\V1\Test\StartTestAttemptRequest;
 use App\Http\Requests\Api\V1\Test\SubmitTestAttemptRequest;
 use App\Http\Resources\Api\V1\TestAttemptResource;
 use App\Http\Resources\Api\V1\TestAttemptResultResource;
 use App\Models\ApplicationTestAssignment;
 use App\Models\TestAttempt;
 use App\Models\User;
-use App\Services\TestService;
 use App\Services\TestGradingService;
+use App\Services\TestService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -24,8 +24,7 @@ class TestAttemptController extends Controller
     public function __construct(
         private readonly TestService $testService,
         private readonly TestGradingService $testGradingService,
-    ) {
-    }
+    ) {}
 
     public function start(StartTestAttemptRequest $request, ApplicationTestAssignment $applicationTestAssignment): JsonResponse
     {
@@ -33,7 +32,7 @@ class TestAttemptController extends Controller
             data: new TestAttemptResource(
                 $this->testService->startAttempt($this->authenticatedUser($request), $applicationTestAssignment),
             ),
-            message: 'Test attempt started successfully.',
+            message: __('tests.started'),
             status: 201,
         );
     }
@@ -48,7 +47,7 @@ class TestAttemptController extends Controller
                     $request->validated('answers'),
                 ),
             ),
-            message: 'Test attempt submitted successfully.',
+            message: __('tests.submitted'),
         );
     }
 
@@ -63,7 +62,7 @@ class TestAttemptController extends Controller
                     $request->validated('feedback'),
                 ),
             ),
-            message: 'Test attempt evaluated successfully.',
+            message: __('tests.evaluated'),
         );
     }
 
@@ -71,7 +70,7 @@ class TestAttemptController extends Controller
     {
         return ApiResponse::success(
             new TestAttemptResultResource($this->testGradingService->getResult($testAttempt)),
-            'Test attempt result retrieved successfully.',
+            __('tests.result'),
         );
     }
 
@@ -83,6 +82,6 @@ class TestAttemptController extends Controller
 
         return $tokenable instanceof User
             ? $tokenable->withAccessToken($accessToken)
-            : throw new \RuntimeException('Authenticated user could not be resolved.');
+            : throw new \RuntimeException(__('auth.user_unresolved'));
     }
 }

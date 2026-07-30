@@ -10,12 +10,14 @@ class ApiResponse
 {
     public static function success(
         mixed $data = null,
-        string $message = 'Request completed successfully.',
+        ?string $message = null,
         int $status = 200,
     ): JsonResponse {
         return response()->json([
             'success' => true,
-            'message' => $message,
+            'message' => $message === null
+                ? __('api.request_completed')
+                : LocalizedMessage::resolve($message),
             'data' => self::resolveData($data),
         ], $status);
     }
@@ -24,15 +26,17 @@ class ApiResponse
      * @param  array<string, mixed>  $errors
      */
     public static function error(
-        string $message = 'Request failed.',
+        ?string $message = null,
         array $errors = [],
         int $status = 400,
         ?string $code = null,
     ): JsonResponse {
         $payload = [
             'success' => false,
-            'message' => $message,
-            'errors' => $errors,
+            'message' => $message === null
+                ? __('api.request_failed')
+                : LocalizedMessage::resolve($message, $code),
+            'errors' => LocalizedMessage::resolveArray($errors),
         ];
 
         if ($code !== null) {

@@ -14,14 +14,13 @@ class CompanyController extends Controller
 {
     public function __construct(
         private readonly ProfileService $profileService,
-    ) {
-    }
+    ) {}
 
     public function show(ShowCompanyRequest $request): JsonResponse
     {
         return ApiResponse::success(
             data: new CompanyResource($this->profileService->getCompany($request->user())),
-            message: 'Company retrieved successfully.',
+            message: __('companies.retrieved'),
         );
     }
 
@@ -29,7 +28,7 @@ class CompanyController extends Controller
     {
         return ApiResponse::success(
             data: new CompanyResource($this->profileService->updateCompany($request->user(), $request->validated())),
-            message: 'Company updated successfully.',
+            message: __('companies.updated'),
         );
     }
 }

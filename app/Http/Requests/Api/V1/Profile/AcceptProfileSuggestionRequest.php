@@ -78,7 +78,7 @@ class AcceptProfileSuggestionRequest extends GenerateProfileSuggestionsRequest
                 return;
             }
             if (($value['is_current'] ?? false) && ($value['end_date'] ?? null) !== null) {
-                $validator->errors()->add('edited_value.end_date', 'The end date must be null for a current experience.');
+                $validator->errors()->add('edited_value.end_date', __('validation.custom_messages.current_end_date'));
             }
         }];
     }

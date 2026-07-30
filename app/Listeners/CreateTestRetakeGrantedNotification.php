@@ -24,7 +24,7 @@ class CreateTestRetakeGrantedNotification extends IdempotentNotificationListener
             'test_assignment',
             $assignment->id,
             $candidate,
-            fn () => $this->notificationService->createForUser($candidate, 'test.retake_granted', 'Test retake granted', 'A new test attempt is available.', [
+            fn () => $this->notificationService->createForUser($candidate, 'test.retake_granted', __('notifications.test_retake_title'), __('notifications.test_retake_body'), [
                 'assignment_id' => $assignment->id,
                 'attempt_number' => $assignment->attempt_number,
                 'max_attempts' => $assignment->max_attempts,

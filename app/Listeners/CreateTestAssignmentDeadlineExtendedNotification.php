@@ -24,7 +24,7 @@ class CreateTestAssignmentDeadlineExtendedNotification extends IdempotentNotific
             'test_assignment',
             $assignment->id,
             $candidate,
-            fn () => $this->notificationService->createForUser($candidate, 'test.deadline_extended', 'Test deadline extended', 'Your test deadline has been extended.', [
+            fn () => $this->notificationService->createForUser($candidate, 'test.deadline_extended', __('notifications.test_deadline_title'), __('notifications.test_deadline_body'), [
                 'assignment_id' => $assignment->id,
                 'new_deadline_at' => $assignment->deadline_at?->toISOString(),
             ]),

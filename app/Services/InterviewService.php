@@ -59,7 +59,7 @@ class InterviewService
         return DB::transaction(function () use ($actor, $application, $data): Interview {
             $jobApplication = JobApplication::query()->with('applicationStatus')->lockForUpdate()->findOrFail($application->id);
             if (in_array($jobApplication->applicationStatus?->slug, self::TERMINAL_APPLICATION_STATUSES, true)) {
-                $this->fail('Interviews cannot be scheduled for a terminal application.', 'INTERVIEW_INVALID_STATUS_TRANSITION', 409);
+                $this->fail(__('domain_errors.INTERVIEW_INVALID_STATUS_TRANSITION'), 'INTERVIEW_INVALID_STATUS_TRANSITION', 409);
             }
 
             $schedule = $this->validatedSchedule($data, true);
@@ -126,7 +126,7 @@ class InterviewService
             JobApplication::query()->lockForUpdate()->findOrFail($interview->job_application_id);
             $locked = Interview::query()->lockForUpdate()->findOrFail($interview->id);
             if ($locked->status !== InterviewStatus::SCHEDULED->value) {
-                $this->fail('Only an unconfirmed scheduled interview can be edited.', 'INTERVIEW_INVALID_STATUS_TRANSITION');
+                $this->fail(__('domain_errors.INTERVIEW_INVALID_STATUS_TRANSITION'), 'INTERVIEW_INVALID_STATUS_TRANSITION');
             }
 
             $before = $locked->only(['interview_type', 'candidate_message', 'internal_note']);
@@ -163,12 +163,12 @@ class InterviewService
         return DB::transaction(function () use ($actor, $interview): Interview {
             $locked = Interview::query()->lockForUpdate()->findOrFail($interview->id);
             if ($locked->status === InterviewStatus::CONFIRMED->value) {
-                $this->fail('This interview is already confirmed.', 'INTERVIEW_ALREADY_CONFIRMED');
+                $this->fail(__('domain_errors.INTERVIEW_ALREADY_CONFIRMED'), 'INTERVIEW_ALREADY_CONFIRMED');
             }
             if (! in_array($locked->status, [InterviewStatus::SCHEDULED->value, InterviewStatus::RESCHEDULED->value], true)
                 || $locked->scheduled_end_at === null
                 || now()->gte($locked->scheduled_end_at)) {
-                $this->fail('This interview cannot be confirmed in its current state.', 'INTERVIEW_CONFIRMATION_NOT_ALLOWED');
+                $this->fail(__('domain_errors.INTERVIEW_CONFIRMATION_NOT_ALLOWED'), 'INTERVIEW_CONFIRMATION_NOT_ALLOWED');
             }
 
             $from = $locked->status;
@@ -190,7 +190,7 @@ class InterviewService
         return DB::transaction(function () use ($actor, $interview, $data): Interview {
             $locked = Interview::query()->lockForUpdate()->findOrFail($interview->id);
             if (! in_array($locked->status, self::ACTIVE_STATUSES, true)) {
-                $this->fail('This interview cannot be rescheduled.', 'INTERVIEW_RESCHEDULE_NOT_ALLOWED');
+                $this->fail(__('domain_errors.INTERVIEW_RESCHEDULE_NOT_ALLOWED'), 'INTERVIEW_RESCHEDULE_NOT_ALLOWED');
             }
             $schedule = $this->validatedSchedule($data, true);
             $same = $locked->scheduled_at?->equalTo($schedule['start'])
@@ -199,7 +199,7 @@ class InterviewService
                 && $locked->meeting_link === $schedule['meeting_link']
                 && $locked->location === $schedule['location'];
             if ($same) {
-                $this->fail('The new interview schedule must contain a material change.', 'INTERVIEW_RESCHEDULE_NOT_ALLOWED', 422);
+                $this->fail(__('domain_errors.INTERVIEW_RESCHEDULE_NOT_ALLOWED'), 'INTERVIEW_RESCHEDULE_NOT_ALLOWED', 422);
             }
 
             $change = InterviewScheduleChange::query()->create([
@@ -243,7 +243,7 @@ class InterviewService
             $application = JobApplication::query()->with('applicationStatus')->lockForUpdate()->findOrFail($interview->job_application_id);
             $locked = Interview::query()->lockForUpdate()->findOrFail($interview->id);
             if (! in_array($locked->status, self::ACTIVE_STATUSES, true)) {
-                $this->fail('Only an active interview can be cancelled.', 'INTERVIEW_CANCELLATION_NOT_ALLOWED');
+                $this->fail(__('domain_errors.INTERVIEW_CANCELLATION_NOT_ALLOWED'), 'INTERVIEW_CANCELLATION_NOT_ALLOWED');
             }
             $from = $locked->status;
             $this->assertTransition($from, 'cancelled');
@@ -273,7 +273,7 @@ class InterviewService
         return DB::transaction(function () use ($actor, $interview, $data): Interview {
             $locked = Interview::query()->lockForUpdate()->findOrFail($interview->id);
             if (! in_array($locked->status, self::ACTIVE_STATUSES, true) || now()->lt($locked->scheduled_at)) {
-                $this->fail('Attendance cannot be recorded yet or in this state.', 'INTERVIEW_ATTENDANCE_NOT_READY');
+                $this->fail(__('domain_errors.INTERVIEW_ATTENDANCE_NOT_READY'), 'INTERVIEW_ATTENDANCE_NOT_READY');
             }
             $before = $locked->only(['candidate_attendance_status', 'interviewer_attendance_status', 'attendance_note']);
             $after = ['candidate_attendance_status' => $data['candidate_status'], 'interviewer_attendance_status' => $data['interviewer_status'], 'attendance_note' => $data['note'] ?? null];
@@ -297,7 +297,7 @@ class InterviewService
             $application = JobApplication::query()->with('applicationStatus')->lockForUpdate()->findOrFail($interview->job_application_id);
             $locked = Interview::query()->lockForUpdate()->findOrFail($interview->id);
             if (! in_array($locked->status, self::ACTIVE_STATUSES, true) || now()->lt($locked->scheduled_at)) {
-                $this->fail('This interview cannot be marked as no show.', 'INTERVIEW_NO_SHOW_NOT_ALLOWED');
+                $this->fail(__('domain_errors.INTERVIEW_NO_SHOW_NOT_ALLOWED'), 'INTERVIEW_NO_SHOW_NOT_ALLOWED');
             }
             $from = $locked->status;
             $this->assertTransition($from, 'no_show');
@@ -328,10 +328,10 @@ class InterviewService
             $application = JobApplication::query()->with('applicationStatus')->lockForUpdate()->findOrFail($interview->job_application_id);
             $locked = Interview::query()->lockForUpdate()->findOrFail($interview->id);
             if ($locked->status !== 'confirmed' || now()->lt($locked->scheduled_at)) {
-                $this->fail('Only a started, confirmed interview can be completed.', 'INTERVIEW_COMPLETION_NOT_ALLOWED');
+                $this->fail(__('domain_errors.INTERVIEW_COMPLETION_NOT_ALLOWED'), 'INTERVIEW_COMPLETION_NOT_ALLOWED');
             }
             if ($locked->candidate_attendance_status !== 'present' || $locked->interviewer_attendance_status !== 'present') {
-                $this->fail('Present attendance for both parties is required before completion.', 'INTERVIEW_COMPLETION_NOT_ALLOWED');
+                $this->fail(__('domain_errors.INTERVIEW_COMPLETION_NOT_ALLOWED'), 'INTERVIEW_COMPLETION_NOT_ALLOWED');
             }
             $from = $locked->status;
             $this->assertTransition($from, 'completed');
@@ -356,7 +356,7 @@ class InterviewService
             $application = JobApplication::query()->with('applicationStatus')->lockForUpdate()->findOrFail($interview->job_application_id);
             $locked = Interview::query()->with('evaluation')->lockForUpdate()->findOrFail($interview->id);
             if ($locked->status !== 'completed' || $locked->evaluation instanceof InterviewEvaluation) {
-                $this->fail('Only a completed, unevaluated interview can be evaluated.', 'INTERVIEW_EVALUATION_NOT_ALLOWED');
+                $this->fail(__('domain_errors.INTERVIEW_EVALUATION_NOT_ALLOWED'), 'INTERVIEW_EVALUATION_NOT_ALLOWED');
             }
             $evaluation = InterviewEvaluation::query()->create([
                 'interview_id' => $locked->id, 'evaluated_by_user_id' => $actor->id,
@@ -420,10 +420,10 @@ class InterviewService
             $start = CarbonImmutable::parse($data['scheduled_start_at'])->utc();
             $end = CarbonImmutable::parse($data['scheduled_end_at'])->utc();
         } catch (\Throwable) {
-            $this->fail('The interview time configuration is invalid.', 'INTERVIEW_TIME_INVALID', 422);
+            $this->fail(__('domain_errors.INTERVIEW_TIME_INVALID'), 'INTERVIEW_TIME_INVALID', 422);
         }
         if (($future && $start->lte(now())) || $end->lte($start) || $start->diffInMinutes($end) > 480) {
-            $this->fail('Interview times must be future, ordered, and no longer than eight hours.', 'INTERVIEW_TIME_INVALID', 422);
+            $this->fail(__('domain_errors.INTERVIEW_TIME_INVALID'), 'INTERVIEW_TIME_INVALID', 422);
         }
         $mode = InterviewMode::from($data['mode'])->value;
         $meetingLink = isset($data['meeting_link']) ? trim((string) $data['meeting_link']) : null;
@@ -431,7 +431,7 @@ class InterviewService
         $meetingLink = $meetingLink === '' ? null : $meetingLink;
         $location = $location === '' ? null : $location;
         if (($mode === 'online' && $meetingLink === null) || ($mode === 'on_site' && $location === null)) {
-            $this->fail('The interview mode configuration is incomplete.', 'INTERVIEW_MODE_CONFIGURATION_INVALID', 422);
+            $this->fail(__('domain_errors.INTERVIEW_MODE_CONFIGURATION_INVALID'), 'INTERVIEW_MODE_CONFIGURATION_INVALID', 422);
         }
 
         return ['start' => $start, 'end' => $end, 'mode' => $mode, 'meeting_link' => $mode === 'online' ? $meetingLink : null, 'location' => $mode === 'on_site' ? $location : null];
@@ -442,14 +442,14 @@ class InterviewService
         $exists = Interview::query()->where('job_application_id', $applicationId)->where('interview_type', $type)
             ->whereIn('status', self::ACTIVE_STATUSES)->when($exceptId, fn ($query) => $query->where('id', '!=', $exceptId))->exists();
         if ($exists) {
-            $this->fail('An active interview of this type already exists for the application.', 'INTERVIEW_ALREADY_ACTIVE_FOR_TYPE');
+            $this->fail(__('domain_errors.INTERVIEW_ALREADY_ACTIVE_FOR_TYPE'), 'INTERVIEW_ALREADY_ACTIVE_FOR_TYPE');
         }
     }
 
     private function assertTransition(string $from, string $to): void
     {
         if (! in_array($to, self::TRANSITIONS[$from] ?? [], true)) {
-            $this->fail("The interview transition from {$from} to {$to} is not allowed.", 'INTERVIEW_INVALID_STATUS_TRANSITION');
+            $this->fail(__('domain_errors.INTERVIEW_INVALID_STATUS_TRANSITION'), 'INTERVIEW_INVALID_STATUS_TRANSITION');
         }
     }
 

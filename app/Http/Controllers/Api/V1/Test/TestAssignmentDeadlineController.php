@@ -29,7 +29,7 @@ class TestAssignmentDeadlineController extends Controller
                 $applicationTestAssignment,
                 $request->validated(),
             )),
-            'Test assignment deadline updated successfully.',
+            __('tests.deadline_updated'),
         );
     }
 
@@ -37,7 +37,7 @@ class TestAssignmentDeadlineController extends Controller
     {
         return ApiResponse::success(
             TestAssignmentDeadlineChangeResource::collection($this->deadlineService->history($applicationTestAssignment)),
-            'Test assignment deadline history retrieved successfully.',
+            __('tests.deadline_history'),
         );
     }
 
@@ -49,6 +49,6 @@ class TestAssignmentDeadlineController extends Controller
 
         return $tokenable instanceof User
             ? $tokenable->withAccessToken($accessToken)
-            : throw new \RuntimeException('Authenticated user could not be resolved.');
+            : throw new \RuntimeException(__('auth.user_unresolved'));
     }
 }

@@ -39,7 +39,7 @@ class AdminSkillController extends Controller
 
         return ApiResponse::success(
             data: SkillResource::collection($skills),
-            message: 'Skills retrieved successfully.',
+            message: __('admin.skills'),
         );
     }
 
@@ -59,7 +59,7 @@ class AdminSkillController extends Controller
 
         return ApiResponse::success(
             data: new SkillResource($skill),
-            message: 'Skill created successfully.',
+            message: __('admin.skill_created'),
             status: 201,
         );
     }
@@ -81,7 +81,7 @@ class AdminSkillController extends Controller
 
         return ApiResponse::success(
             data: new SkillResource($skill->refresh()),
-            message: 'Skill updated successfully.',
+            message: __('admin.skill_updated'),
         );
     }
 
@@ -89,8 +89,8 @@ class AdminSkillController extends Controller
     {
         if ($skill->jobSeekerProfiles()->exists() || $skill->jobPostings()->exists()) {
             return ApiResponse::error(
-                message: 'Skill is used by profiles or jobs and cannot be hard-deleted.',
-                errors: ['skill' => ['Detach the skill from related profiles and jobs before deleting it.']],
+                message: __('admin.skill_in_use'),
+                errors: ['skill' => [__('admin.skill_detach_first')]],
                 status: 409,
             );
         }
@@ -108,7 +108,7 @@ class AdminSkillController extends Controller
 
         return ApiResponse::success(
             data: null,
-            message: 'Skill deleted successfully.',
+            message: __('admin.skill_deleted'),
         );
     }
 

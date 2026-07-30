@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Support\SystemGeneratedText;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -14,7 +15,7 @@ class InterviewStatusHistoryResource extends JsonResource
             'interview_id' => $this->interview_id,
             'from_status' => $this->from_status,
             'to_status' => $this->to_status,
-            'reason' => $this->reason,
+            'reason' => SystemGeneratedText::resolve($this->reason),
             'metadata' => $this->metadata,
             'changed_by' => $this->whenLoaded('changedBy', fn () => $this->changedBy === null ? null : ['id' => $this->changedBy->id, 'name' => $this->changedBy->name, 'role' => $this->changedBy->role?->value]),
             'created_at' => $this->created_at?->toISOString(),

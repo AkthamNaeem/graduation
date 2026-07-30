@@ -14,14 +14,13 @@ class ProfileController extends Controller
 {
     public function __construct(
         private readonly ProfileService $profileService,
-    ) {
-    }
+    ) {}
 
     public function show(ShowProfileRequest $request): JsonResponse
     {
         return ApiResponse::success(
             data: new JobSeekerProfileResource($this->profileService->getJobSeekerProfile($request->user())),
-            message: 'Profile retrieved successfully.',
+            message: __('profile.retrieved'),
         );
     }
 
@@ -29,7 +28,7 @@ class ProfileController extends Controller
     {
         return ApiResponse::success(
             data: new JobSeekerProfileResource($this->profileService->updateJobSeekerProfile($request->user(), $request->validated())),
-            message: 'Profile updated successfully.',
+            message: __('profile.updated'),
         );
     }
 }

@@ -15,18 +15,14 @@ class TestAttemptTimingService
     public function durationDeadline(TestAttempt $attempt): CarbonImmutable
     {
         if ($attempt->started_at === null) {
-            throw new TestAttemptTimingException(
-                'The start time for this test attempt is missing.',
-                'TEST_ATTEMPT_START_TIME_MISSING',
+            throw new TestAttemptTimingException(__('domain_errors.TEST_ATTEMPT_START_TIME_MISSING'), 'TEST_ATTEMPT_START_TIME_MISSING',
             );
         }
 
         $assignment = $this->assignment($attempt);
         $duration = $assignment->test?->duration_minutes;
         if (! is_int($duration) || $duration < 1 || $duration > self::MAX_DURATION_MINUTES) {
-            throw new TestAttemptTimingException(
-                'The configured test duration is invalid.',
-                'INVALID_TEST_DURATION',
+            throw new TestAttemptTimingException(__('domain_errors.INVALID_TEST_DURATION'), 'INVALID_TEST_DURATION',
             );
         }
 
@@ -75,9 +71,7 @@ class TestAttemptTimingService
     {
         $this->snapshot($attempt);
         if ($this->isExpired($attempt)) {
-            throw new TestAttemptTimingException(
-                'The allowed time for this test attempt has expired.',
-                'TEST_ATTEMPT_TIME_EXPIRED',
+            throw new TestAttemptTimingException(__('domain_errors.TEST_ATTEMPT_TIME_EXPIRED'), 'TEST_ATTEMPT_TIME_EXPIRED',
             );
         }
     }

@@ -93,11 +93,11 @@ class PasswordResetOtpService
 
             if ($otp->attempts >= $this->maxAttempts()) {
                 return ['error' => [
-                    'message' => 'The maximum number of password reset attempts has been reached.',
+                    'message' => __('auth.reset_attempts_exceeded'),
                     'code' => 'PASSWORD_RESET_OTP_ATTEMPTS_EXCEEDED',
                     'status' => 429,
                     'errors' => [
-                        'otp' => ['The maximum number of password reset attempts has been reached.'],
+                        'otp' => [__('auth.reset_attempts_exceeded')],
                     ],
                 ]];
             }
@@ -165,11 +165,11 @@ class PasswordResetOtpService
     private function invalidOtpError(): array
     {
         return [
-            'message' => 'The password reset code is invalid or expired.',
+            'message' => __('auth.invalid_reset_otp'),
             'code' => 'INVALID_OR_EXPIRED_PASSWORD_RESET_OTP',
             'status' => 422,
             'errors' => [
-                'otp' => ['The password reset code is invalid or expired.'],
+                'otp' => [__('auth.invalid_reset_otp')],
             ],
         ];
     }

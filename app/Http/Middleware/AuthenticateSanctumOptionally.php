@@ -23,7 +23,7 @@ class AuthenticateSanctumOptionally
 
         if ($request->bearerToken() === null) {
             return ApiResponse::error(
-                message: 'Unauthenticated.',
+                message: __('api.unauthenticated'),
                 status: 401,
                 code: 'INVALID_AUTHORIZATION_TOKEN',
             );
@@ -33,7 +33,7 @@ class AuthenticateSanctumOptionally
 
         if ($user === null) {
             return ApiResponse::error(
-                message: 'Unauthenticated.',
+                message: __('api.unauthenticated'),
                 status: 401,
                 code: 'INVALID_AUTHORIZATION_TOKEN',
             );

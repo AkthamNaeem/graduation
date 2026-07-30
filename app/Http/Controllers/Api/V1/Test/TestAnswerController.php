@@ -26,21 +26,21 @@ class TestAnswerController extends Controller
 
     public function index(IndexTestAnswerRequest $request, TestAttempt $testAttempt): JsonResponse
     {
-        return ApiResponse::success(TestAnswerResource::collection($this->service->listAnswers($testAttempt)), 'Test answers retrieved successfully.');
+        return ApiResponse::success(TestAnswerResource::collection($this->service->listAnswers($testAttempt)), __('tests.answers'));
     }
 
     public function upsert(UpsertTestAnswerRequest $request, TestAttempt $testAttempt, TestQuestion $question): JsonResponse
     {
         $answer = $this->service->upsertAnswer($testAttempt, $question, $request->validated(), $request->file('answer_file'));
 
-        return ApiResponse::success(new TestAnswerResource($answer), 'Test answer saved successfully.');
+        return ApiResponse::success(new TestAnswerResource($answer), __('tests.answer_saved'));
     }
 
     public function bulk(BulkUpsertTestAnswerRequest $request, TestAttempt $testAttempt): JsonResponse
     {
         return ApiResponse::success(
             TestAnswerResource::collection($this->service->bulkUpsert($testAttempt, $request->validated('answers'))),
-            'Test answers saved successfully.',
+            __('tests.answers_saved'),
         );
     }
 
@@ -48,7 +48,7 @@ class TestAnswerController extends Controller
     {
         $this->service->deleteAnswer($testAttempt, $question);
 
-        return ApiResponse::success(null, 'Test answer deleted successfully.');
+        return ApiResponse::success(null, __('tests.answer_deleted'));
     }
 
     public function download(DownloadTestAnswerFileRequest $request, TestAttempt $testAttempt, TestQuestion $question): StreamedResponse

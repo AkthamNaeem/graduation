@@ -19,7 +19,7 @@ class EnsureUserIsActive
 
         if ($user?->status !== UserStatus::ACTIVE) {
             return ApiResponse::error(
-                message: 'Your account is suspended.',
+                message: __('auth.suspended'),
                 status: 403,
                 code: 'USER_SUSPENDED',
             );

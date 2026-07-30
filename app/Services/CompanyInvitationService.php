@@ -49,9 +49,7 @@ class CompanyInvitationService
                 ->first();
 
             if ($duplicate instanceof CompanyInvitation && $duplicate->expires_at->isFuture()) {
-                throw new CompanyManagementException(
-                    'A pending invitation already exists for this company and email.',
-                    'COMPANY_INVITATION_DUPLICATE_PENDING',
+                throw new CompanyManagementException(__('domain_errors.COMPANY_INVITATION_DUPLICATE_PENDING'), 'COMPANY_INVITATION_DUPLICATE_PENDING',
                 );
             }
 
@@ -258,25 +256,19 @@ class CompanyInvitationService
                 ]);
                 $user->forceFill(['email_verified_at' => now()])->save();
             } elseif ($user->role !== UserRole::EMPLOYER) {
-                throw new CompanyManagementException(
-                    'The invitation email belongs to an incompatible account role.',
-                    'COMPANY_INVITATION_USER_ROLE_CONFLICT',
+                throw new CompanyManagementException(__('domain_errors.COMPANY_INVITATION_USER_ROLE_CONFLICT'), 'COMPANY_INVITATION_USER_ROLE_CONFLICT',
                 );
             }
 
             $profile = EmployerProfile::query()->where('user_id', $user->id)->lockForUpdate()->first();
             if ($profile instanceof EmployerProfile) {
                 if ((int) $profile->company_id !== (int) $invitation->company_id) {
-                    throw new CompanyManagementException(
-                        'This employer already belongs to another company.',
-                        'COMPANY_MEMBER_DIFFERENT_COMPANY',
+                    throw new CompanyManagementException(__('domain_errors.COMPANY_MEMBER_DIFFERENT_COMPANY'), 'COMPANY_MEMBER_DIFFERENT_COMPANY',
                     );
                 }
 
                 if ($profile->membership_status !== CompanyMembershipStatus::REMOVED) {
-                    throw new CompanyManagementException(
-                        'This user is already a company member.',
-                        'COMPANY_MEMBER_ALREADY_EXISTS',
+                    throw new CompanyManagementException(__('domain_errors.COMPANY_MEMBER_ALREADY_EXISTS'), 'COMPANY_MEMBER_ALREADY_EXISTS',
                     );
                 }
 
@@ -338,9 +330,7 @@ class CompanyInvitationService
         });
 
         if ($expired || ! $result instanceof EmployerProfile) {
-            throw new CompanyManagementException(
-                'This company invitation has expired.',
-                'COMPANY_INVITATION_EXPIRED',
+            throw new CompanyManagementException(__('domain_errors.COMPANY_INVITATION_EXPIRED'), 'COMPANY_INVITATION_EXPIRED',
             );
         }
 
@@ -355,9 +345,7 @@ class CompanyInvitationService
 
         $actorRole = $this->permissionService->activeMembership($actor)?->company_role;
         if (! $actorRole?->canAssign($role)) {
-            throw new CompanyManagementException(
-                'Your company role cannot assign the requested role.',
-                'COMPANY_INVITATION_ROLE_FORBIDDEN',
+            throw new CompanyManagementException(__('domain_errors.COMPANY_INVITATION_ROLE_FORBIDDEN'), 'COMPANY_INVITATION_ROLE_FORBIDDEN',
                 403,
             );
         }
@@ -371,9 +359,7 @@ class CompanyInvitationService
         }
 
         if ($user->role !== UserRole::EMPLOYER) {
-            throw new CompanyManagementException(
-                'The invitation email belongs to an incompatible account role.',
-                'COMPANY_INVITATION_USER_ROLE_CONFLICT',
+            throw new CompanyManagementException(__('domain_errors.COMPANY_INVITATION_USER_ROLE_CONFLICT'), 'COMPANY_INVITATION_USER_ROLE_CONFLICT',
             );
         }
 
@@ -383,16 +369,12 @@ class CompanyInvitationService
         }
 
         if ((int) $profile->company_id !== (int) $company->id) {
-            throw new CompanyManagementException(
-                'This employer belongs to another company.',
-                'COMPANY_MEMBER_DIFFERENT_COMPANY',
+            throw new CompanyManagementException(__('domain_errors.COMPANY_MEMBER_DIFFERENT_COMPANY'), 'COMPANY_MEMBER_DIFFERENT_COMPANY',
             );
         }
 
         if ($profile->membership_status !== CompanyMembershipStatus::REMOVED) {
-            throw new CompanyManagementException(
-                'This user is already a company member.',
-                'COMPANY_MEMBER_ALREADY_EXISTS',
+            throw new CompanyManagementException(__('domain_errors.COMPANY_MEMBER_ALREADY_EXISTS'), 'COMPANY_MEMBER_ALREADY_EXISTS',
             );
         }
     }
@@ -400,21 +382,15 @@ class CompanyInvitationService
     private function assertPending(CompanyInvitation $invitation): void
     {
         if ($invitation->status === CompanyInvitationStatus::REVOKED) {
-            throw new CompanyManagementException(
-                'This company invitation has been revoked.',
-                'COMPANY_INVITATION_REVOKED',
+            throw new CompanyManagementException(__('domain_errors.COMPANY_INVITATION_REVOKED'), 'COMPANY_INVITATION_REVOKED',
             );
         }
         if ($invitation->status === CompanyInvitationStatus::EXPIRED || $invitation->expires_at->isPast()) {
-            throw new CompanyManagementException(
-                'This company invitation has expired.',
-                'COMPANY_INVITATION_EXPIRED',
+            throw new CompanyManagementException(__('domain_errors.COMPANY_INVITATION_EXPIRED'), 'COMPANY_INVITATION_EXPIRED',
             );
         }
         if ($invitation->status !== CompanyInvitationStatus::PENDING) {
-            throw new CompanyManagementException(
-                'This company invitation has already been used.',
-                'COMPANY_INVITATION_ALREADY_USED',
+            throw new CompanyManagementException(__('domain_errors.COMPANY_INVITATION_ALREADY_USED'), 'COMPANY_INVITATION_ALREADY_USED',
             );
         }
     }
@@ -443,9 +419,7 @@ class CompanyInvitationService
             ->first();
 
         if (! $invitation instanceof CompanyInvitation) {
-            throw new CompanyManagementException(
-                'The company invitation could not be found.',
-                'COMPANY_INVITATION_NOT_FOUND',
+            throw new CompanyManagementException(__('domain_errors.COMPANY_INVITATION_NOT_FOUND'), 'COMPANY_INVITATION_NOT_FOUND',
                 404,
             );
         }
@@ -461,9 +435,7 @@ class CompanyInvitationService
             ->first();
 
         if (! $invitation instanceof CompanyInvitation) {
-            throw new CompanyManagementException(
-                'The company invitation could not be found.',
-                'COMPANY_INVITATION_NOT_FOUND',
+            throw new CompanyManagementException(__('domain_errors.COMPANY_INVITATION_NOT_FOUND'), 'COMPANY_INVITATION_NOT_FOUND',
                 404,
             );
         }

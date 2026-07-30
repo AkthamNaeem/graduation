@@ -18,7 +18,7 @@ class TestAttemptQuestionController extends Controller
     {
         return ApiResponse::success(
             CandidateTestQuestionResource::collection($this->service->questions($testAttempt)),
-            'Test attempt questions retrieved successfully.',
+            __('tests.attempt_questions'),
         );
     }
 }

@@ -20,7 +20,7 @@ class CreateApplicationInformationRequestCancelledNotification extends Idempoten
             'information_request',
             $request->id,
             $candidate,
-            fn () => $this->notificationService->createForUser($candidate, 'application.information_request_cancelled', 'Information request cancelled', 'The additional information request was cancelled.', ['application_id' => $request->job_application_id, 'information_request_id' => $request->id]),
+            fn () => $this->notificationService->createForUser($candidate, 'application.information_request_cancelled', __('notifications.information_cancelled_title'), __('notifications.information_cancelled_body'), ['application_id' => $request->job_application_id, 'information_request_id' => $request->id]),
         );
     }
 }

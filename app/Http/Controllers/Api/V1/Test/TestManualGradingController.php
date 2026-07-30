@@ -32,7 +32,7 @@ class TestManualGradingController extends Controller
                 $question,
                 $request->validated(),
             )),
-            'Manual answer grading saved successfully.',
+            __('tests.grading_saved'),
         );
     }
 
@@ -44,7 +44,7 @@ class TestManualGradingController extends Controller
                 $testAttempt,
                 $request->validated('gradings'),
             )),
-            'Manual answer gradings saved successfully.',
+            __('tests.gradings_saved'),
         );
     }
 
@@ -59,7 +59,7 @@ class TestManualGradingController extends Controller
                 $testAttempt,
                 $question,
             )),
-            'Manual answer grading removed successfully.',
+            __('tests.grading_deleted'),
         );
     }
 
@@ -71,6 +71,6 @@ class TestManualGradingController extends Controller
 
         return $tokenable instanceof User
             ? $tokenable->withAccessToken($accessToken)
-            : throw new \RuntimeException('Authenticated user could not be resolved.');
+            : throw new \RuntimeException(__('auth.user_unresolved'));
     }
 }

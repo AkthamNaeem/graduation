@@ -34,7 +34,7 @@ class CompanyInvitationController extends Controller
                     ->whereRaw('LOWER(email) = ?', [$invitation->email])
                     ->exists(),
             ],
-            message: 'Company invitation retrieved successfully.',
+            message: __('companies.invitation'),
         );
     }
 
@@ -44,7 +44,7 @@ class CompanyInvitationController extends Controller
             data: new CompanyMemberResource(
                 $this->invitationService->accept($token, $request->validated()),
             ),
-            message: 'Company invitation accepted successfully.',
+            message: __('companies.invitation_accepted'),
             status: 201,
         );
     }
@@ -53,7 +53,7 @@ class CompanyInvitationController extends Controller
     {
         return ApiResponse::success(
             data: new CompanyInvitationResource($this->invitationService->reject($token)),
-            message: 'Company invitation rejected successfully.',
+            message: __('companies.invitation_rejected'),
         );
     }
 }

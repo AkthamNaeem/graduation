@@ -28,7 +28,7 @@ class AuditLogController extends Controller
 
         return ApiResponse::success(
             data: AuditLogResource::collection($auditLogs),
-            message: 'Audit logs retrieved successfully.',
+            message: __('admin.audit_logs'),
         );
     }
 }

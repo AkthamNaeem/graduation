@@ -37,7 +37,7 @@ trait ValidatesInformationRequestItems
             }
             $labels = collect($items)->pluck('label')->filter(fn ($label) => is_string($label))->map(fn ($label) => mb_strtolower(trim($label)));
             if ($labels->count() !== $labels->unique()->count()) {
-                $validator->errors()->add('requested_items', 'Requested item labels must be unique (case-insensitive).');
+                $validator->errors()->add('requested_items', __('validation.custom_messages.requested_item_labels_unique'));
             }
         });
     }

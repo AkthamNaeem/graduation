@@ -2927,3 +2927,191 @@ recommendation fallback notes.
 - Mobile Postman collection: valid JSON after adding both Home requests.
 
 No migration, commit, or push was created for this implementation.
+
+## Localization audit and bilingual API contract (2026-07-30)
+
+### Baseline and findings
+
+The baseline had `APP_LOCALE` and `APP_FALLBACK_LOCALE` configuration but no
+application `lang/` directory, no request-locale middleware, and no unified
+language negotiation. An initial static inventory found 43 PHP files with 210
+`ApiResponse` calls, 65 files with human-display fields, and 60 files with
+custom throw/abort sites. Home copy was Arabic-only while controllers,
+validation, domain exceptions, recommendation reasons, and notifications were
+predominantly English-only.
+
+### Implemented behavior
+
+- `SetRequestLocale` is prepended to Laravel 12's API middleware group only.
+- Supported languages are configured by `APP_SUPPORTED_LOCALES=en,ar`.
+- Missing headers use `config('app.locale')`; unsupported or malformed headers
+  use `config('app.fallback_locale')`.
+- Regional tags are reduced to their base language and valid `q` weights are
+  sorted by quality then original order.
+- Every API response includes `Content-Language` and appends
+  `Accept-Language` to `Vary`.
+- Translation files are split by API, auth, profile, CV, jobs, applications,
+  tests, interviews, companies, notifications, admin, Home, enums, AI, and
+  shared errors.
+- Laravel validation has complete English and Arabic rule messages plus
+  translated attribute names; error object keys are unchanged.
+- Controller messages use translation keys. The exception renderer localizes
+  common/domain exceptions, never exposes internal exception text, and handles
+  404, 405, 413, 415, 429, validation, authentication, authorization,
+  conflicts, and generic 500 responses.
+- Enum values remain unchanged. `EnumLabel` is the centralized opt-in helper;
+  no label fields were added to frozen contracts that did not already require
+  them.
+- Home system copy and profile-completeness/action copy are bilingual.
+- Structured matching/ML reasons keep their stable `code` and are translated
+  in Laravel at resource serialization time. Scoring and ranking are unchanged.
+  The recommendation cache stores structured identifiers/results rather than a
+  translated HTTP response, so resource-time translation prevents
+  cross-language leakage without fragmenting model cache entries.
+- In-app notification templates use translation keys and placeholders.
+  User-authored messages remain untouched. The User schema has no locale
+  preference and no migration was added; notifications created outside a
+  request therefore use the configured default locale.
+- Both Postman collections inject `Accept-Language: {{locale}}`; the environment
+  defaults `locale` to `en`, and collection tests verify `Content-Language` and
+  `Vary`.
+
+### Examples
+
+English:
+
+```json
+{
+  "success": false,
+  "message": "Invalid credentials.",
+  "errors": []
+}
+```
+
+Arabic:
+
+```json
+{
+  "success": false,
+  "message": "بيانات تسجيل الدخول غير صحيحة.",
+  "errors": []
+}
+```
+
+Stable structured reason:
+
+```json
+{
+  "code": "REQUIRED_SKILLS_MATCH",
+  "message": "تطابقت 2 مهارة من أصل 3 مهارات مطلوبة.",
+  "value": 66.67
+}
+```
+
+### Verification notes
+
+The dedicated Localization suite covers default/simple/regional/weighted/
+unsupported/malformed negotiation, response headers, English and Arabic
+validation attributes, authentication, sequential locale isolation, and
+structured AI reason translation. Full-suite and formatting results are
+recorded in the task handoff. No migration, commit, or push was created.
+
+Final verification now includes the negotiation suite, exact bilingual domain
+error contract tests, complete translation-catalog parity, non-empty values,
+and placeholder parity. The final command results are recorded in the
+localization closure report below.
+
+The final broad literal scan still identifies reviewed legacy/internal
+candidates. Every user-facing candidate is connected to an exact catalog key;
+known domain codes never use the generic fallback. The complete 215-row
+classification is in `reports/LOCALIZATION_HARDCODED_STRING_INVENTORY.md`.
+
+## Localization final closure — 2026-07-30
+
+### Baseline and discovered issues
+
+- The pre-existing backend had no application `lang/` tree and only isolated
+  translation-helper use. API success/error messages, validation attributes,
+  middleware/exception messages, Home copy, notification text, workflow
+  reasons, enum display labels, and recommendation explanations contained
+  display literals.
+- The first implementation pass left 215 review candidates and used a generic
+  Arabic fallback for unmatched legacy domain messages.
+- Phase 17/18 integrity tests failed because protected presentation files had
+  changed. The failures were
+  `FinalHandoverDocumentationTest::test_final_handover_documentation_contract`
+  and
+  `RecommendationEndToEndTest::test_phase17_protected_baseline_entries_and_aggregate_are_valid`.
+
+### Request locale and fallback
+
+- `SetRequestLocale` is prepended only to Laravel's API middleware group.
+- Supported locales are `en` and `ar`. It parses regional tags, weighted
+  language lists, invalid entries, and original-order ties.
+- Missing header uses `config('app.locale')`; a header without a supported
+  candidate uses `config('app.fallback_locale')`, then the configured default.
+- Every API response receives `Content-Language` and merges
+  `Accept-Language` into `Vary`.
+
+### Catalogs and response behavior
+
+- There are matching English and Arabic domain catalogs for API, auth,
+  applications, companies, CV, Home, interviews, jobs, notifications, profile,
+  tests, validation, enum labels, AI reasons, exact domain error codes,
+  persisted system text, and domain validation.
+- `ApiResponse` resolves a known error with
+  `code → domain_errors.CODE`. It no longer replaces an unmatched known domain
+  message with a generic Arabic sentence.
+- Validation field keys remain unchanged. Only messages and human-readable
+  attribute names are localized, including nested/custom validation.
+- Enum/status/code values remain stable. Resources expose localized labels only
+  where the existing presentation contract needs them.
+- Legacy persisted system reasons are translated at serialization through a
+  narrow exact mapping; arbitrary user notes are returned unchanged.
+
+### Notifications, AI, and cache
+
+- Notification titles and bodies use bilingual keys with placeholders. The
+  current User schema has no locale preference; no migration was added.
+  Notifications outside an HTTP request therefore use the configured default
+  locale. Request-scoped notifications use the negotiated locale.
+- Matching/ML reason codes stay stable and are translated in Resources.
+  `MatchingService` is byte-identical to its protected baseline; scoring,
+  ranking, weights, thresholds, fallback behavior, and ML contracts are
+  unchanged.
+- No public/Home response cache storing translated payloads exists. The
+  recommendation cache stores structured codes/data and translation occurs
+  after hydration, preventing Arabic/English response leakage.
+
+### Protected baselines
+
+- The protected JSON baselines and aggregate hashes were not regenerated.
+- Eighty-seven reviewed localization-only protected paths were added to the
+  tests' existing explicit post-handover allowlists. Both tests continue to
+  verify every non-approved file and all baseline self-integrity constraints.
+- Per-file previous/current hashes and diff summaries are recorded in
+  `reports/LOCALIZATION_PHASE17_18_FINGERPRINT_AUDIT.md`.
+
+### Inventory and compatibility
+
+- All 215 final-pass candidates are classified by file, line, original text,
+  exposure, translation key, and decision.
+- User-facing candidates without a key: zero.
+- Residual literals are limited to renderer/Resource-translated legacy values,
+  CLI output, internal logs, provider diagnostics, AI schema guidance, SQL, or
+  technical invariants.
+- Field names, pagination, error codes, enums, statuses, HTTP statuses,
+  business rules, and user-generated content remain stable.
+
+### Verification
+
+- Dedicated Localization suite: **25 passed, 6193 assertions, 0 failed**.
+- Complete Laravel suite: **868 passed, 2 expected opt-in skips, 23232
+  assertions, 0 failed**.
+- Phase 17/18 protected tests pass without skips or baseline regeneration.
+- Laravel Pint `--dirty --test`: passed. Composer strict validation: passed.
+  Postman JSON parsing: passed. `git diff --check`: passed.
+- Composer defines no PHPStan/Psalm or other static-analysis command.
+- Postman Web/Mobile collections use `Accept-Language: {{locale}}`; the
+  environment defaults to `en` and documents `ar`.
+- No migration was added. No commit or push was performed.

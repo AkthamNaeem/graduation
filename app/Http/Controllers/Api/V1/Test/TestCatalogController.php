@@ -29,7 +29,7 @@ class TestCatalogController extends Controller
                     $request->integer('per_page', 15),
                 ),
             ),
-            message: 'Tests retrieved successfully.',
+            message: __('tests.list_retrieved'),
         );
     }
 
@@ -37,7 +37,7 @@ class TestCatalogController extends Controller
     {
         return ApiResponse::success(
             data: new TestResource($this->testService->createCatalogTest($request->user('sanctum'), $request->validated())),
-            message: 'Test created successfully.',
+            message: __('tests.created'),
             status: 201,
         );
     }
@@ -46,7 +46,7 @@ class TestCatalogController extends Controller
     {
         return ApiResponse::success(
             data: new TestResource($this->testService->getCatalogTest($test)),
-            message: 'Test retrieved successfully.',
+            message: __('tests.retrieved'),
         );
     }
 
@@ -54,7 +54,7 @@ class TestCatalogController extends Controller
     {
         return ApiResponse::success(
             data: new TestResource($this->testService->updateCatalogTest($request->user('sanctum'), $test, $request->validated())),
-            message: 'Test updated successfully.',
+            message: __('tests.updated'),
         );
     }
 
@@ -64,7 +64,7 @@ class TestCatalogController extends Controller
 
         return ApiResponse::success(
             data: null,
-            message: 'Test deleted successfully.',
+            message: __('tests.deleted'),
         );
     }
 }

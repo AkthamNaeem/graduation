@@ -32,7 +32,7 @@ class JobApplicationController extends Controller
             data: new JobApplicationResource(
                 $this->applicationWorkflowService->applyToJob($request->user('sanctum'), $jobPosting, $request->validated()),
             ),
-            message: 'Job application created successfully.',
+            message: __('applications.created'),
             status: 201,
         );
     }
@@ -46,7 +46,7 @@ class JobApplicationController extends Controller
                     $request->integer('per_page', 15),
                 ),
             ),
-            message: 'Job applications retrieved successfully.',
+            message: __('applications.list_retrieved'),
         );
     }
 
@@ -56,7 +56,7 @@ class JobApplicationController extends Controller
             data: new JobApplicationResource(
                 $this->applicationWorkflowService->getApplication($request->user('sanctum'), $jobApplication),
             ),
-            message: 'Job application retrieved successfully.',
+            message: __('applications.retrieved'),
         );
     }
 
@@ -64,7 +64,7 @@ class JobApplicationController extends Controller
     {
         $cvFile = $jobApplication->selectedCvFile()->first();
         if ($cvFile === null || ! $this->privateStorage->exists($cvFile->disk, $cvFile->stored_path)) {
-            throw new CVLifecycleException('The selected CV file is unavailable.', 'CV_FILE_UNAVAILABLE', 404);
+            throw new CVLifecycleException(__('domain_errors.CV_FILE_UNAVAILABLE'), 'CV_FILE_UNAVAILABLE', 404);
         }
 
         return $this->privateStorage->downloadResponse($cvFile->disk, $cvFile->stored_path, $cvFile->original_name, $cvFile->mime_type);
@@ -80,7 +80,7 @@ class JobApplicationController extends Controller
                     $request->validated('note'),
                 ),
             ),
-            message: 'Job application withdrawn successfully.',
+            message: __('applications.withdrawn'),
         );
     }
 
@@ -93,7 +93,7 @@ class JobApplicationController extends Controller
                     $request->integer('per_page', 15),
                 ),
             ),
-            message: 'Job applications retrieved successfully.',
+            message: __('applications.list_retrieved'),
         );
     }
 
@@ -108,7 +108,7 @@ class JobApplicationController extends Controller
                     $request->validated('note'),
                 ),
             ),
-            message: 'Application status updated successfully.',
+            message: __('applications.status_updated'),
         );
     }
 }

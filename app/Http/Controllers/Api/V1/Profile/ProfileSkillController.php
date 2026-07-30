@@ -15,8 +15,7 @@ class ProfileSkillController extends Controller
 {
     public function __construct(
         private readonly ProfileService $profileService,
-    ) {
-    }
+    ) {}
 
     public function store(AttachSkillRequest $request): JsonResponse
     {
@@ -24,7 +23,7 @@ class ProfileSkillController extends Controller
 
         return ApiResponse::success(
             data: new JobSeekerProfileResource($this->profileService->attachSkill($request->user(), $skill)),
-            message: 'Skill attached successfully.',
+            message: __('profile.skill_attached'),
         );
     }
 
@@ -32,7 +31,7 @@ class ProfileSkillController extends Controller
     {
         return ApiResponse::success(
             data: new JobSeekerProfileResource($this->profileService->detachSkill($request->user(), $skill)),
-            message: 'Skill detached successfully.',
+            message: __('jobs.skill_detached'),
         );
     }
 }

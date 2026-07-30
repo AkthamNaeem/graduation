@@ -38,7 +38,7 @@ class CompanyTeamController extends Controller
             data: CompanyMemberResource::collection(
                 $this->membershipService->list($request->user('sanctum'), $company, $request->validated()),
             ),
-            message: 'Company members retrieved successfully.',
+            message: __('companies.members'),
         );
     }
 
@@ -50,7 +50,7 @@ class CompanyTeamController extends Controller
             data: CompanyInvitationResource::collection(
                 $this->invitationService->list($request->user('sanctum'), $company, $request->validated()),
             ),
-            message: 'Company invitations retrieved successfully.',
+            message: __('companies.invitations'),
         );
     }
 
@@ -68,7 +68,7 @@ class CompanyTeamController extends Controller
                 'invitation' => new CompanyInvitationResource($result['invitation']),
                 'token' => $result['token'],
             ],
-            message: 'Company invitation created successfully.',
+            message: __('companies.invitation_created'),
             status: 201,
         );
     }
@@ -84,7 +84,7 @@ class CompanyTeamController extends Controller
                 'invitation' => new CompanyInvitationResource($result['invitation']),
                 'token' => $result['token'],
             ],
-            message: 'Company invitation resent successfully.',
+            message: __('companies.invitation_resent'),
         );
     }
 
@@ -97,7 +97,7 @@ class CompanyTeamController extends Controller
             data: new CompanyInvitationResource(
                 $this->invitationService->revoke($request->user('sanctum'), $invitation),
             ),
-            message: 'Company invitation revoked successfully.',
+            message: __('companies.invitation_revoked'),
         );
     }
 
@@ -116,7 +116,7 @@ class CompanyTeamController extends Controller
                     CompanyRole::from($request->validated('company_role')),
                 ),
             ),
-            message: 'Company member role updated successfully.',
+            message: __('companies.member_role'),
         );
     }
 
@@ -135,7 +135,7 @@ class CompanyTeamController extends Controller
                     CompanyMembershipStatus::from($request->validated('membership_status')),
                 ),
             ),
-            message: 'Company member status updated successfully.',
+            message: __('companies.member_status'),
         );
     }
 
@@ -147,7 +147,7 @@ class CompanyTeamController extends Controller
             data: new CompanyMemberResource(
                 $this->membershipService->remove($request->user('sanctum'), $company, $user),
             ),
-            message: 'Company member removed successfully.',
+            message: __('companies.member_removed'),
         );
     }
 
@@ -163,7 +163,7 @@ class CompanyTeamController extends Controller
                     $request->validated(),
                 ),
             ),
-            message: 'Company ownership transferred successfully.',
+            message: __('companies.ownership'),
         );
     }
 }

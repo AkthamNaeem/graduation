@@ -48,8 +48,11 @@ class CreateTestSubmittedNotification extends IdempotentNotificationListener
                 fn () => $this->notificationService->createForUser(
                     $employer,
                     'test.submitted',
-                    'Test submitted',
-                    "A candidate submitted {$assignment->test->title} for {$job->title}.",
+                    __('notifications.test_submitted_title'),
+                    __('notifications.test_submitted_body', [
+                        'test' => $assignment->test->title,
+                        'job' => $job->title,
+                    ]),
                     $data,
                 ),
             );

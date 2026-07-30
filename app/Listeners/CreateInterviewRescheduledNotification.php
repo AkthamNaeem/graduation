@@ -17,7 +17,7 @@ class CreateInterviewRescheduledNotification extends IdempotentNotificationListe
 
         $this->notificationOnce(
             'interview.rescheduled', InterviewRescheduled::class, 'interview', $interview->id, $candidate,
-            fn () => $this->notificationService->createForUser($candidate, 'interview.rescheduled', 'Interview rescheduled', 'Your interview schedule has been updated.', [
+            fn () => $this->notificationService->createForUser($candidate, 'interview.rescheduled', __('notifications.interview_rescheduled_title'), __('notifications.interview_rescheduled_body'), [
                 'interview_id' => $interview->id,
                 'application_id' => $interview->job_application_id,
                 'mode' => $interview->interview_mode,

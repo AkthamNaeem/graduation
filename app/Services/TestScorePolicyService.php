@@ -37,9 +37,7 @@ class TestScorePolicyService
 
         $canonical = $this->calculateCanonicalMaxScore($test);
         if ($this->toMinorUnits($passing) < 0 || $this->toMinorUnits($passing) > $this->toMinorUnits($canonical)) {
-            throw new TestScorePolicyException(
-                'The passing score may not be greater than the test maximum score.',
-                'TEST_PASSING_SCORE_EXCEEDS_MAX_SCORE',
+            throw new TestScorePolicyException(__('domain_errors.TEST_PASSING_SCORE_EXCEEDS_MAX_SCORE'), 'TEST_PASSING_SCORE_EXCEEDS_MAX_SCORE',
                 422,
                 ['passing_score' => ['The passing score may not be greater than the test maximum score.']],
             );
@@ -56,9 +54,7 @@ class TestScorePolicyService
                 }
             }
             if ($requireScoreable && ($test->questions()->count() === 0 || $this->toMinorUnits($canonical) <= 0)) {
-                throw new TestScorePolicyException(
-                    'The test must contain at least one question with a positive score before it can be assigned.',
-                    'TEST_HAS_NO_SCOREABLE_QUESTIONS',
+                throw new TestScorePolicyException(__('domain_errors.TEST_HAS_NO_SCOREABLE_QUESTIONS'), 'TEST_HAS_NO_SCOREABLE_QUESTIONS',
                     409,
                 );
             }
@@ -67,9 +63,7 @@ class TestScorePolicyService
                 throw new InvalidArgumentException('Passing score is outside the canonical range.');
             }
         } catch (InvalidArgumentException) {
-            throw new TestScorePolicyException(
-                'The test score configuration is invalid.',
-                'TEST_SCORE_CONFIGURATION_INVALID',
+            throw new TestScorePolicyException(__('domain_errors.TEST_SCORE_CONFIGURATION_INVALID'), 'TEST_SCORE_CONFIGURATION_INVALID',
                 409,
             );
         }

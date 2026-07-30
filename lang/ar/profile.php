@@ -1,0 +1,25 @@
+<?php
+
+return [
+    'retrieved' => 'تم استرجاع الملف الشخصي بنجاح.',
+    'updated' => 'تم تحديث الملف الشخصي بنجاح.',
+    'employer_retrieved' => 'تم استرجاع ملف صاحب العمل بنجاح.',
+    'employer_updated' => 'تم تحديث ملف صاحب العمل بنجاح.',
+    'experiences_retrieved' => 'تم استرجاع الخبرات بنجاح.',
+    'experience_retrieved' => 'تم استرجاع الخبرة بنجاح.',
+    'experience_created' => 'تم إنشاء الخبرة بنجاح.',
+    'experience_updated' => 'تم تحديث الخبرة بنجاح.',
+    'experience_deleted' => 'تم حذف الخبرة بنجاح.',
+    'education_retrieved' => 'تم استرجاع سجلات التعليم بنجاح.',
+    'education_item_retrieved' => 'تم استرجاع سجل التعليم بنجاح.',
+    'education_created' => 'تم إنشاء سجل التعليم بنجاح.',
+    'education_updated' => 'تم تحديث سجل التعليم بنجاح.',
+    'education_deleted' => 'تم حذف سجل التعليم بنجاح.',
+    'skill_attached' => 'تم إرفاق المهارة بنجاح.',
+    'skill_detached' => 'تم فصل المهارة بنجاح.',
+    'suggestions_retrieved' => 'تم استرجاع اقتراحات الملف الشخصي بنجاح.',
+    'suggestions_generated' => 'تم إنشاء اقتراحات الملف الشخصي بنجاح.',
+    'suggestion_saved' => 'تم حفظ قرار اقتراح الملف الشخصي بنجاح.',
+    'suggestion_rejected' => 'تم رفض اقتراح الملف الشخصي بنجاح.',
+    'suggestions_applied' => 'تم تطبيق اقتراحات الملف الشخصي المقبولة بنجاح.',
+];

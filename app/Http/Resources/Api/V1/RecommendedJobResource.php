@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Api\V1;
 
 use App\Models\JobPosting;
+use App\Support\Recommendation\RecommendationReasonTranslator;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -26,7 +27,10 @@ class RecommendedJobResource extends JsonResource
             'matched_required_skills' => $this->resource['matched_required_skills'],
             'missing_required_skills' => $this->resource['missing_required_skills'],
             'matched_nice_to_have_skills' => $this->resource['matched_nice_to_have_skills'],
-            'reasons' => $this->resource['reasons'],
+            'reasons' => collect($this->resource['reasons'])
+                ->map(fn (array $reason): array => RecommendationReasonTranslator::translate($reason))
+                ->values()
+                ->all(),
             'rank' => $this->resource['rank'] ?? null,
             'recommendation_engine' => $this->resource['recommendation_engine'] ?? null,
             'model_version' => $this->resource['model_version'] ?? null,

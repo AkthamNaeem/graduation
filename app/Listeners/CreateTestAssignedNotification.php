@@ -25,7 +25,7 @@ class CreateTestAssignedNotification extends IdempotentNotificationListener
             'test_assignment',
             $assignment->id,
             $candidate,
-            fn () => $this->notificationService->createForUser($candidate, 'test.assigned', 'New test assigned', "You have been assigned {$assignment->test->title}.", [
+            fn () => $this->notificationService->createForUser($candidate, 'test.assigned', __('notifications.test_assigned_title'), __('notifications.test_assigned_body', ['test' => $assignment->test->title]), [
                 'application_id' => $assignment->job_application_id,
                 'job_id' => $assignment->jobApplication->job_posting_id,
                 'job_title' => $assignment->jobApplication->jobPosting?->title,

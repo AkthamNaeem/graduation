@@ -17,7 +17,7 @@ class CreateInterviewConfirmedNotification extends IdempotentNotificationListene
 
         $this->notificationOnce(
             'interview.confirmed', InterviewConfirmed::class, 'interview', $interview->id, $recipient,
-            fn () => $this->notificationService->createForUser($recipient, 'interview.confirmed', 'Interview confirmed', 'The candidate confirmed the interview.', [
+            fn () => $this->notificationService->createForUser($recipient, 'interview.confirmed', __('notifications.interview_confirmed_title'), __('notifications.interview_confirmed_body'), [
                 'interview_id' => $interview->id,
                 'application_id' => $interview->job_application_id,
                 'scheduled_start_at' => $interview->scheduled_at?->toISOString(),

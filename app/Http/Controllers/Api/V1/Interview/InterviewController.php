@@ -46,7 +46,7 @@ class InterviewController extends Controller
                     $request->validated(),
                 ),
             ),
-            message: 'Interview scheduled successfully.',
+            message: __('interviews.scheduled'),
             status: 201,
         );
     }
@@ -57,7 +57,7 @@ class InterviewController extends Controller
             data: InterviewResource::collection(
                 $this->interviewService->getApplicationInterviews($jobApplication),
             ),
-            message: 'Application interviews retrieved successfully.',
+            message: __('interviews.application_list'),
         );
     }
 
@@ -71,7 +71,7 @@ class InterviewController extends Controller
                     $request->validated(),
                 ),
             ),
-            message: 'Interview updated successfully.',
+            message: __('interviews.updated'),
         );
     }
 
@@ -81,7 +81,7 @@ class InterviewController extends Controller
 
         return ApiResponse::success(
             data: null,
-            message: 'Interview cancelled successfully.',
+            message: __('interviews.cancelled'),
         );
     }
 
@@ -89,7 +89,7 @@ class InterviewController extends Controller
     {
         return ApiResponse::success(
             new InterviewResource($this->interviewService->confirmInterview($this->authenticatedUser($request), $interview)),
-            'Interview confirmed successfully.',
+            __('interviews.confirmed'),
         );
     }
 
@@ -97,7 +97,7 @@ class InterviewController extends Controller
     {
         return ApiResponse::success(
             new InterviewResource($this->interviewService->rescheduleInterview($this->authenticatedUser($request), $interview, $request->validated())),
-            'Interview rescheduled successfully.',
+            __('interviews.rescheduled'),
         );
     }
 
@@ -107,7 +107,7 @@ class InterviewController extends Controller
             new InterviewResource($this->interviewService->cancelInterview(
                 $this->authenticatedUser($request), $interview, $request->string('reason')->toString(), $request->validated('candidate_message'),
             )),
-            'Interview cancelled successfully.',
+            __('interviews.cancelled'),
         );
     }
 
@@ -115,7 +115,7 @@ class InterviewController extends Controller
     {
         return ApiResponse::success(
             new InterviewResource($this->interviewService->updateAttendance($this->authenticatedUser($request), $interview, $request->validated())),
-            'Interview attendance updated successfully.',
+            __('interviews.attendance_updated'),
         );
     }
 
@@ -125,18 +125,18 @@ class InterviewController extends Controller
             new InterviewResource($this->interviewService->markNoShow(
                 $this->authenticatedUser($request), $interview, $request->string('party')->toString(), $request->string('reason')->toString(),
             )),
-            'Interview marked as no show.',
+            __('interviews.no_show'),
         );
     }
 
     public function statusHistory(InterviewStatusHistoryRequest $request, Interview $interview): JsonResponse
     {
-        return ApiResponse::success(InterviewStatusHistoryResource::collection($this->interviewService->statusHistory($interview, $request->integer('per_page', 25))), 'Interview status history retrieved successfully.');
+        return ApiResponse::success(InterviewStatusHistoryResource::collection($this->interviewService->statusHistory($interview, $request->integer('per_page', 25))), __('interviews.status_history'));
     }
 
     public function scheduleHistory(InterviewScheduleHistoryRequest $request, Interview $interview): JsonResponse
     {
-        return ApiResponse::success(InterviewScheduleChangeResource::collection($this->interviewService->scheduleHistory($interview, $request->integer('per_page', 25))), 'Interview schedule history retrieved successfully.');
+        return ApiResponse::success(InterviewScheduleChangeResource::collection($this->interviewService->scheduleHistory($interview, $request->integer('per_page', 25))), __('interviews.schedule_history'));
     }
 
     public function complete(CompleteInterviewRequest $request, Interview $interview): JsonResponse
@@ -149,7 +149,7 @@ class InterviewController extends Controller
                     $request->validated('completion_note'),
                 ),
             ),
-            message: 'Interview completed successfully.',
+            message: __('interviews.completed'),
         );
     }
 
@@ -163,7 +163,7 @@ class InterviewController extends Controller
                     $request->validated(),
                 ),
             ),
-            message: 'Interview evaluated successfully.',
+            message: __('interviews.evaluated'),
         );
     }
 
@@ -176,7 +176,7 @@ class InterviewController extends Controller
                     $request->integer('per_page', 15),
                 ),
             ),
-            message: 'My interviews retrieved successfully.',
+            message: __('interviews.my_list'),
         );
     }
 
@@ -186,7 +186,7 @@ class InterviewController extends Controller
             data: new InterviewResource(
                 $this->interviewService->getInterview($interview, $this->authenticatedUser($request)),
             ),
-            message: 'Interview retrieved successfully.',
+            message: __('interviews.retrieved'),
         );
     }
 
@@ -198,6 +198,6 @@ class InterviewController extends Controller
 
         return $tokenable instanceof User
             ? $tokenable->withAccessToken($accessToken)
-            : throw new \RuntimeException('Authenticated user could not be resolved.');
+            : throw new \RuntimeException(__('auth.user_unresolved'));
     }
 }

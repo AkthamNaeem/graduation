@@ -17,7 +17,7 @@ class CreateInterviewAttendanceUpdatedNotification extends IdempotentNotificatio
 
         $this->notificationOnce(
             'interview.attendance_updated', InterviewAttendanceUpdated::class, 'interview', $interview->id, $candidate,
-            fn () => $this->notificationService->createForUser($candidate, 'interview.attendance_updated', 'Interview attendance updated', 'Your interview attendance record was updated.', [
+            fn () => $this->notificationService->createForUser($candidate, 'interview.attendance_updated', __('notifications.attendance_updated_title'), __('notifications.attendance_updated_body'), [
                 'interview_id' => $interview->id,
                 'application_id' => $interview->job_application_id,
                 'candidate_attendance_status' => $interview->candidate_attendance_status,

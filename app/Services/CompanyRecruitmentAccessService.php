@@ -46,9 +46,7 @@ class CompanyRecruitmentAccessService
         $company = $this->companyForEmployer($user);
 
         if (! $company instanceof Company) {
-            throw new RecruitmentAccessException(
-                'A company profile is required before using recruitment workflows.',
-                'COMPANY_PROFILE_MISSING',
+            throw new RecruitmentAccessException(__('domain_errors.COMPANY_PROFILE_MISSING'), 'COMPANY_PROFILE_MISSING',
                 errors: ['company_approval_status' => ['missing']],
             );
         }
@@ -64,9 +62,7 @@ class CompanyRecruitmentAccessService
         $company = $this->companyFor($subject);
 
         if (! $company instanceof Company || $company->approval_status !== CompanyApprovalStatus::APPROVED->value) {
-            throw new RecruitmentAccessException(
-                'Recruitment activity for this company is currently unavailable.',
-                'COMPANY_RECRUITMENT_UNAVAILABLE',
+            throw new RecruitmentAccessException(__('domain_errors.COMPANY_RECRUITMENT_UNAVAILABLE'), 'COMPANY_RECRUITMENT_UNAVAILABLE',
             );
         }
 
@@ -92,7 +88,7 @@ class CompanyRecruitmentAccessService
             CompanyApprovalStatus::PENDING->value => ['Your company is pending approval.', 'COMPANY_PENDING'],
             CompanyApprovalStatus::REJECTED->value => ['Your company application was rejected.', 'COMPANY_REJECTED'],
             CompanyApprovalStatus::SUSPENDED->value => ['Your company has been suspended.', 'COMPANY_SUSPENDED'],
-            default => ['Recruitment activity for this company is currently unavailable.', 'COMPANY_RECRUITMENT_UNAVAILABLE'],
+            default => [__('companies.not_approved'), 'COMPANY_RECRUITMENT_UNAVAILABLE'],
         };
 
         if ($company->approval_status !== CompanyApprovalStatus::APPROVED->value) {
@@ -116,9 +112,7 @@ class CompanyRecruitmentAccessService
             ->exists();
 
         if (! $hasOwner) {
-            throw new RecruitmentAccessException(
-                'Company setup requires an active owner before recruitment can begin.',
-                'COMPANY_SETUP_OWNER_REQUIRED',
+            throw new RecruitmentAccessException(__('domain_errors.COMPANY_SETUP_OWNER_REQUIRED'), 'COMPANY_SETUP_OWNER_REQUIRED',
                 409,
             );
         }

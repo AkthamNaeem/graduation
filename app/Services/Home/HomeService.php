@@ -52,15 +52,15 @@ class HomeService
                 'is_authenticated' => false,
             ],
             'hero' => [
-                'title' => 'وظيفتك المناسبة تبدأ من هنا',
-                'description' => 'اكتشف فرصًا تناسب مهاراتك وطموحاتك.',
+                'title' => __('home.guest_title'),
+                'description' => __('home.guest_subtitle'),
                 'primary_action' => [
                     'type' => 'register',
-                    'label' => 'إنشاء حساب',
+                    'label' => __('home.register'),
                 ],
                 'secondary_action' => [
                     'type' => 'login',
-                    'label' => 'تسجيل الدخول',
+                    'label' => __('home.login'),
                 ],
             ],
             'latest_jobs' => HomeJobResource::collection(
@@ -80,7 +80,7 @@ class HomeService
     {
         if ($user->role !== UserRole::JOB_SEEKER) {
             throw new AuthorizationException(
-                'Mobile Home is available to job seekers only.',
+                __('home.job_seeker_only'),
             );
         }
 
@@ -209,18 +209,18 @@ class HomeService
         return [
             [
                 'key' => 'smart_recommendations',
-                'title' => 'توصيات ذكية',
-                'description' => 'وظائف تناسب مهاراتك وخبرتك',
+                'title' => __('home.features.recommendations_title'),
+                'description' => __('home.features.recommendations_subtitle'),
             ],
             [
                 'key' => 'application_tracking',
-                'title' => 'تقديم ومتابعة بسهولة',
-                'description' => 'تابع حالة طلباتك في مكان واحد',
+                'title' => __('home.features.tracking_title'),
+                'description' => __('home.features.tracking_subtitle'),
             ],
             [
                 'key' => 'cv_parsing',
-                'title' => 'استفد من سيرتك الذاتية',
-                'description' => 'حوّل سيرتك إلى ملف مهني بعد مراجعتك',
+                'title' => __('home.features.cv_title'),
+                'description' => __('home.features.cv_subtitle'),
             ],
         ];
     }

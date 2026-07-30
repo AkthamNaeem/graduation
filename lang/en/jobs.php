@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'retrieved' => 'Job posting retrieved successfully.',
+    'list_retrieved' => 'Job postings retrieved successfully.',
+    'employer_list_retrieved' => 'Employer job postings retrieved successfully.',
+    'created' => 'Job posting created successfully.',
+    'updated' => 'Job posting updated successfully.',
+    'deleted' => 'Job posting deleted successfully.',
+    'published' => 'Job posting published successfully.',
+    'closed' => 'Job posting closed successfully.',
+    'skills_attached' => 'Skills attached successfully.',
+    'skill_detached' => 'Skill detached successfully.',
+    'questions_retrieved' => 'Screening questions retrieved successfully.',
+    'question_created' => 'Screening question created successfully.',
+    'question_updated' => 'Screening question updated successfully.',
+    'question_disabled' => 'Screening question disabled successfully.',
+    'ranked_candidates' => 'Ranked candidates retrieved successfully.',
+    'recommended' => 'Recommended jobs retrieved successfully.',
+    'open_only' => 'Applications are only allowed for open jobs.',
+    'deadline_passed' => 'The application deadline for this job has passed.',
+    'already_applied' => 'You have already applied to this job.',
+    'job_seeker_only' => 'Only job seekers can apply to jobs.',
+    'profile_required' => 'A job seeker profile is required before applying.',
+    'primary_cv_required' => 'Select a CV or set a primary CV before applying.',
+];

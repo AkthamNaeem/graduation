@@ -78,8 +78,8 @@ class HomeActionResolver
             'type' => $attempt === null ? 'pending_test' : 'started_test',
             'priority' => 100,
             'title' => $attempt === null
-                ? 'لديك اختبار مطلوب'
-                : 'لديك اختبار لم يكتمل',
+                ? __('home.actions.test_required')
+                : __('home.actions.test_incomplete'),
             'subtitle' => $assignment->test?->title,
             'deadline' => ($attempt?->effective_deadline_at ?? $assignment->deadline_at)
                 ?->toISOString(),
@@ -88,8 +88,8 @@ class HomeActionResolver
                 'id' => $assignment->id,
             ],
             'action_label' => $attempt === null
-                ? 'بدء الاختبار'
-                : 'متابعة الاختبار',
+                ? __('home.actions.start_test')
+                : __('home.actions.continue_test'),
         ];
     }
 
@@ -125,21 +125,25 @@ class HomeActionResolver
                 : 'upcoming_interview',
             'priority' => 90,
             'title' => $interview->confirmed_at === null
-                ? 'لديك مقابلة تحتاج تأكيد الحضور'
-                : 'لديك مقابلة قادمة',
-            'subtitle' => trim(sprintf(
-                'مقابلة %s%s',
-                $interview->interview_type,
-                $companyName === null ? '' : ' مع شركة '.$companyName,
-            )),
+                ? __('home.actions.interview_confirmation')
+                : __('home.actions.upcoming_interview'),
+            'subtitle' => $companyName === null
+                ? __('home.actions.interview_subtitle', [
+                    'type' => $interview->interview_type,
+                    'company' => '',
+                ])
+                : __('home.actions.interview_subtitle_with_company', [
+                    'type' => $interview->interview_type,
+                    'company' => $companyName,
+                ]),
             'date_time' => $interview->scheduled_at?->toISOString(),
             'target' => [
                 'type' => 'interview',
                 'id' => $interview->id,
             ],
             'action_label' => $interview->confirmed_at === null
-                ? 'تأكيد الحضور'
-                : 'عرض التفاصيل',
+                ? __('home.actions.confirm_attendance')
+                : __('home.actions.view_details'),
         ];
     }
 
@@ -174,14 +178,14 @@ class HomeActionResolver
         return [
             'type' => 'information_request',
             'priority' => 80,
-            'title' => 'مطلوب منك معلومات إضافية',
+            'title' => __('home.actions.information_required'),
             'subtitle' => $informationRequest->message,
             'deadline' => $informationRequest->due_at?->toISOString(),
             'target' => [
                 'type' => 'information_request',
                 'id' => $informationRequest->id,
             ],
-            'action_label' => 'إرسال المعلومات',
+            'action_label' => __('home.actions.submit_information'),
         ];
     }
 
@@ -209,13 +213,13 @@ class HomeActionResolver
         return [
             'type' => 'cv_review',
             'priority' => 70,
-            'title' => 'راجع بيانات سيرتك الذاتية',
+            'title' => __('home.actions.review_cv'),
             'subtitle' => $cv->original_name,
             'target' => [
                 'type' => 'cv_review',
                 'id' => $cv->id,
             ],
-            'action_label' => 'مراجعة السيرة الذاتية',
+            'action_label' => __('home.actions.review_cv_action'),
         ];
     }
 
@@ -238,13 +242,13 @@ class HomeActionResolver
         return [
             'type' => 'profile_sync',
             'priority' => 60,
-            'title' => 'لديك اقتراحات لتحديث ملفك',
-            'subtitle' => 'راجع التغييرات المقترحة قبل تطبيقها.',
+            'title' => __('home.actions.profile_suggestions'),
+            'subtitle' => __('home.actions.profile_suggestions_subtitle'),
             'target' => [
                 'type' => 'profile_suggestions',
                 'value' => 'pending',
             ],
-            'action_label' => 'مراجعة الاقتراحات',
+            'action_label' => __('home.actions.review_suggestions'),
         ];
     }
 
@@ -261,16 +265,15 @@ class HomeActionResolver
         return [
             'type' => 'profile_incomplete',
             'priority' => 50,
-            'title' => 'أكمل ملفك الشخصي',
-            'subtitle' => sprintf(
-                'اكتمل %d%% من ملفك الشخصي.',
-                $profileCompleteness['percentage'],
-            ),
+            'title' => __('home.actions.complete_profile'),
+            'subtitle' => __('home.actions.profile_progress', [
+                'percentage' => $profileCompleteness['percentage'],
+            ]),
             'target' => $profileCompleteness['next_item']['target'] ?? [
                 'type' => 'profile_section',
                 'value' => 'basic_information',
             ],
-            'action_label' => 'إكمال الملف',
+            'action_label' => __('home.actions.complete_profile_action'),
         ];
     }
 }

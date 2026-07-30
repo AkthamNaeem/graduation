@@ -18,6 +18,6 @@ abstract class InternalNoteRequest extends FormRequest
 
     protected function fail(string $code = 'APPLICATION_INTERNAL_NOTE_NOT_OWNED'): never
     {
-        throw new ApplicationInternalNoteException('This internal note action is not authorized.', $code, 403);
+        throw new ApplicationInternalNoteException(__('validation.custom_messages.internal_note_unauthorized'), $code, 403);
     }
 }

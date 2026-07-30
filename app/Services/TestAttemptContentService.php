@@ -15,18 +15,14 @@ class TestAttemptContentService
         $attempt->loadMissing('applicationTestAssignment');
 
         if ($attempt->started_at === null) {
-            throw new TestContentAccessException(
-                'This test attempt has not been started.',
-                'TEST_ATTEMPT_NOT_STARTED',
+            throw new TestContentAccessException(__('domain_errors.TEST_ATTEMPT_NOT_STARTED'), 'TEST_ATTEMPT_NOT_STARTED',
                 409,
             );
         }
 
         $assignment = $attempt->applicationTestAssignment;
         if (! $assignment->isLatestAssignment() && $attempt->submitted_at === null) {
-            throw new TestContentAccessException(
-                'Test content is unavailable for this superseded assignment.',
-                'TEST_CONTENT_UNAVAILABLE',
+            throw new TestContentAccessException(__('domain_errors.TEST_CONTENT_UNAVAILABLE'), 'TEST_CONTENT_UNAVAILABLE',
                 409,
             );
         }

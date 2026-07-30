@@ -17,7 +17,7 @@ class AdminMiddleware
     {
         if (($request->user('sanctum') ?? $request->user())?->role !== UserRole::ADMIN) {
             return ApiResponse::error(
-                message: 'This action is unauthorized.',
+                message: __('api.unauthorized'),
                 status: 403,
             );
         }

@@ -22,7 +22,7 @@ class CreateApplicationInformationRespondedNotification extends IdempotentNotifi
             'information_response',
             $response->id,
             $recipient,
-            fn () => $this->notificationService->createForUser($recipient, 'application.information_submitted', 'Requested information submitted', 'The candidate submitted the requested information.', ['application_id' => $request->job_application_id, 'information_request_id' => $request->id, 'response_id' => $response->id, 'submitted_at' => $response->submitted_at?->toISOString(), 'attachment_count' => $response->attachments->count()]),
+            fn () => $this->notificationService->createForUser($recipient, 'application.information_submitted', __('notifications.information_submitted_title'), __('notifications.information_submitted_body'), ['application_id' => $request->job_application_id, 'information_request_id' => $request->id, 'response_id' => $response->id, 'submitted_at' => $response->submitted_at?->toISOString(), 'attachment_count' => $response->attachments->count()]),
         );
     }
 }

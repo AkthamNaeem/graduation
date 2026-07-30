@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'application_interview_recalculated' => 'Application interview status recalculated.',
+    'interview_closed_no_show' => 'Interview closed as no show.',
+    'interview_completed_candidate' => 'Interview completed for candidate.',
+    'interview_scheduled_candidate' => 'Interview scheduled for candidate.',
+    'interview_final_evaluation' => 'Final interview evaluation completed.',
+    'interview_legacy_cancelled' => 'Cancelled through the legacy delete endpoint.',
+    'test_assigned_candidate' => 'Test assigned to candidate.',
+    'test_attempt_submitted' => 'Test attempt submitted.',
+    'test_attempt_evaluated' => 'Test attempt evaluated.',
+    'profile_experience_matched' => 'Matched by title, company, and start period.',
+    'profile_experience_new' => 'New experience found in parsed CV.',
+    'profile_education_matched' => 'Matched by institution, degree, and start or graduation period.',
+    'profile_education_new' => 'New education entry found in parsed CV.',
+    'profile_skill_matched' => 'Skill already exists on the profile.',
+    'profile_skill_new' => 'New skill found in parsed CV.',
+    'profile_value_review' => 'The CV contains a profile value for review.',
+    'profile_value_matched' => 'The profile value already matches.',
+    'grading_single_correct' => 'The selected option exactly matches the correct option.',
+    'grading_single_incorrect' => 'The selected option does not match the correct option.',
+    'grading_multiple_correct' => 'The selected option set exactly matches the correct option set.',
+    'grading_multiple_incorrect' => 'The selected option set does not exactly match the correct option set.',
+    'ml_attribution' => 'Model attribution only; not a probability or hiring decision.',
+];

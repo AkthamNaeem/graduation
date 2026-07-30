@@ -82,7 +82,7 @@ class HomeActionResolverTest extends TestCase
         $action = $this->resolve($fixture['profile']);
 
         $this->assertSame('started_test', $action['type']);
-        $this->assertSame('متابعة الاختبار', $action['action_label']);
+        $this->assertSame('Continue test', $action['action_label']);
     }
 
     public function test_unconfirmed_future_interview_requests_confirmation(): void

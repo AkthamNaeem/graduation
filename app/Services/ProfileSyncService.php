@@ -33,7 +33,7 @@ class ProfileSyncService
             abort(404);
         }
         if ($cvFile->review_mode === CVFile::REVIEW_MODE_INITIAL_IMPORT) {
-            throw new CVLifecycleException('Initial CV imports use the review draft flow.', 'CV_REVIEW_MODE_INVALID');
+            throw new CVLifecycleException(__('domain_errors.CV_REVIEW_MODE_INVALID'), 'CV_REVIEW_MODE_INVALID');
         }
 
         $suggestions = DB::transaction(function () use ($user, $cvFile): Collection {
@@ -41,7 +41,7 @@ class ProfileSyncService
             $this->ownedCVFile($user, $lockedCV);
             $this->assertCVMutable($lockedCV);
             if ($lockedCV->review_mode === CVFile::REVIEW_MODE_INITIAL_IMPORT) {
-                throw new CVLifecycleException('Initial CV imports use the review draft flow.', 'CV_REVIEW_MODE_INVALID');
+                throw new CVLifecycleException(__('domain_errors.CV_REVIEW_MODE_INVALID'), 'CV_REVIEW_MODE_INVALID');
             }
             if ($lockedCV->review_mode === null) {
                 $lockedCV->forceFill(['review_mode' => CVFile::REVIEW_MODE_PROFILE_SYNC])->save();
@@ -90,7 +90,7 @@ class ProfileSyncService
         $suggestion = $this->ownedSuggestion($user, $suggestion);
         $this->assertSuggestionMutable($suggestion);
         if ($suggestion->suggestion_type === ProfileChangeSuggestion::TYPE_IGNORE) {
-            throw ValidationException::withMessages(['suggestion' => ['Matched items do not require a decision.']]);
+            throw ValidationException::withMessages(['suggestion' => [__('errors.profile_suggestion_matched')]]);
         }
 
         return DB::transaction(function () use ($user, $suggestion, $editedValue): ProfileChangeSuggestion {
@@ -117,7 +117,7 @@ class ProfileSyncService
         $suggestion = $this->ownedSuggestion($user, $suggestion);
         $this->assertSuggestionMutable($suggestion);
         if ($suggestion->suggestion_type === ProfileChangeSuggestion::TYPE_IGNORE) {
-            throw ValidationException::withMessages(['suggestion' => ['Matched items do not require a decision.']]);
+            throw ValidationException::withMessages(['suggestion' => [__('errors.profile_suggestion_matched')]]);
         }
 
         return DB::transaction(function () use ($user, $suggestion, $reason): ProfileChangeSuggestion {
@@ -146,13 +146,13 @@ class ProfileSyncService
             $lockedCV = CVFile::query()->lockForUpdate()->findOrFail($cvFile->id);
             $this->ownedCVFile($user, $lockedCV);
             if ($lockedCV->archived_at !== null) {
-                throw new CVLifecycleException('Archived CV data is read-only.', 'CV_ARCHIVED_READ_ONLY');
+                throw new CVLifecycleException(__('domain_errors.CV_ARCHIVED_READ_ONLY'), 'CV_ARCHIVED_READ_ONLY');
             }
             if ($lockedCV->review_status === CVFile::REVIEW_STATUS_APPLIED) {
                 return $this->applicationResult($user, $lockedCV, true);
             }
             if (($lockedCV->review_mode ?? CVFile::REVIEW_MODE_PROFILE_SYNC) !== CVFile::REVIEW_MODE_PROFILE_SYNC) {
-                throw new CVLifecycleException('This CV does not use profile synchronization.', 'CV_REVIEW_MODE_INVALID');
+                throw new CVLifecycleException(__('domain_errors.CV_REVIEW_MODE_INVALID'), 'CV_REVIEW_MODE_INVALID');
             }
             if ($lockedCV->review_mode === null) {
                 $lockedCV->forceFill(['review_mode' => CVFile::REVIEW_MODE_PROFILE_SYNC])->save();
@@ -171,10 +171,10 @@ class ProfileSyncService
                 $this->synchronizeReviewStatus($lockedCV);
             }
             if ($lockedCV->review_status !== CVFile::REVIEW_STATUS_READY_TO_APPLY) {
-                throw new CVLifecycleException('The CV suggestions are not ready to apply.', 'CV_SUGGESTIONS_NOT_READY');
+                throw new CVLifecycleException(__('domain_errors.CV_SUGGESTIONS_NOT_READY'), 'CV_SUGGESTIONS_NOT_READY');
             }
             if ($suggestions->contains(fn (ProfileChangeSuggestion $item): bool => $item->suggestion_type !== ProfileChangeSuggestion::TYPE_IGNORE && $item->status === ProfileChangeSuggestion::STATUS_PENDING)) {
-                throw new CVLifecycleException('All actionable suggestions must be decided before applying.', 'CV_SUGGESTIONS_PENDING');
+                throw new CVLifecycleException(__('domain_errors.CV_SUGGESTIONS_PENDING'), 'CV_SUGGESTIONS_PENDING');
             }
             foreach ($suggestions->where('status', ProfileChangeSuggestion::STATUS_ACCEPTED)
                 ->where('suggestion_type', '!=', ProfileChangeSuggestion::TYPE_IGNORE) as $suggestion) {
@@ -215,12 +215,12 @@ class ProfileSyncService
         foreach ($suggestions as $suggestion) {
             $this->ownedSuggestion($user, $suggestion);
             if ($suggestion->status !== ProfileChangeSuggestion::STATUS_ACCEPTED) {
-                throw ValidationException::withMessages(['suggestion_ids' => ['Only accepted suggestions can be applied.']]);
+                throw ValidationException::withMessages(['suggestion_ids' => [__('errors.profile_suggestion_accepted')]]);
             }
         }
         $cvIds = $suggestions->pluck('cv_file_id')->filter()->unique();
         if ($cvIds->count() !== 1) {
-            throw ValidationException::withMessages(['suggestion_ids' => ['All suggestions must belong to one CV.']]);
+            throw ValidationException::withMessages(['suggestion_ids' => [__('errors.profile_suggestion_cv')]]);
         }
 
         $cvFile = CVFile::query()->findOrFail($cvIds->first());
@@ -335,7 +335,7 @@ class ProfileSyncService
             ProfileChangeSuggestion::ENTITY_EXPERIENCE => $this->applyExperience($profile, $suggestion, $value),
             ProfileChangeSuggestion::ENTITY_EDUCATION => $this->applyEducation($profile, $suggestion, $value),
             ProfileChangeSuggestion::ENTITY_SKILL => $this->applySkill($profile, $suggestion, $value),
-            default => throw ValidationException::withMessages(['suggestion' => ['Unsupported suggestion entity.']]),
+            default => throw ValidationException::withMessages(['suggestion' => [__('errors.profile_suggestion_entity')]]),
         };
     }
 
@@ -382,7 +382,7 @@ class ProfileSyncService
 
     private function throwStale(ProfileChangeSuggestion $suggestion): never
     {
-        throw new CVLifecycleException('A reviewed profile value changed before apply.', 'SUGGESTION_STALE', 409, [
+        throw new CVLifecycleException(__('domain_errors.SUGGESTION_STALE'), 'SUGGESTION_STALE', 409, [
             'suggestion_id' => $suggestion->id,
             'entity_type' => $suggestion->entity_type,
         ]);
@@ -675,7 +675,7 @@ class ProfileSyncService
     private function assertSuggestionMutable(ProfileChangeSuggestion $suggestion): void
     {
         if ($suggestion->status === ProfileChangeSuggestion::STATUS_APPLIED) {
-            throw new CVLifecycleException('Applied suggestions are immutable.', 'SUGGESTION_APPLIED_IMMUTABLE');
+            throw new CVLifecycleException(__('domain_errors.SUGGESTION_APPLIED_IMMUTABLE'), 'SUGGESTION_APPLIED_IMMUTABLE');
         }
         $cvFile = $suggestion->cvFile()->first();
         if ($cvFile instanceof CVFile) {
@@ -686,10 +686,10 @@ class ProfileSyncService
     private function assertCVMutable(CVFile $cvFile): void
     {
         if ($cvFile->archived_at !== null) {
-            throw new CVLifecycleException('Archived CV data is read-only.', 'CV_ARCHIVED_READ_ONLY');
+            throw new CVLifecycleException(__('domain_errors.CV_ARCHIVED_READ_ONLY'), 'CV_ARCHIVED_READ_ONLY');
         }
         if ($cvFile->review_status === CVFile::REVIEW_STATUS_APPLIED || $cvFile->confirmed_at !== null) {
-            throw new CVLifecycleException('Applied CV reviews are immutable.', 'CV_REVIEW_APPLIED_IMMUTABLE');
+            throw new CVLifecycleException(__('domain_errors.CV_REVIEW_APPLIED_IMMUTABLE'), 'CV_REVIEW_APPLIED_IMMUTABLE');
         }
     }
 }

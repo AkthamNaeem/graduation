@@ -1,0 +1,2485 @@
+{
+    "generated_at": "2026-07-30T16:38:45+00:00",
+    "candidate_count": 147,
+    "candidates": [
+        {
+            "text": "A job seeker profile is required before recommendations can be computed.",
+            "occurrences": [
+                {
+                    "file": "app/Services/MatchingService.php",
+                    "line": 146
+                }
+            ]
+        },
+        {
+            "text": "A newer retake assignment already exists.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestRetakeService.php",
+                    "line": 181
+                }
+            ]
+        },
+        {
+            "text": "A submitted test assignment can no longer be extended.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestAssignmentDeadlineService.php",
+                    "line": 84
+                }
+            ]
+        },
+        {
+            "text": "A temporary parsing file could not be created.",
+            "occurrences": [
+                {
+                    "file": "app/Jobs/ParseCVFileJob.php",
+                    "line": 57
+                }
+            ]
+        },
+        {
+            "text": "A temporary parsing file could not be opened.",
+            "occurrences": [
+                {
+                    "file": "app/Jobs/ParseCVFileJob.php",
+                    "line": 68
+                }
+            ]
+        },
+        {
+            "text": "A temporary parsing file could not be prepared.",
+            "occurrences": [
+                {
+                    "file": "app/Jobs/ParseCVFileJob.php",
+                    "line": 63
+                }
+            ]
+        },
+        {
+            "text": "A test assignment for a final application can no longer be extended.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestAssignmentDeadlineService.php",
+                    "line": 89
+                }
+            ]
+        },
+        {
+            "text": "A test attempt cannot be started for a final application.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestAssignmentDeadlineService.php",
+                    "line": 45
+                }
+            ]
+        },
+        {
+            "text": "A test retake can only reopen an application from test_completed.",
+            "occurrences": [
+                {
+                    "file": "app/Services/ApplicationWorkflowService.php",
+                    "line": 211
+                }
+            ]
+        },
+        {
+            "text": "A valid work mode and location for on-site or hybrid jobs are required before publishing.",
+            "occurrences": [
+                {
+                    "file": "app/Services/JobPostingService.php",
+                    "line": 226
+                }
+            ]
+        },
+        {
+            "text": "An expired unsubmitted assignment should be extended instead of creating a retake.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestRetakeService.php",
+                    "line": 106
+                }
+            ]
+        },
+        {
+            "text": "Application interview status recalculated.",
+            "occurrences": [
+                {
+                    "file": "app/Services/InterviewService.php",
+                    "line": 472
+                },
+                {
+                    "file": "app/Support/SystemGeneratedText.php",
+                    "line": 13
+                }
+            ]
+        },
+        {
+            "text": "At least one required skill is needed before publishing this job.",
+            "occurrences": [
+                {
+                    "file": "app/Services/JobPostingService.php",
+                    "line": 259
+                }
+            ]
+        },
+        {
+            "text": "At least two options are required.",
+            "occurrences": [
+                {
+                    "file": "app/Services/JobScreeningQuestionService.php",
+                    "line": 177
+                }
+            ]
+        },
+        {
+            "text": "Audit log recording failed.",
+            "occurrences": [
+                {
+                    "file": "app/Services/AuditLogService.php",
+                    "line": 41
+                }
+            ]
+        },
+        {
+            "text": "Automatically graded answers cannot be manually overridden.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestManualGradingService.php",
+                    "line": 35
+                },
+                {
+                    "file": "app/Services/TestManualGradingService.php",
+                    "line": 101
+                },
+                {
+                    "file": "app/Services/TestManualGradingService.php",
+                    "line": 121
+                },
+                {
+                    "file": "app/Services/TestManualGradingService.php",
+                    "line": 163
+                },
+                {
+                    "file": "app/Services/TestManualGradingService.php",
+                    "line": 207
+                }
+            ]
+        },
+        {
+            "text": "Awarded points cannot exceed the question maximum.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestManualGradingService.php",
+                    "line": 224
+                }
+            ]
+        },
+        {
+            "text": "Cancelled through the legacy delete endpoint.",
+            "occurrences": [
+                {
+                    "file": "app/Services/InterviewService.php",
+                    "line": 265
+                },
+                {
+                    "file": "app/Support/SystemGeneratedText.php",
+                    "line": 18
+                }
+            ]
+        },
+        {
+            "text": "Candidate has %.2f years against %.2f required.",
+            "occurrences": [
+                {
+                    "file": "app/Services/MatchingService.php",
+                    "line": 415
+                }
+            ]
+        },
+        {
+            "text": "Choice questions accept selected_option_ids only.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestAnswerService.php",
+                    "line": 267
+                }
+            ]
+        },
+        {
+            "text": "Choice questions require at least two options.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestQuestionService.php",
+                    "line": 222
+                }
+            ]
+        },
+        {
+            "text": "Complete birth date in YYYY-MM-DD format, or null when incomplete.",
+            "occurrences": [
+                {
+                    "file": "app/Services/CV/CVParsingSchema.php",
+                    "line": 25
+                }
+            ]
+        },
+        {
+            "text": "DRY RUN: no database rows or objects were changed. Use --execute only after inventory review.",
+            "occurrences": [
+                {
+                    "file": "app/Console/Commands/MigratePrivateFilesCommand.php",
+                    "line": 71
+                }
+            ]
+        },
+        {
+            "text": "Education level was compared with the job requirement.",
+            "occurrences": [
+                {
+                    "file": "app/Services/MatchingService.php",
+                    "line": 418
+                }
+            ]
+        },
+        {
+            "text": "Eligibility contains an invalid Job.",
+            "occurrences": [
+                {
+                    "file": "app/Data/Recommendation/RecommendationEligibility.php",
+                    "line": 21
+                }
+            ]
+        },
+        {
+            "text": "Employers cannot move an application to withdrawn.",
+            "occurrences": [
+                {
+                    "file": "app/Services/ApplicationWorkflowService.php",
+                    "line": 151
+                }
+            ]
+        },
+        {
+            "text": "Event side-effect key segments must be non-empty and contain no spaces or colons.",
+            "occurrences": [
+                {
+                    "file": "app/Services/EventEffectKeyFactory.php",
+                    "line": 42
+                }
+            ]
+        },
+        {
+            "text": "Every job skill must have a valid requirement type.",
+            "occurrences": [
+                {
+                    "file": "app/Services/JobPostingService.php",
+                    "line": 241
+                }
+            ]
+        },
+        {
+            "text": "Every job skill weight must be between 1 and 5.",
+            "occurrences": [
+                {
+                    "file": "app/Services/JobPostingService.php",
+                    "line": 252
+                }
+            ]
+        },
+        {
+            "text": "Every question must exist and belong to this attempt.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestManualGradingService.php",
+                    "line": 97
+                }
+            ]
+        },
+        {
+            "text": "Every question must exist and belong to this test attempt.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestAnswerService.php",
+                    "line": 114
+                }
+            ]
+        },
+        {
+            "text": "Every selected option must belong to the question.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestAnswerService.php",
+                    "line": 277
+                }
+            ]
+        },
+        {
+            "text": "Every subjective question must have an answer.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestManualGradingService.php",
+                    "line": 106
+                }
+            ]
+        },
+        {
+            "text": "Explicit profile sharing consent is required.",
+            "occurrences": [
+                {
+                    "file": "app/Services/ApplicationWorkflowService.php",
+                    "line": 79
+                }
+            ]
+        },
+        {
+            "text": "File questions accept one answer_file only.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestAnswerService.php",
+                    "line": 298
+                }
+            ]
+        },
+        {
+            "text": "Final interview evaluation completed.",
+            "occurrences": [
+                {
+                    "file": "app/Services/InterviewService.php",
+                    "line": 374
+                },
+                {
+                    "file": "app/Support/SystemGeneratedText.php",
+                    "line": 17
+                }
+            ]
+        },
+        {
+            "text": "Format must be table, json, or csv.",
+            "occurrences": [
+                {
+                    "file": "app/Console/Commands/InventoryPrivateFilesCommand.php",
+                    "line": 20
+                }
+            ]
+        },
+        {
+            "text": "Groq CV parser request exceeded provider token capacity.",
+            "occurrences": [
+                {
+                    "file": "app/Services/CV/GroqCVTextParser.php",
+                    "line": 178
+                }
+            ]
+        },
+        {
+            "text": "Groq CV parser request was rejected.",
+            "occurrences": [
+                {
+                    "file": "app/Services/CV/GroqCVTextParser.php",
+                    "line": 215
+                }
+            ]
+        },
+        {
+            "text": "Groq strict structured output failed; trying JSON object fallback.",
+            "occurrences": [
+                {
+                    "file": "app/Services/CV/GroqCVTextParser.php",
+                    "line": 76
+                }
+            ]
+        },
+        {
+            "text": "Interview closed as no show.",
+            "occurrences": [
+                {
+                    "file": "app/Services/InterviewService.php",
+                    "line": 315
+                },
+                {
+                    "file": "app/Support/SystemGeneratedText.php",
+                    "line": 14
+                }
+            ]
+        },
+        {
+            "text": "Interview completed for candidate.",
+            "occurrences": [
+                {
+                    "file": "app/Services/InterviewService.php",
+                    "line": 342
+                },
+                {
+                    "file": "app/Support/SystemGeneratedText.php",
+                    "line": 15
+                }
+            ]
+        },
+        {
+            "text": "Interview scheduled for candidate.",
+            "occurrences": [
+                {
+                    "file": "app/Services/InterviewService.php",
+                    "line": 90
+                },
+                {
+                    "file": "app/Support/SystemGeneratedText.php",
+                    "line": 16
+                }
+            ]
+        },
+        {
+            "text": "Invalid CV parser driver. Supported drivers: openai, groq, rules.",
+            "occurrences": [
+                {
+                    "file": "app/Providers/AppServiceProvider.php",
+                    "line": 163
+                }
+            ]
+        },
+        {
+            "text": "Invalid decimal score.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestScorePolicyService.php",
+                    "line": 101
+                }
+            ]
+        },
+        {
+            "text": "Job requirements are required before publishing this job.",
+            "occurrences": [
+                {
+                    "file": "app/Services/JobPostingService.php",
+                    "line": 217
+                }
+            ]
+        },
+        {
+            "text": "LOWER(email) = ?",
+            "occurrences": [
+                {
+                    "file": "app/Http/Controllers/Api/V1/Company/CompanyInvitationController.php",
+                    "line": 34
+                },
+                {
+                    "file": "app/Services/CompanyInvitationService.php",
+                    "line": 238
+                },
+                {
+                    "file": "app/Services/CompanyInvitationService.php",
+                    "line": 356
+                },
+                {
+                    "file": "app/Services/CompanyInvitationService.php",
+                    "line": 453
+                }
+            ]
+        },
+        {
+            "text": "LOWER(name) = ?",
+            "occurrences": [
+                {
+                    "file": "app/Http/Requests/Api/V1/Admin/StoreAdminSkillRequest.php",
+                    "line": 24
+                },
+                {
+                    "file": "app/Http/Requests/Api/V1/Admin/UpdateAdminSkillRequest.php",
+                    "line": 30
+                }
+            ]
+        },
+        {
+            "text": "Legacy answer maps cannot be matched safely. Save normalized answers before submitting.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestAnswerService.php",
+                    "line": 254
+                }
+            ]
+        },
+        {
+            "text": "Matched %d nice-to-have skill(s).",
+            "occurrences": [
+                {
+                    "file": "app/Services/MatchingService.php",
+                    "line": 414
+                }
+            ]
+        },
+        {
+            "text": "Matched %d of %d required skills.",
+            "occurrences": [
+                {
+                    "file": "app/Services/MatchingService.php",
+                    "line": 402
+                }
+            ]
+        },
+        {
+            "text": "Matched by institution, degree, and start or graduation period.",
+            "occurrences": [
+                {
+                    "file": "app/Services/ProfileSyncService.php",
+                    "line": 304
+                },
+                {
+                    "file": "app/Support/SystemGeneratedText.php",
+                    "line": 24
+                }
+            ]
+        },
+        {
+            "text": "Matched by title, company, and start period.",
+            "occurrences": [
+                {
+                    "file": "app/Services/ProfileSyncService.php",
+                    "line": 277
+                },
+                {
+                    "file": "app/Support/SystemGeneratedText.php",
+                    "line": 22
+                }
+            ]
+        },
+        {
+            "text": "Matching component weights must be configured and sum to 100.",
+            "occurrences": [
+                {
+                    "file": "app/Services/MatchingService.php",
+                    "line": 433
+                }
+            ]
+        },
+        {
+            "text": "Migration report written.",
+            "occurrences": [
+                {
+                    "file": "app/Console/Commands/MigratePrivateFilesCommand.php",
+                    "line": 189
+                }
+            ]
+        },
+        {
+            "text": "Missing %d required skill(s).",
+            "occurrences": [
+                {
+                    "file": "app/Services/MatchingService.php",
+                    "line": 408
+                }
+            ]
+        },
+        {
+            "text": "Model attribution only; not a probability or hiring decision.",
+            "occurrences": [
+                {
+                    "file": "app/Data/RecommendationMl/MlRankResponse.php",
+                    "line": 10
+                },
+                {
+                    "file": "app/Support/SystemGeneratedText.php",
+                    "line": 34
+                }
+            ]
+        },
+        {
+            "text": "Multiple choice questions require at least one correct option.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestQuestionService.php",
+                    "line": 240
+                }
+            ]
+        },
+        {
+            "text": "New education entry found in parsed CV.",
+            "occurrences": [
+                {
+                    "file": "app/Services/ProfileSyncService.php",
+                    "line": 304
+                },
+                {
+                    "file": "app/Support/SystemGeneratedText.php",
+                    "line": 25
+                }
+            ]
+        },
+        {
+            "text": "New experience found in parsed CV.",
+            "occurrences": [
+                {
+                    "file": "app/Services/ProfileSyncService.php",
+                    "line": 277
+                },
+                {
+                    "file": "app/Support/SystemGeneratedText.php",
+                    "line": 23
+                }
+            ]
+        },
+        {
+            "text": "New skill found in parsed CV.",
+            "occurrences": [
+                {
+                    "file": "app/Services/ProfileSyncService.php",
+                    "line": 324
+                },
+                {
+                    "file": "app/Support/SystemGeneratedText.php",
+                    "line": 27
+                }
+            ]
+        },
+        {
+            "text": "No education level was configured for this job.",
+            "occurrences": [
+                {
+                    "file": "app/Services/MatchingService.php",
+                    "line": 417
+                }
+            ]
+        },
+        {
+            "text": "No nice-to-have skills were configured for this job.",
+            "occurrences": [
+                {
+                    "file": "app/Services/MatchingService.php",
+                    "line": 413
+                }
+            ]
+        },
+        {
+            "text": "No pending email verification was found.",
+            "occurrences": [
+                {
+                    "file": "app/Services/Auth/EmailVerificationService.php",
+                    "line": 66
+                },
+                {
+                    "file": "app/Services/Auth/EmailVerificationService.php",
+                    "line": 87
+                }
+            ]
+        },
+        {
+            "text": "Only job seekers can access recommended jobs.",
+            "occurrences": [
+                {
+                    "file": "app/Services/MatchingService.php",
+                    "line": 140
+                }
+            ]
+        },
+        {
+            "text": "Only submitted attempts can be auto-graded.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestGradingService.php",
+                    "line": 24
+                }
+            ]
+        },
+        {
+            "text": "Only submitted attempts can be evaluated.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestService.php",
+                    "line": 420
+                }
+            ]
+        },
+        {
+            "text": "Option order indexes must be unique within a question.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestQuestionService.php",
+                    "line": 232
+                }
+            ]
+        },
+        {
+            "text": "Option text must be unique within a question.",
+            "occurrences": [
+                {
+                    "file": "app/Services/JobScreeningQuestionService.php",
+                    "line": 206
+                },
+                {
+                    "file": "app/Services/TestQuestionService.php",
+                    "line": 227
+                }
+            ]
+        },
+        {
+            "text": "Options are not allowed for this question type.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestQuestionService.php",
+                    "line": 215
+                }
+            ]
+        },
+        {
+            "text": "Options are only allowed for choice questions.",
+            "occurrences": [
+                {
+                    "file": "app/Services/JobScreeningQuestionService.php",
+                    "line": 166
+                }
+            ]
+        },
+        {
+            "text": "Passing score is outside the canonical range.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestScorePolicyService.php",
+                    "line": 63
+                }
+            ]
+        },
+        {
+            "text": "Please wait before requesting another verification code.",
+            "occurrences": [
+                {
+                    "file": "app/Services/Auth/EmailVerificationService.php",
+                    "line": 180
+                }
+            ]
+        },
+        {
+            "text": "Private file inventory written to the requested output file.",
+            "occurrences": [
+                {
+                    "file": "app/Console/Commands/InventoryPrivateFilesCommand.php",
+                    "line": 64
+                }
+            ]
+        },
+        {
+            "text": "Private file storage operation failed.",
+            "occurrences": [
+                {
+                    "file": "app/Services/PrivateFileStorageService.php",
+                    "line": 250
+                }
+            ]
+        },
+        {
+            "text": "Private storage returned different content.",
+            "occurrences": [
+                {
+                    "file": "app/Console/Commands/VerifyPrivateStorageCommand.php",
+                    "line": 30
+                }
+            ]
+        },
+        {
+            "text": "Professional profile text was compared with the job text.",
+            "occurrences": [
+                {
+                    "file": "app/Services/MatchingService.php",
+                    "line": 419
+                }
+            ]
+        },
+        {
+            "text": "Provide between 2 and 50 options.",
+            "occurrences": [
+                {
+                    "file": "app/Services/JobScreeningQuestionService.php",
+                    "line": 188
+                }
+            ]
+        },
+        {
+            "text": "Question points cannot be negative.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestScorePolicyService.php",
+                    "line": 53
+                }
+            ]
+        },
+        {
+            "text": "Recommendation cache enabled configuration is invalid.",
+            "occurrences": [
+                {
+                    "file": "app/Data/Recommendation/RecommendationPersistenceConfiguration.php",
+                    "line": 88
+                }
+            ]
+        },
+        {
+            "text": "Recommendation context is invalid.",
+            "occurrences": [
+                {
+                    "file": "app/Data/Recommendation/RecommendationContext.php",
+                    "line": 12
+                }
+            ]
+        },
+        {
+            "text": "Recommendation fingerprint requires loaded job relations.",
+            "occurrences": [
+                {
+                    "file": "app/Services/Recommendation/RecommendationContextFingerprint.php",
+                    "line": 74
+                }
+            ]
+        },
+        {
+            "text": "Recommendation fingerprint requires loaded profile relations.",
+            "occurrences": [
+                {
+                    "file": "app/Services/Recommendation/RecommendationContextFingerprint.php",
+                    "line": 35
+                }
+            ]
+        },
+        {
+            "text": "Recommendation limit must be positive.",
+            "occurrences": [
+                {
+                    "file": "app/Services/Recommendation/RecommendationOrchestrator.php",
+                    "line": 56
+                }
+            ]
+        },
+        {
+            "text": "Recommendation persistence configuration is invalid.",
+            "occurrences": [
+                {
+                    "file": "app/Data/Recommendation/RecommendationPersistenceConfiguration.php",
+                    "line": 29
+                }
+            ]
+        },
+        {
+            "text": "Recommendation persistence counts are invalid.",
+            "occurrences": [
+                {
+                    "file": "app/Services/Recommendation/RecommendationResultStore.php",
+                    "line": 132
+                }
+            ]
+        },
+        {
+            "text": "Recommendation persistence item is invalid.",
+            "occurrences": [
+                {
+                    "file": "app/Services/Recommendation/RecommendationResultStore.php",
+                    "line": 166
+                }
+            ]
+        },
+        {
+            "text": "Recommendation persistence metadata is invalid.",
+            "occurrences": [
+                {
+                    "file": "app/Services/Recommendation/RecommendationResultStore.php",
+                    "line": 212
+                }
+            ]
+        },
+        {
+            "text": "Recommendation persistence reason is invalid.",
+            "occurrences": [
+                {
+                    "file": "app/Services/Recommendation/RecommendationResultStore.php",
+                    "line": 228
+                }
+            ]
+        },
+        {
+            "text": "Recommendation result counts are invalid.",
+            "occurrences": [
+                {
+                    "file": "app/Data/Recommendation/RecommendationResult.php",
+                    "line": 31
+                }
+            ]
+        },
+        {
+            "text": "Single choice questions require exactly one correct option.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestQuestionService.php",
+                    "line": 237
+                }
+            ]
+        },
+        {
+            "text": "Skill already exists on the profile.",
+            "occurrences": [
+                {
+                    "file": "app/Services/ProfileSyncService.php",
+                    "line": 324
+                },
+                {
+                    "file": "app/Support/SystemGeneratedText.php",
+                    "line": 26
+                }
+            ]
+        },
+        {
+            "text": "Source and target must be different configured disks.",
+            "occurrences": [
+                {
+                    "file": "app/Console/Commands/MigratePrivateFilesCommand.php",
+                    "line": 36
+                }
+            ]
+        },
+        {
+            "text": "Test assigned to candidate.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestService.php",
+                    "line": 204
+                },
+                {
+                    "file": "app/Support/SystemGeneratedText.php",
+                    "line": 19
+                }
+            ]
+        },
+        {
+            "text": "Test attempt evaluated.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestService.php",
+                    "line": 461
+                },
+                {
+                    "file": "app/Support/SystemGeneratedText.php",
+                    "line": 21
+                }
+            ]
+        },
+        {
+            "text": "Test attempt submitted.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestService.php",
+                    "line": 397
+                },
+                {
+                    "file": "app/Support/SystemGeneratedText.php",
+                    "line": 20
+                }
+            ]
+        },
+        {
+            "text": "Text questions accept answer_text only.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestAnswerService.php",
+                    "line": 285
+                }
+            ]
+        },
+        {
+            "text": "The CV contains a profile value for review.",
+            "occurrences": [
+                {
+                    "file": "app/Services/ProfileSyncService.php",
+                    "line": 250
+                },
+                {
+                    "file": "app/Support/SystemGeneratedText.php",
+                    "line": 28
+                }
+            ]
+        },
+        {
+            "text": "The CV could not be copied for parsing.",
+            "occurrences": [
+                {
+                    "file": "app/Jobs/ParseCVFileJob.php",
+                    "line": 72
+                }
+            ]
+        },
+        {
+            "text": "The application deadline must be in the future before publishing this job.",
+            "occurrences": [
+                {
+                    "file": "app/Services/JobPostingService.php",
+                    "line": 266
+                }
+            ]
+        },
+        {
+            "text": "The application is no longer eligible for a test retake policy change.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestRetakeService.php",
+                    "line": 44
+                }
+            ]
+        },
+        {
+            "text": "The application is no longer eligible for a test retake.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestRetakeService.php",
+                    "line": 113
+                }
+            ]
+        },
+        {
+            "text": "The deadline must be a future date and time.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestAssignmentDeadlineService.php",
+                    "line": 34
+                },
+                {
+                    "file": "app/Services/TestAssignmentDeadlineService.php",
+                    "line": 95
+                }
+            ]
+        },
+        {
+            "text": "The email address is already verified.",
+            "occurrences": [
+                {
+                    "file": "app/Services/Auth/EmailVerificationService.php",
+                    "line": 74
+                }
+            ]
+        },
+        {
+            "text": "The end date must be after or equal to the start date.",
+            "occurrences": [
+                {
+                    "file": "app/Services/CVService.php",
+                    "line": 272
+                }
+            ]
+        },
+        {
+            "text": "The end date must be null for a current experience.",
+            "occurrences": [
+                {
+                    "file": "app/Services/CVService.php",
+                    "line": 275
+                }
+            ]
+        },
+        {
+            "text": "The event side-effect key exceeds 191 characters.",
+            "occurrences": [
+                {
+                    "file": "app/Services/EventEffectKeyFactory.php",
+                    "line": 31
+                }
+            ]
+        },
+        {
+            "text": "The job contains an invalid skill requirement type.",
+            "occurrences": [
+                {
+                    "file": "app/Services/MatchingService.php",
+                    "line": 450
+                }
+            ]
+        },
+        {
+            "text": "The job contains an invalid skill weight.",
+            "occurrences": [
+                {
+                    "file": "app/Services/MatchingService.php",
+                    "line": 290
+                }
+            ]
+        },
+        {
+            "text": "The job education level is invalid.",
+            "occurrences": [
+                {
+                    "file": "app/Services/MatchingService.php",
+                    "line": 362
+                }
+            ]
+        },
+        {
+            "text": "The job experience level is not supported by matching configuration.",
+            "occurrences": [
+                {
+                    "file": "app/Services/MatchingService.php",
+                    "line": 327
+                }
+            ]
+        },
+        {
+            "text": "The maximum attempts value can only be increased.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestRetakeService.php",
+                    "line": 51
+                }
+            ]
+        },
+        {
+            "text": "The maximum attempts value cannot be lower than attempts already used.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestRetakeService.php",
+                    "line": 56
+                }
+            ]
+        },
+        {
+            "text": "The maximum number of verification attempts has been reached.",
+            "occurrences": [
+                {
+                    "file": "app/Services/Auth/EmailVerificationService.php",
+                    "line": 103
+                }
+            ]
+        },
+        {
+            "text": "The name field is required for a new account.",
+            "occurrences": [
+                {
+                    "file": "app/Services/CompanyInvitationService.php",
+                    "line": 245
+                }
+            ]
+        },
+        {
+            "text": "The new deadline must be later than the current deadline.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestAssignmentDeadlineService.php",
+                    "line": 102
+                }
+            ]
+        },
+        {
+            "text": "The option text is invalid.",
+            "occurrences": [
+                {
+                    "file": "app/Services/JobScreeningQuestionService.php",
+                    "line": 200
+                }
+            ]
+        },
+        {
+            "text": "The passing score may not be greater than the test maximum score.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestScorePolicyService.php",
+                    "line": 42
+                }
+            ]
+        },
+        {
+            "text": "The password field is required for a new account.",
+            "occurrences": [
+                {
+                    "file": "app/Services/CompanyInvitationService.php",
+                    "line": 246
+                }
+            ]
+        },
+        {
+            "text": "The payload contains unexpected fields.",
+            "occurrences": [
+                {
+                    "file": "app/Services/CVService.php",
+                    "line": 263
+                }
+            ]
+        },
+        {
+            "text": "The private storage prefix is invalid.",
+            "occurrences": [
+                {
+                    "file": "app/Services/PrivateFileStorageService.php",
+                    "line": 222
+                }
+            ]
+        },
+        {
+            "text": "The profile value already matches.",
+            "occurrences": [
+                {
+                    "file": "app/Services/ProfileSyncService.php",
+                    "line": 250
+                },
+                {
+                    "file": "app/Support/SystemGeneratedText.php",
+                    "line": 29
+                }
+            ]
+        },
+        {
+            "text": "The question must belong to the attempt test.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestManualGradingService.php",
+                    "line": 203
+                }
+            ]
+        },
+        {
+            "text": "The reorder payload must contain every option in this question exactly once.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestQuestionService.php",
+                    "line": 193
+                }
+            ]
+        },
+        {
+            "text": "The reorder payload must contain every question in this test exactly once.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestQuestionService.php",
+                    "line": 122
+                }
+            ]
+        },
+        {
+            "text": "The score may not be greater than the test maximum score.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestService.php",
+                    "line": 434
+                }
+            ]
+        },
+        {
+            "text": "The selected option does not match the correct option.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestGradingService.php",
+                    "line": 138
+                },
+                {
+                    "file": "app/Support/SystemGeneratedText.php",
+                    "line": 31
+                }
+            ]
+        },
+        {
+            "text": "The selected option exactly matches the correct option.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestGradingService.php",
+                    "line": 137
+                },
+                {
+                    "file": "app/Support/SystemGeneratedText.php",
+                    "line": 30
+                }
+            ]
+        },
+        {
+            "text": "The selected option set does not exactly match the correct option set.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestGradingService.php",
+                    "line": 133
+                },
+                {
+                    "file": "app/Support/SystemGeneratedText.php",
+                    "line": 33
+                }
+            ]
+        },
+        {
+            "text": "The selected option set exactly matches the correct option set.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestGradingService.php",
+                    "line": 132
+                },
+                {
+                    "file": "app/Support/SystemGeneratedText.php",
+                    "line": 32
+                }
+            ]
+        },
+        {
+            "text": "The selected test must belong to the same company as the application.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestService.php",
+                    "line": 135
+                }
+            ]
+        },
+        {
+            "text": "The skill name is invalid.",
+            "occurrences": [
+                {
+                    "file": "app/Services/ProfileSyncService.php",
+                    "line": 435
+                }
+            ]
+        },
+        {
+            "text": "The verification code has expired.",
+            "occurrences": [
+                {
+                    "file": "app/Services/Auth/EmailVerificationService.php",
+                    "line": 95
+                }
+            ]
+        },
+        {
+            "text": "The verification code is invalid.",
+            "occurrences": [
+                {
+                    "file": "app/Services/Auth/EmailVerificationService.php",
+                    "line": 113
+                }
+            ]
+        },
+        {
+            "text": "This assignment is not the latest assignment in the retake series.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestRetakeService.php",
+                    "line": 100
+                }
+            ]
+        },
+        {
+            "text": "This attempt has already been evaluated.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestService.php",
+                    "line": 426
+                }
+            ]
+        },
+        {
+            "text": "This internal note has already been deleted.",
+            "occurrences": [
+                {
+                    "file": "app/Services/ApplicationInternalNoteService.php",
+                    "line": 218
+                }
+            ]
+        },
+        {
+            "text": "This test assignment has expired and can no longer be started.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestAssignmentDeadlineService.php",
+                    "line": 49
+                }
+            ]
+        },
+        {
+            "text": "This test attempt has not been started yet.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestAnswerService.php",
+                    "line": 185
+                }
+            ]
+        },
+        {
+            "text": "Title, description, and employment type are required before publishing this job.",
+            "occurrences": [
+                {
+                    "file": "app/Services/JobPostingService.php",
+                    "line": 210
+                }
+            ]
+        },
+        {
+            "text": "True/false questions require exactly True and False options with one correct answer.",
+            "occurrences": [
+                {
+                    "file": "app/Services/TestQuestionService.php",
+                    "line": 245
+                }
+            ]
+        },
+        {
+            "text": "Unsupported CV file type.",
+            "occurrences": [
+                {
+                    "file": "app/Services/CVParsingService.php",
+                    "line": 34
+                }
+            ]
+        },
+        {
+            "text": "Unsupported private file domain.",
+            "occurrences": [
+                {
+                    "file": "app/Services/PrivateFileRecordService.php",
+                    "line": 34
+                }
+            ]
+        },
+        {
+            "text": "Verification cleanup failed; inspect structured application logs.",
+            "occurrences": [
+                {
+                    "file": "app/Console/Commands/VerifyPrivateStorageCommand.php",
+                    "line": 50
+                }
+            ]
+        },
+        {
+            "text": "Your company application was rejected.",
+            "occurrences": [
+                {
+                    "file": "app/Services/CompanyRecruitmentAccessService.php",
+                    "line": 89
+                }
+            ]
+        },
+        {
+            "text": "Your company has been suspended.",
+            "occurrences": [
+                {
+                    "file": "app/Services/CompanyRecruitmentAccessService.php",
+                    "line": 90
+                }
+            ]
+        },
+        {
+            "text": "Your company is pending approval.",
+            "occurrences": [
+                {
+                    "file": "app/Services/CompanyRecruitmentAccessService.php",
+                    "line": 88
+                }
+            ]
+        }
+    ],
+    "domain_code_count": 103,
+    "domain_code_sites": {
+        "APPLICATION_INFORMATION_REQUEST_ALREADY_OPEN": [
+            {
+                "file": "app/Services/ApplicationInformationRequestService.php",
+                "line": 206,
+                "message_or_key": "domain_errors.APPLICATION_INFORMATION_REQUEST_ALREADY_OPEN"
+            }
+        ],
+        "APPLICATION_INFORMATION_REQUEST_COMPANY_UNAVAILABLE": [
+            {
+                "file": "app/Services/ApplicationInformationRequestService.php",
+                "line": 215,
+                "message_or_key": "domain_errors.APPLICATION_INFORMATION_REQUEST_COMPANY_UNAVAILABLE"
+            }
+        ],
+        "APPLICATION_INFORMATION_REQUEST_EXPIRED": [
+            {
+                "file": "app/Services/ApplicationInformationRequestService.php",
+                "line": 136,
+                "message_or_key": "domain_errors.APPLICATION_INFORMATION_REQUEST_EXPIRED"
+            }
+        ],
+        "APPLICATION_INFORMATION_REQUEST_NOT_OWNED": [
+            {
+                "file": "app/Services/ApplicationInformationRequestService.php",
+                "line": 243,
+                "message_or_key": "domain_errors.APPLICATION_INFORMATION_REQUEST_NOT_OWNED"
+            },
+            {
+                "file": "app/Services/ApplicationInformationRequestService.php",
+                "line": 250,
+                "message_or_key": "domain_errors.APPLICATION_INFORMATION_REQUEST_NOT_OWNED"
+            }
+        ],
+        "APPLICATION_INFORMATION_REQUEST_NOT_PENDING": [
+            {
+                "file": "app/Services/ApplicationInformationRequestService.php",
+                "line": 139,
+                "message_or_key": "domain_errors.APPLICATION_INFORMATION_REQUEST_NOT_PENDING"
+            },
+            {
+                "file": "app/Services/ApplicationInformationRequestService.php",
+                "line": 178,
+                "message_or_key": "domain_errors.APPLICATION_INFORMATION_REQUEST_NOT_PENDING"
+            },
+            {
+                "file": "app/Services/ApplicationInformationRequestService.php",
+                "line": 181,
+                "message_or_key": "domain_errors.APPLICATION_INFORMATION_REQUEST_NOT_PENDING"
+            },
+            {
+                "file": "app/Services/ApplicationInformationRequestService.php",
+                "line": 224,
+                "message_or_key": "domain_errors.APPLICATION_INFORMATION_REQUEST_NOT_PENDING"
+            },
+            {
+                "file": "app/Services/ApplicationInformationRequestService.php",
+                "line": 231,
+                "message_or_key": "domain_errors.APPLICATION_INFORMATION_REQUEST_NOT_PENDING"
+            },
+            {
+                "file": "app/Services/ApplicationWorkflowService.php",
+                "line": 313,
+                "message_or_key": "domain_errors.APPLICATION_INFORMATION_REQUEST_NOT_PENDING"
+            },
+            {
+                "file": "app/Services/ApplicationWorkflowService.php",
+                "line": 322,
+                "message_or_key": "domain_errors.APPLICATION_INFORMATION_REQUEST_NOT_PENDING"
+            }
+        ],
+        "APPLICATION_INFORMATION_RESPONSE_ALREADY_SUBMITTED": [
+            {
+                "file": "app/Services/ApplicationInformationRequestService.php",
+                "line": 133,
+                "message_or_key": "domain_errors.APPLICATION_INFORMATION_RESPONSE_ALREADY_SUBMITTED"
+            }
+        ],
+        "APPLICATION_INTERNAL_NOTES_READ_ONLY": [
+            {
+                "file": "app/Services/ApplicationInternalNoteService.php",
+                "line": 210,
+                "message_or_key": "domain_errors.APPLICATION_INTERNAL_NOTES_READ_ONLY"
+            }
+        ],
+        "APPLICATION_INTERNAL_NOTE_AUTHOR_ONLY": [
+            {
+                "file": "app/Services/ApplicationInternalNoteService.php",
+                "line": 196,
+                "message_or_key": "domain_errors.APPLICATION_INTERNAL_NOTE_AUTHOR_ONLY"
+            }
+        ],
+        "APPLICATION_INTERNAL_NOTE_COMPANY_UNAVAILABLE": [
+            {
+                "file": "app/Services/ApplicationInternalNoteService.php",
+                "line": 203,
+                "message_or_key": "domain_errors.APPLICATION_INTERNAL_NOTE_COMPANY_UNAVAILABLE"
+            }
+        ],
+        "APPLICATION_INTERNAL_NOTE_EDIT_WINDOW_EXPIRED": [
+            {
+                "file": "app/Services/ApplicationInternalNoteService.php",
+                "line": 227,
+                "message_or_key": "domain_errors.APPLICATION_INTERNAL_NOTE_EDIT_WINDOW_EXPIRED"
+            }
+        ],
+        "APPLICATION_INTERNAL_NOTE_NOT_OWNED": [
+            {
+                "file": "app/Services/ApplicationInternalNoteService.php",
+                "line": 185,
+                "message_or_key": "domain_errors.APPLICATION_INTERNAL_NOTE_NOT_OWNED"
+            }
+        ],
+        "APPLICATION_INTERNAL_NOTE_VERSION_CONFLICT": [
+            {
+                "file": "app/Services/ApplicationInternalNoteService.php",
+                "line": 234,
+                "message_or_key": "domain_errors.APPLICATION_INTERNAL_NOTE_VERSION_CONFLICT"
+            }
+        ],
+        "APPLICATION_SCREENING_ANSWER_TYPE_INVALID": [
+            {
+                "file": "app/Services/ApplicationScreeningAnswerService.php",
+                "line": 136,
+                "message_or_key": "domain_errors.APPLICATION_SCREENING_ANSWER_TYPE_INVALID"
+            },
+            {
+                "file": "app/Services/ApplicationScreeningAnswerService.php",
+                "line": 145,
+                "message_or_key": "domain_errors.APPLICATION_SCREENING_ANSWER_TYPE_INVALID"
+            },
+            {
+                "file": "app/Services/ApplicationScreeningAnswerService.php",
+                "line": 148,
+                "message_or_key": "domain_errors.APPLICATION_SCREENING_ANSWER_TYPE_INVALID"
+            },
+            {
+                "file": "app/Services/ApplicationScreeningAnswerService.php",
+                "line": 169,
+                "message_or_key": "domain_errors.APPLICATION_SCREENING_ANSWER_TYPE_INVALID"
+            },
+            {
+                "file": "app/Services/ApplicationScreeningAnswerService.php",
+                "line": 178,
+                "message_or_key": "domain_errors.APPLICATION_SCREENING_ANSWER_TYPE_INVALID"
+            },
+            {
+                "file": "app/Services/ApplicationScreeningAnswerService.php",
+                "line": 183,
+                "message_or_key": "domain_errors.APPLICATION_SCREENING_ANSWER_TYPE_INVALID"
+            },
+            {
+                "file": "app/Services/ApplicationScreeningAnswerService.php",
+                "line": 198,
+                "message_or_key": "domain_errors.APPLICATION_SCREENING_ANSWER_TYPE_INVALID"
+            },
+            {
+                "file": "app/Services/ApplicationScreeningAnswerService.php",
+                "line": 212,
+                "message_or_key": "domain_errors.APPLICATION_SCREENING_ANSWER_TYPE_INVALID"
+            }
+        ],
+        "APPLICATION_SCREENING_DUPLICATE_ANSWER": [
+            {
+                "file": "app/Services/ApplicationScreeningAnswerService.php",
+                "line": 30,
+                "message_or_key": "domain_errors.APPLICATION_SCREENING_DUPLICATE_ANSWER"
+            }
+        ],
+        "APPLICATION_SCREENING_OPTION_INVALID": [
+            {
+                "file": "app/Services/ApplicationScreeningAnswerService.php",
+                "line": 154,
+                "message_or_key": "domain_errors.APPLICATION_SCREENING_OPTION_INVALID"
+            }
+        ],
+        "APPLICATION_SCREENING_QUESTION_INVALID": [
+            {
+                "file": "app/Services/ApplicationScreeningAnswerService.php",
+                "line": 40,
+                "message_or_key": "domain_errors.APPLICATION_SCREENING_QUESTION_INVALID"
+            }
+        ],
+        "APPLICATION_SCREENING_REQUIRED_ANSWER_MISSING": [
+            {
+                "file": "app/Services/ApplicationScreeningAnswerService.php",
+                "line": 51,
+                "message_or_key": "domain_errors.APPLICATION_SCREENING_REQUIRED_ANSWER_MISSING"
+            },
+            {
+                "file": "app/Services/ApplicationScreeningAnswerService.php",
+                "line": 139,
+                "message_or_key": "domain_errors.APPLICATION_SCREENING_REQUIRED_ANSWER_MISSING"
+            },
+            {
+                "file": "app/Services/ApplicationScreeningAnswerService.php",
+                "line": 172,
+                "message_or_key": "domain_errors.APPLICATION_SCREENING_REQUIRED_ANSWER_MISSING"
+            }
+        ],
+        "COMPANY_INVITATION_ALREADY_USED": [
+            {
+                "file": "app/Services/CompanyInvitationService.php",
+                "line": 393,
+                "message_or_key": "domain_errors.COMPANY_INVITATION_ALREADY_USED"
+            }
+        ],
+        "COMPANY_INVITATION_DUPLICATE_PENDING": [
+            {
+                "file": "app/Services/CompanyInvitationService.php",
+                "line": 52,
+                "message_or_key": "domain_errors.COMPANY_INVITATION_DUPLICATE_PENDING"
+            }
+        ],
+        "COMPANY_INVITATION_EXPIRED": [
+            {
+                "file": "app/Services/CompanyInvitationService.php",
+                "line": 333,
+                "message_or_key": "domain_errors.COMPANY_INVITATION_EXPIRED"
+            },
+            {
+                "file": "app/Services/CompanyInvitationService.php",
+                "line": 389,
+                "message_or_key": "domain_errors.COMPANY_INVITATION_EXPIRED"
+            }
+        ],
+        "COMPANY_INVITATION_NOT_FOUND": [
+            {
+                "file": "app/Services/CompanyInvitationService.php",
+                "line": 422,
+                "message_or_key": "domain_errors.COMPANY_INVITATION_NOT_FOUND"
+            },
+            {
+                "file": "app/Services/CompanyInvitationService.php",
+                "line": 438,
+                "message_or_key": "domain_errors.COMPANY_INVITATION_NOT_FOUND"
+            }
+        ],
+        "COMPANY_INVITATION_REVOKED": [
+            {
+                "file": "app/Services/CompanyInvitationService.php",
+                "line": 385,
+                "message_or_key": "domain_errors.COMPANY_INVITATION_REVOKED"
+            }
+        ],
+        "COMPANY_INVITATION_ROLE_FORBIDDEN": [
+            {
+                "file": "app/Services/CompanyInvitationService.php",
+                "line": 348,
+                "message_or_key": "domain_errors.COMPANY_INVITATION_ROLE_FORBIDDEN"
+            }
+        ],
+        "COMPANY_INVITATION_USER_ROLE_CONFLICT": [
+            {
+                "file": "app/Services/CompanyInvitationService.php",
+                "line": 259,
+                "message_or_key": "domain_errors.COMPANY_INVITATION_USER_ROLE_CONFLICT"
+            },
+            {
+                "file": "app/Services/CompanyInvitationService.php",
+                "line": 362,
+                "message_or_key": "domain_errors.COMPANY_INVITATION_USER_ROLE_CONFLICT"
+            }
+        ],
+        "COMPANY_LAST_OWNER_REQUIRED": [
+            {
+                "file": "app/Services/CompanyMembershipService.php",
+                "line": 301,
+                "message_or_key": "domain_errors.COMPANY_LAST_OWNER_REQUIRED"
+            },
+            {
+                "file": "app/Services/CompanyMembershipService.php",
+                "line": 326,
+                "message_or_key": "domain_errors.COMPANY_LAST_OWNER_REQUIRED"
+            }
+        ],
+        "COMPANY_MEMBER_ALREADY_EXISTS": [
+            {
+                "file": "app/Services/CompanyInvitationService.php",
+                "line": 271,
+                "message_or_key": "domain_errors.COMPANY_MEMBER_ALREADY_EXISTS"
+            },
+            {
+                "file": "app/Services/CompanyInvitationService.php",
+                "line": 377,
+                "message_or_key": "domain_errors.COMPANY_MEMBER_ALREADY_EXISTS"
+            }
+        ],
+        "COMPANY_MEMBER_DIFFERENT_COMPANY": [
+            {
+                "file": "app/Services/CompanyInvitationService.php",
+                "line": 266,
+                "message_or_key": "domain_errors.COMPANY_MEMBER_DIFFERENT_COMPANY"
+            },
+            {
+                "file": "app/Services/CompanyInvitationService.php",
+                "line": 372,
+                "message_or_key": "domain_errors.COMPANY_MEMBER_DIFFERENT_COMPANY"
+            }
+        ],
+        "COMPANY_MEMBER_INACTIVE": [
+            {
+                "file": "app/Services/CompanyMembershipService.php",
+                "line": 105,
+                "message_or_key": "domain_errors.COMPANY_MEMBER_INACTIVE"
+            },
+            {
+                "file": "app/Services/CompanyMembershipService.php",
+                "line": 263,
+                "message_or_key": "domain_errors.COMPANY_MEMBER_INACTIVE"
+            },
+            {
+                "file": "app/Services/CompanyPermissionService.php",
+                "line": 62,
+                "message_or_key": "domain_errors.COMPANY_MEMBER_INACTIVE"
+            }
+        ],
+        "COMPANY_MEMBER_NOT_FOUND": [
+            {
+                "file": "app/Services/CompanyMembershipService.php",
+                "line": 244,
+                "message_or_key": "domain_errors.COMPANY_MEMBER_NOT_FOUND"
+            }
+        ],
+        "COMPANY_MEMBER_ROLE_FORBIDDEN": [
+            {
+                "file": "app/Services/CompanyMembershipService.php",
+                "line": 270,
+                "message_or_key": "domain_errors.COMPANY_MEMBER_ROLE_FORBIDDEN"
+            },
+            {
+                "file": "app/Services/CompanyMembershipService.php",
+                "line": 284,
+                "message_or_key": "domain_errors.COMPANY_MEMBER_ROLE_FORBIDDEN"
+            },
+            {
+                "file": "app/Services/CompanyPermissionService.php",
+                "line": 76,
+                "message_or_key": "domain_errors.COMPANY_MEMBER_ROLE_FORBIDDEN"
+            }
+        ],
+        "COMPANY_OWNERSHIP_TARGET_INVALID": [
+            {
+                "file": "app/Services/CompanyMembershipService.php",
+                "line": 181,
+                "message_or_key": "domain_errors.COMPANY_OWNERSHIP_TARGET_INVALID"
+            },
+            {
+                "file": "app/Services/CompanyMembershipService.php",
+                "line": 187,
+                "message_or_key": "domain_errors.COMPANY_OWNERSHIP_TARGET_INVALID"
+            },
+            {
+                "file": "app/Services/CompanyMembershipService.php",
+                "line": 195,
+                "message_or_key": "domain_errors.COMPANY_OWNERSHIP_TARGET_INVALID"
+            }
+        ],
+        "COMPANY_OWNER_TRANSFER_REQUIRED": [
+            {
+                "file": "app/Services/CompanyMembershipService.php",
+                "line": 278,
+                "message_or_key": "domain_errors.COMPANY_OWNER_TRANSFER_REQUIRED"
+            }
+        ],
+        "COMPANY_PROFILE_MISSING": [
+            {
+                "file": "app/Services/CompanyRecruitmentAccessService.php",
+                "line": 49,
+                "message_or_key": "domain_errors.COMPANY_PROFILE_MISSING"
+            }
+        ],
+        "COMPANY_RECRUITMENT_UNAVAILABLE": [
+            {
+                "file": "app/Services/CompanyRecruitmentAccessService.php",
+                "line": 65,
+                "message_or_key": "domain_errors.COMPANY_RECRUITMENT_UNAVAILABLE"
+            }
+        ],
+        "COMPANY_SETUP_OWNER_REQUIRED": [
+            {
+                "file": "app/Services/CompanyRecruitmentAccessService.php",
+                "line": 115,
+                "message_or_key": "domain_errors.COMPANY_SETUP_OWNER_REQUIRED"
+            }
+        ],
+        "CV_ALREADY_ARCHIVED": [
+            {
+                "file": "app/Services/CVService.php",
+                "line": 327,
+                "message_or_key": "domain_errors.CV_ALREADY_ARCHIVED"
+            }
+        ],
+        "CV_ARCHIVED": [
+            {
+                "file": "app/Services/ApplicationWorkflowService.php",
+                "line": 394,
+                "message_or_key": "domain_errors.CV_ARCHIVED"
+            },
+            {
+                "file": "app/Services/CVService.php",
+                "line": 417,
+                "message_or_key": "domain_errors.CV_ARCHIVED"
+            }
+        ],
+        "CV_ARCHIVED_READ_ONLY": [
+            {
+                "file": "app/Services/CVService.php",
+                "line": 403,
+                "message_or_key": "domain_errors.CV_ARCHIVED_READ_ONLY"
+            },
+            {
+                "file": "app/Services/ProfileSyncService.php",
+                "line": 149,
+                "message_or_key": "domain_errors.CV_ARCHIVED_READ_ONLY"
+            },
+            {
+                "file": "app/Services/ProfileSyncService.php",
+                "line": 689,
+                "message_or_key": "domain_errors.CV_ARCHIVED_READ_ONLY"
+            }
+        ],
+        "CV_FILE_UNAVAILABLE": [
+            {
+                "file": "app/Http/Controllers/Api/V1/Application/JobApplicationController.php",
+                "line": 67,
+                "message_or_key": "domain_errors.CV_FILE_UNAVAILABLE"
+            },
+            {
+                "file": "app/Services/ApplicationWorkflowService.php",
+                "line": 397,
+                "message_or_key": "domain_errors.CV_FILE_UNAVAILABLE"
+            },
+            {
+                "file": "app/Services/CVService.php",
+                "line": 428,
+                "message_or_key": "domain_errors.CV_FILE_UNAVAILABLE"
+            }
+        ],
+        "CV_NOT_ARCHIVED": [
+            {
+                "file": "app/Services/CVService.php",
+                "line": 376,
+                "message_or_key": "domain_errors.CV_NOT_ARCHIVED"
+            }
+        ],
+        "CV_NOT_OWNED": [
+            {
+                "file": "app/Services/ApplicationWorkflowService.php",
+                "line": 391,
+                "message_or_key": "domain_errors.CV_NOT_OWNED"
+            },
+            {
+                "file": "app/Services/CVService.php",
+                "line": 410,
+                "message_or_key": "domain_errors.CV_NOT_OWNED"
+            }
+        ],
+        "CV_NOT_USABLE": [
+            {
+                "file": "app/Services/CVService.php",
+                "line": 343,
+                "message_or_key": "domain_errors.CV_NOT_USABLE"
+            },
+            {
+                "file": "app/Services/CVService.php",
+                "line": 348,
+                "message_or_key": "domain_errors.CV_NOT_USABLE"
+            },
+            {
+                "file": "app/Services/CVService.php",
+                "line": 421,
+                "message_or_key": "domain_errors.CV_NOT_USABLE"
+            }
+        ],
+        "CV_NOT_USABLE_FOR_APPLICATION": [
+            {
+                "file": "app/Services/ApplicationWorkflowService.php",
+                "line": 400,
+                "message_or_key": "domain_errors.CV_NOT_USABLE_FOR_APPLICATION"
+            }
+        ],
+        "CV_PRIMARY_REPLACEMENT_REQUIRED": [
+            {
+                "file": "app/Services/CVService.php",
+                "line": 337,
+                "message_or_key": "domain_errors.CV_PRIMARY_REPLACEMENT_REQUIRED"
+            }
+        ],
+        "CV_REVIEW_APPLIED_IMMUTABLE": [
+            {
+                "file": "app/Services/ProfileSyncService.php",
+                "line": 692,
+                "message_or_key": "domain_errors.CV_REVIEW_APPLIED_IMMUTABLE"
+            }
+        ],
+        "CV_REVIEW_DRAFT_INVALID": [
+            {
+                "file": "app/Services/CVService.php",
+                "line": 209,
+                "message_or_key": "domain_errors.CV_REVIEW_DRAFT_INVALID"
+            }
+        ],
+        "CV_REVIEW_DRAFT_NOT_EDITABLE": [
+            {
+                "file": "app/Services/CVService.php",
+                "line": 133,
+                "message_or_key": "domain_errors.CV_REVIEW_DRAFT_NOT_EDITABLE"
+            },
+            {
+                "file": "app/Services/CVService.php",
+                "line": 138,
+                "message_or_key": "domain_errors.CV_REVIEW_DRAFT_NOT_EDITABLE"
+            }
+        ],
+        "CV_REVIEW_MODE_INVALID": [
+            {
+                "file": "app/Services/ProfileSyncService.php",
+                "line": 36,
+                "message_or_key": "domain_errors.CV_REVIEW_MODE_INVALID"
+            },
+            {
+                "file": "app/Services/ProfileSyncService.php",
+                "line": 44,
+                "message_or_key": "domain_errors.CV_REVIEW_MODE_INVALID"
+            },
+            {
+                "file": "app/Services/ProfileSyncService.php",
+                "line": 155,
+                "message_or_key": "domain_errors.CV_REVIEW_MODE_INVALID"
+            }
+        ],
+        "CV_REVIEW_MODE_STALE": [
+            {
+                "file": "app/Services/CVService.php",
+                "line": 203,
+                "message_or_key": "domain_errors.CV_REVIEW_MODE_STALE"
+            }
+        ],
+        "CV_REVIEW_NOT_CONFIRMABLE": [
+            {
+                "file": "app/Services/CVService.php",
+                "line": 198,
+                "message_or_key": "domain_errors.CV_REVIEW_NOT_CONFIRMABLE"
+            }
+        ],
+        "CV_SUGGESTIONS_NOT_READY": [
+            {
+                "file": "app/Services/ProfileSyncService.php",
+                "line": 174,
+                "message_or_key": "domain_errors.CV_SUGGESTIONS_NOT_READY"
+            }
+        ],
+        "CV_SUGGESTIONS_PENDING": [
+            {
+                "file": "app/Services/ProfileSyncService.php",
+                "line": 177,
+                "message_or_key": "domain_errors.CV_SUGGESTIONS_PENDING"
+            }
+        ],
+        "EMAIL_ALREADY_VERIFIED": [
+            {
+                "file": "app/Services/Auth/EmailVerificationService.php",
+                "line": 22,
+                "message_or_key": "domain_errors.EMAIL_ALREADY_VERIFIED"
+            }
+        ],
+        "EMPLOYER_SELF_REGISTRATION_DISABLED": [
+            {
+                "file": "app/Http/Controllers/Api/V1/Auth/RegistrationController.php",
+                "line": 37,
+                "message_or_key": "domain_errors.EMPLOYER_SELF_REGISTRATION_DISABLED"
+            }
+        ],
+        "INFORMATION_REQUEST_ENDPOINT_REQUIRED": [
+            {
+                "file": "app/Services/ApplicationWorkflowService.php",
+                "line": 146,
+                "message_or_key": "domain_errors.INFORMATION_REQUEST_ENDPOINT_REQUIRED"
+            }
+        ],
+        "INFORMATION_RESPONSE_REQUIRED": [
+            {
+                "file": "app/Services/ApplicationWorkflowService.php",
+                "line": 163,
+                "message_or_key": "domain_errors.INFORMATION_RESPONSE_REQUIRED"
+            }
+        ],
+        "INTERVIEW_ALREADY_ACTIVE_FOR_TYPE": [
+            {
+                "file": "app/Services/InterviewService.php",
+                "line": 445,
+                "message_or_key": "domain_errors.INTERVIEW_ALREADY_ACTIVE_FOR_TYPE"
+            }
+        ],
+        "INTERVIEW_ALREADY_CONFIRMED": [
+            {
+                "file": "app/Services/InterviewService.php",
+                "line": 166,
+                "message_or_key": "domain_errors.INTERVIEW_ALREADY_CONFIRMED"
+            }
+        ],
+        "INTERVIEW_ATTENDANCE_NOT_READY": [
+            {
+                "file": "app/Services/InterviewService.php",
+                "line": 276,
+                "message_or_key": "domain_errors.INTERVIEW_ATTENDANCE_NOT_READY"
+            }
+        ],
+        "INTERVIEW_CANCELLATION_NOT_ALLOWED": [
+            {
+                "file": "app/Services/InterviewService.php",
+                "line": 246,
+                "message_or_key": "domain_errors.INTERVIEW_CANCELLATION_NOT_ALLOWED"
+            }
+        ],
+        "INTERVIEW_COMPLETION_NOT_ALLOWED": [
+            {
+                "file": "app/Services/InterviewService.php",
+                "line": 331,
+                "message_or_key": "domain_errors.INTERVIEW_COMPLETION_NOT_ALLOWED"
+            },
+            {
+                "file": "app/Services/InterviewService.php",
+                "line": 334,
+                "message_or_key": "domain_errors.INTERVIEW_COMPLETION_NOT_ALLOWED"
+            }
+        ],
+        "INTERVIEW_CONFIRMATION_NOT_ALLOWED": [
+            {
+                "file": "app/Services/InterviewService.php",
+                "line": 171,
+                "message_or_key": "domain_errors.INTERVIEW_CONFIRMATION_NOT_ALLOWED"
+            }
+        ],
+        "INTERVIEW_EVALUATION_NOT_ALLOWED": [
+            {
+                "file": "app/Services/InterviewService.php",
+                "line": 359,
+                "message_or_key": "domain_errors.INTERVIEW_EVALUATION_NOT_ALLOWED"
+            }
+        ],
+        "INTERVIEW_INVALID_STATUS_TRANSITION": [
+            {
+                "file": "app/Services/InterviewService.php",
+                "line": 62,
+                "message_or_key": "domain_errors.INTERVIEW_INVALID_STATUS_TRANSITION"
+            },
+            {
+                "file": "app/Services/InterviewService.php",
+                "line": 129,
+                "message_or_key": "domain_errors.INTERVIEW_INVALID_STATUS_TRANSITION"
+            },
+            {
+                "file": "app/Services/InterviewService.php",
+                "line": 452,
+                "message_or_key": "domain_errors.INTERVIEW_INVALID_STATUS_TRANSITION"
+            }
+        ],
+        "INTERVIEW_MODE_CONFIGURATION_INVALID": [
+            {
+                "file": "app/Services/InterviewService.php",
+                "line": 434,
+                "message_or_key": "domain_errors.INTERVIEW_MODE_CONFIGURATION_INVALID"
+            }
+        ],
+        "INTERVIEW_NO_SHOW_NOT_ALLOWED": [
+            {
+                "file": "app/Services/InterviewService.php",
+                "line": 300,
+                "message_or_key": "domain_errors.INTERVIEW_NO_SHOW_NOT_ALLOWED"
+            }
+        ],
+        "INTERVIEW_RESCHEDULE_NOT_ALLOWED": [
+            {
+                "file": "app/Services/InterviewService.php",
+                "line": 193,
+                "message_or_key": "domain_errors.INTERVIEW_RESCHEDULE_NOT_ALLOWED"
+            },
+            {
+                "file": "app/Services/InterviewService.php",
+                "line": 202,
+                "message_or_key": "domain_errors.INTERVIEW_RESCHEDULE_NOT_ALLOWED"
+            }
+        ],
+        "INTERVIEW_TIME_INVALID": [
+            {
+                "file": "app/Services/InterviewService.php",
+                "line": 423,
+                "message_or_key": "domain_errors.INTERVIEW_TIME_INVALID"
+            },
+            {
+                "file": "app/Services/InterviewService.php",
+                "line": 426,
+                "message_or_key": "domain_errors.INTERVIEW_TIME_INVALID"
+            }
+        ],
+        "INVALID_JOB_WORK_MODE": [
+            {
+                "file": "app/Services/JobPostingService.php",
+                "line": 224,
+                "message_or_key": "domain_errors.INVALID_JOB_WORK_MODE"
+            }
+        ],
+        "INVALID_TEST_DURATION": [
+            {
+                "file": "app/Services/TestAttemptTimingService.php",
+                "line": 25,
+                "message_or_key": "domain_errors.INVALID_TEST_DURATION"
+            }
+        ],
+        "JOB_APPLICATION_DEADLINE_PASSED": [
+            {
+                "file": "app/Services/ApplicationWorkflowService.php",
+                "line": 137,
+                "message_or_key": "domain_errors.JOB_APPLICATION_DEADLINE_PASSED"
+            },
+            {
+                "file": "app/Services/JobPostingService.php",
+                "line": 264,
+                "message_or_key": "domain_errors.JOB_APPLICATION_DEADLINE_PASSED"
+            }
+        ],
+        "JOB_REQUIRED_SKILL_MISSING": [
+            {
+                "file": "app/Services/JobPostingService.php",
+                "line": 257,
+                "message_or_key": "domain_errors.JOB_REQUIRED_SKILL_MISSING"
+            }
+        ],
+        "JOB_REQUIREMENTS_MISSING": [
+            {
+                "file": "app/Services/JobPostingService.php",
+                "line": 215,
+                "message_or_key": "domain_errors.JOB_REQUIREMENTS_MISSING"
+            }
+        ],
+        "JOB_SCREENING_QUESTION_DUPLICATE_OPTION": [
+            {
+                "file": "app/Services/JobScreeningQuestionService.php",
+                "line": 204,
+                "message_or_key": "domain_errors.JOB_SCREENING_QUESTION_DUPLICATE_OPTION"
+            }
+        ],
+        "JOB_SCREENING_QUESTION_FORBIDDEN": [
+            {
+                "file": "app/Services/JobScreeningQuestionService.php",
+                "line": 140,
+                "message_or_key": "domain_errors.JOB_SCREENING_QUESTION_FORBIDDEN"
+            }
+        ],
+        "JOB_SCREENING_QUESTION_JOB_CLOSED": [
+            {
+                "file": "app/Services/JobScreeningQuestionService.php",
+                "line": 131,
+                "message_or_key": "domain_errors.JOB_SCREENING_QUESTION_JOB_CLOSED"
+            }
+        ],
+        "JOB_SCREENING_QUESTION_LIMIT_REACHED": [
+            {
+                "file": "app/Services/JobScreeningQuestionService.php",
+                "line": 41,
+                "message_or_key": "domain_errors.JOB_SCREENING_QUESTION_LIMIT_REACHED"
+            }
+        ],
+        "JOB_SCREENING_QUESTION_NOT_FOUND": [
+            {
+                "file": "app/Services/JobScreeningQuestionService.php",
+                "line": 149,
+                "message_or_key": "domain_errors.JOB_SCREENING_QUESTION_NOT_FOUND"
+            }
+        ],
+        "JOB_SCREENING_QUESTION_OPTIONS_NOT_ALLOWED": [
+            {
+                "file": "app/Services/JobScreeningQuestionService.php",
+                "line": 164,
+                "message_or_key": "domain_errors.JOB_SCREENING_QUESTION_OPTIONS_NOT_ALLOWED"
+            }
+        ],
+        "JOB_SCREENING_QUESTION_OPTIONS_REQUIRED": [
+            {
+                "file": "app/Services/JobScreeningQuestionService.php",
+                "line": 175,
+                "message_or_key": "domain_errors.JOB_SCREENING_QUESTION_OPTIONS_REQUIRED"
+            },
+            {
+                "file": "app/Services/JobScreeningQuestionService.php",
+                "line": 186,
+                "message_or_key": "domain_errors.JOB_SCREENING_QUESTION_OPTIONS_REQUIRED"
+            },
+            {
+                "file": "app/Services/JobScreeningQuestionService.php",
+                "line": 198,
+                "message_or_key": "domain_errors.JOB_SCREENING_QUESTION_OPTIONS_REQUIRED"
+            }
+        ],
+        "JOB_SKILL_TYPE_INVALID": [
+            {
+                "file": "app/Services/JobPostingService.php",
+                "line": 239,
+                "message_or_key": "domain_errors.JOB_SKILL_TYPE_INVALID"
+            },
+            {
+                "file": "app/Services/MatchingService.php",
+                "line": 451,
+                "message_or_key": "The job contains an invalid skill requirement type."
+            }
+        ],
+        "JOB_SKILL_WEIGHT_INVALID": [
+            {
+                "file": "app/Services/JobPostingService.php",
+                "line": 250,
+                "message_or_key": "domain_errors.JOB_SKILL_WEIGHT_INVALID"
+            },
+            {
+                "file": "app/Services/MatchingService.php",
+                "line": 291,
+                "message_or_key": "The job contains an invalid skill weight."
+            }
+        ],
+        "MATCHING_CONFIGURATION_INVALID": [
+            {
+                "file": "app/Services/MatchingService.php",
+                "line": 434,
+                "message_or_key": "Matching component weights must be configured and sum to 100."
+            }
+        ],
+        "MATCHING_EDUCATION_LEVEL_INVALID": [
+            {
+                "file": "app/Services/MatchingService.php",
+                "line": 363,
+                "message_or_key": "The job education level is invalid."
+            }
+        ],
+        "MATCHING_EXPERIENCE_LEVEL_UNSUPPORTED": [
+            {
+                "file": "app/Services/MatchingService.php",
+                "line": 328,
+                "message_or_key": "The job experience level is not supported by matching configuration."
+            }
+        ],
+        "OTP_DRIVER_NOT_AVAILABLE": [
+            {
+                "file": "app/Services/Auth/OtpCodeService.php",
+                "line": 16,
+                "message_or_key": "domain_errors.OTP_DRIVER_NOT_AVAILABLE"
+            }
+        ],
+        "PRIMARY_CV_REQUIRED": [
+            {
+                "file": "app/Services/ApplicationWorkflowService.php",
+                "line": 386,
+                "message_or_key": "domain_errors.PRIMARY_CV_REQUIRED"
+            }
+        ],
+        "PRIVATE_FILE_DELETE_FAILED": [
+            {
+                "file": "app/Services/PrivateFileStorageService.php",
+                "line": 148,
+                "message_or_key": "domain_errors.PRIVATE_FILE_DELETE_FAILED"
+            },
+            {
+                "file": "app/Services/PrivateFileStorageService.php",
+                "line": 155,
+                "message_or_key": "domain_errors.PRIVATE_FILE_DELETE_FAILED"
+            }
+        ],
+        "PRIVATE_FILE_READ_FAILED": [
+            {
+                "file": "app/Services/PrivateFileStorageService.php",
+                "line": 100,
+                "message_or_key": "domain_errors.PRIVATE_FILE_READ_FAILED"
+            },
+            {
+                "file": "app/Services/PrivateFileStorageService.php",
+                "line": 110,
+                "message_or_key": "domain_errors.PRIVATE_FILE_READ_FAILED"
+            },
+            {
+                "file": "app/Services/PrivateFileStorageService.php",
+                "line": 119,
+                "message_or_key": "domain_errors.PRIVATE_FILE_READ_FAILED"
+            },
+            {
+                "file": "app/Services/PrivateFileStorageService.php",
+                "line": 186,
+                "message_or_key": "domain_errors.PRIVATE_FILE_READ_FAILED"
+            }
+        ],
+        "PRIVATE_FILE_STORAGE_UNAVAILABLE": [
+            {
+                "file": "app/Services/PrivateFileStorageService.php",
+                "line": 90,
+                "message_or_key": "domain_errors.PRIVATE_FILE_STORAGE_UNAVAILABLE"
+            }
+        ],
+        "PRIVATE_FILE_VERIFICATION_FAILED": [
+            {
+                "file": "app/Services/PrivateFileStorageService.php",
+                "line": 163,
+                "message_or_key": "domain_errors.PRIVATE_FILE_VERIFICATION_FAILED"
+            },
+            {
+                "file": "app/Services/PrivateFileStorageService.php",
+                "line": 166,
+                "message_or_key": "domain_errors.PRIVATE_FILE_VERIFICATION_FAILED"
+            },
+            {
+                "file": "app/Services/PrivateFileStorageService.php",
+                "line": 173,
+                "message_or_key": "domain_errors.PRIVATE_FILE_VERIFICATION_FAILED"
+            },
+            {
+                "file": "app/Services/PrivateFileStorageService.php",
+                "line": 212,
+                "message_or_key": "domain_errors.PRIVATE_FILE_VERIFICATION_FAILED"
+            }
+        ],
+        "PRIVATE_FILE_WRITE_FAILED": [
+            {
+                "file": "app/Services/PrivateFileStorageService.php",
+                "line": 25,
+                "message_or_key": "domain_errors.PRIVATE_FILE_WRITE_FAILED"
+            },
+            {
+                "file": "app/Services/PrivateFileStorageService.php",
+                "line": 64,
+                "message_or_key": "domain_errors.PRIVATE_FILE_WRITE_FAILED"
+            },
+            {
+                "file": "app/Services/PrivateFileStorageService.php",
+                "line": 80,
+                "message_or_key": "domain_errors.PRIVATE_FILE_WRITE_FAILED"
+            }
+        ],
+        "SUGGESTION_APPLIED_IMMUTABLE": [
+            {
+                "file": "app/Services/ProfileSyncService.php",
+                "line": 678,
+                "message_or_key": "domain_errors.SUGGESTION_APPLIED_IMMUTABLE"
+            }
+        ],
+        "SUGGESTION_STALE": [
+            {
+                "file": "app/Services/ProfileSyncService.php",
+                "line": 385,
+                "message_or_key": "domain_errors.SUGGESTION_STALE"
+            }
+        ],
+        "TEST_ATTEMPT_NOT_STARTED": [
+            {
+                "file": "app/Services/TestAttemptContentService.php",
+                "line": 18,
+                "message_or_key": "domain_errors.TEST_ATTEMPT_NOT_STARTED"
+            }
+        ],
+        "TEST_ATTEMPT_START_TIME_MISSING": [
+            {
+                "file": "app/Services/TestAttemptTimingService.php",
+                "line": 18,
+                "message_or_key": "domain_errors.TEST_ATTEMPT_START_TIME_MISSING"
+            }
+        ],
+        "TEST_ATTEMPT_TIME_EXPIRED": [
+            {
+                "file": "app/Services/TestAttemptTimingService.php",
+                "line": 74,
+                "message_or_key": "domain_errors.TEST_ATTEMPT_TIME_EXPIRED"
+            }
+        ],
+        "TEST_CATALOG_FORBIDDEN": [
+            {
+                "file": "app/Http/Requests/Api/V1/Test/Concerns/AuthorizesTestCatalog.php",
+                "line": 39,
+                "message_or_key": "domain_errors.TEST_CATALOG_FORBIDDEN"
+            }
+        ],
+        "TEST_CONTENT_UNAVAILABLE": [
+            {
+                "file": "app/Services/TestAttemptContentService.php",
+                "line": 25,
+                "message_or_key": "domain_errors.TEST_CONTENT_UNAVAILABLE"
+            }
+        ],
+        "TEST_HAS_NO_SCOREABLE_QUESTIONS": [
+            {
+                "file": "app/Services/TestScorePolicyService.php",
+                "line": 57,
+                "message_or_key": "domain_errors.TEST_HAS_NO_SCOREABLE_QUESTIONS"
+            }
+        ],
+        "TEST_PASSING_SCORE_EXCEEDS_MAX_SCORE": [
+            {
+                "file": "app/Services/TestScorePolicyService.php",
+                "line": 40,
+                "message_or_key": "domain_errors.TEST_PASSING_SCORE_EXCEEDS_MAX_SCORE"
+            }
+        ],
+        "TEST_SCORE_CONFIGURATION_IMMUTABLE": [
+            {
+                "file": "app/Services/TestService.php",
+                "line": 479,
+                "message_or_key": "domain_errors.TEST_SCORE_CONFIGURATION_IMMUTABLE"
+            }
+        ],
+        "TEST_SCORE_CONFIGURATION_INVALID": [
+            {
+                "file": "app/Services/TestGradingService.php",
+                "line": 81,
+                "message_or_key": "domain_errors.TEST_SCORE_CONFIGURATION_INVALID"
+            },
+            {
+                "file": "app/Services/TestManualGradingService.php",
+                "line": 258,
+                "message_or_key": "domain_errors.TEST_SCORE_CONFIGURATION_INVALID"
+            },
+            {
+                "file": "app/Services/TestScorePolicyService.php",
+                "line": 66,
+                "message_or_key": "domain_errors.TEST_SCORE_CONFIGURATION_INVALID"
+            }
+        ]
+    }
+}

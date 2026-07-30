@@ -33,7 +33,7 @@ class AdminCompanyMemberController extends Controller
             data: CompanyMemberResource::collection(
                 $this->membershipService->list($request->user('sanctum'), $company, $request->validated()),
             ),
-            message: 'Company members retrieved successfully.',
+            message: __('companies.members'),
         );
     }
 
@@ -43,7 +43,7 @@ class AdminCompanyMemberController extends Controller
             data: CompanyInvitationResource::collection(
                 $this->invitationService->list($request->user('sanctum'), $company, $request->validated()),
             ),
-            message: 'Company invitations retrieved successfully.',
+            message: __('companies.invitations'),
         );
     }
 
@@ -60,7 +60,7 @@ class AdminCompanyMemberController extends Controller
                 'invitation' => new CompanyInvitationResource($result['invitation']),
                 'token' => $result['token'],
             ],
-            message: 'Company invitation created successfully.',
+            message: __('companies.invitation_created'),
             status: 201,
         );
     }
@@ -79,7 +79,7 @@ class AdminCompanyMemberController extends Controller
                     CompanyRole::from($request->validated('company_role')),
                 ),
             ),
-            message: 'Company member role updated successfully.',
+            message: __('companies.member_role'),
         );
     }
 
@@ -97,7 +97,7 @@ class AdminCompanyMemberController extends Controller
                     CompanyMembershipStatus::from($request->validated('membership_status')),
                 ),
             ),
-            message: 'Company member status updated successfully.',
+            message: __('companies.member_status'),
         );
     }
 
@@ -107,7 +107,7 @@ class AdminCompanyMemberController extends Controller
             data: new CompanyMemberResource(
                 $this->membershipService->remove($request->user('sanctum'), $company, $user),
             ),
-            message: 'Company member removed successfully.',
+            message: __('companies.member_removed'),
         );
     }
 
@@ -123,7 +123,7 @@ class AdminCompanyMemberController extends Controller
                     $request->validated(),
                 ),
             ),
-            message: 'Company ownership transferred successfully.',
+            message: __('companies.ownership'),
         );
     }
 }

@@ -37,6 +37,6 @@ class StoreTestCatalogRequest extends FormRequest
 
     public function messages(): array
     {
-        return ['max_score.prohibited' => 'The maximum score is calculated from the test questions.'];
+        return ['max_score.prohibited' => __('validation.custom_messages.max_score_managed')];
     }
 }

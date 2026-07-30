@@ -18,7 +18,7 @@ final class RecommendationEligibilityProvider implements RecommendationEligibili
     {
         if ($user->status !== UserStatus::ACTIVE || $user->role !== UserRole::JOB_SEEKER) {
             throw ValidationException::withMessages([
-                'user' => ['Only active job seekers can access recommended jobs.'],
+                'user' => [__('errors.recommendation_active')],
             ]);
         }
 
@@ -28,7 +28,7 @@ final class RecommendationEligibilityProvider implements RecommendationEligibili
         if (! $profile instanceof JobSeekerProfile) {
             throw ValidationException::withMessages([
                 'job_seeker_profile' => [
-                    'A job seeker profile is required before recommendations can be computed.',
+                    __('errors.recommendation_profile'),
                 ],
             ]);
         }

@@ -59,9 +59,7 @@ class CompanyPermissionService
         $membership = $this->activeMembership($user);
 
         if (! $membership instanceof EmployerProfile) {
-            throw new CompanyManagementException(
-                'An active company membership is required.',
-                'COMPANY_MEMBER_INACTIVE',
+            throw new CompanyManagementException(__('domain_errors.COMPANY_MEMBER_INACTIVE'), 'COMPANY_MEMBER_INACTIVE',
                 403,
             );
         }
@@ -75,9 +73,7 @@ class CompanyPermissionService
         Company|int|null $company = null,
     ): void {
         if (! $this->can($user, $permission, $company)) {
-            throw new CompanyManagementException(
-                'Your company role does not allow this action.',
-                'COMPANY_MEMBER_ROLE_FORBIDDEN',
+            throw new CompanyManagementException(__('domain_errors.COMPANY_MEMBER_ROLE_FORBIDDEN'), 'COMPANY_MEMBER_ROLE_FORBIDDEN',
                 403,
             );
         }

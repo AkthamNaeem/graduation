@@ -32,7 +32,7 @@ class UpdateAdminSkillRequest extends FormRequest
                         ->exists();
 
                     if ($exists) {
-                        $fail('The name has already been taken.');
+                        $fail(__('validation.custom_messages.name_taken'));
                     }
                 },
             ],

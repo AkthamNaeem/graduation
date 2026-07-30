@@ -26,7 +26,7 @@ class CreateInterviewUpdatedNotification extends IdempotentNotificationListener
             'interview',
             $interview->id,
             $candidate,
-            fn () => $this->notificationService->createForUser($candidate, 'interview.rescheduled', 'Interview updated', "Your interview for {$job->title} has been updated.", [
+            fn () => $this->notificationService->createForUser($candidate, 'interview.rescheduled', __('notifications.interview_updated_title'), __('notifications.interview_updated_body', ['job' => $job->title]), [
                 'application_id' => $interview->job_application_id,
                 'job_id' => $job->id,
                 'job_title' => $job->title,

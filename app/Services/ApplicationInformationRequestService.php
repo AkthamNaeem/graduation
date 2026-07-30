@@ -115,7 +115,7 @@ class ApplicationInformationRequestService
     {
         $message = $message === null ? null : trim($message);
         if (($message === null || $message === '') && $files === []) {
-            throw ValidationException::withMessages(['response' => ['Provide a non-empty message or at least one attachment.']]);
+            throw ValidationException::withMessages(['response' => [__('applications.response_required')]]);
         }
         $application = $request->jobApplication()->with(['jobPosting.company', 'jobSeekerProfile'])->firstOrFail();
         $this->ensureCandidateOwns($actor, $application);
@@ -130,13 +130,13 @@ class ApplicationInformationRequestService
                 $this->assertCompanyAvailable($application);
                 $this->ensurePending($locked);
                 if ($locked->response !== null) {
-                    $this->fail('This information request already has a response.', 'APPLICATION_INFORMATION_RESPONSE_ALREADY_SUBMITTED');
+                    $this->fail(__('domain_errors.APPLICATION_INFORMATION_RESPONSE_ALREADY_SUBMITTED'), 'APPLICATION_INFORMATION_RESPONSE_ALREADY_SUBMITTED');
                 }
                 if ($locked->due_at !== null && now()->gt($locked->due_at)) {
-                    $this->fail('The deadline for submitting the requested information has passed.', 'APPLICATION_INFORMATION_REQUEST_EXPIRED');
+                    $this->fail(__('domain_errors.APPLICATION_INFORMATION_REQUEST_EXPIRED'), 'APPLICATION_INFORMATION_REQUEST_EXPIRED');
                 }
                 if ($application->applicationStatus->slug !== 'need_more_information') {
-                    $this->fail('The application is not awaiting requested information.', 'APPLICATION_INFORMATION_REQUEST_NOT_PENDING');
+                    $this->fail(__('domain_errors.APPLICATION_INFORMATION_REQUEST_NOT_PENDING'), 'APPLICATION_INFORMATION_REQUEST_NOT_PENDING');
                 }
 
                 $response = ApplicationInformationResponse::query()->create(['application_information_request_id' => $locked->id, 'submitted_by_user_id' => $actor->id, 'message' => $message ?: null, 'submitted_at' => now()]);
@@ -175,10 +175,10 @@ class ApplicationInformationRequestService
             $this->assertCompanyAvailable($application);
             $this->ensurePending($locked);
             if ($locked->response !== null) {
-                $this->fail('Responded information requests cannot be cancelled.', 'APPLICATION_INFORMATION_REQUEST_NOT_PENDING');
+                $this->fail(__('domain_errors.APPLICATION_INFORMATION_REQUEST_NOT_PENDING'), 'APPLICATION_INFORMATION_REQUEST_NOT_PENDING');
             }
             if ($application->applicationStatus->slug !== 'need_more_information') {
-                $this->fail('The application is not awaiting requested information.', 'APPLICATION_INFORMATION_REQUEST_NOT_PENDING');
+                $this->fail(__('domain_errors.APPLICATION_INFORMATION_REQUEST_NOT_PENDING'), 'APPLICATION_INFORMATION_REQUEST_NOT_PENDING');
             }
 
             $locked->forceFill(['status' => ApplicationInformationRequestStatus::CANCELLED, 'cancelled_at' => now(), 'cancelled_by_user_id' => $actor->id])->save();
@@ -203,7 +203,7 @@ class ApplicationInformationRequestService
     private function ensureNoPendingRequest(JobApplication $application): void
     {
         if (ApplicationInformationRequest::query()->where('job_application_id', $application->id)->where('status', 'pending')->exists()) {
-            $this->fail('There is already an open information request for this application.', 'APPLICATION_INFORMATION_REQUEST_ALREADY_OPEN');
+            $this->fail(__('domain_errors.APPLICATION_INFORMATION_REQUEST_ALREADY_OPEN'), 'APPLICATION_INFORMATION_REQUEST_ALREADY_OPEN');
         }
     }
 
@@ -212,9 +212,7 @@ class ApplicationInformationRequestService
         try {
             $this->companyAccess->assertRecruitmentAvailable($application);
         } catch (RecruitmentAccessException) {
-            throw new ApplicationInformationRequestException(
-                'Recruitment activity for this information request is currently unavailable.',
-                'APPLICATION_INFORMATION_REQUEST_COMPANY_UNAVAILABLE',
+            throw new ApplicationInformationRequestException(__('domain_errors.APPLICATION_INFORMATION_REQUEST_COMPANY_UNAVAILABLE'), 'APPLICATION_INFORMATION_REQUEST_COMPANY_UNAVAILABLE',
                 403,
             );
         }
@@ -223,14 +221,14 @@ class ApplicationInformationRequestService
     private function ensurePending(ApplicationInformationRequest $request): void
     {
         if (! $request->isPending()) {
-            $this->fail('This information request is no longer pending.', 'APPLICATION_INFORMATION_REQUEST_NOT_PENDING');
+            $this->fail(__('domain_errors.APPLICATION_INFORMATION_REQUEST_NOT_PENDING'), 'APPLICATION_INFORMATION_REQUEST_NOT_PENDING');
         }
     }
 
     private function ensureActiveApplication(JobApplication $application): void
     {
         if (in_array($application->applicationStatus->slug, ['accepted', 'rejected', 'withdrawn'], true)) {
-            $this->fail('Terminal applications cannot request additional information.', 'APPLICATION_INFORMATION_REQUEST_NOT_PENDING');
+            $this->fail(__('domain_errors.APPLICATION_INFORMATION_REQUEST_NOT_PENDING'), 'APPLICATION_INFORMATION_REQUEST_NOT_PENDING');
         }
         $this->workflow->validateTransition($application->applicationStatus->slug, 'need_more_information');
     }
@@ -242,14 +240,14 @@ class ApplicationInformationRequestService
             CompanyPermission::MANAGE_APPLICATIONS,
             $application->jobPosting->company_id,
         )) {
-            throw new ApplicationInformationRequestException('This information request does not belong to your company.', 'APPLICATION_INFORMATION_REQUEST_NOT_OWNED', 403);
+            throw new ApplicationInformationRequestException(__('domain_errors.APPLICATION_INFORMATION_REQUEST_NOT_OWNED'), 'APPLICATION_INFORMATION_REQUEST_NOT_OWNED', 403);
         }
     }
 
     private function ensureCandidateOwns(User $actor, JobApplication $application): void
     {
         if ($actor->role !== UserRole::JOB_SEEKER || (int) ($actor->jobSeekerProfile?->id ?? 0) !== (int) $application->job_seeker_profile_id) {
-            throw new ApplicationInformationRequestException('This information request does not belong to you.', 'APPLICATION_INFORMATION_REQUEST_NOT_OWNED', 403);
+            throw new ApplicationInformationRequestException(__('domain_errors.APPLICATION_INFORMATION_REQUEST_NOT_OWNED'), 'APPLICATION_INFORMATION_REQUEST_NOT_OWNED', 403);
         }
     }
 

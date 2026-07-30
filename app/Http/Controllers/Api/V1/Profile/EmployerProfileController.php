@@ -14,14 +14,13 @@ class EmployerProfileController extends Controller
 {
     public function __construct(
         private readonly ProfileService $profileService,
-    ) {
-    }
+    ) {}
 
     public function show(ShowEmployerProfileRequest $request): JsonResponse
     {
         return ApiResponse::success(
             data: new EmployerProfileResource($this->profileService->getEmployerProfile($request->user())),
-            message: 'Employer profile retrieved successfully.',
+            message: __('profile.employer_retrieved'),
         );
     }
 
@@ -29,7 +28,7 @@ class EmployerProfileController extends Controller
     {
         return ApiResponse::success(
             data: new EmployerProfileResource($this->profileService->updateEmployerProfile($request->user(), $request->validated())),
-            message: 'Employer profile updated successfully.',
+            message: __('profile.employer_updated'),
         );
     }
 }

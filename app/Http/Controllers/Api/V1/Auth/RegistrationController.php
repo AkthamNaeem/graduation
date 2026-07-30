@@ -27,16 +27,14 @@ class RegistrationController extends Controller
                 'user' => new UserResource($user),
                 'email_verification' => $this->emailVerificationService->getVerificationMetadata(),
             ],
-            message: 'Registration successful. Verify the account using the temporary OTP.',
+            message: __('auth.registration_success'),
             status: 201,
         );
     }
 
     public function registerEmployer(): JsonResponse
     {
-        throw new CompanyManagementException(
-            'Public employer registration is disabled. Accept a company invitation instead.',
-            'EMPLOYER_SELF_REGISTRATION_DISABLED',
+        throw new CompanyManagementException(__('domain_errors.EMPLOYER_SELF_REGISTRATION_DISABLED'), 'EMPLOYER_SELF_REGISTRATION_DISABLED',
             403,
         );
     }

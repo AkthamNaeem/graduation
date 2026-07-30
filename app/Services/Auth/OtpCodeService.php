@@ -13,9 +13,7 @@ class OtpCodeService
                 || (bool) config('otp.allow_static_in_production', false));
 
         if (! $staticAllowed) {
-            throw new EmailVerificationException(
-                'OTP operations are temporarily unavailable.',
-                'OTP_DRIVER_NOT_AVAILABLE',
+            throw new EmailVerificationException(__('domain_errors.OTP_DRIVER_NOT_AVAILABLE'), 'OTP_DRIVER_NOT_AVAILABLE',
                 503,
             );
         }

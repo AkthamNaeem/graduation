@@ -7,6 +7,7 @@ use App\Models\TestAnswer;
 use App\Models\TestAttempt;
 use App\Models\TestQuestion;
 use App\Services\TestAttemptTimingService;
+use App\Support\SystemGeneratedText;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Laravel\Sanctum\PersonalAccessToken;
@@ -112,7 +113,9 @@ class TestAttemptResultResource extends JsonResource
                             'id' => $option->id,
                             'option_text' => $option->option_text,
                         ])->values()->all(),
-                        'explanation' => $grading?->explanation ?? 'The optional question was not answered.',
+                        'explanation' => $grading === null
+                            ? __('tests.unanswered_optional')
+                            : SystemGeneratedText::resolve($grading->explanation),
                     ];
                 } else {
                     $item += [

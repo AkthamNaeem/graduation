@@ -30,7 +30,7 @@ class CreateTestEvaluatedNotification extends IdempotentNotificationListener
             'test_attempt',
             $attempt->id,
             $candidate,
-            fn () => $this->notificationService->createForUser($candidate, 'test.evaluated', 'Test evaluated', "Your {$assignment->test->title} submission has been evaluated.", [
+            fn () => $this->notificationService->createForUser($candidate, 'test.evaluated', __('notifications.test_evaluated_title'), __('notifications.test_evaluated_body', ['test' => $assignment->test->title]), [
                 'test_attempt_id' => $attempt->id,
                 'test_assignment_id' => $assignment->id,
                 'application_id' => $assignment->job_application_id,

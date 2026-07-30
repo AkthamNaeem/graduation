@@ -27,7 +27,7 @@ class CreateInterviewScheduledNotification extends IdempotentNotificationListene
             'interview',
             $interview->id,
             $candidate,
-            fn () => $this->notificationService->createForUser($candidate, 'interview.scheduled', 'Interview scheduled', "Your interview for {$interview->jobApplication->jobPosting->title} is scheduled for {$scheduledAt}.", [
+            fn () => $this->notificationService->createForUser($candidate, 'interview.scheduled', __('notifications.interview_scheduled_title'), __('notifications.interview_scheduled_body', ['job' => $interview->jobApplication->jobPosting->title, 'date' => $scheduledAt]), [
                 'interview_id' => $interview->id,
                 'application_id' => $interview->job_application_id,
                 'job_id' => $interview->jobApplication->job_posting_id,

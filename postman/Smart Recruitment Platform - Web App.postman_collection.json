@@ -20,6 +20,12 @@
         {
             "key": "password_reset_email",
             "value": "otp.jobseeker@example.com"
+        },
+        {
+            "key": "locale",
+            "value": "en",
+            "type": "string",
+            "description": "API response locale. Supported examples: en, ar, en-US, ar-SY."
         }
     ],
     "item": [
@@ -7159,6 +7165,44 @@
                     ]
                 }
             ]
+        }
+    ],
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "id": "localization-contract",
+                "type": "text/javascript",
+                "exec": [
+                    "pm.request.headers.upsert({ key: 'Accept-Language', value: '{{locale}}' });"
+                ]
+            }
+        },
+        {
+            "listen": "test",
+            "script": {
+                "id": "localization-contract",
+                "type": "text/javascript",
+                "exec": [
+                    "pm.test('Content-Language matches the selected base locale', function () {",
+                    "  const expected = (pm.variables.replaceIn('{{locale}}') || 'en').split(/[-_,;]/)[0].toLowerCase();",
+                    "  pm.expect(pm.response.headers.get('Content-Language')).to.eql(expected);",
+                    "});",
+                    "pm.test('Response varies by Accept-Language', function () {",
+                    "  pm.expect(pm.response.headers.get('Vary') || '').to.include('Accept-Language');",
+                    "});",
+                    "pm.test('Human API message follows the selected locale', function () {",
+                    "  let body = {}; try { body = pm.response.json(); } catch (e) { return; }",
+                    "  if (typeof body.message !== 'string') return;",
+                    "  const locale = (pm.variables.replaceIn('{{locale}}') || 'en').split(/[-_,;]/)[0].toLowerCase();",
+                    "  locale === 'ar' ? pm.expect(body.message).to.match(/[\\u0600-\\u06FF]/) : pm.expect(body.message).not.to.match(/[\\u0600-\\u06FF]/);",
+                    "});",
+                    "pm.test('Machine-readable error codes remain stable identifiers', function () {",
+                    "  let body = {}; try { body = pm.response.json(); } catch (e) { return; }",
+                    "  if (body.code !== undefined) pm.expect(body.code).to.match(/^[A-Z0-9_]+$/);",
+                    "});"
+                ]
+            }
         }
     ]
 }

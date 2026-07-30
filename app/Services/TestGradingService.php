@@ -78,7 +78,7 @@ class TestGradingService
 
         $maxScore = $objectiveMaxScore + $manualMaxScore;
         if ($maxScore !== $this->scorePolicyService->toMinorUnits((string) $attempt->applicationTestAssignment->test->max_score)) {
-            throw new TestScorePolicyException('The test score configuration is invalid.', 'TEST_SCORE_CONFIGURATION_INVALID', 409);
+            throw new TestScorePolicyException(__('domain_errors.TEST_SCORE_CONFIGURATION_INVALID'), 'TEST_SCORE_CONFIGURATION_INVALID', 409);
         }
         $finalizedWithoutManualWork = $hasSubjectiveQuestions && ! $requiresManualGrading;
         $totalScore = $requiresManualGrading ? null : $objectiveScore;
@@ -110,7 +110,7 @@ class TestGradingService
     {
         if ($attempt->submitted_at === null) {
             throw new ConflictHttpException(
-                'This test attempt has not been submitted yet.',
+                __('errors.test_not_submitted'),
             );
         }
 

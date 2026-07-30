@@ -20,7 +20,7 @@ class CreateApplicationInformationRequestedNotification extends IdempotentNotifi
             'information_request',
             $request->id,
             $candidate,
-            fn () => $this->notificationService->createForUser($candidate, 'application.information_requested', 'Additional information requested', 'An employer requested additional information for your application.', ['application_id' => $request->job_application_id, 'information_request_id' => $request->id, 'message_summary' => str($request->message)->limit(160)->toString(), 'due_at' => $request->due_at?->toISOString(), 'requested_items_count' => $request->items->count()]),
+            fn () => $this->notificationService->createForUser($candidate, 'application.information_requested', __('notifications.information_requested_title'), __('notifications.information_requested_body'), ['application_id' => $request->job_application_id, 'information_request_id' => $request->id, 'message_summary' => str($request->message)->limit(160)->toString(), 'due_at' => $request->due_at?->toISOString(), 'requested_items_count' => $request->items->count()]),
         );
     }
 }

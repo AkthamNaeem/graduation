@@ -4,6 +4,7 @@ namespace App\Http\Resources\Api\V1;
 
 use App\Models\CVFile;
 use App\Models\ProfileChangeSuggestion;
+use App\Support\SystemGeneratedText;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -32,7 +33,7 @@ class ProfileChangeSuggestionResource extends JsonResource
             'new_value' => $this->new_value,
             'user_edited_value' => $this->user_edited_value,
             'confidence_score' => $this->confidence_score,
-            'reason' => $this->reason,
+            'reason' => SystemGeneratedText::resolve($this->reason),
             'can_accept' => $this->suggestion_type !== ProfileChangeSuggestion::TYPE_IGNORE
                 && $this->status !== ProfileChangeSuggestion::STATUS_APPLIED
                 && $reviewIsMutable,

@@ -18,14 +18,13 @@ class ExperienceController extends Controller
 {
     public function __construct(
         private readonly ProfileService $profileService,
-    ) {
-    }
+    ) {}
 
     public function index(ExperienceIndexRequest $request): JsonResponse
     {
         return ApiResponse::success(
             data: ExperienceResource::collection($this->profileService->getExperiences($request->user())),
-            message: 'Experiences retrieved successfully.',
+            message: __('profile.experiences_retrieved'),
         );
     }
 
@@ -33,7 +32,7 @@ class ExperienceController extends Controller
     {
         return ApiResponse::success(
             data: new ExperienceResource($this->profileService->createExperience($request->user(), $request->validated())),
-            message: 'Experience created successfully.',
+            message: __('profile.experience_created'),
             status: 201,
         );
     }
@@ -42,7 +41,7 @@ class ExperienceController extends Controller
     {
         return ApiResponse::success(
             data: new ExperienceResource($this->profileService->getExperience($request->user(), $experience)),
-            message: 'Experience retrieved successfully.',
+            message: __('profile.experience_retrieved'),
         );
     }
 
@@ -50,7 +49,7 @@ class ExperienceController extends Controller
     {
         return ApiResponse::success(
             data: new ExperienceResource($this->profileService->updateExperience($request->user(), $experience, $request->validated())),
-            message: 'Experience updated successfully.',
+            message: __('profile.experience_updated'),
         );
     }
 
@@ -60,7 +59,7 @@ class ExperienceController extends Controller
 
         return ApiResponse::success(
             data: null,
-            message: 'Experience deleted successfully.',
+            message: __('profile.experience_deleted'),
         );
     }
 }

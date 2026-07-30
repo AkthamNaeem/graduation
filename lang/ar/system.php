@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'application_interview_recalculated' => 'أُعيد احتساب حالة مقابلة طلب التوظيف.',
+    'interview_closed_no_show' => 'أُغلقت المقابلة بسبب عدم الحضور.',
+    'interview_completed_candidate' => 'اكتملت مقابلة المرشح.',
+    'interview_scheduled_candidate' => 'تم تحديد مقابلة للمرشح.',
+    'interview_final_evaluation' => 'اكتمل التقييم النهائي للمقابلة.',
+    'interview_legacy_cancelled' => 'أُلغيت المقابلة عبر مسار الحذف القديم.',
+    'test_assigned_candidate' => 'تم تعيين اختبار للمرشح.',
+    'test_attempt_submitted' => 'تم إرسال محاولة الاختبار.',
+    'test_attempt_evaluated' => 'تم تقييم محاولة الاختبار.',
+    'profile_experience_matched' => 'تمت المطابقة حسب المسمى والشركة وفترة البدء.',
+    'profile_experience_new' => 'عُثر على خبرة جديدة في السيرة الذاتية المحللة.',
+    'profile_education_matched' => 'تمت المطابقة حسب المؤسسة والدرجة وفترة البدء أو التخرج.',
+    'profile_education_new' => 'عُثر على سجل تعليمي جديد في السيرة الذاتية المحللة.',
+    'profile_skill_matched' => 'المهارة موجودة مسبقًا في الملف الشخصي.',
+    'profile_skill_new' => 'عُثر على مهارة جديدة في السيرة الذاتية المحللة.',
+    'profile_value_review' => 'تحتوي السيرة الذاتية على قيمة ملف شخصي تحتاج إلى المراجعة.',
+    'profile_value_matched' => 'قيمة الملف الشخصي متطابقة مسبقًا.',
+    'grading_single_correct' => 'الخيار المحدد يطابق الخيار الصحيح تمامًا.',
+    'grading_single_incorrect' => 'الخيار المحدد لا يطابق الخيار الصحيح.',
+    'grading_multiple_correct' => 'مجموعة الخيارات المحددة تطابق مجموعة الخيارات الصحيحة تمامًا.',
+    'grading_multiple_incorrect' => 'مجموعة الخيارات المحددة لا تطابق مجموعة الخيارات الصحيحة تمامًا.',
+    'ml_attribution' => 'هذا تفسير من النموذج فقط، وليس احتمالًا أو قرار توظيف.',
+];

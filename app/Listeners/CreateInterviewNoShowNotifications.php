@@ -18,7 +18,7 @@ class CreateInterviewNoShowNotifications extends IdempotentNotificationListener
         foreach ($recipients as $recipient) {
             $this->notificationOnce(
                 'interview.no_show', InterviewNoShow::class, 'interview', $interview->id, $recipient,
-                fn () => $this->notificationService->createForUser($recipient, 'interview.no_show', 'Interview marked as no show', 'The interview was closed because a participant did not attend.', [
+                fn () => $this->notificationService->createForUser($recipient, 'interview.no_show', __('notifications.interview_no_show_title'), __('notifications.interview_no_show_body'), [
                     'interview_id' => $interview->id,
                     'application_id' => $interview->job_application_id,
                     'status' => 'no_show',

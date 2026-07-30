@@ -55,7 +55,7 @@ class IndexJobPostingRequest extends FormRequest
     {
         $validator->after(function (Validator $validator): void {
             if ($this->filled('skill_requirement') && ! $this->filled('skill')) {
-                $validator->errors()->add('skill_requirement', 'The skill requirement filter requires the skill filter.');
+                $validator->errors()->add('skill_requirement', __('validation.custom_messages.skill_filter_required'));
             }
 
             if (! $this->filled('salary_min') || ! $this->filled('salary_max')) {
@@ -63,7 +63,7 @@ class IndexJobPostingRequest extends FormRequest
             }
 
             if ((float) $this->input('salary_max') < (float) $this->input('salary_min')) {
-                $validator->errors()->add('salary_max', 'The salary max field must be greater than or equal to salary min.');
+                $validator->errors()->add('salary_max', __('validation.custom_messages.salary_range'));
             }
         });
     }

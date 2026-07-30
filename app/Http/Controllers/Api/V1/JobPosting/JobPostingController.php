@@ -38,7 +38,7 @@ class JobPostingController extends Controller
     {
         return ApiResponse::success(
             data: JobPostingResource::collection($this->jobPostingService->getPublicJobs($request->validated())),
-            message: 'Job postings retrieved successfully.',
+            message: __('jobs.list_retrieved'),
         );
     }
 
@@ -46,7 +46,7 @@ class JobPostingController extends Controller
     {
         return ApiResponse::success(
             data: JobPostingResource::collection($this->jobPostingService->getEmployerJobs($request->user('sanctum'), $request->validated())),
-            message: 'Employer job postings retrieved successfully.',
+            message: __('jobs.employer_list_retrieved'),
         );
     }
 
@@ -61,7 +61,7 @@ class JobPostingController extends Controller
             data: RecommendedJobResource::collection(
                 $result->items,
             ),
-            message: 'Recommended jobs retrieved successfully.',
+            message: __('jobs.recommended'),
         );
     }
 
@@ -69,7 +69,7 @@ class JobPostingController extends Controller
     {
         return ApiResponse::success(
             data: new JobPostingResource($this->jobPostingService->getVisibleJobPosting($jobPosting)),
-            message: 'Job posting retrieved successfully.',
+            message: __('jobs.retrieved'),
         );
     }
 
@@ -77,7 +77,7 @@ class JobPostingController extends Controller
     {
         return ApiResponse::success(
             data: new JobPostingResource($this->jobPostingService->createJob($request->user('sanctum'), $request->validated())),
-            message: 'Job posting created successfully.',
+            message: __('jobs.created'),
             status: 201,
         );
     }
@@ -86,7 +86,7 @@ class JobPostingController extends Controller
     {
         return ApiResponse::success(
             data: new JobPostingResource($this->jobPostingService->updateJob($request->user('sanctum'), $jobPosting, $request->validated())),
-            message: 'Job posting updated successfully.',
+            message: __('jobs.updated'),
         );
     }
 
@@ -96,7 +96,7 @@ class JobPostingController extends Controller
 
         return ApiResponse::success(
             data: null,
-            message: 'Job posting deleted successfully.',
+            message: __('jobs.deleted'),
         );
     }
 
@@ -106,7 +106,7 @@ class JobPostingController extends Controller
             data: new JobPostingResource(
                 $this->jobPostingService->attachSkills($request->user('sanctum'), $jobPosting, $request->validated()),
             ),
-            message: 'Skills attached successfully.',
+            message: __('jobs.skills_attached'),
         );
     }
 
@@ -114,7 +114,7 @@ class JobPostingController extends Controller
     {
         return ApiResponse::success(
             data: new JobPostingResource($this->jobPostingService->detachSkills($request->user('sanctum'), $jobPosting, $skill)),
-            message: 'Skill detached successfully.',
+            message: __('jobs.skill_detached'),
         );
     }
 
@@ -122,7 +122,7 @@ class JobPostingController extends Controller
     {
         return ApiResponse::success(
             data: new JobPostingResource($this->jobPostingService->publishJob($request->user('sanctum'), $jobPosting)),
-            message: 'Job posting published successfully.',
+            message: __('jobs.published'),
         );
     }
 
@@ -130,7 +130,7 @@ class JobPostingController extends Controller
     {
         return ApiResponse::success(
             data: new JobPostingResource($this->jobPostingService->closeJob($request->user('sanctum'), $jobPosting)),
-            message: 'Job posting closed successfully.',
+            message: __('jobs.closed'),
         );
     }
 
@@ -143,7 +143,7 @@ class JobPostingController extends Controller
                     $request->integer('limit', 10),
                 ),
             ),
-            message: 'Ranked candidates retrieved successfully.',
+            message: __('jobs.ranked_candidates'),
         );
     }
 }

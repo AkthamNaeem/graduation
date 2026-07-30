@@ -29,32 +29,32 @@ class ApplicationInformationRequestController extends Controller
 
     public function index(IndexApplicationInformationRequestRequest $request, JobApplication $jobApplication): JsonResponse
     {
-        return ApiResponse::success(ApplicationInformationRequestResource::collection($this->service->list($jobApplication)), 'Information requests retrieved successfully.');
+        return ApiResponse::success(ApplicationInformationRequestResource::collection($this->service->list($jobApplication)), __('applications.information_list'));
     }
 
     public function store(StoreApplicationInformationRequestRequest $request, JobApplication $jobApplication): JsonResponse
     {
-        return ApiResponse::success(new ApplicationInformationRequestResource($this->service->create($request->user('sanctum'), $jobApplication, $request->validated())), 'Information request created successfully.', 201);
+        return ApiResponse::success(new ApplicationInformationRequestResource($this->service->create($request->user('sanctum'), $jobApplication, $request->validated())), __('applications.information_created'), 201);
     }
 
     public function show(ShowApplicationInformationRequestRequest $request, ApplicationInformationRequest $informationRequest): JsonResponse
     {
-        return ApiResponse::success(new ApplicationInformationRequestResource($this->service->view($informationRequest)), 'Information request retrieved successfully.');
+        return ApiResponse::success(new ApplicationInformationRequestResource($this->service->view($informationRequest)), __('applications.information_retrieved'));
     }
 
     public function update(UpdateApplicationInformationRequestRequest $request, ApplicationInformationRequest $informationRequest): JsonResponse
     {
-        return ApiResponse::success(new ApplicationInformationRequestResource($this->service->update($request->user('sanctum'), $informationRequest, $request->validated())), 'Information request updated successfully.');
+        return ApiResponse::success(new ApplicationInformationRequestResource($this->service->update($request->user('sanctum'), $informationRequest, $request->validated())), __('applications.information_updated'));
     }
 
     public function respond(SubmitApplicationInformationResponseRequest $request, ApplicationInformationRequest $informationRequest): JsonResponse
     {
-        return ApiResponse::success(new ApplicationInformationRequestResource($this->service->respond($request->user('sanctum'), $informationRequest, $request->validated('message'), $request->file('attachments', []))), 'Requested information submitted successfully.', 201);
+        return ApiResponse::success(new ApplicationInformationRequestResource($this->service->respond($request->user('sanctum'), $informationRequest, $request->validated('message'), $request->file('attachments', []))), __('applications.information_submitted'), 201);
     }
 
     public function cancel(CancelApplicationInformationRequestRequest $request, ApplicationInformationRequest $informationRequest): JsonResponse
     {
-        return ApiResponse::success(new ApplicationInformationRequestResource($this->service->cancel($request->user('sanctum'), $informationRequest, $request->validated('reason'))), 'Information request cancelled successfully.');
+        return ApiResponse::success(new ApplicationInformationRequestResource($this->service->cancel($request->user('sanctum'), $informationRequest, $request->validated('reason'))), __('applications.information_cancelled'));
     }
 
     public function download(DownloadApplicationInformationResponseAttachmentRequest $request, ApplicationInformationResponseAttachment $attachment): StreamedResponse

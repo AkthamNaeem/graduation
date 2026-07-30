@@ -20,7 +20,7 @@ class CreateApplicationInformationRequestUpdatedNotification extends IdempotentN
             'information_request',
             $request->id,
             $candidate,
-            fn () => $this->notificationService->createForUser($candidate, 'application.information_request_updated', 'Information request updated', 'The information requested for your application was updated.', ['application_id' => $request->job_application_id, 'information_request_id' => $request->id, 'due_at' => $request->due_at?->toISOString()]),
+            fn () => $this->notificationService->createForUser($candidate, 'application.information_request_updated', __('notifications.information_updated_title'), __('notifications.information_updated_body'), ['application_id' => $request->job_application_id, 'information_request_id' => $request->id, 'due_at' => $request->due_at?->toISOString()]),
             $event->occurrenceId,
         );
     }
