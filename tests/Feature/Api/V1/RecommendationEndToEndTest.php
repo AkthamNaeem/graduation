@@ -315,6 +315,22 @@ class RecommendationEndToEndTest extends TestCase
             'database/seeders/DatabaseSeeder.php',
             'database/seeders/SampleUserSeeder.php',
             'tests/Feature/Api/V1/JobPostingTest.php',
+            // Approved temporary registration email-verification implementation.
+            'app/Http/Controllers/Api/V1/Auth/AuthController.php',
+            'app/Http/Controllers/Api/V1/Auth/RegistrationController.php',
+            'app/Http/Requests/Api/V1/Auth/EmployerRegisterRequest.php',
+            'app/Http/Requests/Api/V1/Auth/JobSeekerRegisterRequest.php',
+            'app/Http/Requests/Api/V1/Auth/LoginRequest.php',
+            'app/Http/Resources/Api/V1/UserResource.php',
+            'app/Models/User.php',
+            'app/Providers/AppServiceProvider.php',
+            'app/Services/Auth/AuthService.php',
+            'app/Services/Auth/RegistrationService.php',
+            'bootstrap/app.php',
+            'postman/Smart Recruitment Platform - Web App.postman_collection.json',
+            'routes/api/v1.php',
+            'tests/Feature/Api/V1/AuthTest.php',
+            'tests/Feature/Api/V1/RecommendationEndToEndTest.php',
         ];
         foreach ($baseline['files'] as $entry) {
             $file = base_path($entry['path']);

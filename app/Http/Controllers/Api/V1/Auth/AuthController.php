@@ -41,6 +41,15 @@ class AuthController extends Controller
             );
         }
 
+        if ($result['status'] === AuthService::LOGIN_UNVERIFIED) {
+            return ApiResponse::error(
+                message: 'Email verification is required before login.',
+                errors: ['email' => ['Complete OTP verification to continue.']],
+                status: 403,
+                code: 'EMAIL_NOT_VERIFIED',
+            );
+        }
+
         return ApiResponse::success(
             data: [
                 'token' => $result['token'],

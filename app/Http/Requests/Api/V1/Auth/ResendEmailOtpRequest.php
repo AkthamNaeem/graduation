@@ -4,9 +4,8 @@ namespace App\Http\Requests\Api\V1\Auth;
 
 use App\Http\Requests\Api\V1\Auth\Concerns\NormalizesEmail;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rules\Password;
 
-class JobSeekerRegisterRequest extends FormRequest
+class ResendEmailOtpRequest extends FormRequest
 {
     use NormalizesEmail;
 
@@ -26,11 +25,7 @@ class JobSeekerRegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email'],
-            'terms_accepted' => ['required', 'accepted'],
-            'phone' => ['nullable', 'string', 'max:30'],
-            'password' => ['required', 'confirmed', Password::defaults()],
+            'email' => ['required', 'string', 'email'],
         ];
     }
 }

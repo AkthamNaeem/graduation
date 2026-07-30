@@ -20,6 +20,8 @@ class UserResource extends JsonResource
             'email' => $this->email,
             'role' => $this->role?->value ?? $this->role,
             'status' => $this->status?->value ?? $this->status,
+            'email_verified_at' => $this->email_verified_at?->toISOString(),
+            'is_email_verified' => $this->email_verified_at !== null,
             'job_seeker_profile' => $this->when(
                 $this->relationLoaded('jobSeekerProfile') && $this->jobSeekerProfile,
                 fn (): JobSeekerProfileResource => new JobSeekerProfileResource($this->jobSeekerProfile),

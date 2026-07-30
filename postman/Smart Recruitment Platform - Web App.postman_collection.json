@@ -1,9 +1,23 @@
 ﻿{
-    "info":  {
+             "info":  {
                  "name":  "Smart Recruitment Platform - Web App",
                  "description":  "Web consumer collection for public website visitors, employer dashboard, admin dashboard, and supported web job seeker flows. TODO: add dedicated analytics/reporting endpoints here if the backend later exposes them.",
                  "schema":  "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
              },
+    "variable":  [
+                     {
+                         "key":  "otp_job_seeker_email",
+                         "value":  "otp.jobseeker@example.com"
+                     },
+                     {
+                         "key":  "otp_employer_email",
+                         "value":  "otp.employer@example.com"
+                     },
+                     {
+                         "key":  "temporary_otp",
+                         "value":  "000000"
+                     }
+                 ],
     "item":  [
                  {
                      "name": "Job Screening Questions",
@@ -97,7 +111,121 @@
                      "name":  "02 Auth - Web Roles",
                      "item":  [
                                   {
-                                      "name":  "Register Employer",
+                                      "name":  "Registration OTP Demo",
+                                      "description":  "Temporary development/demo workflow. No OTP is delivered. Use 000000 only for the current static driver; replace it before real production use.",
+                                      "item":  [
+                                                   {
+                                                       "name":  "Register Job Seeker",
+                                                       "request":  {
+                                                                       "auth":  {"type":  "noauth"},
+                                                                       "method":  "POST",
+                                                                       "header":  [{"key":  "Accept", "value":  "application/json"}, {"key":  "Content-Type", "value":  "application/json"}],
+                                                                       "url":  "{{base_url}}/auth/register/job-seeker",
+                                                                       "description":  "Creates an unverified job seeker and hashed OTP record. No token or OTP is returned and no delivery occurs.",
+                                                                       "body":  {
+                                                                                    "mode":  "raw",
+                                                                                    "raw":  "{\n  \"name\": \"OTP Job Seeker\",\n  \"email\": \"{{otp_job_seeker_email}}\",\n  \"password\": \"password\",\n  \"password_confirmation\": \"password\",\n  \"phone\": \"+1 555 0100\",\n  \"terms_accepted\": true\n}",
+                                                                                    "options":  {"raw":  {"language":  "json"}}
+                                                                                }
+                                                                   }
+                                                   },
+                                                   {
+                                                       "name":  "Register Employer",
+                                                       "request":  {
+                                                                       "auth":  {"type":  "noauth"},
+                                                                       "method":  "POST",
+                                                                       "header":  [{"key":  "Accept", "value":  "application/json"}, {"key":  "Content-Type", "value":  "application/json"}],
+                                                                       "url":  "{{base_url}}/auth/register/employer",
+                                                                       "description":  "Creates an unverified employer, company, profile, and hashed OTP record. No delivery occurs.",
+                                                                       "body":  {
+                                                                                    "mode":  "raw",
+                                                                                    "raw":  "{\n  \"name\": \"OTP Employer\",\n  \"email\": \"{{otp_employer_email}}\",\n  \"password\": \"password\",\n  \"password_confirmation\": \"password\",\n  \"company_name\": \"OTP Demo Hiring\",\n  \"terms_accepted\": true\n}",
+                                                                                    "options":  {"raw":  {"language":  "json"}}
+                                                                                }
+                                                                   }
+                                                   },
+                                                   {
+                                                       "name":  "Login Before Verification",
+                                                       "request":  {
+                                                                       "auth":  {"type":  "noauth"},
+                                                                       "method":  "POST",
+                                                                       "header":  [{"key":  "Accept", "value":  "application/json"}, {"key":  "Content-Type", "value":  "application/json"}],
+                                                                       "url":  "{{base_url}}/auth/login",
+                                                                       "description":  "Expected response: HTTP 403 with EMAIL_NOT_VERIFIED and no token.",
+                                                                       "body":  {
+                                                                                    "mode":  "raw",
+                                                                                    "raw":  "{\n  \"email\": \"{{otp_job_seeker_email}}\",\n  \"password\": \"password\"\n}",
+                                                                                    "options":  {"raw":  {"language":  "json"}}
+                                                                                }
+                                                                   }
+                                                   },
+                                                   {
+                                                       "name":  "Verify OTP Using 000000",
+                                                       "request":  {
+                                                                       "auth":  {"type":  "noauth"},
+                                                                       "method":  "POST",
+                                                                       "header":  [{"key":  "Accept", "value":  "application/json"}, {"key":  "Content-Type", "value":  "application/json"}],
+                                                                       "url":  "{{base_url}}/auth/email/verify-otp",
+                                                                       "description":  "Temporary OTP for development/demo: 000000. Consumes the OTP, verifies the email, and returns a Sanctum token.",
+                                                                       "body":  {
+                                                                                    "mode":  "raw",
+                                                                                    "raw":  "{\n  \"email\": \"{{otp_job_seeker_email}}\",\n  \"otp\": \"{{temporary_otp}}\"\n}",
+                                                                                    "options":  {"raw":  {"language":  "json"}}
+                                                                                }
+                                                                   },
+                                                       "event":  [
+                                                                     {
+                                                                         "listen":  "test",
+                                                                         "script":  {
+                                                                                        "type":  "text/javascript",
+                                                                                        "exec":  ["if (pm.response.code === 200) { const json = pm.response.json(); if (json.data && json.data.token) pm.environment.set('otp_access_token', json.data.token); }"]
+                                                                                    }
+                                                                     }
+                                                                 ]
+                                                   },
+                                                   {
+                                                       "name":  "Reissue OTP",
+                                                       "request":  {
+                                                                       "auth":  {"type":  "noauth"},
+                                                                       "method":  "POST",
+                                                                       "header":  [{"key":  "Accept", "value":  "application/json"}, {"key":  "Content-Type", "value":  "application/json"}],
+                                                                       "url":  "{{base_url}}/auth/email/resend-otp",
+                                                                       "description":  "Refreshes expiry and attempts after cooldown. Nothing is delivered; the response does not reveal account existence.",
+                                                                       "body":  {
+                                                                                    "mode":  "raw",
+                                                                                    "raw":  "{\n  \"email\": \"{{otp_job_seeker_email}}\"\n}",
+                                                                                    "options":  {"raw":  {"language":  "json"}}
+                                                                                }
+                                                                   }
+                                                   },
+                                                   {
+                                                       "name":  "Login After Verification",
+                                                       "request":  {
+                                                                       "auth":  {"type":  "noauth"},
+                                                                       "method":  "POST",
+                                                                       "header":  [{"key":  "Accept", "value":  "application/json"}, {"key":  "Content-Type", "value":  "application/json"}],
+                                                                       "url":  "{{base_url}}/auth/login",
+                                                                       "description":  "Logs in after verification. Any returned token is stored only in the active Postman environment.",
+                                                                       "body":  {
+                                                                                    "mode":  "raw",
+                                                                                    "raw":  "{\n  \"email\": \"{{otp_job_seeker_email}}\",\n  \"password\": \"password\"\n}",
+                                                                                    "options":  {"raw":  {"language":  "json"}}
+                                                                                }
+                                                                   },
+                                                       "event":  [
+                                                                     {
+                                                                         "listen":  "test",
+                                                                         "script":  {
+                                                                                        "type":  "text/javascript",
+                                                                                        "exec":  ["if (pm.response.code === 200) { const json = pm.response.json(); if (json.data && json.data.token) pm.environment.set('otp_access_token', json.data.token); }"]
+                                                                                    }
+                                                                     }
+                                                                 ]
+                                                   }
+                                               ]
+                                  },
+                                 {
+                                     "name":  "Register Employer",
                                       "request":  {
                                                       "method":  "POST",
                                                       "header":  [

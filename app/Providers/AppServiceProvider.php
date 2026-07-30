@@ -43,12 +43,16 @@ use App\Services\Recommendation\RecommendationResultCache;
 use App\Services\Recommendation\RecommendationResultHydrator;
 use App\Services\Recommendation\RecommendationResultStore;
 use App\Services\RecommendationMl\RecommendationMlClient;
+use App\Support\ApiResponse;
 use App\Support\Recommendation\MlRecommendationResourceAdapter;
 use App\Support\RecommendationMl\MlOutboundPayloadGuard;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Client\Factory;
+use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use InvalidArgumentException;
 
@@ -168,6 +172,30 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        RateLimiter::for('email-verification-verify', function (Request $request): Limit {
+            return Limit::perMinute(10)
+                ->by($this->emailVerificationRateLimitKey($request))
+                ->response(
+                    fn (Request $request, array $headers) => ApiResponse::error(
+                        message: 'Too many email verification attempts. Please try again later.',
+                        status: 429,
+                        code: 'OTP_RATE_LIMIT_EXCEEDED',
+                    )->withHeaders($headers),
+                );
+        });
+
+        RateLimiter::for('email-verification-resend', function (Request $request): Limit {
+            return Limit::perMinutes(10, 3)
+                ->by($this->emailVerificationRateLimitKey($request))
+                ->response(
+                    fn (Request $request, array $headers) => ApiResponse::error(
+                        message: 'Too many verification code requests. Please try again later.',
+                        status: 429,
+                        code: 'OTP_RATE_LIMIT_EXCEEDED',
+                    )->withHeaders($headers),
+                );
+        });
+
         Gate::policy(JobPosting::class, JobPostingPolicy::class);
         Gate::policy(JobApplication::class, JobApplicationPolicy::class);
         Gate::policy(ApplicationTestAssignment::class, ApplicationTestAssignmentPolicy::class);
@@ -184,5 +212,12 @@ class AppServiceProvider extends ServiceProvider
         });
 
         JsonResource::withoutWrapping();
+    }
+
+    private function emailVerificationRateLimitKey(Request $request): string
+    {
+        $email = mb_strtolower(trim((string) $request->input('email')));
+
+        return hash('sha256', $email.'|'.$request->ip());
     }
 }

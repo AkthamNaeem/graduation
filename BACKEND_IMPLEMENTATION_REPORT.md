@@ -6,6 +6,42 @@ The backend implements a Laravel 12 REST API for a smart recruitment platform. T
 
 The implementation follows a service-oriented Laravel structure using Form Requests for validation and authorization, API Resources for response shaping, Policies and gates for ownership and role checks, seeders for initial data, and feature/unit tests for the implemented modules. API routes are versioned under `/api/v1`. The backend is functionally broad for an MVP, but it does not yet include deep AI/LLM matching, email notification delivery, or a UI-facing dashboard.
 
+### 1.1 Temporary Registration OTP Verification
+
+Both job seeker and employer registration flows now require email verification before login. Registration still creates the active user and its profile/company records in one transaction, but the user starts with `email_verified_at = null`, receives no Sanctum token, and gets one hashed OTP record in `email_verification_otps`. `users.email_verified_at` is the only verification source of truth; `UserStatus` remains reserved for administrative account state.
+
+**Temporary OTP for development/demo: `000000`.**
+
+No OTP is currently delivered. During this temporary phase the user must enter `000000` through `POST /api/v1/auth/email/verify-otp`. The API never returns the OTP, never stores it in plaintext, and sends no email, SMS, or WhatsApp request. `POST /api/v1/auth/email/resend-otp` preserves the future sender contract by refreshing expiry, resetting attempts, and enforcing a cooldown even though nothing is delivered.
+
+This static OTP is intentionally insecure and must not be used as a real production authentication mechanism. A real email, SMS, or WhatsApp delivery driver must replace the static driver before production use; the registration, verification, reissue, and login API contracts are designed to remain unchanged.
+
+Configuration:
+
+```env
+OTP_DRIVER=static
+OTP_LENGTH=6
+OTP_TTL_MINUTES=5
+OTP_MAX_ATTEMPTS=5
+OTP_RESEND_COOLDOWN_SECONDS=60
+OTP_ALLOW_STATIC_IN_PRODUCTION=false
+```
+
+The static driver is allowed in `local` and `testing`. In `production` it fails safely with `OTP_DRIVER_NOT_AVAILABLE` unless the explicit temporary override is enabled. For the graduation-project Render demo only:
+
+```env
+OTP_DRIVER=static
+OTP_LENGTH=6
+OTP_TTL_MINUTES=5
+OTP_MAX_ATTEMPTS=5
+OTP_RESEND_COOLDOWN_SECONDS=60
+OTP_ALLOW_STATIC_IN_PRODUCTION=true
+```
+
+`OTP_ALLOW_STATIC_IN_PRODUCTION=true` is a temporary demo exception. Remove it when a real delivery provider is implemented. No SMTP variables are required for this workflow.
+
+Security controls include hashed OTP storage, one OTP row per user, expiry, database-level attempt limits, reissue cooldown, row locks and transactions during consumption, one-time deletion, token creation only after commit, email/IP route throttling, normalized email handling, production-driver protection, generic reissue responses, and safe audit metadata that excludes codes, hashes, passwords, tokens, and request payloads.
+
 ## 2. Technology Stack
 
 | Area | Implementation |

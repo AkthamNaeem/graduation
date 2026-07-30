@@ -12,6 +12,10 @@ use Illuminate\Support\Facades\DB;
 
 class RegistrationService
 {
+    public function __construct(
+        private readonly EmailVerificationService $emailVerificationService,
+    ) {}
+
     public function registerJobSeeker(array $data): User
     {
         return DB::transaction(function () use ($data): User {
@@ -27,6 +31,8 @@ class RegistrationService
                 'user_id' => $user->id,
                 'phone' => $data['phone'] ?? null,
             ]);
+
+            $this->emailVerificationService->issueOtp($user);
 
             return $this->loadUserProfile($user);
         });
@@ -53,6 +59,8 @@ class RegistrationService
                 'company_id' => $company->id,
                 'phone' => $data['phone'] ?? null,
             ]);
+
+            $this->emailVerificationService->issueOtp($user);
 
             return $this->loadUserProfile($user);
         });

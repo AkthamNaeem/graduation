@@ -3,6 +3,7 @@
 use App\Exceptions\ApplicationInformationRequestException;
 use App\Exceptions\ApplicationInternalNoteException;
 use App\Exceptions\CVLifecycleException;
+use App\Exceptions\EmailVerificationException;
 use App\Exceptions\InterviewLifecycleException;
 use App\Exceptions\JobPostingOperationException;
 use App\Exceptions\PrivateFileStorageException;
@@ -19,6 +20,7 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
@@ -40,6 +42,28 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (EmailVerificationException $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            $response = ApiResponse::error(
+                message: $exception->getMessage(),
+                errors: $exception->errors,
+                status: $exception->status,
+                code: $exception->errorCode,
+            );
+
+            if ($exception->responseData === []) {
+                return $response;
+            }
+
+            return response()->json(
+                array_merge($response->getData(true), $exception->responseData),
+                $exception->status,
+            );
+        });
+
         $exceptions->render(function (PrivateFileStorageException $exception, Request $request) {
             if (! $request->is('api/*')) {
                 return null;
@@ -213,6 +237,10 @@ return Application::configure(basePath: dirname(__DIR__))
                 message: 'The requested resource could not be found.',
                 status: 404,
             );
+        });
+
+        $exceptions->render(function (HttpResponseException $exception) {
+            return $exception->getResponse();
         });
 
         $exceptions->render(function (Throwable $exception, Request $request) {

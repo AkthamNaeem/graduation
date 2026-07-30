@@ -66,6 +66,11 @@ class User extends Authenticatable
         return $this->hasOne(EmployerProfile::class);
     }
 
+    public function emailVerificationOtp(): HasOne
+    {
+        return $this->hasOne(EmailVerificationOtp::class);
+    }
+
     public function cvFiles(): HasMany
     {
         return $this->hasMany(CVFile::class);

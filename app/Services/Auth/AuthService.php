@@ -16,6 +16,8 @@ class AuthService
 
     public const LOGIN_BLOCKED = 'blocked';
 
+    public const LOGIN_UNVERIFIED = 'unverified';
+
     public const LOGIN_SUCCESS = 'success';
 
     /**
@@ -33,6 +35,10 @@ class AuthService
 
         if ($user->status !== UserStatus::ACTIVE) {
             return ['status' => self::LOGIN_BLOCKED];
+        }
+
+        if ($user->email_verified_at === null) {
+            return ['status' => self::LOGIN_UNVERIFIED];
         }
 
         $user = $this->loadAuthenticatedUser($user);

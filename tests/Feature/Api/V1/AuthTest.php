@@ -76,11 +76,13 @@ class AuthTest extends TestCase
 
         $response->assertCreated()
             ->assertJsonPath('success', true)
-            ->assertJsonPath('message', 'Job seeker registered successfully.')
-            ->assertJsonPath('data.email', 'jane@example.com')
-            ->assertJsonPath('data.role', UserRole::JOB_SEEKER->value)
-            ->assertJsonPath('data.status', UserStatus::ACTIVE->value)
-            ->assertJsonPath('data.job_seeker_profile.phone', '+1 555 0100');
+            ->assertJsonPath('message', 'Registration successful. Verify the account using the temporary OTP.')
+            ->assertJsonPath('data.user.email', 'jane@example.com')
+            ->assertJsonPath('data.user.role', UserRole::JOB_SEEKER->value)
+            ->assertJsonPath('data.user.status', UserStatus::ACTIVE->value)
+            ->assertJsonPath('data.user.job_seeker_profile.phone', '+1 555 0100')
+            ->assertJsonPath('data.user.is_email_verified', false)
+            ->assertJsonPath('data.email_verification.sent', false);
 
         $user = User::query()->where('email', 'jane@example.com')->firstOrFail();
 
@@ -125,11 +127,12 @@ class AuthTest extends TestCase
 
         $response->assertCreated()
             ->assertJsonPath('success', true)
-            ->assertJsonPath('data.role', UserRole::EMPLOYER->value)
-            ->assertJsonPath('data.status', UserStatus::ACTIVE->value)
-            ->assertJsonPath('data.employer_profile.phone', '+1 555 0200')
-            ->assertJsonPath('data.employer_profile.company.name', 'Talent Forge')
-            ->assertJsonPath('data.employer_profile.company.website', 'https://talentforge.example.com');
+            ->assertJsonPath('data.user.role', UserRole::EMPLOYER->value)
+            ->assertJsonPath('data.user.status', UserStatus::ACTIVE->value)
+            ->assertJsonPath('data.user.employer_profile.phone', '+1 555 0200')
+            ->assertJsonPath('data.user.employer_profile.company.name', 'Talent Forge')
+            ->assertJsonPath('data.user.employer_profile.company.website', 'https://talentforge.example.com')
+            ->assertJsonPath('data.user.is_email_verified', false);
 
         $user = User::query()->where('email', 'evan@example.com')->firstOrFail();
         $company = Company::query()->where('name', 'Talent Forge')->firstOrFail();

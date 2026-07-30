@@ -10,6 +10,7 @@ use App\Http\Controllers\Api\V1\Application\ApplicationInformationRequestControl
 use App\Http\Controllers\Api\V1\Application\ApplicationInternalNoteController;
 use App\Http\Controllers\Api\V1\Application\JobApplicationController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
+use App\Http\Controllers\Api\V1\Auth\EmailVerificationController;
 use App\Http\Controllers\Api\V1\Auth\RegistrationController;
 use App\Http\Controllers\Api\V1\CV\CVController;
 use App\Http\Controllers\Api\V1\Interview\InterviewController;
@@ -43,6 +44,12 @@ Route::prefix('auth')
         Route::post('register/employer', [RegistrationController::class, 'registerEmployer'])
             ->name('register.employer');
         Route::post('login', [AuthController::class, 'login'])->name('login');
+        Route::post('email/verify-otp', [EmailVerificationController::class, 'verify'])
+            ->middleware('throttle:email-verification-verify')
+            ->name('email.verify-otp');
+        Route::post('email/resend-otp', [EmailVerificationController::class, 'resend'])
+            ->middleware('throttle:email-verification-resend')
+            ->name('email.resend-otp');
         Route::post('forgot-password', [AuthController::class, 'forgotPassword'])->name('forgot-password');
         Route::post('reset-password', [AuthController::class, 'resetPassword'])->name('reset-password');
 
