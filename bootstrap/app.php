@@ -14,6 +14,7 @@ use App\Exceptions\TestAttemptTimingException;
 use App\Exceptions\TestContentAccessException;
 use App\Exceptions\TestScorePolicyException;
 use App\Http\Middleware\AdminMiddleware;
+use App\Http\Middleware\AuthenticateSanctumOptionally;
 use App\Http\Middleware\EnsureCompanyApproved;
 use App\Http\Middleware\EnsureUserIsActive;
 use App\Support\ApiResponse;
@@ -39,6 +40,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'admin' => AdminMiddleware::class,
+            'auth.sanctum.optional' => AuthenticateSanctumOptionally::class,
             'company.approved' => EnsureCompanyApproved::class,
             'user.active' => EnsureUserIsActive::class,
         ]);

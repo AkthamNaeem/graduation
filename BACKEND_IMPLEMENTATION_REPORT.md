@@ -2745,3 +2745,185 @@ added; every other protected path retains size and SHA-256 enforcement.
 The final complete Laravel run reported 762 passed, two expected opt-in skips,
 zero failures, and 16,547 assertions. No production behavior changed.
 The strict Phase 18 gate is **PROJECT HANDOVER READY**.
+
+---
+
+## Unified Mobile Home API — 2026-07-30
+
+### Summary
+
+Implemented `GET /api/v1/home` as the single mobile Home endpoint for both
+anonymous visitors and authenticated job seekers. The endpoint uses the
+project's `ApiResponse` envelope, existing public-job rules, the existing
+recommendation orchestrator, and the existing account-state protection.
+Employer and administrator tokens are rejected with `403`; an invalid,
+expired, or malformed supplied token is rejected with `401` rather than being
+downgraded to a guest request.
+
+### Existing components reused
+
+- `JobPostingService::getPublicJobs()` already owned public visibility rules:
+  open jobs belonging to approved companies, including its existing
+  `accepting_applications` deadline filter. Home calls it with that filter for
+  latest jobs and does not alter the existing public-list behavior.
+- `RecommendationOrchestratorContract::recommend(User $user, int $limit)` was
+  already backed by the ML provider plus the existing Matching V2 fallback.
+  Home calls this contract directly with limit `6`; it never calls the
+  `/jobs/recommended` endpoint over HTTP and does not duplicate matching.
+- Recommendation eligibility already excludes non-open jobs, jobs from
+  unapproved companies, passed deadlines, and jobs previously applied to.
+- Existing profile, experience, education, skill, primary-CV, CV review,
+  profile suggestion, test assignment/attempt, interview, application
+  information request, company, and job relations are queried directly.
+- `EnsureUserIsActive` and `ApiResponse` remain the common account-state and
+  response-envelope mechanisms.
+
+### Optional Sanctum authentication decision
+
+The route is intentionally outside the mandatory `auth:sanctum` group. It uses
+`auth.sanctum.optional`, which:
+
+1. Continues as a guest only when the `Authorization` header is absent.
+2. Resolves a supplied Bearer token through the Sanctum guard.
+3. Returns `401 INVALID_AUTHORIZATION_TOKEN` when a supplied token is invalid,
+   expired, or malformed.
+
+After a token is authenticated, the optional middleware delegates to the
+unchanged `EnsureUserIsActive` middleware, preserving its `USER_SUSPENDED`
+response without changing the protected middleware file. Home service accepts
+only `job_seeker`; authenticated employer/admin users receive `403` with
+`Mobile Home is available to job seekers only.`
+
+### Final guest contract
+
+`data` contains only:
+
+- `viewer`: `{ "type": "guest", "is_authenticated": false }`
+- `hero`: title, description, register semantic action, login semantic action
+- `latest_jobs`: at most five lightweight visible job cards
+- `featured_companies`: at most six lightweight company cards
+- `app_features`: three static product feature descriptors
+
+Personal profile, recommendations, applications, tests, interviews,
+notifications, and any other user's data are omitted, not returned as `null`.
+
+### Final authenticated job-seeker contract
+
+`data` contains:
+
+- `viewer`: type, authentication state, user id, name, and nullable
+  `avatar_url`
+- `profile_completeness`
+- `required_action`: the highest-priority computed action or `null`
+- `recommended_jobs`: at most six lightweight cards with `match`
+- `featured_companies`
+- `latest_jobs`
+- `meta.recommendations_available`
+- `meta.recommendations`: availability, source, and fallback-used flag
+
+Home job cards contain only id, title, company card, location, work mode,
+employment type, and publication time. Recommendation cards additionally
+contain score, matched skill names, missing required skill names, and safe
+reason code/message pairs. CV raw text and parsed JSON are neither selected by
+Home queries nor serialized.
+
+### Required-action order
+
+`HomeActionResolver` computes a view model without adding a database table:
+
+1. Available pending or started test (`100`); submitted and expired tests are
+   excluded.
+2. Future scheduled/confirmed/rescheduled interview (`90`); cancelled and
+   completed interviews are excluded. Unconfirmed interviews use the
+   `interview_confirmation` action.
+3. Pending, unanswered, non-expired information request (`80`).
+4. Parsed, unconfirmed CV requiring review (`70`).
+5. Pending profile-sync suggestion (`60`).
+6. Incomplete profile (`50`).
+7. No action: `required_action` is `null`.
+
+Dates are emitted with Laravel/Carbon ISO-8601 serialization and retain the
+application timezone offset where applicable. Navigation is semantic
+(`profile_section`, `test_assignment`, `interview`, `information_request`,
+`cv_review`, `profile_suggestions`) and contains no mobile route paths.
+
+### Profile-completeness calculation
+
+`ProfileCompletenessService` uses the requested 100-point allocation:
+
+- Basic information (name, email, phone): 15
+- Professional headline and summary: 15
+- Location: 10
+- At least one experience: 20
+- At least one education record: 15
+- At least three skills: 15
+- A primary, confirmed, non-archived CV: 10
+
+The response includes integer percentage, `is_complete`, ordered semantic
+missing items, missing count, and the highest-priority `next_item`.
+
+### Public jobs and featured companies
+
+Latest jobs call the existing `JobPostingService::getPublicJobs()` with
+`accepting_applications=true`, `published_at desc`, and `per_page=5`, reusing
+the public endpoint's visibility and sorting implementation without changing
+its contract.
+
+Featured companies use one aggregate query: approved companies only, at least
+one open non-expired job, open job count descending, latest open-job
+publication descending, then id; limit six. `withCount` and `withMax` avoid
+per-company queries.
+
+### Recommendation and failure behavior
+
+Home injects and calls `RecommendationOrchestratorContract` directly with
+limit six. The existing orchestrator remains responsible for ML ranking,
+eligibility, persistence/cache, explainability, and its Matching V2 fallback.
+The orchestrator's eligibility provider remains the authority that excludes
+non-public jobs and previous applications before Home serialization. No AI
+request contract was changed.
+
+Normal provider failures continue through the orchestrator's existing local
+fallback and report its engine in metadata. If an unexpected exception escapes
+the orchestrator, Home logs only user id and exception class, returns an empty
+`recommended_jobs`, and sets recommendations to
+`{available: false, source: "unavailable", fallback_used: false}`; the Home
+response remains `200`.
+
+### Files added
+
+- `app/Http/Controllers/Api/V1/Home/HomeController.php`
+- `app/Http/Middleware/AuthenticateSanctumOptionally.php`
+- `app/Http/Resources/Api/V1/Home/HomeActionResource.php`
+- `app/Http/Resources/Api/V1/Home/HomeCompanyResource.php`
+- `app/Http/Resources/Api/V1/Home/HomeJobResource.php`
+- `app/Services/Home/HomeActionResolver.php`
+- `app/Services/Home/HomeService.php`
+- `app/Services/Home/ProfileCompletenessService.php`
+- `tests/Feature/Api/V1/HomeApiTest.php`
+- `tests/Unit/Home/HomeActionResolverTest.php`
+- `tests/Unit/Home/ProfileCompletenessServiceTest.php`
+
+### Files modified
+
+- `bootstrap/app.php`
+- `routes/api/v1.php`
+- `postman/Smart Recruitment Platform - Mobile App.postman_collection.json`
+- `BACKEND_IMPLEMENTATION_REPORT.md`
+
+The Mobile Postman collection now contains `Home - Guest` and
+`Home - Authenticated Job Seeker`, including authentication, successful
+contracts, `401`/`403` behavior, action ordering, company ordering, and
+recommendation fallback notes.
+
+### Verification
+
+- Focused Home tests: 26 passed, 109 assertions.
+- PHP syntax checks: all added and modified PHP files passed.
+- Route verification: one `GET|HEAD api/v1/home` route named `v1.home`.
+- Full Laravel suite: 843 passed, 2 expected opt-in skips, 0 failures, and
+  17,387 assertions.
+- Laravel Pint: all scoped added/modified PHP files pass.
+- Mobile Postman collection: valid JSON after adding both Home requests.
+
+No migration, commit, or push was created for this implementation.

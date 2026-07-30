@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\V1\Auth\RegistrationController;
 use App\Http\Controllers\Api\V1\Company\CompanyInvitationController;
 use App\Http\Controllers\Api\V1\Company\CompanyTeamController;
 use App\Http\Controllers\Api\V1\CV\CVController;
+use App\Http\Controllers\Api\V1\Home\HomeController;
 use App\Http\Controllers\Api\V1\Interview\InterviewController;
 use App\Http\Controllers\Api\V1\JobPosting\JobPostingController;
 use App\Http\Controllers\Api\V1\JobPosting\JobScreeningQuestionController;
@@ -38,6 +39,10 @@ use App\Http\Controllers\Api\V1\Test\TestManualGradingController;
 use App\Http\Controllers\Api\V1\Test\TestQuestionController;
 use App\Http\Controllers\Api\V1\Test\TestRetakeController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('home', HomeController::class)
+    ->middleware('auth.sanctum.optional')
+    ->name('home');
 
 Route::prefix('auth')
     ->name('auth.')

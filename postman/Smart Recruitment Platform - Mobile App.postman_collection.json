@@ -16,6 +16,55 @@
     },
     "item": [
         {
+            "name": "Home",
+            "description": "Unified mobile Home API. Without Authorization it returns guest viewer, hero, latest visible jobs, approved featured companies, and app features. With a valid job-seeker Sanctum bearer token it returns viewer, profile completeness, the highest-priority required action, recommendations, featured companies, latest jobs, and recommendation availability metadata. Invalid/expired tokens return 401. Employer, admin, and suspended-user tokens return 403.\n\nRequired-action order: pending/started test; upcoming interview/confirmation; open information request; parsed CV review; pending profile-sync suggestion; incomplete profile; no action.\n\nFeatured companies: approved only, at least one open non-expired job, ordered by open job count then newest published job, limited to six.\n\nRecommendation failures do not fail Home: the orchestrator's existing matching fallback is used when available; unexpected failures return an empty list with meta.recommendations_available=false.",
+            "item": [
+                {
+                    "name": "Home - Guest",
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "GET",
+                        "url": "{{base_url}}/home",
+                        "description": "Authentication: none.\n\n200 data contract: viewer {type: guest, is_authenticated: false}, hero, latest_jobs (max 5), featured_companies (max 6), app_features. Personal profile, application, recommendation, test, interview, and notification data are omitted."
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Guest Home is successful', () => pm.response.to.have.status(200));",
+                                    "pm.test('Guest Home has no personal sections', () => { const data = pm.response.json().data; pm.expect(data.viewer.type).to.eql('guest'); pm.expect(data).not.to.have.property('profile_completeness'); pm.expect(data).not.to.have.property('recommended_jobs'); });"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Home - Authenticated Job Seeker",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{base_url}}/home",
+                        "description": "Authentication: inherited Bearer {{job_seeker_token}} (Sanctum).\n\n200 data contract: viewer {type: job_seeker, is_authenticated: true, id, name, avatar_url}, profile_completeness, required_action (object or null), recommended_jobs (max 6), featured_companies, latest_jobs, and meta.recommendations.\n\nErrors: 401 for invalid/expired/malformed Authorization token; 403 for employer/admin tokens or suspended accounts."
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('Authenticated Home is successful', () => pm.response.to.have.status(200));",
+                                    "pm.test('Authenticated Home contract', () => { const data = pm.response.json().data; pm.expect(data.viewer.type).to.eql('job_seeker'); pm.expect(data).to.have.property('profile_completeness'); pm.expect(data).to.have.property('recommended_jobs'); pm.expect(data).to.have.property('meta'); });"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
             "name": "Screening Questions and Applications",
             "item": [
                 {
