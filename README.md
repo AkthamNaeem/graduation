@@ -2,6 +2,19 @@
 
 Laravel 12 REST API for candidate profiles and CVs, companies and jobs, applications, information requests, private internal notes, tests and grading, interviews, notifications, matching, audit logs, and administration.
 
+## Demo database
+
+The project includes a complete, rerunnable demo database for API, dashboard,
+and mobile testing. It deletes existing application demo data and is blocked in
+production even when Artisan is run with `--force`.
+
+```bash
+php artisan db:seed
+```
+
+See [Workey demo database](docs/DEMO_SEEDING.md) for architecture, coverage,
+expected counts, scenarios, gaps, and login accounts.
+
 ## Local setup
 
 1. Copy `.env.example` to `.env` and generate `APP_KEY`.

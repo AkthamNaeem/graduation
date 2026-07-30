@@ -454,8 +454,8 @@ class JobPostingTest extends TestCase
     {
         $this->seed(SampleUserSeeder::class);
 
-        $this->assertDatabaseCount('job_postings', 3);
-        $this->assertDatabaseCount('job_posting_skills', 12);
+        $this->assertDatabaseCount('job_postings', 8);
+        $this->assertDatabaseCount('job_posting_skills', 25);
         $this->assertDatabaseHas('job_postings', [
             'title' => 'Senior Laravel Backend Engineer',
             'status' => 'open',

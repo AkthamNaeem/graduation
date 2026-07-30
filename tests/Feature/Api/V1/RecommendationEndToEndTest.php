@@ -311,6 +311,10 @@ class RecommendationEndToEndTest extends TestCase
             // Approved post-handover provenance and Locked-Test-safety maintenance.
             'services/ml-recommendation/src/smart_recruitment_ml/training/trainer.py',
             'services/ml-recommendation/tests/test_model_artifacts.py',
+            // Approved post-handover comprehensive demo-database implementation.
+            'database/seeders/DatabaseSeeder.php',
+            'database/seeders/SampleUserSeeder.php',
+            'tests/Feature/Api/V1/JobPostingTest.php',
         ];
         foreach ($baseline['files'] as $entry) {
             $file = base_path($entry['path']);

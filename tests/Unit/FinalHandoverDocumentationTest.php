@@ -258,6 +258,11 @@ class FinalHandoverDocumentationTest extends TestCase
             // Approved post-handover provenance-integrity remediation.
             'services/ml-recommendation/src/smart_recruitment_ml/training/trainer.py',
             'services/ml-recommendation/tests/test_model_artifacts.py',
+            // Approved post-handover comprehensive demo-database implementation.
+            'database/seeders/DatabaseSeeder.php',
+            'database/seeders/SampleUserSeeder.php',
+            'tests/Feature/Api/V1/JobPostingTest.php',
+            'tests/Unit/FinalHandoverDocumentationTest.php',
         ];
         foreach ($baseline['files'] as $entry) {
             $this->assertRelativeRepositoryPath($entry['path']);
