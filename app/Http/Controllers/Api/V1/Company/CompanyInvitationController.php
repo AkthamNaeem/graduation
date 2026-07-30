@@ -9,6 +9,7 @@ use App\Http\Resources\Api\V1\CompanyMemberResource;
 use App\Models\User;
 use App\Services\CompanyInvitationService;
 use App\Support\ApiResponse;
+use App\Support\LocalizedValue;
 use Illuminate\Http\JsonResponse;
 
 class CompanyInvitationController extends Controller
@@ -28,7 +29,7 @@ class CompanyInvitationController extends Controller
                     'name' => $invitation->company->name,
                 ],
                 'email' => $invitation->email,
-                'company_role' => $invitation->company_role->value,
+                'company_role' => LocalizedValue::make($invitation->company_role, 'company_roles'),
                 'expires_at' => $invitation->expires_at?->toISOString(),
                 'requires_registration' => ! User::query()
                     ->whereRaw('LOWER(email) = ?', [$invitation->email])

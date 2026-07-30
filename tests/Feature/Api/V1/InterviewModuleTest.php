@@ -38,11 +38,11 @@ class InterviewModuleTest extends TestCase
             ->postJson("/api/v1/applications/{$application->id}/interviews", $this->interviewPayload())
             ->assertCreated()
             ->assertJsonPath('data.job_application_id', $application->id)
-            ->assertJsonPath('data.interview_type', 'technical')
-            ->assertJsonPath('data.interview_mode', 'online')
-            ->assertJsonPath('data.status', 'scheduled')
+            ->assertJsonPath('data.interview_type.key', 'technical')
+            ->assertJsonPath('data.interview_mode.key', 'online')
+            ->assertJsonPath('data.status.key', 'scheduled')
             ->assertJsonPath('data.completed_at', null)
-            ->assertJsonPath('data.job_application.status.slug', 'interview_scheduled');
+            ->assertJsonPath('data.job_application.status.key', 'interview_scheduled');
 
         $interviewId = $response->json('data.id');
 
@@ -116,7 +116,7 @@ class InterviewModuleTest extends TestCase
                 'candidate_message' => 'Please bring an identity document.',
             ])
             ->assertOk()
-            ->assertJsonPath('data.interview_type', 'final')
+            ->assertJsonPath('data.interview_type.key', 'final')
             ->assertJsonPath('data.candidate_message', 'Please bring an identity document.');
 
         $this->withToken($this->tokenFor($employer))
@@ -155,7 +155,7 @@ class InterviewModuleTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.completed_by_user_id', $employer->id)
             ->assertJsonPath('data.completion_note', 'Candidate attended and completed the round.')
-            ->assertJsonPath('data.job_application.status.slug', 'interview_completed');
+            ->assertJsonPath('data.job_application.status.key', 'interview_completed');
 
         $this->withToken($this->tokenFor($employer))
             ->putJson("/api/v1/interviews/{$interviewId}", $this->interviewPayload([
@@ -191,9 +191,9 @@ class InterviewModuleTest extends TestCase
         $this->withToken($this->tokenFor($employer))
             ->postJson("/api/v1/interviews/{$interviewId}/evaluate", $this->evaluationPayload())
             ->assertOk()
-            ->assertJsonPath('data.evaluation.recommendation', 'advance')
+            ->assertJsonPath('data.evaluation.recommendation.key', 'advance')
             ->assertJsonCount(2, 'data.evaluation.items')
-            ->assertJsonPath('data.job_application.status.slug', 'final_review');
+            ->assertJsonPath('data.job_application.status.key', 'final_review');
 
         $this->assertDatabaseHas('interview_evaluations', [
             'interview_id' => $interviewId,
@@ -343,7 +343,7 @@ class InterviewModuleTest extends TestCase
         $this->withToken($this->tokenFor($candidate))
             ->postJson("/api/v1/interviews/{$interviewId}/confirm")
             ->assertOk()
-            ->assertJsonPath('data.status', 'confirmed');
+            ->assertJsonPath('data.status.key', 'confirmed');
 
         Carbon::setTestNow(Interview::findOrFail($interviewId)->scheduled_at);
         $this->withToken($this->tokenFor($employer))

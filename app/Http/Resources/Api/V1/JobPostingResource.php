@@ -2,8 +2,12 @@
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Enums\EducationLevel;
+use App\Enums\EmploymentType;
+use App\Enums\ExperienceLevel;
 use App\Enums\JobSkillRequirementType;
 use App\Models\JobPosting;
+use App\Support\LocalizedValue;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -24,14 +28,23 @@ class JobPostingResource extends JsonResource
             'responsibilities' => $this->responsibilities,
             'requirements' => $this->requirements,
             'benefits' => $this->benefits,
-            'employment_type' => $this->employment_type,
-            'experience_level' => $this->experience_level,
-            'education_level' => $this->education_level,
+            'employment_type' => LocalizedValue::make(
+                EmploymentType::normalize((string) $this->employment_type),
+                'employment_types',
+            ),
+            'experience_level' => LocalizedValue::make(
+                ExperienceLevel::normalize((string) $this->experience_level),
+                'experience_levels',
+            ),
+            'education_level' => LocalizedValue::make(
+                EducationLevel::tryFrom((string) $this->education_level),
+                'education_levels',
+            ),
             'location' => $this->location,
-            'work_mode' => $this->work_mode?->value ?? $this->work_mode,
+            'work_mode' => LocalizedValue::make($this->work_mode, 'job_work_modes'),
             'salary_min' => $this->salary_min,
             'salary_max' => $this->salary_max,
-            'status' => $this->status,
+            'status' => LocalizedValue::make($this->status, 'job_statuses'),
             'published_at' => $this->published_at?->toISOString(),
             'application_deadline' => $this->application_deadline?->toISOString(),
             'has_application_deadline' => $this->hasApplicationDeadline(),

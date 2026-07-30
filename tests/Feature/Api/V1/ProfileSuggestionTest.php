@@ -29,13 +29,13 @@ class ProfileSuggestionTest extends TestCase
             ->assertCreated()
             ->assertJsonPath('success', true)
             ->assertJsonFragment([
-                'entity_type' => 'experience',
-                'suggestion_type' => 'add',
-                'status' => 'pending',
+                'entity_type' => ['key' => 'experience', 'value' => 'Work experience'],
+                'suggestion_type' => ['key' => 'add', 'value' => 'Add'],
+                'status' => ['key' => 'pending', 'value' => 'Pending decision'],
             ])
             ->assertJsonFragment([
-                'entity_type' => 'skill',
-                'suggestion_type' => 'add',
+                'entity_type' => ['key' => 'skill', 'value' => 'Skill'],
+                'suggestion_type' => ['key' => 'add', 'value' => 'Add'],
             ]);
 
         $this->assertDatabaseCount('profile_change_suggestions', 4);
@@ -150,7 +150,7 @@ class ProfileSuggestionTest extends TestCase
         $this->withToken($this->tokenFor($user))
             ->postJson("/api/v1/profile/suggestions/{$experienceSuggestion->id}/accept")
             ->assertOk()
-            ->assertJsonPath('data.status', 'accepted');
+            ->assertJsonPath('data.status.key', 'accepted');
 
         $this->assertDatabaseCount('experiences', 0);
         $this->assertDatabaseHas('audit_logs', [
@@ -181,7 +181,7 @@ class ProfileSuggestionTest extends TestCase
                 'reason' => 'Not relevant.',
             ])
             ->assertOk()
-            ->assertJsonPath('data.status', 'rejected')
+            ->assertJsonPath('data.status.key', 'rejected')
             ->assertJsonPath('data.reason', 'Not relevant.');
 
         $this->assertDatabaseCount('experiences', 0);
@@ -243,8 +243,8 @@ class ProfileSuggestionTest extends TestCase
             ->postJson("/api/v1/cv/{$cvFile->id}/suggestions/generate")
             ->assertCreated()
             ->assertJsonFragment([
-                'entity_type' => 'experience',
-                'suggestion_type' => 'update',
+                'entity_type' => ['key' => 'experience', 'value' => 'Work experience'],
+                'suggestion_type' => ['key' => 'update', 'value' => 'Update'],
             ]);
 
         $suggestion = ProfileChangeSuggestion::query()
@@ -268,8 +268,8 @@ class ProfileSuggestionTest extends TestCase
             ->postJson("/api/v1/cv/{$cvFile->id}/suggestions/generate")
             ->assertCreated()
             ->assertJsonFragment([
-                'entity_type' => 'profile',
-                'suggestion_type' => 'update',
+                'entity_type' => ['key' => 'profile', 'value' => 'Profile'],
+                'suggestion_type' => ['key' => 'update', 'value' => 'Update'],
             ]);
 
         $this->assertDatabaseHas('job_seeker_profiles', [

@@ -45,7 +45,7 @@ class CVTest extends TestCase
         $response->assertCreated()
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.original_name', 'resume.pdf')
-            ->assertJsonPath('data.status', 'uploaded');
+            ->assertJsonPath('data.status.key', 'uploaded');
 
         $cvId = $response->json('data.id');
         $cvFile = CVFile::query()->findOrFail($cvId);
@@ -125,7 +125,7 @@ class CVTest extends TestCase
                 'file' => UploadedFile::fake()->createWithContent('synthetic-resume.pdf', $pdf),
             ], ['Accept' => 'application/json'])
             ->assertCreated()
-            ->assertJsonPath('data.status', 'parsed');
+            ->assertJsonPath('data.status.key', 'parsed');
 
         $cvFile = CVFile::query()->findOrFail($response->json('data.id'));
         $result = $cvFile->parsingResult()->firstOrFail();
@@ -186,7 +186,7 @@ class CVTest extends TestCase
                 'file' => UploadedFile::fake()->createWithContent('synthetic-resume.docx', SyntheticDocx::make()),
             ], ['Accept' => 'application/json'])
             ->assertCreated()
-            ->assertJsonPath('data.status', 'parsed');
+            ->assertJsonPath('data.status.key', 'parsed');
 
         $cvFile = CVFile::query()->findOrFail($response->json('data.id'));
         $result = $cvFile->parsingResult()->firstOrFail();
@@ -340,13 +340,13 @@ class CVTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.profile.phone', '+1 555 EXISTING')
             ->assertJsonFragment([
-                'entity_type' => 'experience',
-                'suggestion_type' => 'add',
-                'status' => 'pending',
+                'entity_type' => ['key' => 'experience', 'value' => 'Work experience'],
+                'suggestion_type' => ['key' => 'add', 'value' => 'Add'],
+                'status' => ['key' => 'pending', 'value' => 'Pending decision'],
             ])
             ->assertJsonFragment([
-                'entity_type' => 'skill',
-                'suggestion_type' => 'add',
+                'entity_type' => ['key' => 'skill', 'value' => 'Skill'],
+                'suggestion_type' => ['key' => 'add', 'value' => 'Add'],
                 'new_value' => [
                     'name' => $skill->name,
                 ],

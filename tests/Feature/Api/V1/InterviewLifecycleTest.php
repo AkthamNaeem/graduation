@@ -32,7 +32,7 @@ class InterviewLifecycleTest extends TestCase
         $this->withToken($this->tokenForInterviewUser($candidate))
             ->postJson("/api/v1/interviews/{$interviewId}/confirm")
             ->assertOk()
-            ->assertJsonPath('data.status', 'confirmed');
+            ->assertJsonPath('data.status.key', 'confirmed');
 
         $this->withToken($this->tokenForInterviewUser($employer))
             ->postJson("/api/v1/interviews/{$interviewId}/reschedule", [
@@ -41,7 +41,7 @@ class InterviewLifecycleTest extends TestCase
                 'scheduled_end_at' => now()->addDays(2)->addHour()->toISOString(),
                 'meeting_link' => 'https://meet.example.com/new-time',
                 'reason' => 'Interviewer conflict.',
-            ])->assertOk()->assertJsonPath('data.candidate_confirmation_status', 'pending');
+            ])->assertOk()->assertJsonPath('data.candidate_confirmation_status.key', 'pending');
 
         $this->assertDatabaseHas('interviews', ['id' => $interviewId, 'status' => 'rescheduled', 'confirmed_at' => null, 'confirmed_by_user_id' => null]);
         $this->withToken($this->tokenForInterviewUser($candidate))->postJson("/api/v1/interviews/{$interviewId}/confirm")->assertOk();
@@ -51,7 +51,7 @@ class InterviewLifecycleTest extends TestCase
             ->getJson("/api/v1/interviews/{$interviewId}/status-history?per_page=10")
             ->assertOk()
             ->assertJsonCount(4, 'data.data')
-            ->assertJsonPath('data.data.0.to_status', 'scheduled')
+            ->assertJsonPath('data.data.0.to_status.key', 'scheduled')
             ->assertJsonPath('data.meta.total', 4);
         $this->withToken($this->tokenForInterviewUser($employer))
             ->getJson("/api/v1/interviews/{$interviewId}/schedule-history")
@@ -72,7 +72,7 @@ class InterviewLifecycleTest extends TestCase
             ->postJson("/api/v1/interviews/{$interviewId}/cancel", [
                 'reason' => 'Internal staffing decision.',
                 'candidate_message' => 'We need to cancel this interview.',
-            ])->assertOk()->assertJsonPath('data.status', 'cancelled');
+            ])->assertOk()->assertJsonPath('data.status.key', 'cancelled');
 
         $this->assertDatabaseHas('interviews', ['id' => $interviewId, 'status' => 'cancelled', 'cancellation_reason' => 'Internal staffing decision.', 'cancelled_by_user_id' => $employer->id]);
         $this->assertDatabaseHas('job_applications', ['id' => $application->id, 'application_status_id' => ApplicationStatus::query()->where('slug', 'interview_pending')->value('id')]);
@@ -99,12 +99,12 @@ class InterviewLifecycleTest extends TestCase
         ])->assertOk();
         $this->withToken($this->tokenForInterviewUser($employer))->postJson("/api/v1/interviews/{$interviewId}/complete", [
             'completion_note' => 'Round complete.',
-        ])->assertOk()->assertJsonPath('data.status', 'completed');
+        ])->assertOk()->assertJsonPath('data.status.key', 'completed');
         $this->withToken($this->tokenForInterviewUser($employer))->postJson("/api/v1/interviews/{$interviewId}/evaluate", [
             'recommendation' => 'advance',
             'overall_comment' => 'Strong final discussion.',
             'items' => [['criterion' => 'Communication', 'score' => 5]],
-        ])->assertOk()->assertJsonPath('data.status', 'evaluated')->assertJsonPath('data.job_application.status.slug', 'final_review');
+        ])->assertOk()->assertJsonPath('data.status.key', 'evaluated')->assertJsonPath('data.job_application.status.key', 'final_review');
 
         $this->assertSame(['scheduled', 'confirmed', 'completed', 'evaluated'], Interview::findOrFail($interviewId)->statusHistory()->pluck('to_status')->all());
     }

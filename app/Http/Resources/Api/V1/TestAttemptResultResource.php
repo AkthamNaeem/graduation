@@ -7,6 +7,7 @@ use App\Models\TestAnswer;
 use App\Models\TestAttempt;
 use App\Models\TestQuestion;
 use App\Services\TestAttemptTimingService;
+use App\Support\LocalizedValue;
 use App\Support\SystemGeneratedText;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -30,7 +31,7 @@ class TestAttemptResultResource extends JsonResource
             'remaining_seconds' => $timing->remainingSeconds($this->resource),
             'is_time_expired' => $timing->isExpired($this->resource),
             'is_expired' => $assignment?->isExpired() ?? false,
-            'grading_status' => $this->grading_status?->value,
+            'grading_status' => LocalizedValue::make($this->grading_status, 'test_grading_statuses'),
             'objective_score' => $this->objective_score,
             'objective_max_score' => $this->objective_max_score,
             'manual_score' => $this->manual_score,
@@ -89,14 +90,14 @@ class TestAttemptResultResource extends JsonResource
 
                 $item = [
                     'question_id' => $question->id,
-                    'question_type' => $question->question_type->value,
+                    'question_type' => LocalizedValue::make($question->question_type, 'test_question_types'),
                     'question_text' => $question->question_text,
                     'answered' => $answer instanceof TestAnswer,
                     'max_points' => $question->points,
                     'awarded_points' => $objective
                         ? ($grading?->awarded_points ?? '0.00')
                         : ($answer instanceof TestAnswer ? $manualGrading?->awarded_points : '0.00'),
-                    'grading_type' => $grading?->grading_type?->value,
+                    'grading_type' => LocalizedValue::make($grading?->grading_type, 'test_grading_types'),
                     'requires_manual_grading' => ! $objective && $answer instanceof TestAnswer && $manualGrading === null,
                 ];
 

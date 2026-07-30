@@ -15,6 +15,7 @@ use App\Models\ProfileChangeSuggestion;
 use App\Models\Test;
 use App\Models\TestAttempt;
 use App\Models\User;
+use App\Support\LocalizedValue;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -29,20 +30,35 @@ class AdminReportService
         return [
             'users' => [
                 'total' => User::query()->count(),
-                'by_role' => $this->countsBy(User::query(), 'role'),
-                'by_status' => $this->countsBy(User::query(), 'status'),
+                'by_role' => $this->localizedCounts(
+                    $this->countsBy(User::query(), 'role'),
+                    'user_roles',
+                ),
+                'by_status' => $this->localizedCounts(
+                    $this->countsBy(User::query(), 'status'),
+                    'user_statuses',
+                ),
             ],
             'companies' => [
                 'total' => Company::query()->count(),
-                'by_approval_status' => $this->countsBy(Company::query(), 'approval_status'),
+                'by_approval_status' => $this->localizedCounts(
+                    $this->countsBy(Company::query(), 'approval_status'),
+                    'company_approval_statuses',
+                ),
             ],
             'jobs' => [
                 'total' => JobPosting::query()->count(),
-                'by_status' => $this->countsBy(JobPosting::query(), 'status'),
+                'by_status' => $this->localizedCounts(
+                    $this->countsBy(JobPosting::query(), 'status'),
+                    'job_statuses',
+                ),
             ],
             'applications' => [
                 'total' => JobApplication::query()->count(),
-                'by_status' => $this->applicationCountsByStatus(JobApplication::query()),
+                'by_status' => $this->localizedCounts(
+                    $this->applicationCountsByStatus(JobApplication::query()),
+                    'application_statuses',
+                ),
             ],
             'tests' => [
                 'total' => Test::query()->count(),
@@ -51,10 +67,10 @@ class AdminReportService
             ],
             'interviews' => [
                 'total' => Interview::query()->count(),
-                'by_status' => [
+                'by_status' => $this->localizedCounts([
                     'scheduled' => Interview::query()->whereNull('completed_at')->count(),
                     'completed' => Interview::query()->whereNotNull('completed_at')->count(),
-                ],
+                ], 'interview_statuses'),
             ],
             'notifications' => [
                 'total' => Notification::query()->count(),
@@ -62,7 +78,10 @@ class AdminReportService
             ],
             'cv_files' => [
                 'total' => CVFile::query()->count(),
-                'by_status' => $this->countsBy(CVFile::query(), 'status'),
+                'by_status' => $this->localizedCounts(
+                    $this->countsBy(CVFile::query(), 'status'),
+                    'cv_parsing_statuses',
+                ),
             ],
             'cv_parsing_results' => [
                 'success' => CVParsingResult::query()->count(),
@@ -96,7 +115,7 @@ class AdminReportService
 
         return [
             'total' => (clone $query)->count(),
-            'by_status' => $statusCounts,
+            'by_status' => $this->localizedCounts($statusCounts, 'application_statuses'),
             'accepted' => $statusCounts['accepted'] ?? 0,
             'rejected' => $statusCounts['rejected'] ?? 0,
             'active' => (clone $query)->whereNotIn('application_statuses.slug', $finalStatuses)->count(),
@@ -133,7 +152,7 @@ class AdminReportService
 
         return [
             'total' => $totalJobs,
-            'by_status' => $statusCounts,
+            'by_status' => $this->localizedCounts($statusCounts, 'job_statuses'),
             'published' => $statusCounts['open'] ?? 0,
             'closed' => $statusCounts['closed'] ?? 0,
             'draft' => $statusCounts['draft'] ?? 0,
@@ -165,7 +184,10 @@ class AdminReportService
                 ->count(),
             'failed_count' => (clone $cvFiles)->where('status', 'failed')->count(),
             'suggestions_generated_count' => (clone $suggestions)->count(),
-            'suggestions_by_status' => $suggestionCounts,
+            'suggestions_by_status' => $this->localizedCounts(
+                $suggestionCounts,
+                'profile_suggestion_statuses',
+            ),
             'suggestions_accepted' => $suggestionCounts['accepted'] ?? 0,
             'suggestions_rejected' => $suggestionCounts['rejected'] ?? 0,
             'suggestions_applied' => $suggestionCounts['applied'] ?? 0,
@@ -198,6 +220,20 @@ class AdminReportService
             ->groupBy('status_counts.slug')
             ->pluck('total', 'status_counts.slug')
             ->map(fn (int $total): int => $total)
+            ->all();
+    }
+
+    /**
+     * @param  array<string, int>  $counts
+     * @return list<array{key:string,value:string,count:int}>
+     */
+    private function localizedCounts(array $counts, string $group): array
+    {
+        return collect($counts)
+            ->map(
+                fn (int $count, string $key): array => LocalizedValue::count($key, $count, $group),
+            )
+            ->values()
             ->all();
     }
 

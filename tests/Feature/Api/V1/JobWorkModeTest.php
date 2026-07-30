@@ -23,7 +23,7 @@ class JobWorkModeTest extends TestCase
         $response = $this->withToken($this->tokenFor($this->employer()))
             ->postJson('/api/v1/jobs', $this->payload(JobWorkMode::REMOTE->value))
             ->assertCreated()
-            ->assertJsonPath('data.work_mode', JobWorkMode::REMOTE->value)
+            ->assertJsonPath('data.work_mode.key', JobWorkMode::REMOTE->value)
             ->assertJsonPath('data.location', null);
 
         $this->assertDatabaseHas('job_postings', [
@@ -41,7 +41,7 @@ class JobWorkModeTest extends TestCase
         $this->withToken($this->tokenFor($this->employer()))
             ->postJson('/api/v1/jobs', $payload)
             ->assertCreated()
-            ->assertJsonPath('data.work_mode', JobWorkMode::ON_SITE->value)
+            ->assertJsonPath('data.work_mode.key', JobWorkMode::ON_SITE->value)
             ->assertJsonPath('data.location', 'Damascus');
     }
 
@@ -53,7 +53,7 @@ class JobWorkModeTest extends TestCase
         $this->withToken($this->tokenFor($this->employer()))
             ->postJson('/api/v1/jobs', $payload)
             ->assertCreated()
-            ->assertJsonPath('data.work_mode', JobWorkMode::HYBRID->value)
+            ->assertJsonPath('data.work_mode.key', JobWorkMode::HYBRID->value)
             ->assertJsonPath('data.location', 'Damascus');
     }
 
@@ -103,7 +103,7 @@ class JobWorkModeTest extends TestCase
         $this->withToken($this->tokenFor($employer))
             ->putJson("/api/v1/jobs/{$jobPosting->id}", ['work_mode' => JobWorkMode::REMOTE->value])
             ->assertOk()
-            ->assertJsonPath('data.work_mode', JobWorkMode::REMOTE->value)
+            ->assertJsonPath('data.work_mode.key', JobWorkMode::REMOTE->value)
             ->assertJsonPath('data.location', 'Damascus');
     }
 
@@ -131,7 +131,7 @@ class JobWorkModeTest extends TestCase
                 'location' => 'Damascus',
             ])
             ->assertOk()
-            ->assertJsonPath('data.work_mode', JobWorkMode::HYBRID->value)
+            ->assertJsonPath('data.work_mode.key', JobWorkMode::HYBRID->value)
             ->assertJsonPath('data.location', 'Damascus');
     }
 
@@ -156,7 +156,7 @@ class JobWorkModeTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1, 'data.data')
             ->assertJsonPath('data.data.0.id', $remote->id)
-            ->assertJsonPath('data.data.0.work_mode', JobWorkMode::REMOTE->value);
+            ->assertJsonPath('data.data.0.work_mode.key', JobWorkMode::REMOTE->value);
     }
 
     public function test_public_on_site_filter_returns_only_on_site_jobs(): void
@@ -169,7 +169,7 @@ class JobWorkModeTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1, 'data.data')
             ->assertJsonPath('data.data.0.id', $onSite->id)
-            ->assertJsonPath('data.data.0.work_mode', JobWorkMode::ON_SITE->value);
+            ->assertJsonPath('data.data.0.work_mode.key', JobWorkMode::ON_SITE->value);
     }
 
     public function test_public_work_mode_filter_rejects_an_unknown_value(): void
@@ -264,8 +264,8 @@ class JobWorkModeTest extends TestCase
         $this->withToken($this->tokenFor($employer))
             ->postJson("/api/v1/jobs/{$jobPosting->id}/publish")
             ->assertOk()
-            ->assertJsonPath('data.status', 'open')
-            ->assertJsonPath('data.work_mode', JobWorkMode::REMOTE->value)
+            ->assertJsonPath('data.status.key', 'open')
+            ->assertJsonPath('data.work_mode.key', JobWorkMode::REMOTE->value)
             ->assertJsonPath('data.location', null);
     }
 

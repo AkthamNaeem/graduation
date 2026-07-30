@@ -7,6 +7,7 @@ use App\Enums\CompanyPermission;
 use App\Enums\CompanyRole;
 use App\Models\EmployerProfile;
 use App\Services\CompanyPermissionService;
+use App\Support\LocalizedValue;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -25,8 +26,8 @@ class CompanyMemberResource extends JsonResource
             'user_id' => $this->user_id,
             'name' => $this->user?->name,
             'email' => $this->user?->email,
-            'company_role' => $this->company_role->value,
-            'membership_status' => $this->membership_status->value,
+            'company_role' => LocalizedValue::make($this->company_role, 'company_roles'),
+            'membership_status' => LocalizedValue::make($this->membership_status, 'company_membership_statuses'),
             'joined_at' => $this->joined_at?->toISOString(),
             'suspended_at' => $this->suspended_at?->toISOString(),
             'removed_at' => $this->removed_at?->toISOString(),

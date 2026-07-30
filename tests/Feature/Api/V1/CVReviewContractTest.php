@@ -49,7 +49,7 @@ class CVReviewContractTest extends TestCase
                 'parsed_json', 'reviewed_json',
             ]]);
         $this->withToken($this->tokenFor($user))->getJson("/api/v1/cv/{$cvFile->id}")
-            ->assertOk()->assertJsonPath('data.next_action', 'review_draft');
+            ->assertOk()->assertJsonPath('data.next_action.key', 'review_draft');
     }
 
     public function test_generation_is_idempotent_and_never_suggests_deleting_absent_profile_items(): void
@@ -107,8 +107,8 @@ class CVReviewContractTest extends TestCase
         $this->withToken($token)->postJson("/api/v1/cv/{$cvFile->id}/suggestions/generate")->assertCreated();
         $suggestion = ProfileChangeSuggestion::firstOrFail();
 
-        $this->withToken($token)->postJson("/api/v1/profile/suggestions/{$suggestion->id}/reject")->assertOk()->assertJsonPath('data.status', 'rejected');
-        $this->withToken($token)->postJson("/api/v1/profile/suggestions/{$suggestion->id}/reject")->assertOk()->assertJsonPath('data.status', 'rejected');
+        $this->withToken($token)->postJson("/api/v1/profile/suggestions/{$suggestion->id}/reject")->assertOk()->assertJsonPath('data.status.key', 'rejected');
+        $this->withToken($token)->postJson("/api/v1/profile/suggestions/{$suggestion->id}/reject")->assertOk()->assertJsonPath('data.status.key', 'rejected');
         $this->withToken($token)->postJson("/api/v1/profile/suggestions/{$suggestion->id}/accept", ['edited_value' => ['phone' => 'B2']])->assertOk();
         $this->withToken($token)->postJson("/api/v1/profile/suggestions/{$suggestion->id}/accept", ['edited_value' => ['phone' => 'B3']])->assertOk()->assertJsonPath('data.user_edited_value.phone', 'B3');
         $this->withToken($token)->postJson("/api/v1/profile/suggestions/{$suggestion->id}/reject")->assertOk();
@@ -140,7 +140,9 @@ class CVReviewContractTest extends TestCase
 
         $data = $this->withToken($this->tokenFor($user))->getJson("/api/v1/cv/{$cvFile->id}/suggestions")
             ->assertOk()->json('data');
-        $byStatus = collect($data)->where('suggestion_type', 'update')->keyBy('status');
+        $byStatus = collect($data)
+            ->where('suggestion_type.key', 'update')
+            ->keyBy('status.key');
 
         foreach (['pending', 'accepted', 'rejected'] as $status) {
             $this->assertTrue($byStatus[$status]['can_accept']);
@@ -154,16 +156,19 @@ class CVReviewContractTest extends TestCase
             $this->assertFalse($byStatus['applied'][$capability]);
         }
 
-        $ignore = collect($data)->firstWhere('suggestion_type', 'ignore');
+        $ignore = collect($data)->firstWhere('suggestion_type.key', 'ignore');
         $this->assertFalse($ignore['is_actionable']);
-        $this->assertSame('matched_items', $ignore['display_group']);
+        $this->assertSame('matched_items', $ignore['display_group']['key']);
         foreach (['can_accept', 'can_reject', 'can_edit', 'can_apply'] as $capability) {
             $this->assertFalse($ignore[$capability]);
         }
         foreach (['add', 'merge', 'update'] as $type) {
-            $actionable = collect($data)->first(fn (array $item): bool => $item['suggestion_type'] === $type && $item['status'] === 'pending');
+            $actionable = collect($data)->first(
+                fn (array $item): bool => $item['suggestion_type']['key'] === $type
+                    && $item['status']['key'] === 'pending',
+            );
             $this->assertTrue($actionable['is_actionable']);
-            $this->assertSame('profile', $actionable['display_group']);
+            $this->assertSame('profile', $actionable['display_group']['key']);
         }
     }
 

@@ -61,14 +61,14 @@ class AdminApiTest extends TestCase
                 'role' => UserRole::EMPLOYER->value,
             ])
             ->assertOk()
-            ->assertJsonPath('data.role', UserRole::EMPLOYER->value);
+            ->assertJsonPath('data.role.key', UserRole::EMPLOYER->value);
 
         $this->withToken($this->tokenFor($admin))
             ->patchJson("/api/v1/admin/users/{$user->id}/status", [
                 'status' => 'suspended',
             ])
             ->assertOk()
-            ->assertJsonPath('data.status', 'suspended');
+            ->assertJsonPath('data.status.key', 'suspended');
 
         $this->assertDatabaseHas('users', [
             'id' => $user->id,
@@ -101,7 +101,7 @@ class AdminApiTest extends TestCase
         $this->withToken($this->tokenFor($admin))
             ->patchJson("/api/v1/admin/users/{$candidate->id}/suspend")
             ->assertOk()
-            ->assertJsonPath('data.status', 'suspended');
+            ->assertJsonPath('data.status.key', 'suspended');
 
         $this->assertDatabaseMissing('personal_access_tokens', [
             'tokenable_id' => $candidate->id,
@@ -110,7 +110,7 @@ class AdminApiTest extends TestCase
         $this->withToken($this->tokenFor($admin))
             ->patchJson("/api/v1/admin/users/{$candidate->id}/activate")
             ->assertOk()
-            ->assertJsonPath('data.status', 'active');
+            ->assertJsonPath('data.status.key', 'active');
 
         $this->assertDatabaseHas('audit_logs', [
             'action' => 'user.suspended',
@@ -155,12 +155,12 @@ class AdminApiTest extends TestCase
         $this->withToken($this->tokenFor($admin))
             ->patchJson("/api/v1/admin/companies/{$company->id}/approve")
             ->assertOk()
-            ->assertJsonPath('data.approval_status', 'approved');
+            ->assertJsonPath('data.approval_status.key', 'approved');
 
         $this->withToken($this->tokenFor($admin))
             ->patchJson("/api/v1/admin/companies/{$company->id}/reject")
             ->assertOk()
-            ->assertJsonPath('data.approval_status', 'rejected');
+            ->assertJsonPath('data.approval_status.key', 'rejected');
     }
 
     public function test_admin_can_suspend_company_and_company_status_changes_are_audited(): void
@@ -171,17 +171,17 @@ class AdminApiTest extends TestCase
         $this->withToken($this->tokenFor($admin))
             ->patchJson("/api/v1/admin/companies/{$company->id}/approve")
             ->assertOk()
-            ->assertJsonPath('data.approval_status', 'approved');
+            ->assertJsonPath('data.approval_status.key', 'approved');
 
         $this->withToken($this->tokenFor($admin))
             ->patchJson("/api/v1/admin/companies/{$company->id}/reject")
             ->assertOk()
-            ->assertJsonPath('data.approval_status', 'rejected');
+            ->assertJsonPath('data.approval_status.key', 'rejected');
 
         $this->withToken($this->tokenFor($admin))
             ->patchJson("/api/v1/admin/companies/{$company->id}/suspend")
             ->assertOk()
-            ->assertJsonPath('data.approval_status', 'suspended');
+            ->assertJsonPath('data.approval_status.key', 'suspended');
 
         $this->assertDatabaseHas('audit_logs', [
             'action' => 'company.approved',
@@ -230,7 +230,7 @@ class AdminApiTest extends TestCase
             ->getJson('/api/v1/admin/audit-logs?action=job.published')
             ->assertOk()
             ->assertJsonCount(1, 'data.data')
-            ->assertJsonPath('data.data.0.action', 'job.published');
+            ->assertJsonPath('data.data.0.action.key', 'job.published');
     }
 
     public function test_non_admin_cannot_list_audit_logs(): void
@@ -393,13 +393,15 @@ class AdminApiTest extends TestCase
             ->getJson('/api/v1/admin/reports/applications')
             ->assertOk()
             ->assertJsonPath('data.total', 1)
-            ->assertJsonPath('data.by_status.accepted', 1);
+            ->assertJsonPath('data.by_status.0.key', 'accepted')
+            ->assertJsonPath('data.by_status.0.count', 1);
 
         $this->withToken($this->tokenFor($admin))
             ->getJson('/api/v1/admin/reports/jobs')
             ->assertOk()
             ->assertJsonPath('data.total', 1)
-            ->assertJsonPath('data.by_status.open', 1);
+            ->assertJsonPath('data.by_status.0.key', 'open')
+            ->assertJsonPath('data.by_status.0.count', 1);
 
         $this->withToken($this->tokenFor($admin))
             ->getJson('/api/v1/admin/reports/cv-parsing')

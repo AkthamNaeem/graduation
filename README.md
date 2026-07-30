@@ -189,7 +189,29 @@ When the header is absent the API uses `APP_LOCALE`. When no supported
 language can be selected it uses `APP_FALLBACK_LOCALE`. Responses include
 `Content-Language` and `Vary: Accept-Language`.
 
-Machine-readable error codes, enum values, statuses, field names, pagination,
-and business rules remain stable. Only human-readable messages, labels,
-notification text, Home copy, validation text, and structured recommendation
-reasons are localized.
+Machine-readable error codes, request/filter values, field names, pagination,
+and business rules remain stable. System-controlled presentation values in API
+responses use one bilingual object contract:
+
+```json
+{
+  "employment_type": {
+    "key": "full_time",
+    "value": "Full time"
+  }
+}
+```
+
+With `Accept-Language: ar`, the `key` remains `full_time` and only `value`
+changes to `دوام كامل`. Clients must send and branch on `key`, never on the
+translated value. This applies to roles/statuses, job options, company
+membership, application workflow, CV/profile-suggestion state, tests,
+interviews, audit presentation data, and report distributions. Free text
+written by users or employers is returned unchanged.
+
+Legacy job input aliases `full-time`, `part-time`, `entry`, `entry-level`,
+`mid`, and `mid-level` are accepted and normalized to the canonical underscore
+keys. New writes store canonical values. Notification type identifiers,
+recommendation engine/model identifiers, structured AI reason codes, MIME
+types, URLs, and audit `entity_type` remain raw technical identifiers by
+design.

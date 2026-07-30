@@ -88,7 +88,7 @@ class InterviewModeTest extends TestCase
                 'reason' => 'Panel availability changed.',
             ])
             ->assertOk()
-            ->assertJsonPath('data.status', 'rescheduled')
+            ->assertJsonPath('data.status.key', 'rescheduled')
             ->assertJsonPath('data.meeting_link', null)
             ->assertJsonPath('data.location_text', 'Aleppo Office');
 

@@ -3,20 +3,11 @@
 namespace App\Support;
 
 use BackedEnum;
-use Illuminate\Support\Str;
 
-class EnumLabel
+final class EnumLabel
 {
-    public static function for(BackedEnum|string|null $value): ?string
+    public static function for(BackedEnum|string|null $value, string $group): ?string
     {
-        if ($value === null) {
-            return null;
-        }
-
-        $raw = $value instanceof BackedEnum ? (string) $value->value : $value;
-        $key = 'enums.values.'.$raw;
-        $translated = __($key);
-
-        return $translated === $key ? Str::headline($raw) : $translated;
+        return LocalizedValue::make($value, $group)['value'] ?? null;
     }
 }

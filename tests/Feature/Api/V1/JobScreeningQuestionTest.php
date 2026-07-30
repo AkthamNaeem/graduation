@@ -28,7 +28,7 @@ class JobScreeningQuestionTest extends TestCase
             ])
             ->assertCreated()
             ->assertJsonPath('data.question_text', 'Describe your Laravel experience.')
-            ->assertJsonPath('data.question_type', 'short_text')
+            ->assertJsonPath('data.question_type.key', 'short_text')
             ->assertJsonPath('data.is_required', true)
             ->assertJsonPath('data.sort_order', 1)
             ->assertJsonCount(0, 'data.options')
@@ -42,7 +42,7 @@ class JobScreeningQuestionTest extends TestCase
 
         $this->createQuestionThroughApi($owner, $job, 'long_text')
             ->assertCreated()
-            ->assertJsonPath('data.question_type', 'long_text');
+            ->assertJsonPath('data.question_type.key', 'long_text');
     }
 
     public function test_owner_creates_number_question(): void
@@ -51,7 +51,7 @@ class JobScreeningQuestionTest extends TestCase
 
         $this->createQuestionThroughApi($owner, $job, 'number')
             ->assertCreated()
-            ->assertJsonPath('data.question_type', 'number');
+            ->assertJsonPath('data.question_type.key', 'number');
     }
 
     public function test_owner_creates_boolean_question_without_synthetic_options(): void
@@ -60,7 +60,7 @@ class JobScreeningQuestionTest extends TestCase
 
         $this->createQuestionThroughApi($owner, $job, 'boolean')
             ->assertCreated()
-            ->assertJsonPath('data.question_type', 'boolean')
+            ->assertJsonPath('data.question_type.key', 'boolean')
             ->assertJsonCount(0, 'data.options');
     }
 
@@ -71,7 +71,7 @@ class JobScreeningQuestionTest extends TestCase
         $this->withToken($this->tokenFor($owner))
             ->postJson($this->questionsUrl($job), $this->choicePayload('single_choice'))
             ->assertCreated()
-            ->assertJsonPath('data.question_type', 'single_choice')
+            ->assertJsonPath('data.question_type.key', 'single_choice')
             ->assertJsonPath('data.options.0.option_text', 'Morning')
             ->assertJsonPath('data.options.1.option_text', 'Evening');
     }
@@ -83,7 +83,7 @@ class JobScreeningQuestionTest extends TestCase
         $this->withToken($this->tokenFor($owner))
             ->postJson($this->questionsUrl($job), $this->choicePayload('multiple_choice'))
             ->assertCreated()
-            ->assertJsonPath('data.question_type', 'multiple_choice');
+            ->assertJsonPath('data.question_type.key', 'multiple_choice');
     }
 
     public function test_creation_rejects_invalid_type_and_blank_text(): void

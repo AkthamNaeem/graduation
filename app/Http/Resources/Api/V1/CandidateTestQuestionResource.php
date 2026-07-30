@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Api\V1;
 
 use App\Models\TestQuestion;
+use App\Support\LocalizedValue;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -14,7 +15,7 @@ class CandidateTestQuestionResource extends JsonResource
         return [
             'id' => $this->id,
             'question_text' => $this->question_text,
-            'question_type' => $this->question_type?->value,
+            'question_type' => LocalizedValue::make($this->question_type, 'test_question_types'),
             'order_index' => $this->order_index,
             'is_required' => $this->is_required,
             'options' => CandidateTestOptionResource::collection($this->whenLoaded('options')),

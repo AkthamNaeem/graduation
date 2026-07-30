@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Enums\EmploymentType;
+use App\Enums\ExperienceLevel;
 use App\Enums\JobSkillRequirementType;
 use App\Enums\JobWorkMode;
 use App\Enums\UserRole;
@@ -374,11 +376,17 @@ class JobPostingService
         }
 
         if (filled($experienceLevel)) {
-            $query->where('experience_level', $experienceLevel);
+            $query->whereIn(
+                'experience_level',
+                ExperienceLevel::from($experienceLevel)->databaseValues(),
+            );
         }
 
         if (filled($employmentType)) {
-            $query->where('employment_type', $employmentType);
+            $query->whereIn(
+                'employment_type',
+                EmploymentType::from($employmentType)->databaseValues(),
+            );
         }
 
         if (filled($workMode)) {

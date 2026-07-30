@@ -3,6 +3,8 @@
 namespace App\Http\Requests\Api\V1\JobPosting;
 
 use App\Enums\EducationLevel;
+use App\Enums\EmploymentType;
+use App\Enums\ExperienceLevel;
 use App\Enums\JobWorkMode;
 use App\Models\JobPosting;
 use Illuminate\Validation\Rule;
@@ -30,8 +32,8 @@ class UpdateJobPostingRequest extends StoreJobPostingRequest
             'responsibilities' => ['sometimes', 'nullable', 'string', 'max:20000'],
             'requirements' => ['sometimes', 'required', 'string', 'max:20000'],
             'benefits' => ['sometimes', 'nullable', 'string', 'max:20000'],
-            'employment_type' => ['sometimes', 'required', 'string', 'max:255'],
-            'experience_level' => ['sometimes', 'required', 'string', 'max:255'],
+            'employment_type' => ['sometimes', 'required', Rule::enum(EmploymentType::class)],
+            'experience_level' => ['sometimes', 'required', Rule::enum(ExperienceLevel::class)],
             'education_level' => ['sometimes', 'nullable', Rule::enum(EducationLevel::class)],
             'location' => ['sometimes', 'nullable', 'string', 'max:255'],
             'work_mode' => ['sometimes', 'required', Rule::enum(JobWorkMode::class)],

@@ -47,7 +47,7 @@ class ApplicationPrivacyTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1, 'data.data')
             ->assertJsonPath('data.data.0.id', $application->id)
-            ->assertJsonPath('data.data.0.status.slug', 'under_review')
+            ->assertJsonPath('data.data.0.status.key', 'under_review')
             ->assertJsonPath('data.data.0.cover_letter', 'Candidate cover letter')
             ->assertJsonPath('data.data.0.screening_answers.availability', 'immediate')
             ->assertJsonPath('data.data.0.selected_cv.original_name', 'candidate.pdf');
@@ -58,7 +58,7 @@ class ApplicationPrivacyTest extends TestCase
             ->getJson("/api/v1/applications/{$application->id}")
             ->assertOk()
             ->assertJsonPath('data.id', $application->id)
-            ->assertJsonPath('data.status_history.1.to_status.slug', 'under_review');
+            ->assertJsonPath('data.status_history.1.to_status.key', 'under_review');
 
         $this->assertSafeApplication($details, 'data');
 
@@ -77,7 +77,7 @@ class ApplicationPrivacyTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.status_history.1.note', 'Internal hiring assessment.')
             ->assertJsonPath('data.status_history.1.changed_by.id', $employer->id)
-            ->assertJsonPath('data.status_history.1.changed_by.role', 'employer')
+            ->assertJsonPath('data.status_history.1.changed_by.role.key', 'employer')
             ->assertJsonMissingPath('data.status_history.1.changed_by.email');
 
         $this->withToken($this->tokenFor($otherEmployer))

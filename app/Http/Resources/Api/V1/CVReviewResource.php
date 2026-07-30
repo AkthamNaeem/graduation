@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Api\V1;
 
 use App\Models\CVFile;
+use App\Support\LocalizedValue;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -18,10 +19,10 @@ class CVReviewResource extends JsonResource
 
         return [
             'cv_file_id' => $this->id,
-            'parsing_status' => $this->status,
-            'review_mode' => $this->review_mode,
-            'review_status' => $this->review_status,
-            'next_action' => $this->nextAction(),
+            'parsing_status' => LocalizedValue::make($this->status, 'cv_parsing_statuses'),
+            'review_mode' => LocalizedValue::make($this->review_mode, 'cv_review_modes'),
+            'review_status' => LocalizedValue::make($this->review_status, 'cv_review_statuses'),
+            'next_action' => LocalizedValue::make($this->nextAction(), 'cv_next_actions'),
             'can_edit_draft' => $initialDraft,
             'can_generate_suggestions' => $this->review_mode === CVFile::REVIEW_MODE_PROFILE_SYNC
                 && $this->review_status === CVFile::REVIEW_STATUS_COMPARISON_PENDING

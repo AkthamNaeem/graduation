@@ -4,6 +4,7 @@ namespace App\Http\Resources\Api\V1;
 
 use App\Http\Resources\Api\V1\Concerns\ResolvesResourceViewer;
 use App\Models\ApplicationStatusHistory;
+use App\Support\LocalizedValue;
 use App\Support\SystemGeneratedText;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -34,7 +35,7 @@ class ApplicationStatusHistoryResource extends JsonResource
                 fn (): ?array => $this->changedBy === null ? null : [
                     'id' => $this->changedBy->id,
                     'name' => $this->changedBy->name,
-                    'role' => $this->changedBy->role?->value,
+                    'role' => LocalizedValue::make($this->changedBy->role, 'user_roles'),
                 ],
             ),
             'changed_at' => $this->created_at?->toISOString(),

@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests\Api\V1\JobPosting;
 
+use App\Enums\EmploymentType;
+use App\Enums\ExperienceLevel;
 use App\Enums\JobSkillRequirementType;
 use App\Enums\JobWorkMode;
 use Illuminate\Foundation\Http\FormRequest;
@@ -12,6 +14,19 @@ class IndexJobPostingRequest extends FormRequest
 {
     protected function prepareForValidation(): void
     {
+        $normalized = [];
+        if (is_string($this->input('employment_type'))) {
+            $normalized['employment_type'] = EmploymentType::normalize($this->input('employment_type'))?->value
+                ?? $this->input('employment_type');
+        }
+        if (is_string($this->input('experience_level'))) {
+            $normalized['experience_level'] = ExperienceLevel::normalize($this->input('experience_level'))?->value
+                ?? $this->input('experience_level');
+        }
+        if ($normalized !== []) {
+            $this->merge($normalized);
+        }
+
         if ($this->input('skill_requirement') === JobSkillRequirementType::OPTIONAL->value) {
             $this->merge(['skill_requirement' => JobSkillRequirementType::NICE_TO_HAVE->value]);
         }
@@ -38,8 +53,8 @@ class IndexJobPostingRequest extends FormRequest
             'search' => ['sometimes', 'nullable', 'string', 'max:255'],
             'location' => ['sometimes', 'nullable', 'string', 'max:255'],
             'skill' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'experience_level' => ['sometimes', 'nullable', 'string', 'max:255'],
-            'employment_type' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'experience_level' => ['sometimes', 'nullable', Rule::enum(ExperienceLevel::class)],
+            'employment_type' => ['sometimes', 'nullable', Rule::enum(EmploymentType::class)],
             'work_mode' => ['sometimes', 'nullable', Rule::enum(JobWorkMode::class)],
             'accepting_applications' => ['sometimes', 'boolean'],
             'skill_requirement' => ['sometimes', 'in:required,nice_to_have'],

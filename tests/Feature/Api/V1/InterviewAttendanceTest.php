@@ -34,7 +34,7 @@ class InterviewAttendanceTest extends TestCase
         $this->withToken($token)->putJson("/api/v1/interviews/{$interviewId}/attendance", $attendance)->assertOk();
         $this->withToken($token)->putJson("/api/v1/interviews/{$interviewId}/attendance", $attendance)->assertOk();
         $this->assertDatabaseCount('audit_logs', 3);
-        $this->withToken($token)->postJson("/api/v1/interviews/{$interviewId}/complete")->assertOk()->assertJsonPath('data.status', 'completed');
+        $this->withToken($token)->postJson("/api/v1/interviews/{$interviewId}/complete")->assertOk()->assertJsonPath('data.status.key', 'completed');
         $this->withToken($token)->postJson("/api/v1/interviews/{$interviewId}/complete")
             ->assertStatus(409)->assertJsonPath('code', 'INTERVIEW_COMPLETION_NOT_ALLOWED');
     }
@@ -53,7 +53,7 @@ class InterviewAttendanceTest extends TestCase
             ->assertStatus(409)->assertJsonPath('code', 'INTERVIEW_COMPLETION_NOT_ALLOWED');
         $this->withToken($this->tokenForInterviewUser($employer))->postJson("/api/v1/interviews/{$interviewId}/no-show", [
             'party' => 'candidate', 'reason' => 'Candidate did not attend.',
-        ])->assertOk()->assertJsonPath('data.status', 'no_show')->assertJsonPath('data.candidate_attendance_status', 'absent');
+        ])->assertOk()->assertJsonPath('data.status.key', 'no_show')->assertJsonPath('data.candidate_attendance_status.key', 'absent');
         $this->assertNotSame('rejected', $application->fresh()->applicationStatus->slug);
         $this->withToken($this->tokenForInterviewUser($employer))->postJson("/api/v1/interviews/{$interviewId}/evaluate", [
             'recommendation' => 'reject', 'items' => [['criterion' => 'Attendance', 'score' => 1]],
@@ -69,8 +69,8 @@ class InterviewAttendanceTest extends TestCase
             $response = $this->withToken($this->tokenForInterviewUser($employer))->postJson("/api/v1/interviews/{$interviewId}/no-show", [
                 'party' => $party, 'reason' => 'Recorded after start.',
             ])->assertOk();
-            $response->assertJsonPath('data.interviewer_attendance_status', 'absent');
-            $response->assertJsonPath('data.candidate_attendance_status', $party === 'both' ? 'absent' : 'present');
+            $response->assertJsonPath('data.interviewer_attendance_status.key', 'absent');
+            $response->assertJsonPath('data.candidate_attendance_status.key', $party === 'both' ? 'absent' : 'present');
             Carbon::setTestNow();
         }
     }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Support\LocalizedValue;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -12,7 +13,7 @@ class JobScreeningQuestionResource extends JsonResource
         return [
             'id' => $this->id,
             'question_text' => $this->question_text,
-            'question_type' => $this->question_type->value,
+            'question_type' => LocalizedValue::make($this->question_type, 'screening_question_types'),
             'is_required' => $this->is_required,
             'sort_order' => $this->sort_order,
             'options' => JobScreeningQuestionOptionResource::collection($this->whenLoaded('options')),

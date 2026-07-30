@@ -5,6 +5,7 @@ namespace App\Http\Resources\Api\V1;
 use App\Enums\UserRole;
 use App\Models\TestAttempt;
 use App\Services\TestAttemptTimingService;
+use App\Support\LocalizedValue;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Laravel\Sanctum\PersonalAccessToken;
@@ -38,7 +39,7 @@ class TestAttemptResource extends JsonResource
             'can_edit_answers' => $this->submitted_at === null && ! $expired,
             'can_submit' => $this->submitted_at === null && ! $expired,
             'answers' => TestAnswerResource::collection($this->whenLoaded('testAnswers')),
-            'grading_status' => $this->grading_status?->value,
+            'grading_status' => LocalizedValue::make($this->grading_status, 'test_grading_statuses'),
             'objective_score' => $this->objective_score,
             'objective_max_score' => $this->objective_max_score,
             'manual_score' => $this->manual_score,

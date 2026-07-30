@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Api\V1;
 
 use App\Models\EmployerProfile;
+use App\Support\LocalizedValue;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -18,8 +19,8 @@ class EmployerProfileResource extends JsonResource
             'id' => $this->id,
             'user_id' => $this->user_id,
             'company_id' => $this->company_id,
-            'company_role' => $this->company_role?->value,
-            'membership_status' => $this->membership_status?->value,
+            'company_role' => LocalizedValue::make($this->company_role, 'company_roles'),
+            'membership_status' => LocalizedValue::make($this->membership_status, 'company_membership_statuses'),
             'joined_at' => $this->joined_at?->toISOString(),
             'suspended_at' => $this->suspended_at?->toISOString(),
             'removed_at' => $this->removed_at?->toISOString(),

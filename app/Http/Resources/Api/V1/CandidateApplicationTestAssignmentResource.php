@@ -5,6 +5,7 @@ namespace App\Http\Resources\Api\V1;
 use App\Models\ApplicationTestAssignment;
 use App\Models\TestAttempt;
 use App\Services\TestAttemptTimingService;
+use App\Support\LocalizedValue;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -42,7 +43,7 @@ class CandidateApplicationTestAssignmentResource extends JsonResource
             'is_expired' => $expired,
             'remaining_seconds' => $this->remainingSeconds(),
             'can_start' => $latest && ! $attempt instanceof TestAttempt && ! $expired,
-            'state' => $this->state($attempt),
+            'state' => LocalizedValue::make($this->state($attempt), 'test_assignment_states'),
             'test' => CandidateAssignedTestSummaryResource::make($this->whenLoaded('test')),
             'attempt' => $attempt instanceof TestAttempt ? [
                 'id' => $attempt->id,
@@ -54,7 +55,7 @@ class CandidateApplicationTestAssignmentResource extends JsonResource
                 'can_edit_answers' => $attempt->submitted_at === null && ! $timeExpired,
                 'can_submit' => $attempt->submitted_at === null && ! $timeExpired,
                 'submitted_at' => $attempt->submitted_at?->toISOString(),
-                'grading_status' => $attempt->grading_status?->value,
+                'grading_status' => LocalizedValue::make($attempt->grading_status, 'test_grading_statuses'),
                 'questions_url' => "/api/v1/test-attempts/{$attempt->id}/questions",
             ] : null,
         ];

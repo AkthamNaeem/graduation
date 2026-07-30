@@ -3,6 +3,8 @@
 namespace App\Http\Requests\Api\V1\JobPosting;
 
 use App\Enums\EducationLevel;
+use App\Enums\EmploymentType;
+use App\Enums\ExperienceLevel;
 use App\Enums\JobWorkMode;
 use App\Enums\UserRole;
 use App\Http\Requests\Api\V1\JobPosting\Concerns\NormalizesJobSkillInput;
@@ -22,6 +24,7 @@ class StoreJobPostingRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $this->normalizeJobSkillInput();
+        $this->normalizeJobCategories();
         $deadline = $this->input('application_deadline');
         if (! is_string($deadline)) {
             return;
@@ -33,6 +36,25 @@ class StoreJobPostingRequest extends FormRequest
             ]);
         } catch (Throwable) {
             // Keep the original input so the date validation rule returns the API error.
+        }
+    }
+
+    private function normalizeJobCategories(): void
+    {
+        $normalized = [];
+
+        if (is_string($this->input('employment_type'))) {
+            $normalized['employment_type'] = EmploymentType::normalize($this->input('employment_type'))?->value
+                ?? $this->input('employment_type');
+        }
+
+        if (is_string($this->input('experience_level'))) {
+            $normalized['experience_level'] = ExperienceLevel::normalize($this->input('experience_level'))?->value
+                ?? $this->input('experience_level');
+        }
+
+        if ($normalized !== []) {
+            $this->merge($normalized);
         }
     }
 
@@ -57,8 +79,8 @@ class StoreJobPostingRequest extends FormRequest
             'responsibilities' => ['sometimes', 'nullable', 'string', 'max:20000'],
             'requirements' => ['required', 'string', 'max:20000'],
             'benefits' => ['sometimes', 'nullable', 'string', 'max:20000'],
-            'employment_type' => ['required', 'string', 'max:255'],
-            'experience_level' => ['required', 'string', 'max:255'],
+            'employment_type' => ['required', Rule::enum(EmploymentType::class)],
+            'experience_level' => ['required', Rule::enum(ExperienceLevel::class)],
             'education_level' => ['sometimes', 'nullable', Rule::enum(EducationLevel::class)],
             'location' => ['sometimes', 'nullable', 'string', 'max:255'],
             'work_mode' => ['required', Rule::enum(JobWorkMode::class)],

@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Api\V1;
 
 use App\Http\Resources\Api\V1\Concerns\ResolvesResourceViewer;
+use App\Support\LocalizedValue;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -50,7 +51,10 @@ class JobApplicationResource extends JsonResource
                 $this->relationLoaded('latestInformationRequest'),
                 fn (): ?array => $this->latestInformationRequest === null ? null : [
                     'id' => $this->latestInformationRequest->id,
-                    'status' => $this->latestInformationRequest->status?->value,
+                    'status' => LocalizedValue::make(
+                        $this->latestInformationRequest->status,
+                        'application_information_request_statuses',
+                    ),
                     'due_at' => $this->latestInformationRequest->due_at?->toISOString(),
                     'is_expired' => $this->latestInformationRequest->isExpired(),
                     'can_respond' => ! $manager && $this->latestInformationRequest->canBeRespondedTo(),

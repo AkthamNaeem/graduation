@@ -36,10 +36,17 @@ class JobPostingTest extends TestCase
             ])
             ->assertCreated()
             ->assertJsonPath('success', true)
-            ->assertJsonPath('data.status', 'draft')
+            ->assertJsonPath('data.status.key', 'draft')
+            ->assertJsonPath('data.employment_type.key', 'full_time')
+            ->assertJsonPath('data.experience_level.key', 'mid_level')
             ->assertJsonPath('data.company_id', $user->employerProfile->company_id);
 
         $jobId = $createResponse->json('data.id');
+        $this->assertDatabaseHas('job_postings', [
+            'id' => $jobId,
+            'employment_type' => 'full_time',
+            'experience_level' => 'mid_level',
+        ]);
 
         $this->withToken($this->tokenFor($user))
             ->getJson('/api/v1/jobs/my')
@@ -128,7 +135,7 @@ class JobPostingTest extends TestCase
         $this->withToken($this->tokenFor($user))
             ->postJson("/api/v1/jobs/{$jobPosting->id}/publish")
             ->assertOk()
-            ->assertJsonPath('data.status', 'open');
+            ->assertJsonPath('data.status.key', 'open');
 
         $this->assertNotNull($jobPosting->refresh()->published_at);
         $this->assertDatabaseHas('audit_logs', [
@@ -141,12 +148,12 @@ class JobPostingTest extends TestCase
         $this->withToken($this->tokenFor($user))
             ->postJson("/api/v1/jobs/{$jobPosting->id}/close")
             ->assertOk()
-            ->assertJsonPath('data.status', 'closed');
+            ->assertJsonPath('data.status.key', 'closed');
 
         $this->withToken($this->tokenFor($user))
             ->postJson("/api/v1/jobs/{$jobPosting->id}/publish")
             ->assertOk()
-            ->assertJsonPath('data.status', 'open');
+            ->assertJsonPath('data.status.key', 'open');
     }
 
     public function test_pending_company_employer_cannot_publish_job(): void
@@ -209,7 +216,7 @@ class JobPostingTest extends TestCase
         $this->withToken($this->tokenFor($user))
             ->postJson("/api/v1/jobs/{$jobPosting->id}/publish")
             ->assertOk()
-            ->assertJsonPath('data.status', 'open');
+            ->assertJsonPath('data.status.key', 'open');
     }
 
     public function test_public_visibility_and_mutation_authorization_are_enforced(): void

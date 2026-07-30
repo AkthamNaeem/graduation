@@ -45,11 +45,11 @@ class CompanyStateTest extends TestCase
             $this->app['auth']->forgetGuards();
 
             $this->withToken($token)->getJson('/api/v1/auth/me')
-                ->assertOk()->assertJsonPath('data.employer_profile.company.approval_status', $status);
+                ->assertOk()->assertJsonPath('data.employer_profile.company.approval_status.key', $status);
             $this->withToken($token)->getJson('/api/v1/company')
-                ->assertOk()->assertJsonPath('data.approval_status', $status);
+                ->assertOk()->assertJsonPath('data.approval_status.key', $status);
             $this->withToken($token)->putJson('/api/v1/company', ['description' => 'Corrected company profile.'])
-                ->assertOk()->assertJsonPath('data.approval_status', $status);
+                ->assertOk()->assertJsonPath('data.approval_status.key', $status);
             $this->withToken($token)->postJson('/api/v1/jobs', [])
                 ->assertForbidden()->assertJsonPath('code', $code);
 
@@ -160,7 +160,7 @@ class CompanyStateTest extends TestCase
             ->assertForbidden()->assertJsonPath('code', 'COMPANY_RECRUITMENT_UNAVAILABLE');
 
         $this->withToken($token)->postJson("/api/v1/applications/{$application->id}/withdraw")
-            ->assertOk()->assertJsonPath('data.status.slug', 'withdrawn');
+            ->assertOk()->assertJsonPath('data.status.key', 'withdrawn');
         $this->assertDatabaseCount('test_attempts', 1);
         $this->assertDatabaseCount('test_answers', 0);
     }

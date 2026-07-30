@@ -2,7 +2,9 @@
 
 namespace App\Http\Resources\Api\V1\Home;
 
+use App\Enums\EmploymentType;
 use App\Models\JobPosting;
+use App\Support\LocalizedValue;
 use App\Support\Recommendation\RecommendationReasonTranslator;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -27,8 +29,11 @@ class HomeJobResource extends JsonResource
                 'logo_url' => null,
             ],
             'location' => $job->location,
-            'work_mode' => $job->work_mode?->value ?? $job->work_mode,
-            'employment_type' => $job->employment_type,
+            'work_mode' => LocalizedValue::make($job->work_mode, 'job_work_modes'),
+            'employment_type' => LocalizedValue::make(
+                EmploymentType::normalize((string) $job->employment_type),
+                'employment_types',
+            ),
             'published_at' => $job->published_at?->toISOString(),
         ];
 

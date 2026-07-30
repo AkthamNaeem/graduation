@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Api\V1;
 
 use App\Models\Company;
+use App\Support\LocalizedValue;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -21,7 +22,7 @@ class CompanyResource extends JsonResource
             'website' => $this->website,
             'location' => $this->location,
             'description' => $this->description,
-            'approval_status' => $this->approval_status,
+            'approval_status' => LocalizedValue::make($this->approval_status, 'company_approval_statuses'),
             'has_owner' => $this->when(
                 array_key_exists('owner_count', $this->resource->getAttributes()),
                 fn (): bool => (int) $this->owner_count > 0,

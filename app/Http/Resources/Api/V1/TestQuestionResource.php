@@ -2,10 +2,12 @@
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Models\TestQuestion;
+use App\Support\LocalizedValue;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin \App\Models\TestQuestion */
+/** @mixin TestQuestion */
 class TestQuestionResource extends JsonResource
 {
     public function toArray(Request $request): array
@@ -14,7 +16,7 @@ class TestQuestionResource extends JsonResource
             'id' => $this->id,
             'test_id' => $this->test_id,
             'question_text' => $this->question_text,
-            'question_type' => $this->question_type?->value,
+            'question_type' => LocalizedValue::make($this->question_type, 'test_question_types'),
             'order_index' => $this->order_index,
             'points' => $this->points,
             'is_required' => $this->is_required,

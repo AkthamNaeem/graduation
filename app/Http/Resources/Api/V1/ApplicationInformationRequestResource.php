@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Api\V1;
 
 use App\Http\Resources\Api\V1\Concerns\ResolvesResourceViewer;
+use App\Support\LocalizedValue;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -20,10 +21,13 @@ class ApplicationInformationRequestResource extends JsonResource
             'message' => $this->message,
             'requested_items' => ApplicationInformationRequestItemResource::collection($this->whenLoaded('items')),
             'due_at' => $this->due_at?->toISOString(),
-            'status' => $this->status?->value,
+            'status' => LocalizedValue::make($this->status, 'application_information_request_statuses'),
             'is_expired' => $this->isExpired(),
             'can_respond' => ! $manager && $this->canBeRespondedTo(),
-            'previous_application_status' => $this->when($manager, $this->previous_application_status),
+            'previous_application_status' => $this->when(
+                $manager,
+                fn () => LocalizedValue::make($this->previous_application_status, 'application_statuses'),
+            ),
             'requested_by' => $this->when($manager && $this->relationLoaded('requestedBy'), fn () => $this->requestedBy === null ? null : ['id' => $this->requestedBy->id, 'name' => $this->requestedBy->name]),
             'responded_at' => $this->responded_at?->toISOString(),
             'cancelled_at' => $this->cancelled_at?->toISOString(),

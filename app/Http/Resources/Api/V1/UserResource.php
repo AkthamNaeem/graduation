@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Api\V1;
 
 use App\Models\User;
+use App\Support\LocalizedValue;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -18,8 +19,8 @@ class UserResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
-            'role' => $this->role?->value ?? $this->role,
-            'status' => $this->status?->value ?? $this->status,
+            'role' => LocalizedValue::make($this->role, 'user_roles'),
+            'status' => LocalizedValue::make($this->status, 'user_statuses'),
             'email_verified_at' => $this->email_verified_at?->toISOString(),
             'is_email_verified' => $this->email_verified_at !== null,
             'job_seeker_profile' => $this->when(

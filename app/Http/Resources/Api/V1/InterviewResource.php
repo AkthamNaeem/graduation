@@ -4,6 +4,7 @@ namespace App\Http\Resources\Api\V1;
 
 use App\Http\Resources\Api\V1\Concerns\ResolvesResourceViewer;
 use App\Models\Interview;
+use App\Support\LocalizedValue;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -22,11 +23,11 @@ class InterviewResource extends JsonResource
         return [
             'id' => $this->id,
             'job_application_id' => $this->job_application_id,
-            'type' => $this->interview_type,
-            'interview_type' => $this->interview_type,
-            'mode' => $this->interview_mode,
-            'interview_mode' => $this->interview_mode,
-            'status' => $this->status,
+            'type' => LocalizedValue::make($this->interview_type, 'interview_types'),
+            'interview_type' => LocalizedValue::make($this->interview_type, 'interview_types'),
+            'mode' => LocalizedValue::make($this->interview_mode, 'interview_modes'),
+            'interview_mode' => LocalizedValue::make($this->interview_mode, 'interview_modes'),
+            'status' => LocalizedValue::make($this->status, 'interview_statuses'),
             'scheduled_start_at' => $this->scheduled_at?->toISOString(),
             'scheduled_end_at' => $this->scheduled_end_at?->toISOString(),
             'scheduled_at' => $this->scheduled_at?->toISOString(),
@@ -36,8 +37,14 @@ class InterviewResource extends JsonResource
             'location' => $this->when($manager || $this->interview_mode === 'on_site', $this->location),
             'meeting_link' => $this->when($manager || $this->interview_mode === 'online', $this->meeting_link),
             'candidate_message' => $this->candidate_message,
-            'candidate_confirmation_status' => $this->confirmed_at !== null ? 'confirmed' : 'pending',
-            'candidate_attendance_status' => $this->candidate_attendance_status,
+            'candidate_confirmation_status' => LocalizedValue::make(
+                $this->confirmed_at !== null ? 'confirmed' : 'pending',
+                'interview_confirmation_statuses',
+            ),
+            'candidate_attendance_status' => LocalizedValue::make(
+                $this->candidate_attendance_status,
+                'interview_attendance_statuses',
+            ),
             'scheduled_by_user_id' => $this->when($manager, $this->scheduled_by_user_id),
             'confirmed_by_user_id' => $this->when($manager, $this->confirmed_by_user_id),
             'completed_by_user_id' => $this->when($manager, $this->completed_by_user_id),
@@ -48,13 +55,16 @@ class InterviewResource extends JsonResource
             'completion_note' => $this->when($manager, $this->completion_note),
             'cancellation_reason' => $this->when($manager, $this->cancellation_reason),
             'cancellation_message' => $this->cancellation_message,
-            'interviewer_attendance_status' => $this->when($manager, $this->interviewer_attendance_status),
+            'interviewer_attendance_status' => $this->when(
+                $manager,
+                fn () => LocalizedValue::make($this->interviewer_attendance_status, 'interview_attendance_statuses'),
+            ),
             'attendance_note' => $this->when($manager, $this->attendance_note),
             'confirmed_at' => $this->confirmed_at?->toISOString(),
             'completed_at' => $this->completed_at?->toISOString(),
             'cancelled_at' => $this->cancelled_at?->toISOString(),
             'attendance_recorded_at' => $this->attendance_recorded_at?->toISOString(),
-            'state' => $this->status,
+            'state' => LocalizedValue::make($this->status, 'interview_statuses'),
             'evaluation' => $this->when(
                 $manager && $this->relationLoaded('evaluation'),
                 fn () => new InterviewEvaluationResource($this->evaluation),

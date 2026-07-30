@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Api\V1;
 
 use App\Models\Company;
+use App\Support\LocalizedValue;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -15,7 +16,7 @@ class CompanyTeamResource extends JsonResource
             'company' => [
                 'id' => $this->id,
                 'name' => $this->name,
-                'approval_status' => $this->approval_status,
+                'approval_status' => LocalizedValue::make($this->approval_status, 'company_approval_statuses'),
             ],
             'members' => CompanyMemberResource::collection($this->whenLoaded('employerProfiles')),
         ];

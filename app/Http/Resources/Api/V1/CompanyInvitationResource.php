@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Api\V1;
 
 use App\Models\CompanyInvitation;
+use App\Support\LocalizedValue;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -15,8 +16,8 @@ class CompanyInvitationResource extends JsonResource
             'id' => $this->id,
             'company_id' => $this->company_id,
             'email' => $this->email,
-            'company_role' => $this->company_role->value,
-            'status' => $this->status->value,
+            'company_role' => LocalizedValue::make($this->company_role, 'company_roles'),
+            'status' => LocalizedValue::make($this->status, 'company_invitation_statuses'),
             'expires_at' => $this->expires_at?->toISOString(),
             'accepted_at' => $this->accepted_at?->toISOString(),
             'rejected_at' => $this->rejected_at?->toISOString(),

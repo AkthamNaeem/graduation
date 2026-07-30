@@ -50,7 +50,7 @@ class TestGradingModuleTest extends TestCase
 
         $historyBefore = $scenario['application']->statusHistory()->count();
         $this->submit($scenario['candidate'], $data['assignment'])->assertOk()
-            ->assertJsonPath('data.grading_status', 'auto_graded')
+            ->assertJsonPath('data.grading_status.key', 'auto_graded')
             ->assertJsonPath('data.objective_score', '4.00')
             ->assertJsonPath('data.objective_max_score', '9.00')
             ->assertJsonPath('data.total_score', '4.00')
@@ -154,7 +154,7 @@ class TestGradingModuleTest extends TestCase
         ]);
 
         $this->submit($scenario['candidate'], $data['assignment'])->assertOk()
-            ->assertJsonPath('data.grading_status', 'manual_grading_required')
+            ->assertJsonPath('data.grading_status.key', 'manual_grading_required')
             ->assertJsonPath('data.objective_score', '3.00')
             ->assertJsonPath('data.objective_max_score', '6.00')
             ->assertJsonPath('data.manual_score', null)
@@ -179,7 +179,7 @@ class TestGradingModuleTest extends TestCase
                 'feedback' => 'Legacy overall evaluation.',
             ])->assertOk()
             ->assertJsonPath('data.score', '12.00')
-            ->assertJsonPath('data.grading_status', 'manual_grading_required')
+            ->assertJsonPath('data.grading_status.key', 'manual_grading_required')
             ->assertJsonPath('data.manual_score', null)
             ->assertJsonPath('data.total_score', null)
             ->assertJsonPath('data.percentage', null);

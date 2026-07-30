@@ -42,7 +42,7 @@ class JobApplicationTest extends TestCase
             ->assertJsonPath('data.job_posting_id', $jobPosting->id)
             ->assertJsonPath('data.job_seeker_profile_id', $jobSeeker->jobSeekerProfile->id)
             ->assertJsonPath('data.selected_cv_file_id', $payload['selected_cv_file_id'])
-            ->assertJsonPath('data.status.slug', 'submitted');
+            ->assertJsonPath('data.status.key', 'submitted');
 
         $this->assertDatabaseHas('job_applications', [
             'id' => $response->json('data.id'),
@@ -130,7 +130,7 @@ class JobApplicationTest extends TestCase
                 'note' => 'Profile looks strong.',
             ])
             ->assertOk()
-            ->assertJsonPath('data.status.slug', 'under_review')
+            ->assertJsonPath('data.status.key', 'under_review')
             ->assertJsonCount(2, 'data.status_history');
     }
 
@@ -144,7 +144,7 @@ class JobApplicationTest extends TestCase
         $this->withToken($this->tokenFor($jobSeeker))
             ->postJson("/api/v1/applications/{$application->id}/withdraw", ['note' => 'Accepted another offer.'])
             ->assertOk()
-            ->assertJsonPath('data.status.slug', 'withdrawn');
+            ->assertJsonPath('data.status.key', 'withdrawn');
     }
 
     private function employer(string $email = 'employer@example.com', ?Company $company = null): User

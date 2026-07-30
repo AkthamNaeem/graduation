@@ -2,10 +2,12 @@
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Models\ApplicationStatus;
+use App\Support\LocalizedValue;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin \App\Models\ApplicationStatus */
+/** @mixin ApplicationStatus */
 class ApplicationStatusResource extends JsonResource
 {
     /**
@@ -15,8 +17,8 @@ class ApplicationStatusResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'name' => $this->name,
-            'slug' => $this->slug,
+            'key' => $this->slug,
+            'value' => LocalizedValue::make($this->slug, 'application_statuses')['value'],
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

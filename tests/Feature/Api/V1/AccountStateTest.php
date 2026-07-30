@@ -45,7 +45,7 @@ class AccountStateTest extends TestCase
                 ? $request->patchJson("/api/v1/admin/users/{$target->id}/status", ['status' => 'suspended'])
                 : $request->patchJson("/api/v1/admin/users/{$target->id}/suspend");
 
-            $response->assertOk()->assertJsonPath('data.status', 'suspended');
+            $response->assertOk()->assertJsonPath('data.status.key', 'suspended');
             $this->assertSame(0, $target->tokens()->count());
 
             $audit = AuditLog::query()

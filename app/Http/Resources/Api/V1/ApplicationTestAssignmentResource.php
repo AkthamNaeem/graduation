@@ -6,6 +6,7 @@ use App\Enums\UserRole;
 use App\Models\ApplicationTestAssignment;
 use App\Models\TestAttempt;
 use App\Services\TestAttemptTimingService;
+use App\Support\LocalizedValue;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Laravel\Sanctum\PersonalAccessToken;
@@ -63,7 +64,7 @@ class ApplicationTestAssignmentResource extends JsonResource
             'can_submit' => $attempt instanceof TestAttempt && $attempt->submitted_at === null && ! $expired,
             'extension_count' => $this->when($manager, fn (): int => $this->deadlineChanges->count()),
             'latest_extension_at' => $this->when($manager, fn (): ?string => $this->deadlineChanges->max('created_at')?->toISOString()),
-            'state' => $this->state(),
+            'state' => LocalizedValue::make($this->state(), 'test_assignment_states'),
             'test' => TestResource::make($this->whenLoaded('test')),
             'attempt' => TestAttemptResource::make($this->whenLoaded('testAttempt')),
             'job_application' => JobApplicationResource::make($this->whenLoaded('jobApplication')),

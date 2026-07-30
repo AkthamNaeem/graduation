@@ -227,7 +227,7 @@ class MatchingTest extends TestCase
             ->assertJsonPath('data.0.job_application_id', $topApplication->id)
             ->assertJsonPath('data.1.job_application_id', $tieApplicationOne->id)
             ->assertJsonPath('data.2.job_application_id', $tieApplicationTwo->id)
-            ->assertJsonPath('data.0.application_status.slug', 'under_review')
+            ->assertJsonPath('data.0.application_status.key', 'under_review')
             ->assertJsonPath('data.0.job_seeker_profile.id', $topCandidate->jobSeekerProfile->id)
             ->assertJsonPath('data.0.matched_skills.0', 'Laravel')
             ->assertJsonPath('data.0.matched_skills.1', 'MySQL')

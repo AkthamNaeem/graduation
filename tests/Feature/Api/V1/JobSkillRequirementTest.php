@@ -28,8 +28,15 @@ class JobSkillRequirementTest extends TestCase
             ['skill_id' => $required->id, 'requirement_type' => 'required'],
             ['skill_id' => $optional->id, 'requirement_type' => 'optional'],
         ]])->assertOk()
-            ->assertJsonFragment(['id' => $required->id, 'requirement_type' => 'required', 'weight' => 1])
-            ->assertJsonFragment(['id' => $optional->id, 'requirement_type' => 'nice_to_have', 'weight' => 1]);
+            ->assertJsonFragment([
+                'id' => $required->id,
+                'requirement_type' => ['key' => 'required', 'value' => 'Required'],
+                'weight' => 1,
+            ])->assertJsonFragment([
+                'id' => $optional->id,
+                'requirement_type' => ['key' => 'nice_to_have', 'value' => 'Nice to have'],
+                'weight' => 1,
+            ]);
         $this->assertDatabaseHas('audit_logs', ['action' => 'job.skills_updated', 'entity_id' => $job->id]);
 
         $this->withToken($token)->postJson("/api/v1/jobs/{$job->id}/skills", ['skills' => [

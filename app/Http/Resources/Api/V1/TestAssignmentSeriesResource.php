@@ -4,11 +4,13 @@ namespace App\Http\Resources\Api\V1;
 
 use App\Enums\UserRole;
 use App\Models\ApplicationTestAssignment;
+use App\Support\LocalizedValue;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Laravel\Sanctum\PersonalAccessToken;
 
-/** @mixin array{root:ApplicationTestAssignment, assignments:\Illuminate\Database\Eloquent\Collection} */
+/** @mixin array{root:ApplicationTestAssignment, assignments:Collection} */
 class TestAssignmentSeriesResource extends JsonResource
 {
     public function toArray(Request $request): array
@@ -35,7 +37,10 @@ class TestAssignmentSeriesResource extends JsonResource
                     'attempt_number' => $assignment->attempt_number,
                     'deadline_at' => $assignment->deadline_at?->toISOString(),
                     'submitted_at' => $attempt?->submitted_at?->toISOString(),
-                    'grading_status' => $attempt?->grading_status?->value ?? 'pending',
+                    'grading_status' => LocalizedValue::make(
+                        $attempt?->grading_status ?? 'pending',
+                        'test_grading_statuses',
+                    ),
                     'percentage' => $attempt?->percentage,
                     'is_latest' => $assignment->id === $latest?->id,
                     'is_superseded' => $assignment->id !== $latest?->id,

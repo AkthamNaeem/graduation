@@ -26,9 +26,9 @@ class JobSkillWeightTest extends TestCase
             'nice_to_have_skills' => [['skill_id' => $nice->id]],
         ])->assertOk()
             ->assertJsonPath('data.required_skills.0.weight', 5)
-            ->assertJsonPath('data.required_skills.0.requirement_type', 'required')
+            ->assertJsonPath('data.required_skills.0.requirement_type.key', 'required')
             ->assertJsonPath('data.nice_to_have_skills.0.weight', 1)
-            ->assertJsonPath('data.nice_to_have_skills.0.requirement_type', 'nice_to_have');
+            ->assertJsonPath('data.nice_to_have_skills.0.requirement_type.key', 'nice_to_have');
 
         $this->assertDatabaseHas('job_posting_skills', ['skill_id' => $required->id, 'weight' => 5]);
         $this->assertDatabaseHas('job_posting_skills', ['skill_id' => $nice->id, 'weight' => 1]);
@@ -49,7 +49,7 @@ class JobSkillWeightTest extends TestCase
             'required_skills' => [['skill_id' => $required->id, 'weight' => 5]],
             'nice_to_have_skills' => [['skill_id' => $nice->id, 'weight' => 2]],
         ])->assertCreated()
-            ->assertJsonPath('data.education_level', 'bachelor')
+            ->assertJsonPath('data.education_level.key', 'bachelor')
             ->assertJsonCount(1, 'data.required_skills')
             ->assertJsonCount(1, 'data.nice_to_have_skills')
             ->json('data.id');

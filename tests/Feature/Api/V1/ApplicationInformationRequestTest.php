@@ -39,7 +39,7 @@ class ApplicationInformationRequestTest extends TestCase
         [$company,$employer,$candidate,$application] = $this->context('under_review');
         $response = $this->withToken($this->token($employer))->postJson("/api/v1/applications/{$application->id}/information-requests", $this->payload());
 
-        $response->assertCreated()->assertJsonPath('data.status', 'pending')->assertJsonPath('data.requested_items.0.order_index', 0)->assertJsonPath('data.previous_application_status', 'under_review');
+        $response->assertCreated()->assertJsonPath('data.status.key', 'pending')->assertJsonPath('data.requested_items.0.order_index', 0)->assertJsonPath('data.previous_application_status.key', 'under_review');
         $requestId = $response->json('data.id');
         $this->assertDatabaseHas('application_information_requests', ['id' => $requestId, 'previous_application_status' => 'under_review', 'status' => 'pending']);
         $this->assertDatabaseHas('job_applications', ['id' => $application->id, 'application_status_id' => $this->statusId('need_more_information')]);
@@ -85,7 +85,7 @@ class ApplicationInformationRequestTest extends TestCase
         $file = UploadedFile::fake()->create('certificate.pdf', 100, 'application/pdf');
 
         $response = $this->withToken($this->token($candidate))->post("/api/v1/information-requests/{$request->id}/respond", ['message' => '  Attached as requested.  ', 'attachments' => [$file]], ['Accept' => 'application/json']);
-        $response->assertCreated()->assertJsonPath('data.status', 'responded')->assertJsonPath('data.response.message', 'Attached as requested.')->assertJsonMissingPath('data.response.attachments.0.stored_path')->assertJsonMissingPath('data.response.attachments.0.disk');
+        $response->assertCreated()->assertJsonPath('data.status.key', 'responded')->assertJsonPath('data.response.message', 'Attached as requested.')->assertJsonMissingPath('data.response.attachments.0.stored_path')->assertJsonMissingPath('data.response.attachments.0.disk');
         $attachmentId = $response->json('data.response.attachments.0.id');
         $attachment = ApplicationInformationResponseAttachment::findOrFail($attachmentId);
         $this->assertSame('s3', $attachment->disk);
@@ -132,7 +132,7 @@ class ApplicationInformationRequestTest extends TestCase
         event(new ApplicationInformationRequestUpdated($request->id, $updateOccurrence));
         event(new ApplicationInformationRequestUpdated($request->id, $updateOccurrence));
         $this->assertSame(1, $candidate->notifications()->where('type', 'application.information_request_updated')->count());
-        $this->withToken($this->token($employer))->postJson("/api/v1/information-requests/{$request->id}/cancel", ['reason' => 'Received elsewhere'])->assertOk()->assertJsonPath('data.status', 'cancelled');
+        $this->withToken($this->token($employer))->postJson("/api/v1/information-requests/{$request->id}/cancel", ['reason' => 'Received elsewhere'])->assertOk()->assertJsonPath('data.status.key', 'cancelled');
         $this->assertDatabaseHas('job_applications', ['id' => $application->id, 'application_status_id' => $this->statusId('test_completed')]);
         $this->assertDatabaseCount('application_information_requests', 1);
         $this->assertDatabaseHas('audit_logs', ['action' => 'application.information_request_cancelled', 'entity_id' => $request->id]);

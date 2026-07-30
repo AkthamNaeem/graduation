@@ -31,7 +31,7 @@ class ProfileSourceTrackingTest extends TestCase
                 'start_date' => '2024-01-01',
             ])
             ->assertCreated()
-            ->assertJsonPath('data.source_type', 'manual')
+            ->assertJsonPath('data.source_type.key', 'manual')
             ->assertJsonPath('data.source_cv_file_id', null);
 
         $this->withToken($this->tokenFor($jobSeeker))
@@ -40,7 +40,7 @@ class ProfileSourceTrackingTest extends TestCase
                 'degree' => 'Bachelor',
             ])
             ->assertCreated()
-            ->assertJsonPath('data.source_type', 'manual')
+            ->assertJsonPath('data.source_type.key', 'manual')
             ->assertJsonPath('data.source_cv_file_id', null);
 
         $this->assertDatabaseHas('experiences', [
@@ -102,7 +102,7 @@ class ProfileSourceTrackingTest extends TestCase
         $this->withToken($this->tokenFor($jobSeeker))
             ->postJson('/api/v1/profile/skills', ['skill_id' => $skill->id])
             ->assertOk()
-            ->assertJsonPath('data.skills.0.source_type', 'manual')
+            ->assertJsonPath('data.skills.0.source_type.key', 'manual')
             ->assertJsonPath('data.skills.0.source_cv_file_id', null);
 
         $this->assertDatabaseHas('job_seeker_skills', [

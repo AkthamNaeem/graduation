@@ -49,14 +49,14 @@ class ManualGradingModuleTest extends TestCase
 
         $this->submit($scenario['candidate'], $data['assignment'])
             ->assertOk()
-            ->assertJsonPath('data.grading_status', 'manual_grading_required')
+            ->assertJsonPath('data.grading_status.key', 'manual_grading_required')
             ->assertJsonPath('data.objective_score', '4.00')
             ->assertJsonPath('data.manual_max_score', '16.00');
         $notificationCountAfterSubmit = \DB::table('notifications')->count();
 
         $this->grade($scenario['employer'], $data['attempt'], $short, 2.5, '  Good short answer.  ')
             ->assertOk()
-            ->assertJsonPath('data.grading_status', 'manual_grading_required')
+            ->assertJsonPath('data.grading_status.key', 'manual_grading_required')
             ->assertJsonPath('data.manual_score', null)
             ->assertJsonPath('data.manual_grading_progress.total', 4)
             ->assertJsonPath('data.manual_grading_progress.graded', 1)
@@ -66,7 +66,7 @@ class ManualGradingModuleTest extends TestCase
         $this->grade($scenario['employer'], $data['attempt'], $long, 4, 'Clear explanation.')->assertOk();
         $this->grade($scenario['employer'], $data['attempt'], $file, 3.5, 'Solution works.')
             ->assertOk()
-            ->assertJsonPath('data.grading_status', 'fully_graded')
+            ->assertJsonPath('data.grading_status.key', 'fully_graded')
             ->assertJsonPath('data.objective_score', '4.00')
             ->assertJsonPath('data.manual_score', '10.00')
             ->assertJsonPath('data.total_score', '14.00')
@@ -105,7 +105,7 @@ class ManualGradingModuleTest extends TestCase
 
         $this->withToken($this->tokenFor($scenario['candidate']))->getJson($url)
             ->assertOk()
-            ->assertJsonPath('data.grading_status', 'fully_graded')
+            ->assertJsonPath('data.grading_status.key', 'fully_graded')
             ->assertJsonPath('data.manual_score', '10.00')
             ->assertJsonMissingPath('data.breakdown')
             ->assertJsonMissing(['reviewer_note', 'graded_by', 'correct_options', 'is_correct', 'explanation']);
@@ -141,7 +141,7 @@ class ManualGradingModuleTest extends TestCase
 
         $admin = User::factory()->create(['role' => UserRole::ADMIN]);
         $this->grade($admin, $data['attempt'], $short, 3, 'Admin review')
-            ->assertOk()->assertJsonPath('data.grading_status', 'fully_graded');
+            ->assertOk()->assertJsonPath('data.grading_status.key', 'fully_graded');
         $this->assertDatabaseHas('test_answer_gradings', [
             'test_answer_id' => $short->testAnswers()->firstOrFail()->id,
             'graded_by' => $admin->id,
@@ -157,7 +157,7 @@ class ManualGradingModuleTest extends TestCase
         $this->submit($scenario['candidate'], $data['assignment'])->assertOk();
 
         $this->grade($scenario['employer'], $data['attempt'], $short, 4, 'First')
-            ->assertOk()->assertJsonPath('data.grading_status', 'fully_graded');
+            ->assertOk()->assertJsonPath('data.grading_status.key', 'fully_graded');
         $this->grade($scenario['employer'], $data['attempt'], $short, 3, '  Revised  ', 'patch')
             ->assertOk()
             ->assertJsonPath('data.manual_score', '3.00')
@@ -176,7 +176,7 @@ class ManualGradingModuleTest extends TestCase
         $this->withToken($this->tokenFor($scenario['employer']))
             ->deleteJson($this->gradeUrl($data['attempt'], $short))
             ->assertOk()
-            ->assertJsonPath('data.grading_status', 'manual_grading_required')
+            ->assertJsonPath('data.grading_status.key', 'manual_grading_required')
             ->assertJsonPath('data.manual_score', null)
             ->assertJsonPath('data.total_score', null)
             ->assertJsonPath('data.percentage', null)
@@ -242,7 +242,7 @@ class ManualGradingModuleTest extends TestCase
             ['question_id' => $short->id, 'awarded_points' => 3, 'reviewer_note' => 'Clear'],
             ['question_id' => $long->id, 'awarded_points' => 5.5, 'reviewer_note' => 'Good'],
         ]])->assertOk()
-            ->assertJsonPath('data.grading_status', 'fully_graded')
+            ->assertJsonPath('data.grading_status.key', 'fully_graded')
             ->assertJsonPath('data.manual_score', '8.50')
             ->assertJsonPath('data.total_score', '8.50')
             ->assertJsonPath('data.percentage', '85.00');
@@ -257,7 +257,7 @@ class ManualGradingModuleTest extends TestCase
 
         $this->submit($scenario['candidate'], $data['assignment'])
             ->assertOk()
-            ->assertJsonPath('data.grading_status', 'fully_graded')
+            ->assertJsonPath('data.grading_status.key', 'fully_graded')
             ->assertJsonPath('data.manual_score', '0.00')
             ->assertJsonPath('data.total_score', '0.00')
             ->assertJsonPath('data.max_score', '5.00')
@@ -309,7 +309,7 @@ class ManualGradingModuleTest extends TestCase
                 'feedback' => 'Legacy general feedback.',
             ])->assertOk()
             ->assertJsonPath('data.score', '1.00')
-            ->assertJsonPath('data.grading_status', 'fully_graded')
+            ->assertJsonPath('data.grading_status.key', 'fully_graded')
             ->assertJsonPath('data.manual_score', '4.00')
             ->assertJsonPath('data.total_score', '4.00')
             ->assertJsonPath('data.percentage', '80.00');

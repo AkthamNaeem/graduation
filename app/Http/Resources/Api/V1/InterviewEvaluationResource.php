@@ -3,10 +3,12 @@
 namespace App\Http\Resources\Api\V1;
 
 use App\Http\Resources\Api\V1\Concerns\ResolvesResourceViewer;
+use App\Models\InterviewEvaluation;
+use App\Support\LocalizedValue;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin \App\Models\InterviewEvaluation */
+/** @mixin InterviewEvaluation */
 class InterviewEvaluationResource extends JsonResource
 {
     use ResolvesResourceViewer;
@@ -29,10 +31,10 @@ class InterviewEvaluationResource extends JsonResource
                 fn (): ?array => $this->evaluatedBy === null ? null : [
                     'id' => $this->evaluatedBy->id,
                     'name' => $this->evaluatedBy->name,
-                    'role' => $this->evaluatedBy->role?->value,
+                    'role' => LocalizedValue::make($this->evaluatedBy->role, 'user_roles'),
                 ],
             ),
-            'recommendation' => $this->recommendation,
+            'recommendation' => LocalizedValue::make($this->recommendation, 'interview_recommendations'),
             'overall_comment' => $this->overall_comment,
             'evaluated_at' => $this->evaluated_at?->toISOString(),
             'items' => InterviewEvaluationItemResource::collection($this->whenLoaded('items')),

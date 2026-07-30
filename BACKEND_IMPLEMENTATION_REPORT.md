@@ -3115,3 +3115,74 @@ classification is in `reports/LOCALIZATION_HARDCODED_STRING_INVENTORY.md`.
 - Postman Web/Mobile collections use `Accept-Language: {{locale}}`; the
   environment defaults to `en` and documents `ar`.
 - No migration was added. No commit or push was performed.
+
+## Localized key/value response contract — 2026-07-30
+
+### Contract
+
+All audited system-controlled values exposed for presentation now use:
+
+```json
+{
+  "key": "under_review",
+  "value": "Under review"
+}
+```
+
+The same Arabic request keeps `key` unchanged and returns `قيد المراجعة` in
+`value`. Request bodies and query filters continue to accept the stable key
+only. User-authored text is not translated.
+
+`LocalizedValue` is the single strict serializer. It accepts backed enums or
+string keys and reads `options.<group>.<key>` in the negotiated locale. A
+missing catalog entry throws a configuration error; there is no generated
+headline or raw-key fallback. English and Arabic catalogs have matching keys,
+non-empty values, and placeholder parity tests.
+
+### Coverage
+
+- Users: role and account status.
+- Companies: approval, role, membership, invitation, and permission catalogs.
+- Jobs: work mode, employment type, experience level, education level, job
+  state, and skill requirement/source.
+- Applications: workflow status and information-request state.
+- CV/profile: parsing/review/next-action state, persisted source, suggestion
+  entity/action/status/source/display group.
+- Tests: question type, grading type/status, and assignment state.
+- Interviews: type, mode, lifecycle, confirmation/attendance, evaluator role,
+  and recommendation.
+- Admin: report distributions are arrays of `{key,value,count}`; audit actions
+  are localized objects and the raw technical `entity_type` is retained beside
+  a localized `entity`.
+
+Application status resources now expose `id`, `key`, and `value`; the previous
+human `name`/duplicate `slug` presentation shape is replaced by the unified
+contract. Other converted fields retain their existing field names and change
+only from a raw system string to the object.
+
+### Canonical job values and compatibility
+
+Employment types are canonicalized to `full_time`, `part_time`, `contract`,
+and `internship`. Experience levels are canonicalized to `entry_level`,
+`junior`, `mid_level`, and `senior`. The API continues accepting the known
+hyphenated/short aliases and normalizes new writes. Filtering queries include
+canonical and known legacy database representations, so no data migration was
+required.
+
+### Deliberate raw identifiers
+
+Notification `type`, recommendation engine/model/version, AI reason `code`,
+audit `entity_type`, routing discriminators, MIME types, extensions, URLs, and
+provider diagnostics remain technical identifiers. Job titles/descriptions,
+company descriptions, locations, messages, notes, screening/test content,
+answers, and other user-generated content remain verbatim.
+
+### Verification
+
+The focused contract suite validates strict catalog behavior, every catalog
+leaf in both locales, every backed enum case, legacy alias normalization,
+bilingual API serialization, stable keys, canonical persistence, and unchanged
+free text. Both Postman collections additionally inspect returned presentation
+fields for the exact `{key,value}` shape. Final full-suite, Pint, Composer, JSON,
+and diff-check counts are recorded in the task handoff and the dedicated audit:
+`reports/LOCALIZED_KEY_VALUE_CONTRACT_AUDIT.md`.

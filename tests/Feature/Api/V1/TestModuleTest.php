@@ -47,7 +47,7 @@ class TestModuleTest extends TestCase
             ->assertCreated()
             ->assertJsonPath('data.job_application_id', $application->id)
             ->assertJsonPath('data.test_id', $test->id)
-            ->assertJsonPath('data.state', 'not_started');
+            ->assertJsonPath('data.state.key', 'not_started');
 
         $assignmentId = $response->json('data.id');
 

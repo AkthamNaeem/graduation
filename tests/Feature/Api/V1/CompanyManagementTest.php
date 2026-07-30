@@ -106,8 +106,8 @@ class CompanyManagementTest extends TestCase
             'password' => 'StrongPassword123!',
             'password_confirmation' => 'StrongPassword123!',
         ])->assertCreated()
-            ->assertJsonPath('data.company_role', CompanyRole::RECRUITER->value)
-            ->assertJsonPath('data.membership_status', CompanyMembershipStatus::ACTIVE->value);
+            ->assertJsonPath('data.company_role.key', CompanyRole::RECRUITER->value)
+            ->assertJsonPath('data.membership_status.key', CompanyMembershipStatus::ACTIVE->value);
 
         $this->assertSame($companyCount, Company::query()->count());
         $this->assertDatabaseHas('employer_profiles', [
@@ -189,8 +189,8 @@ class CompanyManagementTest extends TestCase
         $this->postJson("/api/v1/company-invitations/{$token}/accept")
             ->assertCreated()
             ->assertJsonPath('data.user_id', $removed->id)
-            ->assertJsonPath('data.company_role', CompanyRole::REVIEWER->value)
-            ->assertJsonPath('data.membership_status', CompanyMembershipStatus::ACTIVE->value);
+            ->assertJsonPath('data.company_role.key', CompanyRole::REVIEWER->value)
+            ->assertJsonPath('data.membership_status.key', CompanyMembershipStatus::ACTIVE->value);
 
         $this->assertDatabaseCount('employer_profiles', 2);
         $this->assertDatabaseHas('employer_profiles', [
@@ -252,13 +252,13 @@ class CompanyManagementTest extends TestCase
         $this->patchJson("/api/v1/company/members/{$member->id}/status", [
             'membership_status' => CompanyMembershipStatus::SUSPENDED->value,
         ])->assertOk()
-            ->assertJsonPath('data.membership_status', CompanyMembershipStatus::SUSPENDED->value);
+            ->assertJsonPath('data.membership_status.key', CompanyMembershipStatus::SUSPENDED->value);
         $this->assertDatabaseCount('personal_access_tokens', 0);
 
         $this->patchJson("/api/v1/company/members/{$member->id}/status", [
             'membership_status' => CompanyMembershipStatus::ACTIVE->value,
         ])->assertOk()
-            ->assertJsonPath('data.membership_status', CompanyMembershipStatus::ACTIVE->value);
+            ->assertJsonPath('data.membership_status.key', CompanyMembershipStatus::ACTIVE->value);
     }
 
     public function test_last_owner_cannot_be_removed_or_demoted_even_by_admin(): void
@@ -286,7 +286,7 @@ class CompanyManagementTest extends TestCase
             'new_owner_user_id' => $target->id,
         ])->assertOk()
             ->assertJsonPath('data.user_id', $target->id)
-            ->assertJsonPath('data.company_role', CompanyRole::OWNER->value);
+            ->assertJsonPath('data.company_role.key', CompanyRole::OWNER->value);
 
         $this->assertDatabaseHas('employer_profiles', [
             'user_id' => $owner->id,

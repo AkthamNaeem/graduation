@@ -82,7 +82,7 @@ class CVReviewFlowTest extends TestCase
 
         $this->assertSame($originalParsed, $cvFile->parsingResult->refresh()->parsed_json);
         $this->withToken($this->tokenFor($user))->getJson("/api/v1/cv/{$cvFile->id}/review")
-            ->assertOk()->assertJsonPath('data.next_action', 'review_draft')->assertJsonPath('data.can_edit_draft', true);
+            ->assertOk()->assertJsonPath('data.next_action.key', 'review_draft')->assertJsonPath('data.can_edit_draft', true);
 
         $this->withToken($this->tokenFor($user))->postJson("/api/v1/cv/{$cvFile->id}/confirm")
             ->assertOk()->assertJsonPath('data.profile.location', 'Damascus');
@@ -145,10 +145,19 @@ class CVReviewFlowTest extends TestCase
         $cvFile = $this->reviewCV($user, CVFile::REVIEW_MODE_PROFILE_SYNC, CVFile::REVIEW_STATUS_COMPARISON_PENDING, $parsed);
 
         $response = $this->withToken($this->tokenFor($user))->postJson("/api/v1/cv/{$cvFile->id}/suggestions/generate")->assertCreated();
-        $response->assertJsonFragment(['entity_type' => 'profile', 'suggestion_type' => 'update'])
-            ->assertJsonFragment(['entity_type' => 'profile', 'suggestion_type' => 'add'])
-            ->assertJsonFragment(['entity_type' => 'experience', 'suggestion_type' => 'merge'])
-            ->assertJsonFragment(['entity_type' => 'skill', 'suggestion_type' => 'ignore']);
+        $response->assertJsonFragment([
+            'entity_type' => ['key' => 'profile', 'value' => 'Profile'],
+            'suggestion_type' => ['key' => 'update', 'value' => 'Update'],
+        ])->assertJsonFragment([
+            'entity_type' => ['key' => 'profile', 'value' => 'Profile'],
+            'suggestion_type' => ['key' => 'add', 'value' => 'Add'],
+        ])->assertJsonFragment([
+            'entity_type' => ['key' => 'experience', 'value' => 'Work experience'],
+            'suggestion_type' => ['key' => 'merge', 'value' => 'Merge'],
+        ])->assertJsonFragment([
+            'entity_type' => ['key' => 'skill', 'value' => 'Skill'],
+            'suggestion_type' => ['key' => 'ignore', 'value' => 'Ignore'],
+        ]);
 
         $suggestions = ProfileChangeSuggestion::where('cv_file_id', $cvFile->id)->get();
         foreach ($suggestions->where('suggestion_type', '!=', ProfileChangeSuggestion::TYPE_IGNORE) as $suggestion) {
@@ -189,11 +198,11 @@ class CVReviewFlowTest extends TestCase
             'edited_value' => ['phone' => 'B2', 'email' => 'blocked@example.test'],
         ])->assertUnprocessable();
         $this->withToken($this->tokenFor($user))->postJson("/api/v1/profile/suggestions/{$suggestion->id}/accept", ['edited_value' => ['phone' => 'B2']])
-            ->assertOk()->assertJsonPath('data.status', 'accepted');
+            ->assertOk()->assertJsonPath('data.status.key', 'accepted');
         $this->withToken($this->tokenFor($user))->postJson("/api/v1/profile/suggestions/{$suggestion->id}/reject")
-            ->assertOk()->assertJsonPath('data.status', 'rejected');
+            ->assertOk()->assertJsonPath('data.status.key', 'rejected');
         $this->withToken($this->tokenFor($user))->postJson("/api/v1/profile/suggestions/{$suggestion->id}/accept", ['edited_value' => ['phone' => 'B2']])
-            ->assertOk()->assertJsonPath('data.status', 'accepted');
+            ->assertOk()->assertJsonPath('data.status.key', 'accepted');
 
         $user->jobSeekerProfile->update(['phone' => 'C']);
         $this->withToken($this->tokenFor($user))->postJson("/api/v1/cv/{$cvFile->id}/suggestions/apply")

@@ -76,8 +76,8 @@ class AuthTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonPath('message', 'Registration successful. Verify the account using the temporary OTP.')
             ->assertJsonPath('data.user.email', 'jane@example.com')
-            ->assertJsonPath('data.user.role', UserRole::JOB_SEEKER->value)
-            ->assertJsonPath('data.user.status', UserStatus::ACTIVE->value)
+            ->assertJsonPath('data.user.role.key', UserRole::JOB_SEEKER->value)
+            ->assertJsonPath('data.user.status.key', UserStatus::ACTIVE->value)
             ->assertJsonPath('data.user.job_seeker_profile.phone', '+1 555 0100')
             ->assertJsonPath('data.user.is_email_verified', false)
             ->assertJsonPath('data.email_verification.sent', false);
@@ -235,7 +235,7 @@ class AuthTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('success', true)
             ->assertJsonPath('data.email', 'me@example.com')
-            ->assertJsonPath('data.role', UserRole::EMPLOYER->value)
+            ->assertJsonPath('data.role.key', UserRole::EMPLOYER->value)
             ->assertJsonPath('data.employer_profile.company.name', 'Acme Hiring Co.');
     }
 

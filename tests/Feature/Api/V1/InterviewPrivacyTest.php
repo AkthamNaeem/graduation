@@ -42,9 +42,9 @@ class InterviewPrivacyTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1, 'data.data')
             ->assertJsonPath('data.data.0.id', $interview->id)
-            ->assertJsonPath('data.data.0.interview_mode', 'online')
+            ->assertJsonPath('data.data.0.interview_mode.key', 'online')
             ->assertJsonPath('data.data.0.meeting_link', 'https://meet.example.com/private-room')
-            ->assertJsonPath('data.data.0.state', 'evaluated')
+            ->assertJsonPath('data.data.0.state.key', 'evaluated')
             ->assertJsonMissingPath('data.data.0.location');
 
         $this->assertSafeInterview($list, 'data.data.0');
@@ -52,7 +52,7 @@ class InterviewPrivacyTest extends TestCase
         $details = $this->withToken($this->tokenFor($candidate))
             ->getJson("/api/v1/interviews/{$interview->id}")
             ->assertOk()
-            ->assertJsonPath('data.job_application.status.slug', 'interview_completed');
+            ->assertJsonPath('data.job_application.status.key', 'interview_completed');
 
         $this->assertSafeInterview($details, 'data');
         $this->assertFalse(collect($queries)->contains(
@@ -86,7 +86,7 @@ class InterviewPrivacyTest extends TestCase
             ->assertJsonPath('data.completed_by_user_id', $employer->id)
             ->assertJsonPath('data.note', 'Internal interview preparation note.')
             ->assertJsonPath('data.completion_note', 'Private completion note.')
-            ->assertJsonPath('data.evaluation.recommendation', 'advance')
+            ->assertJsonPath('data.evaluation.recommendation.key', 'advance')
             ->assertJsonPath('data.evaluation.overall_comment', 'Private evaluator comment.')
             ->assertJsonPath('data.evaluation.evaluated_by.id', $employer->id)
             ->assertJsonCount(1, 'data.evaluation.items');

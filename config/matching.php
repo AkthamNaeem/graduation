@@ -14,9 +14,11 @@ return [
     'experience_levels' => [
         'entry' => 0,
         'entry-level' => 0,
+        'entry_level' => 0,
         'junior' => 1,
         'mid' => 3,
         'mid-level' => 3,
+        'mid_level' => 3,
         'senior' => 5,
     ],
 ];

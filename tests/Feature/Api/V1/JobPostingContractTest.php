@@ -214,7 +214,7 @@ class JobPostingContractTest extends TestCase
             $this->attachRequiredSkill($jobPosting);
 
             $this->withToken($token)->postJson("/api/v1/jobs/{$jobPosting->id}/publish")
-                ->assertOk()->assertJsonPath('data.status', 'open');
+                ->assertOk()->assertJsonPath('data.status.key', 'open');
         }
     }
 

@@ -2,10 +2,12 @@
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Models\Experience;
+use App\Support\LocalizedValue;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin \App\Models\Experience */
+/** @mixin Experience */
 class ExperienceResource extends JsonResource
 {
     /**
@@ -23,7 +25,7 @@ class ExperienceResource extends JsonResource
             'end_date' => $this->end_date?->toDateString(),
             'is_current' => $this->is_current,
             'description' => $this->description,
-            'source_type' => $this->source_type,
+            'source_type' => LocalizedValue::make($this->source_type, 'profile_source_types'),
             'source_cv_file_id' => $this->source_cv_file_id,
             'user_verified_at' => $this->user_verified_at?->toISOString(),
             'created_at' => $this->created_at?->toISOString(),

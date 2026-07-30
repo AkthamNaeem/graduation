@@ -15,6 +15,7 @@ use App\Models\Company;
 use App\Services\AdminCompanyService;
 use App\Services\AdminCompanyStatusService;
 use App\Support\ApiResponse;
+use App\Support\LocalizedValue;
 use Illuminate\Http\JsonResponse;
 
 class AdminCompanyController extends Controller
@@ -39,7 +40,10 @@ class AdminCompanyController extends Controller
                     : [
                         'id' => $result['owner_invitation']['invitation']->id,
                         'email' => $result['owner_invitation']['invitation']->email,
-                        'company_role' => $result['owner_invitation']['invitation']->company_role->value,
+                        'company_role' => LocalizedValue::make(
+                            $result['owner_invitation']['invitation']->company_role,
+                            'company_roles',
+                        ),
                         'expires_at' => $result['owner_invitation']['invitation']->expires_at?->toISOString(),
                         'token' => $result['owner_invitation']['token'],
                     ],
