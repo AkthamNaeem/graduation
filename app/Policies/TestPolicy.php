@@ -2,37 +2,35 @@
 
 namespace App\Policies;
 
-use App\Enums\UserRole;
+use App\Enums\CompanyPermission;
 use App\Models\Test;
 use App\Models\User;
+use App\Services\CompanyPermissionService;
 
 class TestPolicy
 {
+    public function __construct(
+        private readonly CompanyPermissionService $permissions,
+    ) {}
+
     public function viewAny(User $user): bool
     {
-        return $user->role === UserRole::EMPLOYER || $user->role === UserRole::ADMIN;
+        return $this->permissions->can($user, CompanyPermission::VIEW_TESTS);
     }
 
     public function view(User $user, Test $test): bool
     {
-        if ($user->role === UserRole::ADMIN) {
-            return true;
-        }
-
-        return $user->role === UserRole::EMPLOYER
-            && $this->belongsToEmployerCompany($user, $test);
+        return $this->permissions->can($user, CompanyPermission::VIEW_TESTS, $test->company_id);
     }
 
     public function create(User $user): bool
     {
-        return $user->role === UserRole::ADMIN
-            || ($user->role === UserRole::EMPLOYER && $user->employerProfile()->exists());
+        return $this->permissions->can($user, CompanyPermission::MANAGE_TESTS);
     }
 
     public function update(User $user, Test $test): bool
     {
-        return $user->role === UserRole::ADMIN
-            || ($user->role === UserRole::EMPLOYER && $this->belongsToEmployerCompany($user, $test));
+        return $this->permissions->can($user, CompanyPermission::MANAGE_TESTS, $test->company_id);
     }
 
     public function delete(User $user, Test $test): bool
@@ -43,11 +41,5 @@ class TestPolicy
     public function manageQuestions(User $user, Test $test): bool
     {
         return $this->update($user, $test);
-    }
-
-    private function belongsToEmployerCompany(User $user, Test $test): bool
-    {
-        return $test->company_id !== null
-            && $user->employerProfile()->where('company_id', $test->company_id)->exists();
     }
 }

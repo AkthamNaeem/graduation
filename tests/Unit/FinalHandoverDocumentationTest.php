@@ -278,8 +278,40 @@ class FinalHandoverDocumentationTest extends TestCase
             'app/Services/Auth/RegistrationService.php',
             'bootstrap/app.php',
             'postman/Smart Recruitment Platform - Web App.postman_collection.json',
+            'postman/Smart Recruitment Platform - Mobile App.postman_collection.json',
+            'postman/Smart Recruitment Platform - Environment.postman_environment.json',
             'routes/api/v1.php',
             'tests/Feature/Api/V1/AuthTest.php',
+            // Approved company membership, invitation, and role-authorization implementation.
+            '.env.example',
+            'app/Http/Controllers/Api/V1/Admin/AdminCompanyController.php',
+            'app/Http/Middleware/EnsureCompanyApproved.php',
+            'app/Http/Requests/Api/V1/Admin/Concerns/AuthorizesAdmin.php',
+            'app/Http/Requests/Api/V1/JobPosting/Concerns/ResolvesJobPostingUser.php',
+            'app/Http/Requests/Api/V1/JobPosting/MyJobPostingIndexRequest.php',
+            'app/Http/Requests/Api/V1/JobPosting/StoreJobPostingRequest.php',
+            'app/Http/Requests/Api/V1/Profile/Concerns/AuthorizesProfileRoles.php',
+            'app/Http/Requests/Api/V1/Profile/UpdateCompanyRequest.php',
+            'app/Http/Requests/Api/V1/Test/Concerns/AuthorizesTestCatalog.php',
+            'app/Http/Resources/Api/V1/CompanyResource.php',
+            'app/Http/Resources/Api/V1/EmployerProfileResource.php',
+            'app/Models/Company.php',
+            'app/Models/EmployerProfile.php',
+            'app/Policies/ApplicationInformationRequestPolicy.php',
+            'app/Policies/ApplicationInternalNotePolicy.php',
+            'app/Policies/ApplicationTestAssignmentPolicy.php',
+            'app/Policies/InterviewPolicy.php',
+            'app/Policies/JobApplicationPolicy.php',
+            'app/Policies/JobPostingPolicy.php',
+            'app/Policies/TestAttemptPolicy.php',
+            'app/Policies/TestPolicy.php',
+            'app/Services/ApplicationInformationRequestService.php',
+            'app/Services/ApplicationInternalNoteService.php',
+            'app/Services/CompanyRecruitmentAccessService.php',
+            'app/Services/JobPostingService.php',
+            'app/Services/ProfileService.php',
+            'database/seeders/DemoUsersSeeder.php',
+            'tests/Feature/Api/V1/EmailVerificationOtpTest.php',
         ];
         foreach ($baseline['files'] as $entry) {
             $this->assertRelativeRepositoryPath($entry['path']);
@@ -353,6 +385,10 @@ class FinalHandoverDocumentationTest extends TestCase
         $approvedOutputMaintenance = [
             // Required temporary registration OTP documentation update.
             'BACKEND_IMPLEMENTATION_REPORT.md',
+            'README.md',
+            'postman/Smart Recruitment Platform - Web App.postman_collection.json',
+            'postman/Smart Recruitment Platform - Mobile App.postman_collection.json',
+            'postman/Smart Recruitment Platform - Environment.postman_environment.json',
             'tests/Unit/FinalHandoverDocumentationTest.php',
         ];
         $outputPaths = [];

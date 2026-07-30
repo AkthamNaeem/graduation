@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Api\V1\Profile;
 
+use App\Enums\CompanyPermission;
 use App\Http\Requests\Api\V1\Profile\Concerns\AuthorizesProfileRoles;
+use App\Services\CompanyPermissionService;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateCompanyRequest extends FormRequest
@@ -11,7 +13,14 @@ class UpdateCompanyRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return $this->isEmployer();
+        $user = $this->user();
+
+        return $user !== null
+            && app(CompanyPermissionService::class)->can(
+                $user,
+                CompanyPermission::UPDATE_COMPANY,
+                $user->employerProfile?->company_id,
+            );
     }
 
     /**

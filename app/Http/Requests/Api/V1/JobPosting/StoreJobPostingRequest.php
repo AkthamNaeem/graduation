@@ -4,6 +4,7 @@ namespace App\Http\Requests\Api\V1\JobPosting;
 
 use App\Enums\EducationLevel;
 use App\Enums\JobWorkMode;
+use App\Enums\UserRole;
 use App\Http\Requests\Api\V1\JobPosting\Concerns\NormalizesJobSkillInput;
 use App\Http\Requests\Api\V1\JobPosting\Concerns\ResolvesJobPostingUser;
 use App\Models\JobPosting;
@@ -47,6 +48,9 @@ class StoreJobPostingRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'company_id' => $this->authenticatedUser()?->role === UserRole::ADMIN
+                ? ['required', 'integer', 'exists:companies,id']
+                : ['prohibited'],
             'title' => ['required', 'string', 'max:255'],
             'department' => ['sometimes', 'nullable', 'string', 'max:255'],
             'description' => ['required', 'string'],

@@ -2,13 +2,19 @@
 
 namespace App\Policies;
 
+use App\Enums\CompanyPermission;
 use App\Enums\UserRole;
 use App\Models\ApplicationInformationRequest;
 use App\Models\JobApplication;
 use App\Models\User;
+use App\Services\CompanyPermissionService;
 
 class ApplicationInformationRequestPolicy
 {
+    public function __construct(
+        private readonly CompanyPermissionService $permissions,
+    ) {}
+
     public function viewAnyForApplication(User $user, JobApplication $application): bool
     {
         return $this->canViewApplication($user, $application);
@@ -16,7 +22,11 @@ class ApplicationInformationRequestPolicy
 
     public function create(User $user, JobApplication $application): bool
     {
-        return $user->role === UserRole::EMPLOYER && $this->employerOwns($user, $application);
+        return $this->permissions->can(
+            $user,
+            CompanyPermission::MANAGE_APPLICATIONS,
+            $application->jobPosting->company_id,
+        );
     }
 
     public function view(User $user, ApplicationInformationRequest $request): bool
@@ -26,7 +36,11 @@ class ApplicationInformationRequestPolicy
 
     public function update(User $user, ApplicationInformationRequest $request): bool
     {
-        return $user->role === UserRole::EMPLOYER && $this->employerOwns($user, $request->jobApplication);
+        return $this->permissions->can(
+            $user,
+            CompanyPermission::MANAGE_APPLICATIONS,
+            $request->jobApplication->jobPosting->company_id,
+        );
     }
 
     public function cancel(User $user, ApplicationInformationRequest $request): bool
@@ -49,13 +63,11 @@ class ApplicationInformationRequestPolicy
     {
         return match ($user->role) {
             UserRole::JOB_SEEKER => (int) ($user->jobSeekerProfile?->id ?? 0) === (int) $application->job_seeker_profile_id,
-            UserRole::EMPLOYER => $this->employerOwns($user, $application),
-            default => false,
+            default => $this->permissions->can(
+                $user,
+                CompanyPermission::VIEW_APPLICATIONS,
+                $application->jobPosting->company_id,
+            ),
         };
-    }
-
-    private function employerOwns(User $user, JobApplication $application): bool
-    {
-        return $user->employerProfile()->where('company_id', $application->jobPosting->company_id)->exists();
     }
 }

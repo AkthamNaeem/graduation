@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Api\V1\Profile\Concerns;
 
+use App\Enums\CompanyMembershipStatus;
 use App\Enums\UserRole;
 
 trait AuthorizesProfileRoles
@@ -13,6 +14,9 @@ trait AuthorizesProfileRoles
 
     protected function isEmployer(): bool
     {
-        return $this->user()?->role === UserRole::EMPLOYER;
+        $user = $this->user();
+
+        return $user?->role === UserRole::EMPLOYER
+            && $user->employerProfile?->membership_status === CompanyMembershipStatus::ACTIVE;
     }
 }

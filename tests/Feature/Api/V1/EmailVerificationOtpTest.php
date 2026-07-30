@@ -41,20 +41,23 @@ class EmailVerificationOtpTest extends TestCase
         $this->assertPayloadDoesNotExposeOtpSecrets($response->json());
     }
 
-    public function test_employer_registration_creates_unverified_user_company_profile_and_otp(): void
+    public function test_disabled_employer_registration_creates_no_user_company_profile_or_otp(): void
     {
-        $response = $this->registerEmployer('employer@example.com');
+        $response = $this->postJson('/api/v1/auth/register/employer', [
+            'name' => 'OTP Employer',
+            'email' => 'employer@example.com',
+            'company_name' => 'Example Hiring',
+            'password' => 'password',
+            'password_confirmation' => 'password',
+            'terms_accepted' => true,
+        ]);
 
-        $response->assertCreated()
-            ->assertJsonPath('data.user.email_verified_at', null)
-            ->assertJsonPath('data.user.is_email_verified', false)
-            ->assertJsonPath('data.user.employer_profile.company.name', 'Example Hiring');
-
-        $user = User::query()->where('email', 'employer@example.com')->firstOrFail();
-
-        $this->assertDatabaseHas('email_verification_otps', ['user_id' => $user->id]);
-        $this->assertDatabaseHas('employer_profiles', ['user_id' => $user->id]);
-        $this->assertDatabaseHas('companies', ['name' => 'Example Hiring']);
+        $response->assertForbidden()
+            ->assertJsonPath('code', 'EMPLOYER_SELF_REGISTRATION_DISABLED');
+        $this->assertDatabaseMissing('users', ['email' => 'employer@example.com']);
+        $this->assertDatabaseCount('email_verification_otps', 0);
+        $this->assertDatabaseCount('employer_profiles', 0);
+        $this->assertDatabaseCount('companies', 0);
     }
 
     public function test_correct_otp_verifies_consumes_record_and_returns_one_token(): void
@@ -294,18 +297,6 @@ class EmailVerificationOtpTest extends TestCase
             'name' => 'OTP Candidate',
             'email' => $email,
             'phone' => '+963 900 000 000',
-            'password' => 'password',
-            'password_confirmation' => 'password',
-            'terms_accepted' => true,
-        ]);
-    }
-
-    private function registerEmployer(string $email)
-    {
-        return $this->postJson('/api/v1/auth/register/employer', [
-            'name' => 'OTP Employer',
-            'email' => $email,
-            'company_name' => 'Example Hiring',
             'password' => 'password',
             'password_confirmation' => 'password',
             'terms_accepted' => true,

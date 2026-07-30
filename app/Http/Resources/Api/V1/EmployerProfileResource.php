@@ -2,10 +2,11 @@
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Models\EmployerProfile;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin \App\Models\EmployerProfile */
+/** @mixin EmployerProfile */
 class EmployerProfileResource extends JsonResource
 {
     /**
@@ -17,6 +18,11 @@ class EmployerProfileResource extends JsonResource
             'id' => $this->id,
             'user_id' => $this->user_id,
             'company_id' => $this->company_id,
+            'company_role' => $this->company_role?->value,
+            'membership_status' => $this->membership_status?->value,
+            'joined_at' => $this->joined_at?->toISOString(),
+            'suspended_at' => $this->suspended_at?->toISOString(),
+            'removed_at' => $this->removed_at?->toISOString(),
             'job_title' => $this->job_title,
             'phone' => $this->phone,
             'bio' => $this->bio,

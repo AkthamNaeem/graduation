@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\CompanyPermission;
 use App\Models\Company;
 use App\Models\Education;
 use App\Models\EmployerProfile;
@@ -17,6 +18,7 @@ class ProfileService
 
     public function __construct(
         private readonly AuditLogService $auditLogService,
+        private readonly CompanyPermissionService $companyPermissionService,
     ) {}
 
     public function getJobSeekerProfile(User $user): JobSeekerProfile
@@ -131,6 +133,11 @@ class ProfileService
     public function updateCompany(User $user, array $data): Company
     {
         $company = $this->employerProfile($user)->company;
+        $this->companyPermissionService->assertCan(
+            $user,
+            CompanyPermission::UPDATE_COMPANY,
+            $company,
+        );
         $before = $company->only(array_keys($data));
 
         $company->update($data);

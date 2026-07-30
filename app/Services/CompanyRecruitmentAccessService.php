@@ -3,23 +3,30 @@
 namespace App\Services;
 
 use App\Enums\CompanyApprovalStatus;
+use App\Enums\CompanyMembershipStatus;
+use App\Enums\CompanyRole;
 use App\Exceptions\RecruitmentAccessException;
 use App\Models\ApplicationTestAssignment;
 use App\Models\Company;
 use App\Models\Interview;
 use App\Models\JobApplication;
 use App\Models\JobPosting;
+use App\Models\Test;
 use App\Models\TestAttempt;
 use App\Models\User;
 
 class CompanyRecruitmentAccessService
 {
+    public function __construct(
+        private readonly CompanyPermissionService $permissionService,
+    ) {}
+
     public function companyForEmployer(User $user): ?Company
     {
-        return $user->employerProfile()->with('company')->first()?->company;
+        return $this->permissionService->activeMembership($user)?->company;
     }
 
-    public function companyFor(JobPosting|JobApplication|ApplicationTestAssignment|TestAttempt|Interview $subject): ?Company
+    public function companyFor(JobPosting|JobApplication|ApplicationTestAssignment|TestAttempt|Interview|Test $subject): ?Company
     {
         return match (true) {
             $subject instanceof JobPosting => $subject->company()->first(),
@@ -30,6 +37,7 @@ class CompanyRecruitmentAccessService
                 ->with('jobApplication.jobPosting.company')->first()?->jobApplication?->jobPosting?->company,
             $subject instanceof Interview => $subject->jobApplication()
                 ->with('jobPosting.company')->first()?->jobPosting?->company,
+            $subject instanceof Test => $subject->company()->first(),
         };
     }
 
@@ -46,11 +54,12 @@ class CompanyRecruitmentAccessService
         }
 
         $this->assertApproved($company);
+        $this->assertHasOwner($company);
 
         return $company;
     }
 
-    public function assertRecruitmentAvailable(JobPosting|JobApplication|ApplicationTestAssignment|TestAttempt|Interview $subject): Company
+    public function assertRecruitmentAvailable(JobPosting|JobApplication|ApplicationTestAssignment|TestAttempt|Interview|Test $subject): Company
     {
         $company = $this->companyFor($subject);
 
@@ -61,7 +70,15 @@ class CompanyRecruitmentAccessService
             );
         }
 
+        $this->assertHasOwner($company);
+
         return $company;
+    }
+
+    public function assertCompanyOperational(Company $company): void
+    {
+        $this->assertApproved($company);
+        $this->assertHasOwner($company);
     }
 
     public function isApproved(?Company $company): bool
@@ -83,6 +100,26 @@ class CompanyRecruitmentAccessService
                 $message,
                 $code,
                 errors: ['company_approval_status' => [$company->approval_status]],
+            );
+        }
+    }
+
+    private function assertHasOwner(Company $company): void
+    {
+        if (! $company->owner_setup_required) {
+            return;
+        }
+
+        $hasOwner = $company->employerProfiles()
+            ->where('company_role', CompanyRole::OWNER)
+            ->where('membership_status', CompanyMembershipStatus::ACTIVE)
+            ->exists();
+
+        if (! $hasOwner) {
+            throw new RecruitmentAccessException(
+                'Company setup requires an active owner before recruitment can begin.',
+                'COMPANY_SETUP_OWNER_REQUIRED',
+                409,
             );
         }
     }

@@ -22,6 +22,14 @@ class CompanyResource extends JsonResource
             'location' => $this->location,
             'description' => $this->description,
             'approval_status' => $this->approval_status,
+            'has_owner' => $this->when(
+                array_key_exists('owner_count', $this->resource->getAttributes()),
+                fn (): bool => (int) $this->owner_count > 0,
+            ),
+            'setup_complete' => $this->when(
+                array_key_exists('owner_count', $this->resource->getAttributes()),
+                fn (): bool => (int) $this->owner_count > 0,
+            ),
             'employer_profiles' => EmployerProfileResource::collection($this->whenLoaded('employerProfiles')),
             'counts' => $this->when(
                 array_key_exists('employer_profiles_count', $this->resource->getAttributes())

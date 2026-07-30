@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\ApplicationInformationRequestStatus;
+use App\Enums\CompanyPermission;
 use App\Enums\UserRole;
 use App\Events\ApplicationInformationRequestCancelled;
 use App\Events\ApplicationInformationRequested;
@@ -28,6 +29,7 @@ class ApplicationInformationRequestService
         private readonly CompanyRecruitmentAccessService $companyAccess,
         private readonly AuditLogService $audit,
         private readonly PrivateFileStorageService $privateStorage,
+        private readonly CompanyPermissionService $companyPermissionService,
     ) {}
 
     /** @return Collection<int, ApplicationInformationRequest> */
@@ -235,7 +237,11 @@ class ApplicationInformationRequestService
 
     private function ensureEmployerOwns(User $actor, JobApplication $application): void
     {
-        if ($actor->role !== UserRole::EMPLOYER || ! $actor->employerProfile()->where('company_id', $application->jobPosting->company_id)->exists()) {
+        if (! $this->companyPermissionService->can(
+            $actor,
+            CompanyPermission::MANAGE_APPLICATIONS,
+            $application->jobPosting->company_id,
+        )) {
             throw new ApplicationInformationRequestException('This information request does not belong to your company.', 'APPLICATION_INFORMATION_REQUEST_NOT_OWNED', 403);
         }
     }

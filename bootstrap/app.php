@@ -2,6 +2,7 @@
 
 use App\Exceptions\ApplicationInformationRequestException;
 use App\Exceptions\ApplicationInternalNoteException;
+use App\Exceptions\CompanyManagementException;
 use App\Exceptions\CVLifecycleException;
 use App\Exceptions\EmailVerificationException;
 use App\Exceptions\InterviewLifecycleException;
@@ -43,6 +44,19 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (CompanyManagementException $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return ApiResponse::error(
+                message: $exception->getMessage(),
+                errors: $exception->errors,
+                status: $exception->status,
+                code: $exception->errorCode,
+            );
+        });
+
         $exceptions->render(function (PasswordResetOtpException $exception, Request $request) {
             if (! $request->is('api/*')) {
                 return null;

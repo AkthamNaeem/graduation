@@ -1,5 +1,180 @@
 # Smart Recruitment Platform — Backend Implementation Report
 
+## Company Management, Membership, Invitations, and Roles (2026-07-30)
+
+### 1. Baseline
+
+| Item | Value |
+| --- | --- |
+| Branch | `master` |
+| Starting commit | `7811ce8d016444568b772cba1ff67f5e4d367838` |
+| Starting working tree | Clean |
+| Baseline tests | 802 passed, 2 skipped, 17,282 assertions |
+
+### 2. Existing implementation reused
+
+The implementation extends the existing `Company`, `EmployerProfile`, and `User`
+models and reuses `AdminCompanyController`, `RegistrationService`,
+`CompanyRecruitmentAccessService`, `EnsureCompanyApproved`, the current
+recruitment policies, `AuditLogService`, `NotificationService`, `ApiResponse`,
+Sanctum tokens, and the existing `/api/v1` route layout. No duplicate
+`company_members` table or parallel recruitment module was created.
+
+### 3. Architecture decisions
+
+- `employer_profiles` remains the one-company-per-employer membership record.
+  `user_id` stays unique, while company role, membership state, inviter, and
+  lifecycle timestamps are stored on that record.
+- `company_invitations` is separate because an invitation can exist before a
+  user account. Only a SHA-256 token hash is persisted. The raw token is
+  returned only by create/resend.
+- Global `UserRole::EMPLOYER` identifies the account type. `CompanyRole`
+  controls company permissions: `owner`, `company_admin`, `recruiter`,
+  `interviewer`, and `reviewer`.
+- `CompanyPermissionService` is the source for active membership, same-company
+  scope, role permissions, and the Administrator bypass. Services still enforce
+  data invariants after authorization succeeds.
+- Admin-created companies set `owner_setup_required`. Recruitment remains
+  blocked with `COMPANY_SETUP_OWNER_REQUIRED` until an Owner accepts.
+- Last-Owner checks are never bypassed. Ownership transfer locks the company,
+  current owner, and target membership in one retried transaction.
+
+### 4. Changed files
+
+| File or group | Change | Reason |
+| --- | --- | --- |
+| `database/migrations/2026_07_30_000003_*` | Membership columns, indexes, deterministic backfill | Extend the existing membership table safely |
+| `database/migrations/2026_07_30_000004_*` | `company_invitations` table | Store invitation lifecycle independently |
+| `database/migrations/2026_07_30_000005_*` | Owner setup marker | Block new Admin companies until Owner setup |
+| `app/Enums/Company*` | Role, permission, membership, invitation enums | Eliminate repeated authorization strings |
+| `app/Models/{Company,EmployerProfile,CompanyInvitation,User}.php` | Casts and relationships | Represent membership and invitation state |
+| `app/Services/Company*Service.php` | Permissions, invitations, membership, ownership | Keep business rules out of controllers |
+| `app/Services/AdminCompanyService.php` | Transactional Admin create/update | Support optional Owner invitation |
+| `app/Http/Controllers/Api/V1/{Admin,Company}` | Admin/team/public invitation APIs | Expose the REST contract |
+| `app/Http/Requests/Api/V1/{Admin,Company}` | Per-operation validation | Validate roles, filters, status, ownership input |
+| `app/Http/Resources/Api/V1/Company*Resource.php` | Safe member/invitation/setup responses | Never expose token hashes |
+| `app/Policies/*` and recruitment services | Role matrix, Admin bypass, active membership, company scope | Apply permissions across existing modules |
+| `routes/api/v1.php` | Admin, team, invitation, ownership routes | Extend the existing API |
+| `database/seeders/DemoUsersSeeder.php` | Role/status/invitation demo scenarios | Provide deterministic test data |
+| `tests/Feature/Api/V1/Company*Test.php` | Invitation, membership, ownership, matrix coverage | Protect invariants |
+| `postman/*` | Six management folders, mobile invitation flow, variables | Document and exercise the API |
+
+### 5. Database changes
+
+`employer_profiles` now includes `company_role`, `membership_status`,
+`invited_by_user_id`, `joined_at`, `suspended_at`, and `removed_at`. Indexes
+cover role, membership status, `(company_id, membership_status)`, and
+`(company_id, company_role)`; the original company foreign-key index and unique
+`user_id` remain.
+
+The backfill marks every existing membership active, copies `created_at` to
+`joined_at`, chooses the oldest `(created_at, id)` membership in each company
+as Owner, and assigns the remaining memberships Company Admin.
+
+`company_invitations` contains company/email/role, unique token hash, status,
+inviter, expiry, acceptance actor/timestamps, rejection/revocation timestamps,
+foreign keys, and lookup indexes. Rollback drops invitations and the added
+membership/setup columns and indexes.
+
+### 6. API contract
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| POST/GET | `/api/v1/admin/companies` | Create/list companies |
+| GET/PUT/PATCH | `/api/v1/admin/companies/{company}` | Show/update company |
+| GET | `/api/v1/admin/companies/{company}/members` | Filter/paginate members |
+| POST/GET | `/api/v1/admin/companies/{company}/invitations` | Create/list invitations |
+| PATCH | `/api/v1/admin/companies/{company}/members/{user}/role` | Change company role |
+| PATCH | `/api/v1/admin/companies/{company}/members/{user}/status` | Suspend/reactivate |
+| DELETE | `/api/v1/admin/companies/{company}/members/{user}` | Soft-remove membership |
+| POST | `/api/v1/admin/companies/{company}/transfer-ownership` | Admin ownership transfer |
+| GET | `/api/v1/company/members` | List current company members |
+| POST/GET | `/api/v1/company/invitations` | Create/list invitations |
+| POST | `/api/v1/company/invitations/{invitation}/resend` | Rotate token/expiry |
+| POST | `/api/v1/company/invitations/{invitation}/revoke` | Revoke invitation |
+| PATCH/DELETE | `/api/v1/company/members/{user}/*` | Role/status/remove |
+| POST | `/api/v1/company/transfer-ownership` | Owner transfer |
+| GET | `/api/v1/company-invitations/{token}` | Safe public inspection |
+| POST | `/api/v1/company-invitations/{token}/accept` | Atomic join/reactivation |
+| POST | `/api/v1/company-invitations/{token}/reject` | Reject invitation |
+
+`POST /api/v1/auth/register/employer` remains routable for compatibility but
+returns HTTP 403 with `EMPLOYER_SELF_REGISTRATION_DISABLED` and performs no
+writes. Employer accounts now enter through invitation acceptance.
+
+Member and invitation lists support validated filtering, sorting, date bounds,
+and pagination capped at 100.
+
+### 7. Permissions matrix
+
+| Action | Admin | Owner | Company Admin | Recruiter | Interviewer | Reviewer |
+| --- | --- | --- | --- | --- | --- | --- |
+| Create/manage company | Any | Own | Own | No | No | No |
+| View/manage team | Any | Yes | Except Owner | No | No | No |
+| Invite Owner | Yes | Yes | No | No | No | No |
+| Transfer ownership | Yes | Yes | No | No | No | No |
+| Jobs | Any | Manage | Manage | Manage | Context only | No |
+| Applications | Any | Manage | Manage | Manage | Read | Read |
+| Tests | Any | Manage | Manage | Manage | No | Read/grade |
+| Interviews | Any | Manage/evaluate | Manage/evaluate | Schedule/manage | Complete/evaluate | No |
+| Internal notes | Any | Yes | Yes | Yes | No | Yes |
+
+All non-Admin permissions require active membership in the resource company.
+Suspended and removed memberships fail before role permissions are considered.
+
+### 8. Business rules
+
+- Emails are trimmed and lowercased. A company/email has at most one unexpired
+  pending invitation.
+- Accepted, rejected, revoked, expired, or rotated tokens cannot be reused.
+- New acceptance creates an Employer and membership in the invited company only.
+- Job Seeker/Admin emails and Employers in another company are rejected without
+  changing global roles or moving memberships.
+- Removed members may return only through a new invitation to the same company.
+- Suspension/removal retains history and revokes every Sanctum token.
+- Company Admin cannot grant/manage Owner. Ownership changes use the explicit
+  transactional transfer endpoint.
+- Audit/notification metadata never includes raw tokens, hashes, OTPs, or
+  passwords.
+
+### 9. Tests
+
+Feature coverage includes Admin company creation with Owner invitation, token
+hashing, acceptance without company creation, reuse/expiry/revocation, duplicate
+invitations, role conflicts, cross-company denial, role restrictions, token
+revocation, reactivation, last-Owner protection, ownership transfer, audit
+events, and the permission matrix. Legacy employer-registration tests now
+assert the disabled contract.
+
+Final regression result: **817 passed, 2 skipped, 17,278 assertions**. The two
+skipped tests are the repository's opt-in real S3 integration checks. Focused
+company-role tests passed with 15 tests and 101 assertions; the requested
+filters also passed: Company 44/323, Invitation 7/58, Member 5/27, and
+Authorization 9/106.
+
+### 10. Verification
+
+The complete migration set ran on isolated SQLite. The three new migrations
+also rolled back and reapplied successfully. Route inspection found 197
+`/api/v1` routes, including every documented Admin, company-team, invitation,
+and ownership endpoint. All three Postman files decode as valid JSON, and
+`git diff --check` passes.
+
+Pint passes for all 58 changed/new PHP files. Repository-wide
+`vendor/bin/pint --test` still reports 51 pre-existing style violations in
+unchanged files; those files were deliberately not reformatted as part of this
+feature. `composer audit --locked` could not be completed in the sandbox:
+Packagist access was blocked, and elevated access was denied because it would
+disclose locked dependency metadata to an external service.
+
+### 11. Remaining gaps
+
+- No email provider was added. In-app notification is used when the invitee
+  already has an account.
+- Database locks serialize ownership and acceptance on MySQL/PostgreSQL. SQLite
+  tests validate atomic outcomes but cannot reproduce server lock scheduling.
+- Public registration OTP remains available for Job Seekers only.
+
 ## 1. Executive Summary
 
 The backend implements a Laravel 12 REST API for a smart recruitment platform. The current scope covers account registration and authentication, job seeker and employer profiles, CV upload and structured parsing, employer job posting management, job applications with status history, test assignments and attempts, interview scheduling and evaluation, deterministic matching/ranking based on TF-IDF and cosine similarity, user-facing in-app notifications, and platform-level admin APIs.
@@ -8,7 +183,13 @@ The implementation follows a service-oriented Laravel structure using Form Reque
 
 ### 1.1 Temporary Registration OTP Verification
 
-Both job seeker and employer registration flows now require email verification before login. Registration still creates the active user and its profile/company records in one transaction, but the user starts with `email_verified_at = null`, receives no Sanctum token, and gets one hashed OTP record in `email_verification_otps`. `users.email_verified_at` is the only verification source of truth; `UserStatus` remains reserved for administrative account state.
+Job Seeker registration requires email verification before login. Public
+Employer registration is disabled and performs no writes; Employer users join
+an existing company through a company invitation. Job Seeker registration
+creates an active unverified user/profile in one transaction, returns no Sanctum
+token, and creates one hashed OTP record in `email_verification_otps`.
+`users.email_verified_at` is the only verification source of truth;
+`UserStatus` remains reserved for administrative account state.
 
 **Temporary OTP for development/demo: `000000`.**
 

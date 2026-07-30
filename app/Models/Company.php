@@ -17,7 +17,15 @@ class Company extends Model
         'location',
         'description',
         'approval_status',
+        'owner_setup_required',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'owner_setup_required' => 'boolean',
+        ];
+    }
 
     public function employerProfiles(): HasMany
     {
@@ -32,5 +40,10 @@ class Company extends Model
     public function tests(): HasMany
     {
         return $this->hasMany(Test::class);
+    }
+
+    public function invitations(): HasMany
+    {
+        return $this->hasMany(CompanyInvitation::class);
     }
 }

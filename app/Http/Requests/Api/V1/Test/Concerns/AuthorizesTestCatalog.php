@@ -14,21 +14,21 @@ trait AuthorizesTestCatalog
     {
         $token = $this->bearerToken();
 
-        if (! $token) {
-            return null;
+        if ($token) {
+            $accessToken = PersonalAccessToken::findToken($token);
+            $tokenable = $accessToken?->tokenable;
+
+            if ($tokenable instanceof User) {
+                $user = $tokenable->withAccessToken($accessToken);
+                $this->setUserResolver(static fn (?string $guard = null): User => $user);
+
+                return $user;
+            }
         }
 
-        $accessToken = PersonalAccessToken::findToken($token);
-        $tokenable = $accessToken?->tokenable;
+        $resolved = $this->user('sanctum') ?? $this->user();
 
-        if (! $tokenable instanceof User) {
-            return null;
-        }
-
-        $user = $tokenable->withAccessToken($accessToken);
-        $this->setUserResolver(static fn (?string $guard = null): User => $user);
-
-        return $user;
+        return $resolved instanceof User ? $resolved : null;
     }
 
     protected function canReadTestCatalog(): bool
@@ -48,10 +48,7 @@ trait AuthorizesTestCatalog
 
     protected function canManageTestCatalog(): bool
     {
-        $role = $this->authenticatedUser()?->role;
-
-        return $role === UserRole::EMPLOYER
-            || $role === UserRole::ADMIN;
+        return $this->authenticatedUser()?->can('create', Test::class) ?? false;
     }
 
     protected function canViewTest(Test $test): bool

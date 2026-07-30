@@ -2,23 +2,35 @@
 
 namespace App\Policies;
 
+use App\Enums\CompanyPermission;
 use App\Enums\UserRole;
 use App\Models\Interview;
 use App\Models\JobApplication;
 use App\Models\User;
+use App\Services\CompanyPermissionService;
 
 class InterviewPolicy
 {
+    public function __construct(
+        private readonly CompanyPermissionService $permissions,
+    ) {}
+
     public function createForApplication(User $user, JobApplication $jobApplication): bool
     {
-        return $user->role === UserRole::EMPLOYER
-            && $this->belongsToCompany($user, $jobApplication->jobPosting->company_id);
+        return $this->permissions->can(
+            $user,
+            CompanyPermission::MANAGE_INTERVIEWS,
+            $jobApplication->jobPosting->company_id,
+        );
     }
 
     public function viewForApplication(User $user, JobApplication $jobApplication): bool
     {
-        return $user->role === UserRole::EMPLOYER
-            && $this->belongsToCompany($user, $jobApplication->jobPosting->company_id);
+        return $this->permissions->can(
+            $user,
+            CompanyPermission::VIEW_INTERVIEWS,
+            $jobApplication->jobPosting->company_id,
+        );
     }
 
     public function view(User $user, Interview $interview): bool
@@ -27,14 +39,20 @@ class InterviewPolicy
             return $user->jobSeekerProfile?->id === $interview->jobApplication->job_seeker_profile_id;
         }
 
-        return $user->role === UserRole::EMPLOYER
-            && $this->belongsToCompany($user, $interview->jobApplication->jobPosting->company_id);
+        return $this->permissions->can(
+            $user,
+            CompanyPermission::VIEW_INTERVIEWS,
+            $interview->jobApplication->jobPosting->company_id,
+        );
     }
 
     public function update(User $user, Interview $interview): bool
     {
-        return $user->role === UserRole::EMPLOYER
-            && $this->belongsToCompany($user, $interview->jobApplication->jobPosting->company_id);
+        return $this->permissions->can(
+            $user,
+            CompanyPermission::MANAGE_INTERVIEWS,
+            $interview->jobApplication->jobPosting->company_id,
+        );
     }
 
     public function confirm(User $user, Interview $interview): bool
@@ -55,7 +73,11 @@ class InterviewPolicy
 
     public function manageAttendance(User $user, Interview $interview): bool
     {
-        return $this->update($user, $interview);
+        return $this->permissions->can(
+            $user,
+            CompanyPermission::EVALUATE_INTERVIEWS,
+            $interview->jobApplication->jobPosting->company_id,
+        );
     }
 
     public function markNoShow(User $user, Interview $interview): bool
@@ -75,18 +97,11 @@ class InterviewPolicy
 
     public function complete(User $user, Interview $interview): bool
     {
-        return $this->update($user, $interview);
+        return $this->manageAttendance($user, $interview);
     }
 
     public function evaluate(User $user, Interview $interview): bool
     {
-        return $this->update($user, $interview);
-    }
-
-    private function belongsToCompany(User $user, int $companyId): bool
-    {
-        return $user->employerProfile()
-            ->where('company_id', $companyId)
-            ->exists();
+        return $this->manageAttendance($user, $interview);
     }
 }

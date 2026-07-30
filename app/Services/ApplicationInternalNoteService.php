@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Enums\CompanyApprovalStatus;
-use App\Enums\UserRole;
+use App\Enums\CompanyPermission;
 use App\Exceptions\ApplicationInternalNoteException;
 use App\Models\ApplicationInternalNote;
 use App\Models\ApplicationInternalNoteRevision;
@@ -16,7 +16,10 @@ class ApplicationInternalNoteService
 {
     private const FINAL_STATUSES = ['accepted', 'rejected', 'withdrawn'];
 
-    public function __construct(private readonly AuditLogService $auditLogService) {}
+    public function __construct(
+        private readonly AuditLogService $auditLogService,
+        private readonly CompanyPermissionService $companyPermissionService,
+    ) {}
 
     public function listForApplication(User $actor, JobApplication $application, array $filters): LengthAwarePaginator
     {
@@ -171,9 +174,12 @@ class ApplicationInternalNoteService
     private function assertCompanyOwnership(User $actor, JobApplication $application): void
     {
         $companyId = $application->jobPosting?->company_id;
-        $owned = $actor->role === UserRole::EMPLOYER
-            && $companyId !== null
-            && $actor->employerProfile()->where('company_id', $companyId)->exists();
+        $owned = $companyId !== null
+            && $this->companyPermissionService->can(
+                $actor,
+                CompanyPermission::MANAGE_INTERNAL_NOTES,
+                $companyId,
+            );
 
         if (! $owned) {
             throw new ApplicationInternalNoteException('The internal note is not available to this user.', 'APPLICATION_INTERNAL_NOTE_NOT_OWNED', 403);
@@ -182,6 +188,10 @@ class ApplicationInternalNoteService
 
     private function assertAuthor(User $actor, ApplicationInternalNote $note): void
     {
+        if ($this->companyPermissionService->isAdministrator($actor)) {
+            return;
+        }
+
         if ($note->author_user_id !== $actor->id) {
             throw new ApplicationInternalNoteException('Only the note author can change it.', 'APPLICATION_INTERNAL_NOTE_AUTHOR_ONLY', 403);
         }

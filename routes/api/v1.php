@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\Admin\AdminCompanyController;
+use App\Http\Controllers\Api\V1\Admin\AdminCompanyMemberController;
 use App\Http\Controllers\Api\V1\Admin\AdminReportController;
 use App\Http\Controllers\Api\V1\Admin\AdminSkillController;
 use App\Http\Controllers\Api\V1\Admin\AdminTestController;
@@ -12,6 +13,8 @@ use App\Http\Controllers\Api\V1\Application\JobApplicationController;
 use App\Http\Controllers\Api\V1\Auth\AuthController;
 use App\Http\Controllers\Api\V1\Auth\EmailVerificationController;
 use App\Http\Controllers\Api\V1\Auth\RegistrationController;
+use App\Http\Controllers\Api\V1\Company\CompanyInvitationController;
+use App\Http\Controllers\Api\V1\Company\CompanyTeamController;
 use App\Http\Controllers\Api\V1\CV\CVController;
 use App\Http\Controllers\Api\V1\Interview\InterviewController;
 use App\Http\Controllers\Api\V1\JobPosting\JobPostingController;
@@ -65,6 +68,14 @@ Route::prefix('auth')
         });
     });
 
+Route::prefix('company-invitations')
+    ->name('company-invitations.')
+    ->group(function (): void {
+        Route::get('{token}', [CompanyInvitationController::class, 'show'])->name('show');
+        Route::post('{token}/accept', [CompanyInvitationController::class, 'accept'])->name('accept');
+        Route::post('{token}/reject', [CompanyInvitationController::class, 'reject'])->name('reject');
+    });
+
 Route::middleware(['auth:sanctum', 'user.active'])->group(function (): void {
     Route::get('applications/{jobApplication}/internal-notes', [ApplicationInternalNoteController::class, 'index'])->name('applications.internal-notes.index');
     Route::post('applications/{jobApplication}/internal-notes', [ApplicationInternalNoteController::class, 'store'])->name('applications.internal-notes.store');
@@ -105,10 +116,20 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function (): void {
             Route::get('reports/cv-parsing', [AdminReportController::class, 'cvParsing'])->name('reports.cv-parsing');
 
             Route::get('companies', [AdminCompanyController::class, 'index'])->name('companies.index');
+            Route::post('companies', [AdminCompanyController::class, 'store'])->name('companies.store');
             Route::get('companies/{company}', [AdminCompanyController::class, 'show'])->name('companies.show');
+            Route::put('companies/{company}', [AdminCompanyController::class, 'update'])->name('companies.update');
+            Route::patch('companies/{company}', [AdminCompanyController::class, 'update'])->name('companies.patch');
             Route::patch('companies/{company}/approve', [AdminCompanyController::class, 'approve'])->name('companies.approve');
             Route::patch('companies/{company}/reject', [AdminCompanyController::class, 'reject'])->name('companies.reject');
             Route::patch('companies/{company}/suspend', [AdminCompanyController::class, 'suspend'])->name('companies.suspend');
+            Route::get('companies/{company}/members', [AdminCompanyMemberController::class, 'members'])->name('companies.members.index');
+            Route::post('companies/{company}/invitations', [AdminCompanyMemberController::class, 'invite'])->name('companies.invitations.store');
+            Route::get('companies/{company}/invitations', [AdminCompanyMemberController::class, 'invitations'])->name('companies.invitations.index');
+            Route::patch('companies/{company}/members/{user}/role', [AdminCompanyMemberController::class, 'updateRole'])->name('companies.members.role');
+            Route::patch('companies/{company}/members/{user}/status', [AdminCompanyMemberController::class, 'updateStatus'])->name('companies.members.status');
+            Route::delete('companies/{company}/members/{user}', [AdminCompanyMemberController::class, 'remove'])->name('companies.members.destroy');
+            Route::post('companies/{company}/transfer-ownership', [AdminCompanyMemberController::class, 'transferOwnership'])->name('companies.transfer-ownership');
 
             Route::get('skills', [AdminSkillController::class, 'index'])->name('skills.index');
             Route::post('skills', [AdminSkillController::class, 'store'])->name('skills.store');
@@ -152,6 +173,15 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function (): void {
 
     Route::get('company', [CompanyController::class, 'show'])->name('company.show');
     Route::put('company', [CompanyController::class, 'update'])->name('company.update');
+    Route::get('company/members', [CompanyTeamController::class, 'members'])->name('company.members.index');
+    Route::post('company/invitations', [CompanyTeamController::class, 'invite'])->name('company.invitations.store');
+    Route::get('company/invitations', [CompanyTeamController::class, 'invitations'])->name('company.invitations.index');
+    Route::post('company/invitations/{invitation}/resend', [CompanyTeamController::class, 'resend'])->name('company.invitations.resend');
+    Route::post('company/invitations/{invitation}/revoke', [CompanyTeamController::class, 'revoke'])->name('company.invitations.revoke');
+    Route::patch('company/members/{user}/role', [CompanyTeamController::class, 'updateRole'])->name('company.members.role');
+    Route::patch('company/members/{user}/status', [CompanyTeamController::class, 'updateStatus'])->name('company.members.status');
+    Route::delete('company/members/{user}', [CompanyTeamController::class, 'remove'])->name('company.members.destroy');
+    Route::post('company/transfer-ownership', [CompanyTeamController::class, 'transferOwnership'])->name('company.transfer-ownership');
     Route::get('employer/profile', [EmployerProfileController::class, 'show'])->name('employer.profile.show');
     Route::put('employer/profile', [EmployerProfileController::class, 'update'])->name('employer.profile.update');
 

@@ -12,20 +12,26 @@ trait ResolvesJobPostingUser
     {
         $token = $this->bearerToken();
 
-        if (! $token) {
-            return null;
+        if ($token) {
+            $accessToken = PersonalAccessToken::findToken($token);
+            $tokenable = $accessToken?->tokenable;
+
+            if ($tokenable instanceof User) {
+                return $tokenable->withAccessToken($accessToken);
+            }
         }
 
-        $accessToken = PersonalAccessToken::findToken($token);
-        $tokenable = $accessToken?->tokenable;
+        $resolved = $this->user('sanctum') ?? $this->user();
 
-        return $tokenable instanceof User
-            ? $tokenable->withAccessToken($accessToken)
-            : null;
+        return $resolved instanceof User ? $resolved : null;
     }
 
     protected function isEmployerUser(): bool
     {
-        return $this->authenticatedUser()?->role === UserRole::EMPLOYER;
+        return in_array(
+            $this->authenticatedUser()?->role,
+            [UserRole::EMPLOYER, UserRole::ADMIN],
+            true,
+        );
     }
 }

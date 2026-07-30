@@ -3,11 +3,16 @@
 namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\Enums\CompanyApprovalStatus;
+use App\Enums\CompanyMembershipStatus;
+use App\Enums\CompanyRole;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Api\V1\Admin\AdminStoreCompanyRequest;
+use App\Http\Requests\Api\V1\Admin\AdminUpdateCompanyRequest;
 use App\Http\Requests\Api\V1\Admin\CompanyApprovalRequest;
 use App\Http\Requests\Api\V1\Admin\IndexAdminCompanyRequest;
 use App\Http\Resources\Api\V1\CompanyResource;
 use App\Models\Company;
+use App\Services\AdminCompanyService;
 use App\Services\AdminCompanyStatusService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
@@ -16,7 +21,33 @@ class AdminCompanyController extends Controller
 {
     public function __construct(
         private readonly AdminCompanyStatusService $adminCompanyStatusService,
+        private readonly AdminCompanyService $adminCompanyService,
     ) {}
+
+    public function store(AdminStoreCompanyRequest $request): JsonResponse
+    {
+        $result = $this->adminCompanyService->create(
+            $request->user('sanctum'),
+            $request->validated(),
+        );
+
+        return ApiResponse::success(
+            data: [
+                'company' => new CompanyResource($result['company']),
+                'owner_invitation' => $result['owner_invitation'] === null
+                    ? null
+                    : [
+                        'id' => $result['owner_invitation']['invitation']->id,
+                        'email' => $result['owner_invitation']['invitation']->email,
+                        'company_role' => $result['owner_invitation']['invitation']->company_role->value,
+                        'expires_at' => $result['owner_invitation']['invitation']->expires_at?->toISOString(),
+                        'token' => $result['owner_invitation']['token'],
+                    ],
+            ],
+            message: 'Company created successfully.',
+            status: 201,
+        );
+    }
 
     public function index(IndexAdminCompanyRequest $request): JsonResponse
     {
@@ -27,6 +58,11 @@ class AdminCompanyController extends Controller
         $companies = Company::query()
             ->with('employerProfiles.user')
             ->withCount(['employerProfiles', 'jobPostings'])
+            ->withCount([
+                'employerProfiles as owner_count' => fn ($query) => $query
+                    ->where('company_role', CompanyRole::OWNER)
+                    ->where('membership_status', CompanyMembershipStatus::ACTIVE),
+            ])
             ->when($filters['search'] ?? null, function ($query, string $search): void {
                 $query->where(function ($builder) use ($search): void {
                     $builder
@@ -54,11 +90,28 @@ class AdminCompanyController extends Controller
             ->loadCount(['employerProfiles', 'jobPostings'])
             ->loadCount([
                 'jobPostings as applications_count' => fn ($query) => $query->join('job_applications', 'job_applications.job_posting_id', '=', 'job_postings.id'),
+                'employerProfiles as owner_count' => fn ($query) => $query
+                    ->where('company_role', CompanyRole::OWNER)
+                    ->where('membership_status', CompanyMembershipStatus::ACTIVE),
             ]);
 
         return ApiResponse::success(
             data: new CompanyResource($company),
             message: 'Company retrieved successfully.',
+        );
+    }
+
+    public function update(AdminUpdateCompanyRequest $request, Company $company): JsonResponse
+    {
+        return ApiResponse::success(
+            data: new CompanyResource(
+                $this->adminCompanyService->update(
+                    $request->user('sanctum'),
+                    $company,
+                    $request->validated(),
+                ),
+            ),
+            message: 'Company updated successfully.',
         );
     }
 

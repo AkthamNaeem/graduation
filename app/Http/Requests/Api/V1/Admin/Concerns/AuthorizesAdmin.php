@@ -17,15 +17,17 @@ trait AuthorizesAdmin
     {
         $token = $this->bearerToken();
 
-        if (! $token) {
-            return null;
+        if ($token) {
+            $accessToken = PersonalAccessToken::findToken($token);
+            $tokenable = $accessToken?->tokenable;
+
+            if ($tokenable instanceof User) {
+                return $tokenable->withAccessToken($accessToken);
+            }
         }
 
-        $accessToken = PersonalAccessToken::findToken($token);
-        $tokenable = $accessToken?->tokenable;
+        $requestUser = $this->user('sanctum') ?? $this->user();
 
-        return $tokenable instanceof User
-            ? $tokenable->withAccessToken($accessToken)
-            : null;
+        return $requestUser instanceof User ? $requestUser : null;
     }
 }

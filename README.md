@@ -2,6 +2,35 @@
 
 Laravel 12 REST API for candidate profiles and CVs, companies and jobs, applications, information requests, private internal notes, tests and grading, interviews, notifications, matching, audit logs, and administration.
 
+## Company accounts and team membership
+
+Companies are created by Administrators. Employer users join an existing
+company through a one-time invitation; public employer self-registration is
+disabled and returns `EMPLOYER_SELF_REGISTRATION_DISABLED`.
+
+`employer_profiles` is the membership record and supports `owner`,
+`company_admin`, `recruiter`, `interviewer`, and `reviewer`. Membership state is
+`active`, `suspended`, or `removed`. Suspended/removed members cannot use
+company-scoped APIs, and their Sanctum tokens are revoked on state change.
+
+Key APIs:
+
+- `/api/v1/admin/companies` and
+  `/api/v1/admin/companies/{company}/members`
+- `/api/v1/company/members` and `/api/v1/company/invitations`
+- `/api/v1/company-invitations/{token}` for public inspect/accept/reject
+- `/api/v1/company/transfer-ownership` for atomic Owner transfer
+
+Invitation tokens expire after 72 hours by default:
+
+```env
+COMPANY_INVITATION_EXPIRATION_HOURS=72
+```
+
+Only a SHA-256 token hash is stored. The raw token is returned once on create or
+resend and must be delivered by the client/integration. No new email provider is
+included.
+
 ## Demo database
 
 The project includes a complete, rerunnable demo database for API, dashboard,

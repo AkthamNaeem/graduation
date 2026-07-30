@@ -31,7 +31,7 @@ class AuthTest extends TestCase
             ->assertJsonValidationErrors(['terms_accepted']);
     }
 
-    public function test_employer_registration_requires_terms_accepted(): void
+    public function test_disabled_employer_registration_does_not_run_legacy_terms_validation(): void
     {
         $response = $this->postJson('/api/v1/auth/register/employer', [
             'name' => 'Evan Employer',
@@ -41,8 +41,8 @@ class AuthTest extends TestCase
             'password_confirmation' => 'password',
         ]);
 
-        $response->assertStatus(422)
-            ->assertJsonValidationErrors(['terms_accepted']);
+        $response->assertForbidden()
+            ->assertJsonPath('code', 'EMPLOYER_SELF_REGISTRATION_DISABLED');
     }
 
     public function test_duplicate_email_is_rejected(): void
@@ -110,7 +110,7 @@ class AuthTest extends TestCase
             ]);
     }
 
-    public function test_employer_registration_creates_company_and_profile_relationships(): void
+    public function test_employer_self_registration_is_disabled_without_side_effects(): void
     {
         $response = $this->postJson('/api/v1/auth/register/employer', [
             'name' => 'Evan Employer',
@@ -123,31 +123,14 @@ class AuthTest extends TestCase
             'terms_accepted' => true,
         ]);
 
-        $response->assertCreated()
-            ->assertJsonPath('success', true)
-            ->assertJsonPath('data.user.role', UserRole::EMPLOYER->value)
-            ->assertJsonPath('data.user.status', UserStatus::ACTIVE->value)
-            ->assertJsonPath('data.user.employer_profile.phone', '+1 555 0200')
-            ->assertJsonPath('data.user.employer_profile.company.name', 'Talent Forge')
-            ->assertJsonPath('data.user.employer_profile.company.website', 'https://talentforge.example.com')
-            ->assertJsonPath('data.user.is_email_verified', false);
-
-        $user = User::query()->where('email', 'evan@example.com')->firstOrFail();
-        $company = Company::query()->where('name', 'Talent Forge')->firstOrFail();
-
-        $this->assertDatabaseHas('companies', [
-            'id' => $company->id,
-            'website' => 'https://talentforge.example.com',
-        ]);
-
-        $this->assertDatabaseHas('employer_profiles', [
-            'user_id' => $user->id,
-            'company_id' => $company->id,
-            'phone' => '+1 555 0200',
-        ]);
+        $response->assertForbidden()
+            ->assertJsonPath('success', false)
+            ->assertJsonPath('code', 'EMPLOYER_SELF_REGISTRATION_DISABLED');
+        $this->assertDatabaseMissing('users', ['email' => 'evan@example.com']);
+        $this->assertDatabaseMissing('companies', ['name' => 'Talent Forge']);
     }
 
-    public function test_employer_registration_returns_validation_errors(): void
+    public function test_employer_self_registration_is_disabled_before_legacy_validation(): void
     {
         $response = $this->postJson('/api/v1/auth/register/employer', [
             'name' => 'Evan Employer',
@@ -157,13 +140,9 @@ class AuthTest extends TestCase
             'terms_accepted' => true,
         ]);
 
-        $response->assertStatus(422)
+        $response->assertForbidden()
             ->assertJsonPath('success', false)
-            ->assertJsonStructure([
-                'success',
-                'message',
-                'errors' => ['company_name'],
-            ]);
+            ->assertJsonPath('code', 'EMPLOYER_SELF_REGISTRATION_DISABLED');
     }
 
     public function test_login_succeeds_with_valid_active_user(): void

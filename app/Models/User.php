@@ -95,4 +95,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(AuditLog::class, 'actor_user_id');
     }
+
+    public function companyInvitationsSent(): HasMany
+    {
+        return $this->hasMany(CompanyInvitation::class, 'invited_by_user_id');
+    }
 }

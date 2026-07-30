@@ -2,23 +2,27 @@
 
 namespace App\Policies;
 
+use App\Enums\CompanyPermission;
 use App\Enums\UserRole;
 use App\Models\ApplicationTestAssignment;
 use App\Models\JobApplication;
 use App\Models\User;
+use App\Services\CompanyPermissionService;
 
 class ApplicationTestAssignmentPolicy
 {
+    public function __construct(
+        private readonly CompanyPermissionService $permissions,
+    ) {}
+
     public function assign(User $user, JobApplication $jobApplication): bool
     {
-        return $user->role === UserRole::EMPLOYER
-            && $this->belongsToCompany($user, $jobApplication->jobPosting->company_id);
+        return $this->permissions->can($user, CompanyPermission::MANAGE_TESTS, $jobApplication->jobPosting->company_id);
     }
 
     public function viewForApplication(User $user, JobApplication $jobApplication): bool
     {
-        return $user->role === UserRole::EMPLOYER
-            && $this->belongsToCompany($user, $jobApplication->jobPosting->company_id);
+        return $this->permissions->can($user, CompanyPermission::VIEW_TESTS, $jobApplication->jobPosting->company_id);
     }
 
     public function start(User $user, ApplicationTestAssignment $assignment): bool
@@ -35,9 +39,11 @@ class ApplicationTestAssignmentPolicy
 
     public function extendDeadline(User $user, ApplicationTestAssignment $assignment): bool
     {
-        return $user->role === UserRole::ADMIN
-            || ($user->role === UserRole::EMPLOYER
-                && $this->belongsToCompany($user, $assignment->jobApplication->jobPosting->company_id));
+        return $this->permissions->can(
+            $user,
+            CompanyPermission::MANAGE_TESTS,
+            $assignment->jobApplication->jobPosting->company_id,
+        );
     }
 
     public function viewDeadlineHistory(User $user, ApplicationTestAssignment $assignment): bool
@@ -57,12 +63,5 @@ class ApplicationTestAssignmentPolicy
         }
 
         return $this->manageRetakes($user, $assignment);
-    }
-
-    private function belongsToCompany(User $user, int $companyId): bool
-    {
-        return $user->employerProfile()
-            ->where('company_id', $companyId)
-            ->exists();
     }
 }

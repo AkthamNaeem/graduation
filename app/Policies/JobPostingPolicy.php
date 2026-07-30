@@ -2,35 +2,38 @@
 
 namespace App\Policies;
 
-use App\Enums\UserRole;
+use App\Enums\CompanyPermission;
 use App\Models\JobPosting;
 use App\Models\User;
+use App\Services\CompanyPermissionService;
 
 class JobPostingPolicy
 {
+    public function __construct(
+        private readonly CompanyPermissionService $permissions,
+    ) {}
+
     public function view(?User $user, JobPosting $jobPosting): bool
     {
         if ($jobPosting->status === 'open') {
             return true;
         }
 
-        if (! $user || $user->role !== UserRole::EMPLOYER) {
+        if (! $user) {
             return false;
         }
 
-        return $this->belongsToCompany($user, $jobPosting);
+        return $this->permissions->can($user, CompanyPermission::VIEW_JOBS, $jobPosting->company_id);
     }
 
     public function create(User $user): bool
     {
-        return $user->role === UserRole::EMPLOYER
-            && $user->employerProfile()->exists();
+        return $this->permissions->can($user, CompanyPermission::MANAGE_JOBS);
     }
 
     public function update(User $user, JobPosting $jobPosting): bool
     {
-        return $user->role === UserRole::EMPLOYER
-            && $this->belongsToCompany($user, $jobPosting);
+        return $this->permissions->can($user, CompanyPermission::MANAGE_JOBS, $jobPosting->company_id);
     }
 
     public function delete(User $user, JobPosting $jobPosting): bool
@@ -66,12 +69,5 @@ class JobPostingPolicy
     public function manageScreeningQuestions(User $user, JobPosting $jobPosting): bool
     {
         return $this->update($user, $jobPosting);
-    }
-
-    private function belongsToCompany(User $user, JobPosting $jobPosting): bool
-    {
-        return $user->employerProfile()
-            ->where('company_id', $jobPosting->company_id)
-            ->exists();
     }
 }

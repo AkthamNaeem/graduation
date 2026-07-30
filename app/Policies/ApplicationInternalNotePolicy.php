@@ -2,13 +2,18 @@
 
 namespace App\Policies;
 
-use App\Enums\UserRole;
+use App\Enums\CompanyPermission;
 use App\Models\ApplicationInternalNote;
 use App\Models\JobApplication;
 use App\Models\User;
+use App\Services\CompanyPermissionService;
 
 class ApplicationInternalNotePolicy
 {
+    public function __construct(
+        private readonly CompanyPermissionService $permissions,
+    ) {}
+
     public function viewAnyForApplication(User $user, JobApplication $application): bool
     {
         return $this->sameCompanyEmployer($user, $application);
@@ -41,14 +46,10 @@ class ApplicationInternalNotePolicy
 
     private function sameCompanyEmployer(User $user, JobApplication $application): bool
     {
-        if ($user->role !== UserRole::EMPLOYER) {
-            return false;
-        }
-
         $companyId = $application->jobPosting?->company_id
             ?? $application->jobPosting()->value('company_id');
 
         return $companyId !== null
-            && $user->employerProfile()->where('company_id', $companyId)->exists();
+            && $this->permissions->can($user, CompanyPermission::MANAGE_INTERNAL_NOTES, $companyId);
     }
 }

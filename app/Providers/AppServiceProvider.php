@@ -226,6 +226,9 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Interview::class, InterviewPolicy::class);
         Gate::policy(TestAttempt::class, TestAttemptPolicy::class);
         Gate::policy(Test::class, TestPolicy::class);
+        Gate::before(
+            fn ($user): ?bool => $user->role === UserRole::ADMIN ? true : null,
+        );
         Gate::define('access-admin', fn ($user): bool => $user->role === UserRole::ADMIN);
 
         JsonResource::withoutWrapping();

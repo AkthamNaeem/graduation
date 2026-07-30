@@ -4,7 +4,9 @@ namespace App\Services;
 
 use App\Enums\JobSkillRequirementType;
 use App\Enums\JobWorkMode;
+use App\Enums\UserRole;
 use App\Exceptions\JobPostingOperationException;
+use App\Models\Company;
 use App\Models\EmployerProfile;
 use App\Models\JobPosting;
 use App\Models\Skill;
@@ -58,6 +60,17 @@ class JobPostingService
      */
     public function getEmployerJobs(User $user, array $filters): LengthAwarePaginator
     {
+        if ($user->role === UserRole::ADMIN) {
+            return $this->applyFilters(
+                Company::query()
+                    ->findOrFail((int) ($filters['company_id'] ?? 0))
+                    ->jobPostings()
+                    ->with(['company', 'skills'])
+                    ->latest(),
+                $filters,
+            )->paginate($this->perPage($filters));
+        }
+
         return $this->applyFilters(
             $this->employerProfile($user)
                 ->company
@@ -91,8 +104,11 @@ class JobPostingService
         return DB::transaction(function () use ($user, $data): JobPosting {
             [$skillsProvided, $skills] = $this->extractSkillItems($data);
             $this->removeSkillContractKeys($data);
-            $jobPosting = $this->employerProfile($user)
-                ->company
+            $company = $user->role === UserRole::ADMIN
+                ? Company::query()->findOrFail((int) ($data['company_id'] ?? 0))
+                : $this->employerProfile($user)->company;
+            unset($data['company_id']);
+            $jobPosting = $company
                 ->jobPostings()
                 ->create([
                     ...$data,
