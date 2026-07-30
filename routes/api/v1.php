@@ -50,8 +50,12 @@ Route::prefix('auth')
         Route::post('email/resend-otp', [EmailVerificationController::class, 'resend'])
             ->middleware('throttle:email-verification-resend')
             ->name('email.resend-otp');
-        Route::post('forgot-password', [AuthController::class, 'forgotPassword'])->name('forgot-password');
-        Route::post('reset-password', [AuthController::class, 'resetPassword'])->name('reset-password');
+        Route::post('forgot-password', [AuthController::class, 'forgotPassword'])
+            ->middleware('throttle:password-reset-forgot')
+            ->name('forgot-password');
+        Route::post('reset-password', [AuthController::class, 'resetPassword'])
+            ->middleware('throttle:password-reset-reset')
+            ->name('reset-password');
 
         Route::middleware(['auth:sanctum', 'user.active'])->group(function (): void {
             Route::get('me', [AuthController::class, 'me'])->name('me');

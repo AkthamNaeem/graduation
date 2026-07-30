@@ -7,12 +7,10 @@ use App\Enums\UserStatus;
 use App\Models\Company;
 use App\Models\EmployerProfile;
 use App\Models\JobSeekerProfile;
+use App\Models\PasswordResetOtp;
 use App\Models\User;
-use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Notification;
-use Illuminate\Support\Facades\Password;
 use Laravel\Sanctum\PersonalAccessToken;
 use Tests\TestCase;
 
@@ -294,9 +292,7 @@ class AuthTest extends TestCase
 
     public function test_forgot_password_returns_generic_success_for_existing_and_non_existing_email(): void
     {
-        Notification::fake();
-
-        $user = User::factory()->create(['email' => 'reset@example.com']);
+        User::factory()->create(['email' => 'reset@example.com']);
 
         $existingResponse = $this->postJson('/api/v1/auth/forgot-password', [
             'email' => 'reset@example.com',
@@ -308,26 +304,29 @@ class AuthTest extends TestCase
 
         $existingResponse->assertOk()
             ->assertJsonPath('success', true)
-            ->assertJsonPath('message', 'If an account with that email exists, a password reset link has been sent.');
+            ->assertJsonPath('message', 'If an account with that email exists, a password reset code is available.');
 
         $missingResponse->assertOk()
             ->assertJsonPath('success', true)
-            ->assertJsonPath('message', 'If an account with that email exists, a password reset link has been sent.');
+            ->assertJsonPath('message', 'If an account with that email exists, a password reset code is available.');
 
-        Notification::assertSentTo($user, ResetPassword::class);
+        $this->assertSame($existingResponse->json('data'), $missingResponse->json('data'));
+        $this->assertDatabaseCount('password_reset_otps', 1);
     }
 
-    public function test_reset_password_works_with_valid_token(): void
+    public function test_reset_password_works_with_valid_otp(): void
     {
         $user = User::factory()->create([
             'email' => 'reset@example.com',
         ]);
-        $token = Password::createToken($user);
         $user->createToken('old-token');
+        $this->postJson('/api/v1/auth/forgot-password', [
+            'email' => 'reset@example.com',
+        ])->assertOk();
 
         $response = $this->postJson('/api/v1/auth/reset-password', [
             'email' => 'reset@example.com',
-            'token' => $token,
+            'otp' => str_repeat('0', (int) config('otp.length')),
             'password' => 'new-password',
             'password_confirmation' => 'new-password',
         ]);
@@ -340,25 +339,33 @@ class AuthTest extends TestCase
 
         $this->assertTrue(Hash::check('new-password', $user->password));
         $this->assertDatabaseCount('personal_access_tokens', 0);
+        $this->assertDatabaseCount('password_reset_otps', 0);
     }
 
-    public function test_reset_password_fails_with_invalid_token(): void
+    public function test_reset_password_rejects_obsolete_token_contract(): void
     {
-        User::factory()->create([
+        $user = User::factory()->create([
             'email' => 'reset@example.com',
+        ]);
+        PasswordResetOtp::query()->create([
+            'user_id' => $user->id,
+            'code_hash' => Hash::make(str_repeat('0', (int) config('otp.length'))),
+            'expires_at' => now()->addMinutes(5),
+            'last_issued_at' => now(),
         ]);
 
         $response = $this->postJson('/api/v1/auth/reset-password', [
             'email' => 'reset@example.com',
-            'token' => 'invalid-token',
+            'token' => 'obsolete-token',
             'password' => 'new-password',
             'password_confirmation' => 'new-password',
         ]);
 
         $response->assertStatus(422)
             ->assertJsonPath('success', false)
-            ->assertJsonPath('message', 'Invalid or expired password reset token.')
-            ->assertJsonValidationErrors(['token']);
+            ->assertJsonValidationErrors(['otp']);
+
+        $this->assertTrue(Hash::check('password', $user->refresh()->password));
     }
 
     public function test_change_password_fails_with_wrong_current_password(): void

@@ -13,6 +13,7 @@ class EmailVerificationService
 {
     public function __construct(
         private readonly AuditLogService $auditLogService,
+        private readonly OtpCodeService $otpCodeService,
     ) {}
 
     public function issueOtp(User $user): EmailVerificationOtp
@@ -31,7 +32,7 @@ class EmailVerificationService
         $otp = EmailVerificationOtp::query()->updateOrCreate(
             ['user_id' => $user->id],
             [
-                'code_hash' => Hash::make($this->generateCode()),
+                'code_hash' => Hash::make($this->otpCodeService->generate()),
                 'expires_at' => $now->copy()->addMinutes($this->ttlMinutes()),
                 'attempts' => 0,
                 'last_issued_at' => $now,
@@ -43,7 +44,7 @@ class EmailVerificationService
             $user,
             User::class,
             $user->id,
-            metadata: ['driver' => $this->driver()],
+            metadata: ['driver' => $this->otpCodeService->driver()],
         );
 
         return $otp;
@@ -127,7 +128,7 @@ class EmailVerificationService
                 $user->id,
                 before: ['is_email_verified' => false],
                 after: ['is_email_verified' => true],
-                metadata: ['driver' => $this->driver()],
+                metadata: ['driver' => $this->otpCodeService->driver()],
             );
 
             return ['user' => $user];
@@ -214,7 +215,7 @@ class EmailVerificationService
     {
         return [
             'required' => true,
-            'delivery_channel' => $this->driver(),
+            'delivery_channel' => $this->otpCodeService->driver(),
             'sent' => false,
             'expires_in_seconds' => $this->ttlMinutes() * 60,
             'resend_after_seconds' => $this->resendCooldownSeconds(),
@@ -223,32 +224,12 @@ class EmailVerificationService
 
     public function ensureDriverAvailable(): void
     {
-        $staticAllowed = $this->driver() === 'static'
-            && (! app()->environment('production')
-                || (bool) config('otp.allow_static_in_production', false));
-
-        if (! $staticAllowed) {
-            throw new EmailVerificationException(
-                'Email verification is temporarily unavailable.',
-                'OTP_DRIVER_NOT_AVAILABLE',
-                503,
-            );
-        }
-    }
-
-    private function generateCode(): string
-    {
-        return str_repeat('0', max(1, (int) config('otp.length')));
+        $this->otpCodeService->ensureAvailable();
     }
 
     private function normalizeEmail(string $email): string
     {
         return mb_strtolower(trim($email));
-    }
-
-    private function driver(): string
-    {
-        return (string) config('otp.driver', 'static');
     }
 
     private function ttlMinutes(): int

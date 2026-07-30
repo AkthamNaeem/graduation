@@ -46,7 +46,6 @@ use App\Services\RecommendationMl\RecommendationMlClient;
 use App\Support\ApiResponse;
 use App\Support\Recommendation\MlRecommendationResourceAdapter;
 use App\Support\RecommendationMl\MlOutboundPayloadGuard;
-use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Client\Factory;
 use Illuminate\Http\Request;
@@ -174,7 +173,7 @@ class AppServiceProvider extends ServiceProvider
     {
         RateLimiter::for('email-verification-verify', function (Request $request): Limit {
             return Limit::perMinute(10)
-                ->by($this->emailVerificationRateLimitKey($request))
+                ->by($this->otpRateLimitKey($request))
                 ->response(
                     fn (Request $request, array $headers) => ApiResponse::error(
                         message: 'Too many email verification attempts. Please try again later.',
@@ -186,12 +185,36 @@ class AppServiceProvider extends ServiceProvider
 
         RateLimiter::for('email-verification-resend', function (Request $request): Limit {
             return Limit::perMinutes(10, 3)
-                ->by($this->emailVerificationRateLimitKey($request))
+                ->by($this->otpRateLimitKey($request))
                 ->response(
                     fn (Request $request, array $headers) => ApiResponse::error(
                         message: 'Too many verification code requests. Please try again later.',
                         status: 429,
                         code: 'OTP_RATE_LIMIT_EXCEEDED',
+                    )->withHeaders($headers),
+                );
+        });
+
+        RateLimiter::for('password-reset-forgot', function (Request $request): Limit {
+            return Limit::perMinutes(10, 3)
+                ->by($this->otpRateLimitKey($request))
+                ->response(
+                    fn (Request $request, array $headers) => ApiResponse::error(
+                        message: 'Too many password reset requests. Please try again later.',
+                        status: 429,
+                        code: 'PASSWORD_RESET_RATE_LIMIT_EXCEEDED',
+                    )->withHeaders($headers),
+                );
+        });
+
+        RateLimiter::for('password-reset-reset', function (Request $request): Limit {
+            return Limit::perMinute(10)
+                ->by($this->otpRateLimitKey($request))
+                ->response(
+                    fn (Request $request, array $headers) => ApiResponse::error(
+                        message: 'Too many password reset attempts. Please try again later.',
+                        status: 429,
+                        code: 'PASSWORD_RESET_RATE_LIMIT_EXCEEDED',
                     )->withHeaders($headers),
                 );
         });
@@ -205,16 +228,10 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Test::class, TestPolicy::class);
         Gate::define('access-admin', fn ($user): bool => $user->role === UserRole::ADMIN);
 
-        ResetPassword::createUrlUsing(function ($notifiable, string $token): string {
-            return rtrim((string) config('app.url'), '/')
-                .'/reset-password?token='.$token
-                .'&email='.urlencode((string) $notifiable->getEmailForPasswordReset());
-        });
-
         JsonResource::withoutWrapping();
     }
 
-    private function emailVerificationRateLimitKey(Request $request): string
+    private function otpRateLimitKey(Request $request): string
     {
         $email = mb_strtolower(trim((string) $request->input('email')));
 

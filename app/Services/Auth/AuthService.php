@@ -4,10 +4,7 @@ namespace App\Services\Auth;
 
 use App\Enums\UserStatus;
 use App\Models\User;
-use Illuminate\Auth\Events\PasswordReset;
-use Illuminate\Auth\Passwords\PasswordBroker;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Str;
 
 class AuthService
@@ -63,36 +60,6 @@ class AuthService
     public function logout(User $user): void
     {
         $user->currentAccessToken()?->delete();
-    }
-
-    /**
-     * @param  array{email: string}  $data
-     */
-    public function sendPasswordResetLink(array $data): void
-    {
-        Password::sendResetLink(['email' => $data['email']]);
-    }
-
-    /**
-     * @param  array{email: string, token: string, password: string, password_confirmation?: string}  $data
-     */
-    public function resetPassword(array $data): bool
-    {
-        $status = Password::reset(
-            $data,
-            function (User $user, string $password): void {
-                $user->forceFill([
-                    'password' => $password,
-                    'remember_token' => Str::random(60),
-                ])->save();
-
-                $user->tokens()->delete();
-
-                event(new PasswordReset($user));
-            },
-        );
-
-        return $status === PasswordBroker::PASSWORD_RESET;
     }
 
     public function changePassword(User $user, string $currentPassword, string $password): bool

@@ -321,6 +321,8 @@ class RecommendationEndToEndTest extends TestCase
             'app/Http/Requests/Api/V1/Auth/EmployerRegisterRequest.php',
             'app/Http/Requests/Api/V1/Auth/JobSeekerRegisterRequest.php',
             'app/Http/Requests/Api/V1/Auth/LoginRequest.php',
+            'app/Http/Requests/Api/V1/Auth/ForgotPasswordRequest.php',
+            'app/Http/Requests/Api/V1/Auth/ResetPasswordRequest.php',
             'app/Http/Resources/Api/V1/UserResource.php',
             'app/Models/User.php',
             'app/Providers/AppServiceProvider.php',

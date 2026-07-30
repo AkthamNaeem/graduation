@@ -6,6 +6,7 @@ use App\Exceptions\CVLifecycleException;
 use App\Exceptions\EmailVerificationException;
 use App\Exceptions\InterviewLifecycleException;
 use App\Exceptions\JobPostingOperationException;
+use App\Exceptions\PasswordResetOtpException;
 use App\Exceptions\PrivateFileStorageException;
 use App\Exceptions\RecruitmentAccessException;
 use App\Exceptions\TestAttemptTimingException;
@@ -42,6 +43,19 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (PasswordResetOtpException $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return ApiResponse::error(
+                message: $exception->getMessage(),
+                errors: $exception->errors,
+                status: $exception->status,
+                code: $exception->errorCode,
+            );
+        });
+
         $exceptions->render(function (EmailVerificationException $exception, Request $request) {
             if (! $request->is('api/*')) {
                 return null;

@@ -11,6 +11,7 @@ use App\Http\Requests\Api\V1\Auth\MeRequest;
 use App\Http\Requests\Api\V1\Auth\ResetPasswordRequest;
 use App\Http\Resources\Api\V1\UserResource;
 use App\Services\Auth\AuthService;
+use App\Services\Auth\PasswordResetOtpService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
 
@@ -18,6 +19,7 @@ class AuthController extends Controller
 {
     public function __construct(
         private readonly AuthService $authService,
+        private readonly PasswordResetOtpService $passwordResetOtpService,
     ) {}
 
     public function login(LoginRequest $request): JsonResponse
@@ -62,23 +64,24 @@ class AuthController extends Controller
 
     public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
     {
-        $this->authService->sendPasswordResetLink($request->validated());
+        $this->passwordResetOtpService->issueForEmail(
+            $request->validated('email'),
+        );
 
         return ApiResponse::success(
-            data: null,
-            message: 'If an account with that email exists, a password reset link has been sent.',
+            data: $this->passwordResetOtpService->getMetadata(),
+            message: 'If an account with that email exists, a password reset code is available.',
         );
     }
 
     public function resetPassword(ResetPasswordRequest $request): JsonResponse
     {
-        if (! $this->authService->resetPassword($request->validated())) {
-            return ApiResponse::error(
-                message: 'Invalid or expired password reset token.',
-                errors: ['token' => ['The password reset token is invalid or has expired.']],
-                status: 422,
-            );
-        }
+        $data = $request->validated();
+        $this->passwordResetOtpService->resetPassword(
+            $data['email'],
+            $data['otp'],
+            $data['password'],
+        );
 
         return ApiResponse::success(
             data: null,

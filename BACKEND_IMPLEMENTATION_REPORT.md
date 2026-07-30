@@ -42,6 +42,45 @@ OTP_ALLOW_STATIC_IN_PRODUCTION=true
 
 Security controls include hashed OTP storage, one OTP row per user, expiry, database-level attempt limits, reissue cooldown, row locks and transactions during consumption, one-time deletion, token creation only after commit, email/IP route throttling, normalized email handling, production-driver protection, generic reissue responses, and safe audit metadata that excludes codes, hashes, passwords, tokens, and request payloads.
 
+### 1.2 Temporary OTP Forgot-Password Workflow
+
+The public forgot-password workflow is separate from registration email verification and authenticated password changes. It no longer uses Laravel Password Broker tokens, reset links, or email notifications.
+
+Forgot password:
+
+```text
+email
+→ OTP
+→ new password
+→ login again
+```
+
+`POST /api/v1/auth/forgot-password` creates or refreshes a hashed record in the separate `password_reset_otps` table for verified, unverified, active, or suspended users. Unknown emails receive the same generic success response. Requests during the service cooldown also receive the same response without changing the hash, expiry, attempts, or issue time.
+
+`POST /api/v1/auth/reset-password` accepts `email`, `otp`, `password`, and `password_confirmation`. It locks and verifies the purpose-specific OTP, changes the password, rotates `remember_token`, revokes all Sanctum tokens, consumes the OTP, dispatches the internal `PasswordReset` event, and returns no replacement token. It does not change email verification, role, administrative status, profiles, companies, or company approval state.
+
+Authenticated change password remains separate:
+
+```text
+authenticated user
+→ current password
+→ new password
+→ confirmation
+```
+
+`POST /api/v1/auth/change-password` remains protected by Sanctum, requires the current password, uses no email or OTP, and does not create or consume a password-reset OTP.
+
+Mobile/frontend integration:
+
+1. Submit the email to `forgot-password`.
+2. Navigate to a form containing OTP, new password, and confirmation.
+3. For the temporary graduation demo, enter `000000`; no code is delivered.
+4. Submit the form to `reset-password`.
+5. On success, clear any locally stored access token, return to login, and authenticate with the new password.
+6. For authenticated change-password, send the current password and new confirmed password with the Bearer token; no OTP screen is involved.
+
+The registration verification and password-reset records are deliberately independent. Neither purpose can operate from only the other purpose's database record, and consuming one does not consume the other. Both currently share the insecure static configuration described above. The production override is for the graduation demo only and must be removed when a real sender replaces the static driver.
+
 ## 2. Technology Stack
 
 | Area | Implementation |
@@ -386,8 +425,8 @@ All responses use the `ApiResponse` envelope:
 | POST | `/api/v1/auth/register/job-seeker` | Public | Public | Register a job seeker and create an empty job seeker profile | `name`, `email`, `phone`, `terms_accepted`, `password`, `password_confirmation` | `UserResource` with nested job seeker profile |
 | POST | `/api/v1/auth/register/employer` | Public | Public | Register an employer, company, and employer profile | `name`, `email`, `company_name`, `company_website`, `phone`, `terms_accepted`, `password`, `password_confirmation` | `UserResource` with nested employer profile and company |
 | POST | `/api/v1/auth/login` | Public | Public | Authenticate active users and issue Sanctum token | `email`, `password` | `token`, `token_type`, `user` |
-| POST | `/api/v1/auth/forgot-password` | Public | Public | Send password reset notification with generic anti-enumeration response | `email` | Success message |
-| POST | `/api/v1/auth/reset-password` | Public | Public | Reset password using Laravel password broker token and revoke existing tokens | `email`, `token`, `password`, `password_confirmation` | Success or token error |
+| POST | `/api/v1/auth/forgot-password` | Public | Public | Create or refresh a hashed password-reset OTP with generic anti-enumeration response | `email` | Generic static-channel metadata |
+| POST | `/api/v1/auth/reset-password` | Public | Public | Verify password-reset OTP, replace password, and revoke all existing tokens | `email`, `otp`, `password`, `password_confirmation` | Success or enumeration-resistant OTP error |
 | GET | `/api/v1/auth/me` | Required | Any authenticated | Return current authenticated user | None | `UserResource` with loaded profile relations |
 | POST | `/api/v1/auth/change-password` | Required | Any authenticated | Change password after verifying current password | `current_password`, `password`, `password_confirmation` | Success or current password error |
 | POST | `/api/v1/auth/logout` | Required | Any authenticated | Revoke current access token | None | Success message |
@@ -401,8 +440,9 @@ Auth hardening notes:
 - Employer registration can persist `phone` to `employer_profiles.phone` and `company_website` to `companies.website`.
 - `company_size` is not accepted or persisted because no existing company/profile column supports it.
 - Users have `active` and `suspended` status values. Only `active` users can login; non-active users receive HTTP 403 and no Sanctum token is created.
-- Forgot password always returns the same success message for existing and non-existing email addresses.
-- Password reset revokes existing Sanctum tokens for that user.
+- Forgot password always returns the same success message and metadata for existing and non-existing email addresses.
+- Password reset uses `otp`, not `token`; it revokes all existing Sanctum tokens and issues no replacement token.
+- Password reset leaves email verification, role, status, profiles, and companies unchanged.
 - Change password verifies the current password and revokes other tokens while keeping the current token.
 
 ### Profiles

@@ -16,6 +16,10 @@
                      {
                          "key":  "temporary_otp",
                          "value":  "000000"
+                     },
+                     {
+                         "key":  "password_reset_email",
+                         "value":  "otp.jobseeker@example.com"
                      }
                  ],
     "item":  [
@@ -408,14 +412,14 @@
                                                                          "value":  "application/json"
                                                                      }
                                                                  ],
-                                                      "description":  "Web App / Employer/Admin: request a password reset email with generic success to avoid email enumeration.",
+                                                      "description":  "Public forgot-password step: creates or refreshes a hashed temporary OTP record with generic anti-enumeration success. No OTP is delivered; temporary demo OTP is 000000.",
                                                       "url":  "{{base_url}}/auth/forgot-password",
                                                       "auth":  {
                                                                    "type":  "noauth"
                                                                },
                                                       "body":  {
                                                                    "mode":  "raw",
-                                                                   "raw":  "{\n  \"email\": \"{{employer_email}}\"\n}",
+                                                                   "raw":  "{\n  \"email\": \"{{password_reset_email}}\"\n}",
                                                                    "options":  {
                                                                                    "raw":  {
                                                                                                "language":  "json"
@@ -429,14 +433,14 @@
                                                         "script":  {
                                                                        "type":  "text/javascript",
                                                                        "exec":  [
-                                                                                    "pm.test(\u0027forgot password response\u0027, () =\u003e pm.expect(pm.response.code).to.be.oneOf([200, 422]));"
+                                                                                    "pm.test(\u0027forgot password response\u0027, () =\u003e pm.expect(pm.response.code).to.be.oneOf([200, 422, 429, 503]));"
                                                                                 ]
                                                                    }
                                                     }
                                                 ]
                                   },
                                   {
-                                      "name":  "Reset Password",
+                                      "name":  "Reset Password with OTP",
                                       "request":  {
                                                       "method":  "POST",
                                                       "header":  [
@@ -449,14 +453,14 @@
                                                                          "value":  "application/json"
                                                                      }
                                                                  ],
-                                                      "description":  "Web App / Employer/Admin: reset password using a broker token from email or tests. Set {{reset_token}} before sending.",
+                                                      "description":  "Public OTP reset step. Uses otp, not token. Temporary demo OTP is 000000 and is not delivered. Success revokes all tokens and requires login again.",
                                                       "url":  "{{base_url}}/auth/reset-password",
                                                       "auth":  {
                                                                    "type":  "noauth"
                                                                },
                                                       "body":  {
                                                                    "mode":  "raw",
-                                                                   "raw":  "{\n  \"email\": \"{{employer_email}}\",\n  \"token\": \"{{reset_token}}\",\n  \"password\": \"new-password\",\n  \"password_confirmation\": \"new-password\"\n}",
+                                                                   "raw":  "{\n  \"email\": \"{{password_reset_email}}\",\n  \"otp\": \"{{temporary_otp}}\",\n  \"password\": \"new-password\",\n  \"password_confirmation\": \"new-password\"\n}",
                                                                    "options":  {
                                                                                    "raw":  {
                                                                                                "language":  "json"
@@ -470,11 +474,41 @@
                                                         "script":  {
                                                                        "type":  "text/javascript",
                                                                        "exec":  [
-                                                                                    "pm.test(\u0027reset password response\u0027, () =\u003e pm.expect(pm.response.code).to.be.oneOf([200, 422]));"
+                                                                                    "pm.test(\u0027reset password response\u0027, () =\u003e pm.expect(pm.response.code).to.be.oneOf([200, 422, 429, 503]));"
                                                                                 ]
                                                                    }
                                                     }
                                                 ]
+                                  },
+                                  {
+                                      "name":  "Login with New Password",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Accept",
+                                                                         "value":  "application/json"
+                                                                     },
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "description":  "Login after a successful OTP password reset. The reset endpoint itself creates no replacement token.",
+                                                      "url":  "{{base_url}}/auth/login",
+                                                      "auth":  {
+                                                                   "type":  "noauth"
+                                                               },
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"email\": \"{{password_reset_email}}\",\n  \"password\": \"new-password\"\n}",
+                                                                   "options":  {
+                                                                                   "raw":  {
+                                                                                               "language":  "json"
+                                                                                           }
+                                                                               }
+                                                               }
+                                                  }
                                   },
                                   {
                                       "name":  "Change Password",
@@ -490,7 +524,7 @@
                                                                          "value":  "application/json"
                                                                      }
                                                                  ],
-                                                      "description":  "Web App / Employer/Admin: change password while authenticated. Uses {{employer_token}} by default.",
+                                                      "description":  "Authenticated current-password flow. Uses {{employer_token}}, does not require email or OTP, and remains separate from forgot-password.",
                                                       "url":  "{{base_url}}/auth/change-password",
                                                       "auth":  {
                                                                    "type":  "bearer",
