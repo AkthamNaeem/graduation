@@ -4,6 +4,7 @@ return [
     'retrieved' => 'CV summary retrieved successfully.',
     'generated' => 'CV summary generated successfully.',
     'disclaimer' => 'AI-generated assistance only. Verify the supporting evidence before making a recruitment decision.',
+    'audit_action' => 'Application CV summary generated',
     'invalid_provider' => 'The configured CV summary provider is not supported.',
     'not_configured' => 'The CV summary service is not configured.',
     'timeout' => 'The CV summary provider timed out.',
