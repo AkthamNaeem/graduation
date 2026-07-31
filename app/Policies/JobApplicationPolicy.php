@@ -43,6 +43,15 @@ class JobApplicationPolicy
         );
     }
 
+    public function generateCVSummary(User $user, JobApplication $jobApplication): bool
+    {
+        return $this->permissions->can(
+            $user,
+            CompanyPermission::MANAGE_APPLICATIONS,
+            $jobApplication->jobPosting->company_id,
+        );
+    }
+
     public function viewJobApplications(User $user, JobPosting $jobPosting): bool
     {
         return $this->permissions->can($user, CompanyPermission::VIEW_APPLICATIONS, $jobPosting->company_id);
