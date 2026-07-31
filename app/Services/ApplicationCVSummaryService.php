@@ -2,18 +2,19 @@
 
 namespace App\Services;
 
-use App\Contracts\AI\ApplicationCVSummarizer;
 use App\Exceptions\ApplicationCVSummaryException;
 use App\Models\ApplicationCVSummary;
 use App\Models\JobApplication;
 use App\Models\User;
+use App\Services\AI\OpenAIApplicationCVSummarizer;
+use BackedEnum;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 
 class ApplicationCVSummaryService
 {
     public function __construct(
-        private readonly ApplicationCVSummarizer $summarizer,
+        private readonly OpenAIApplicationCVSummarizer $summarizer,
         private readonly AuditLogService $auditLogService,
     ) {}
 
@@ -50,26 +51,24 @@ class ApplicationCVSummaryService
 
         $result = $this->summarizer->summarize($context, $locale);
 
-        $summary = DB::transaction(function () use ($application, $actor, $locale, $inputHash, $result): ApplicationCVSummary {
-            return ApplicationCVSummary::query()->updateOrCreate(
-                ['job_application_id' => $application->id, 'locale' => $locale],
-                [
-                    'source_cv_file_id' => $application->selected_cv_file_id,
-                    'generated_by_user_id' => $actor->id,
-                    'provider' => $result['provider'],
-                    'model' => $result['model'],
-                    'prompt_version' => (string) config('ai.cv_summary.prompt_version', '1.0'),
-                    'input_hash' => $inputHash,
-                    'headline' => $result['headline'],
-                    'summary' => $result['summary'],
-                    'strengths' => $result['strengths'],
-                    'gaps' => $result['gaps'],
-                    'evidence' => $result['evidence'],
-                    'provider_request_id' => $result['provider_request_id'],
-                    'generated_at' => now(),
-                ],
-            );
-        });
+        $summary = DB::transaction(fn (): ApplicationCVSummary => ApplicationCVSummary::query()->updateOrCreate(
+            ['job_application_id' => $application->id, 'locale' => $locale],
+            [
+                'source_cv_file_id' => $application->selected_cv_file_id,
+                'generated_by_user_id' => $actor->id,
+                'provider' => $result['provider'],
+                'model' => $result['model'],
+                'prompt_version' => (string) config('ai.cv_summary.prompt_version', '1.0'),
+                'input_hash' => $inputHash,
+                'headline' => $result['headline'],
+                'summary' => $result['summary'],
+                'strengths' => $result['strengths'],
+                'gaps' => $result['gaps'],
+                'evidence' => $result['evidence'],
+                'provider_request_id' => $result['provider_request_id'],
+                'generated_at' => now(),
+            ],
+        ));
 
         $this->auditLogService->record(
             'application.cv_summary_generated',
@@ -134,12 +133,17 @@ class ApplicationCVSummaryService
                 'requirements' => $job?->requirements,
                 'experience_level' => $job?->experience_level,
                 'education_level' => $job?->education_level,
-                'skills' => $job?->skills?->map(fn ($skill): array => [
-                    'name' => $skill->name,
-                    'requirement_type' => $skill->pivot?->requirement_type?->value
-                        ?? $skill->pivot?->requirement_type,
-                    'weight' => $skill->pivot?->weight,
-                ])->values()->all() ?? [],
+                'skills' => $job?->skills?->map(function ($skill): array {
+                    $requirementType = $skill->pivot?->requirement_type;
+
+                    return [
+                        'name' => $skill->name,
+                        'requirement_type' => $requirementType instanceof BackedEnum
+                            ? $requirementType->value
+                            : $requirementType,
+                        'weight' => $skill->pivot?->weight,
+                    ];
+                })->values()->all() ?? [],
             ],
             'candidate' => [
                 'headline' => $profile?->headline,
