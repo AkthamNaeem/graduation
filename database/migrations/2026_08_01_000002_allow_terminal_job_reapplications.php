@@ -12,11 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('job_applications', function (Blueprint $table): void {
-            $table->dropUnique(self::UNIQUE_NAME);
             $table->index(
                 ['job_posting_id', 'job_seeker_profile_id', 'application_status_id'],
                 'job_applications_duplicate_guard_lookup',
             );
+            $table->dropUnique(self::UNIQUE_NAME);
         });
     }
 
@@ -28,14 +28,15 @@ return new class extends Migration
             ->havingRaw('COUNT(*) > 1')
             ->exists();
 
+        if ($hasHistoricalDuplicates) {
+            throw new RuntimeException(
+                'Cannot restore the job application unique constraint while historical reapplications exist.',
+            );
+        }
+
         Schema::table('job_applications', function (Blueprint $table): void {
+            $table->unique(['job_posting_id', 'job_seeker_profile_id'], self::UNIQUE_NAME);
             $table->dropIndex('job_applications_duplicate_guard_lookup');
         });
-
-        if (! $hasHistoricalDuplicates) {
-            Schema::table('job_applications', function (Blueprint $table): void {
-                $table->unique(['job_posting_id', 'job_seeker_profile_id'], self::UNIQUE_NAME);
-            });
-        }
     }
 };
