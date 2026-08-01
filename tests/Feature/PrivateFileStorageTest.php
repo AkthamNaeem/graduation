@@ -229,7 +229,7 @@ class PrivateFileStorageTest extends TestCase
 
         $this->withToken($token)->get("/api/v1/cv/{$missing->id}/download", ['Accept' => 'application/json'])
             ->assertNotFound()
-            ->assertJsonPath('code', 'CV_FILE_UNAVAILABLE');
+            ->assertJsonPath('code', 'CV_FILE_NOT_FOUND');
 
         $invalidRoot = tempnam(sys_get_temp_dir(), 'invalid-read-root-');
         config(['filesystems.disks.broken' => ['driver' => 'local', 'root' => $invalidRoot, 'throw' => true, 'report' => false]]);

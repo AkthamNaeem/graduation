@@ -14,10 +14,11 @@ class CandidateCVStateResolver
         private readonly CurrentCVResolver $currentCVResolver,
         private readonly CVStageResolver $stageResolver,
         private readonly CandidateCVOperationResolver $operationResolver,
+        private readonly CVFileActionResolver $actionResolver,
     ) {}
 
     /**
-     * @return array{current_cv: ?CVFile, pending_cv_update: ?array<string, mixed>}
+     * @return array{current_cv: ?array<string, mixed>, pending_cv_update: ?array<string, mixed>}
      */
     public function resolve(User $user, JobSeekerProfile $profile): array
     {
@@ -35,8 +36,13 @@ class CandidateCVStateResolver
             $pending = null;
         }
 
+        $hasPending = $pending instanceof CVFile;
+
         return [
-            'current_cv' => $current,
+            'current_cv' => $current instanceof CVFile ? [
+                'cv' => $current,
+                'allowed_actions' => $this->actionResolver->current($current, $hasPending),
+            ] : null,
             'pending_cv_update' => $pending instanceof CVFile
                 ? $this->pendingState($user, $profile, $pending)
                 : null,
@@ -58,7 +64,7 @@ class CandidateCVStateResolver
             'stage' => $stage,
             'progress' => $this->progress($pending, $stage),
             'next_action' => $this->nextAction($pending, $stage),
-            'allowed_actions' => $this->allowedActions($stage),
+            'allowed_actions' => $this->actionResolver->pending($pending, $stage),
         ];
     }
 
@@ -103,19 +109,6 @@ class CandidateCVStateResolver
                 'is_actionable' => true,
             ],
             CandidateCVStage::CONFIRMED => null,
-        };
-    }
-
-    /** @return list<string> */
-    private function allowedActions(CandidateCVStage $stage): array
-    {
-        return match ($stage) {
-            CandidateCVStage::PROCESSING,
-            CandidateCVStage::FAILED => ['view_status', 'cancel'],
-            CandidateCVStage::FIRST_REVIEW,
-            CandidateCVStage::DIFFERENCES_REVIEW => ['review', 'cancel'],
-            CandidateCVStage::FINAL_CONFIRMATION => ['confirm', 'cancel'],
-            CandidateCVStage::CONFIRMED => [],
         };
     }
 }

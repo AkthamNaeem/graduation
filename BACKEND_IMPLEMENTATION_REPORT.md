@@ -3380,6 +3380,197 @@ Details, and Withdraw requests. No frontend, commit, or push is included.
 - Both modified Postman collection files parse as valid JSON.
 - `git diff --check`: passed. No commit or push was created.
 
+## CV Secure Preview and Profile Availability
+
+### Repository state and preserved work
+
+Task 5 started on `master` with a clean working tree at commit `1e4baec`
+(`feat: complete CV review confirmation workflow`). The implemented Profile
+Page aggregation, completeness/attention contract, single-current-CV contract,
+and CV upload/review/comparison/confirmation/cancellation workflow were kept
+intact and extended without frontend, application snapshot, avatar, expected
+salary, or unrelated application-workflow changes.
+
+### Existing download and secure preview design
+
+CV downloads already used `PrivateFileStorageService::downloadResponse()` to
+stream private Local or S3 objects through Laravel. It forces
+`Content-Disposition: attachment`; no public or signed storage URL is returned.
+Task 5 keeps that behavior and adds:
+
+```http
+GET /api/v1/cv/{cvFile}/preview
+```
+
+The endpoint accepts only an authenticated job seeker who owns the CV. The CV
+must be the confirmed current profile CV or an active pending workflow; an
+archived, cancelled, unrelated confirmed legacy, or other user's CV is not
+previewable. Other-user IDs remain hidden behind `404`; invalid owner workflow
+states return `CV_PREVIEW_FORBIDDEN`.
+
+PDF is streamed unchanged with `Content-Type: application/pdf`, an RFC-safe
+`Content-Disposition: inline` filename, `X-Content-Type-Options: nosniff`,
+`Cache-Control: private, no-store`, `Pragma: no-cache`, and
+`Accept-Ranges: none`. Header filenames remove CR/LF, NUL, control characters,
+and path components. Storage disk/path, signed URLs, file bytes, and raw CV text
+are never logged or serialized.
+
+DOCX is not converted. A readable DOCX preview returns `415` with
+`CV_PREVIEW_NOT_SUPPORTED`, a localized file hint, and `download` as its
+allowed action; its download endpoint remains an attachment. A missing object
+returns `404 CV_FILE_NOT_FOUND`. An empty, path-invalid, or MIME/extension-
+incompatible object returns `422 CV_FILE_UNAVAILABLE`. Backend streaming was
+chosen instead of signed URLs to keep authorization and privacy centralized.
+
+Range requests are deliberately not implemented. The private storage layer
+supports both Local and S3 Flysystem streams, whose seek/range behavior is not
+uniformly guaranteed. Returning a correct full `200` stream with
+`Accept-Ranges: none` is safer than advertising partial support on only one
+driver. The Range regression test proves that a Range header receives the
+complete file, not a false `206` response.
+
+One `cv.previewed` or `cv.downloaded` audit event is recorded per successful
+full request with only actor/user/CV IDs. There are no per-byte-range audit
+events because byte ranges are not supported.
+
+### CV allowed actions
+
+Actions are calculated once per exposed CV from its trusted MIME/extension,
+private-object existence and non-zero size, pending-workflow state, and CV
+stage:
+
+- Current readable PDF without a pending update: `preview`, `download`,
+  `update`.
+- Current readable DOCX: `download`, `update`.
+- Current CV while an update is pending omits `update`.
+- Processing: `preview`, `download`, `view_status`, `cancel`.
+- First/differences review: `preview`, `download`, `review`, `cancel`.
+- Final confirmation: `preview`, `download`, `review`, `confirm`, `cancel`.
+- Failed: `download`, `cancel`.
+- Cancelled pending CVs are not exposed.
+
+The new Profile Page contract replaces ambiguous `view` with executable
+`preview`; legacy `CVFileResource` remains unchanged.
+
+### Availability enum, storage, and validation
+
+`JobSeekerAvailabilityStatus` defines `available_now`,
+`available_from_date`, and `not_available`. Migration
+`2026_08_02_000001_add_availability_to_job_seeker_profiles.php` adds nullable
+string `availability_status` and nullable date `available_from` without an
+index or backfill. Existing profiles remain unset; the migration supports
+`up()` and `down()` on the supported test schema.
+
+`PUT /api/v1/profile` validates the final merged state, not just the submitted
+partial payload:
+
+| Status | `available_from` | Result |
+| --- | --- | --- |
+| `null` | `null` | Valid clear |
+| `available_now` | `null` | Valid |
+| `available_now` | date | `PROFILE_AVAILABILITY_DATE_NOT_ALLOWED` |
+| `available_from_date` | today/future ISO date | Valid |
+| `available_from_date` | missing/null | `PROFILE_AVAILABILITY_DATE_REQUIRED` |
+| `available_from_date` | past date | `PROFILE_AVAILABILITY_DATE_IN_PAST` |
+| `not_available` | `null` | Valid |
+| `not_available` | date | `PROFILE_AVAILABILITY_DATE_NOT_ALLOWED` |
+| unknown status | any | `PROFILE_AVAILABILITY_STATUS_INVALID` |
+
+Changing only one field is checked against the other stored field. Clearing
+both fields together is valid. `available_from` is stored and returned as
+`YYYY-MM-DD`; it is a calendar date and is not converted to UTC.
+
+### Profile contract, completeness, and CV interaction
+
+The editable scalar compatibility fields include `availability_status` and
+`available_from`. The typed display contract is:
+
+```json
+{
+  "career_summary": {
+    "availability": {
+      "status": {"key": "available_from_date", "label": "Available from a date"},
+      "available_from": "2026-09-01",
+      "display_label": "Available for work from 1 September 2026"
+    }
+  }
+}
+```
+
+Arabic and English localize status and display labels; the machine date stays
+ISO. An unset value returns null status/date/display label and adds an optional
+`availability` item to `profile_completeness.recommended_items`. Availability
+does not change weights, percentage, `is_complete`, required missing items, or
+attention cards.
+
+The current CV parser/review draft does not produce trustworthy availability
+data, so Task 5 does not invent extraction, comparison suggestions, or CV-source
+tracking for it. Manual profile values remain outside the reviewed CV draft and
+are preserved by initial confirmation, update confirmation, conflict handling,
+and cancellation. Employer candidate/application resources were not expanded;
+availability is exposed only in the authenticated job-seeker Profile Page.
+
+### API and client examples
+
+```http
+PUT /api/v1/profile
+Authorization: Bearer {job_seeker_token}
+Content-Type: application/json
+
+{"availability_status":"available_from_date","available_from":"2026-09-01"}
+```
+
+```http
+GET /api/v1/cv/{current_or_pending_cv_id}/preview
+Authorization: Bearer {job_seeker_token}
+```
+
+Both mobile and web Postman collections add the eight requested preview/error
+scenarios and nine availability/localization scenarios using environment
+variables. The shared environment adds DOCX, missing, other-user, cancelled,
+and future-availability variables. Existing requests were retained.
+
+### Performance, privacy, and verification
+
+Preview authorization loads only the primary pointer and target CV; it does
+not load the full profile. Profile Page relations remain eagerly loaded with a
+constant query count. Availability labels are pure resource formatting with no
+query. File capabilities perform one existence/size inspection per exposed CV
+and are reused for all of that CV's actions.
+
+Verification results:
+
+- Complete Laravel suite: **991 passed, 2 expected opt-in integration skips,
+  28,746 assertions, 0 failed**. The skips require dedicated ML-container and
+  S3 integration environments.
+- Focused Task 5, single-current-CV, CV workflow, private storage, and protected
+  baseline set: **53 passed, 10,435 assertions** (including S3 fake preview).
+- `migrate:fresh --seed --force`: passed on an isolated temporary SQLite file,
+  including the Task 5 migration and full demo seed. The temporary file and
+  directory were removed. An initial denied `C:\tmp` isolation attempt fell
+  back to a generated workspace SQLite file; MySQL was never selected, and the
+  generated fallback file was verified and removed before final verification.
+- Route checks passed: **17 profile routes** and **20 CV routes**, including
+  `GET|HEAD api/v1/cv/{cvFile}/preview`.
+- Pint passed for every PHP file changed or added by Task 5. Repository-wide
+  `vendor/bin/pint --test` still reports only pre-existing style issues in
+  unrelated files; no unrelated reformat was performed.
+- `php -l` passed for all **34** changed/new PHP files.
+- Both Postman collections and the environment parse as valid JSON. Each
+  collection contains all **17** requested Task 5 requests.
+- `git diff --check` passed; its only output is Git's existing CRLF-to-LF
+  warning for the three Postman JSON files.
+- `composer audit --locked --no-interaction` did **not** complete: the Composer
+  cache directory is not writable and the sandbox could not connect to
+  `repo.packagist.org:443` (`curl error 7`). No dependency metadata was sent via
+  an escalated or unapproved network path, so audit success is not claimed.
+
+Manual verification is represented by the executable feature scenarios for
+current/pending PDF streaming, DOCX rejection/download, owner/other-user/role
+authorization, missing/empty objects, all availability states, merged partial
+validation, localization, and CV confirmation/cancellation preservation. No
+commit or push is created by this task.
+
 ## CV Update Review and Confirmation Workflow
 
 ### Repository baseline and preserved contracts

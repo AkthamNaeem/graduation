@@ -60,6 +60,8 @@ class ProfilePageService
                         'cv_files.id',
                         'cv_files.user_id',
                         'cv_files.original_name',
+                        'cv_files.stored_path',
+                        'cv_files.disk',
                         'cv_files.mime_type',
                         'cv_files.extension',
                         'cv_files.size_bytes',

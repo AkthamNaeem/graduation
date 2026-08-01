@@ -22,4 +22,5 @@ return [
     'already_confirmed' => 'This CV has already been confirmed.',
     'archived_read_only' => 'Archived CV data is read-only.',
     'review_immutable' => 'Applied CV reviews are immutable.',
+    'preview_not_supported_hint' => 'Download the DOCX file to view it on your device.',
 ];

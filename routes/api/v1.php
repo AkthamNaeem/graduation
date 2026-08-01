@@ -176,6 +176,7 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function (): void {
     Route::post('cv/{cvFile}/archive', [CVController::class, 'archive'])->name('cv.archive');
     Route::post('cv/{cvFile}/restore', [CVController::class, 'restore'])->name('cv.restore');
     Route::get('cv/{cvFile}/download', [CVController::class, 'download'])->name('cv.download');
+    Route::get('cv/{cvFile}/preview', [CVController::class, 'preview'])->name('cv.preview');
     Route::get('cv/{cvFile}/parsed', [CVController::class, 'parsed'])->name('cv.parsed');
     Route::get('cv/{cvFile}/review', [CVController::class, 'review'])->name('cv.review');
     Route::get('cv/{cvFile}/final-preview', [CVController::class, 'review'])->name('cv.final-preview');

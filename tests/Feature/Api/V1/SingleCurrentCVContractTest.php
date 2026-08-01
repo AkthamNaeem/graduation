@@ -26,6 +26,12 @@ class SingleCurrentCVContractTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        Storage::fake('local');
+    }
+
     public function test_no_cv_contract_and_existing_profile_authorization_are_preserved(): void
     {
         $this->getJson('/api/v1/profile')->assertUnauthorized();
@@ -65,7 +71,7 @@ class SingleCurrentCVContractTest extends TestCase
             ->assertJsonPath('data.current_cv.stage.key', 'confirmed')
             ->assertJsonPath('data.current_cv.stage.label', 'Ready for applications')
             ->assertJsonPath('data.current_cv.can_use_for_application', true)
-            ->assertJsonPath('data.current_cv.allowed_actions', ['view', 'download', 'update'])
+            ->assertJsonPath('data.current_cv.allowed_actions', ['preview', 'download', 'update'])
             ->assertJsonPath('data.pending_cv_update', null);
 
         foreach ([
@@ -212,7 +218,8 @@ class SingleCurrentCVContractTest extends TestCase
             ->assertJsonPath('data.pending_cv_update.stage.label', 'مراجعة التغييرات')
             ->assertJsonPath('data.pending_cv_update.next_action.type.key', 'review_cv_changes')
             ->assertJsonPath('data.pending_cv_update.next_action.type.label', 'مراجعة التغييرات')
-            ->assertJsonPath('data.pending_cv_update.allowed_actions', ['review', 'cancel'])
+            ->assertJsonPath('data.current_cv.allowed_actions', ['preview', 'download'])
+            ->assertJsonPath('data.pending_cv_update.allowed_actions', ['preview', 'download', 'review', 'cancel'])
             ->assertJsonPath('data.profile_completeness.percentage', 100)
             ->assertJsonPath('data.attention_items.0.type.key', 'cv_differences_review_required')
             ->assertJsonPath('data.attention_items.0.meta.changes_count', 1);
@@ -391,7 +398,7 @@ class SingleCurrentCVContractTest extends TestCase
     /** @param array<string, mixed> $overrides */
     private function cv(User $user, array $overrides = []): CVFile
     {
-        return CVFile::create(array_merge([
+        $cv = CVFile::create(array_merge([
             'user_id' => $user->id,
             'original_name' => 'resume.pdf',
             'stored_path' => "cv-files/{$user->id}/".Str::uuid().'.pdf',
@@ -401,6 +408,9 @@ class SingleCurrentCVContractTest extends TestCase
             'size_bytes' => 1024,
             'status' => 'uploaded',
         ], $overrides));
+        Storage::disk($cv->disk)->put($cv->stored_path, str_repeat('x', max(1, (int) $cv->size_bytes)));
+
+        return $cv;
     }
 
     private function parsingResult(CVFile $cv): void

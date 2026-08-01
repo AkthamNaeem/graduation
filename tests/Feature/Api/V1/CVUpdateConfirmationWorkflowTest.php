@@ -63,7 +63,11 @@ class CVUpdateConfirmationWorkflowTest extends TestCase
 
     public function test_initial_review_requires_final_preview_then_applies_atomically_and_is_idempotent(): void
     {
-        $user = $this->candidate();
+        $availableFrom = now()->addMonth()->toDateString();
+        $user = $this->candidate([
+            'availability_status' => 'available_from_date',
+            'available_from' => $availableFrom,
+        ]);
         $cv = $this->reviewCV($user, CVFile::REVIEW_MODE_INITIAL_IMPORT, CVFile::REVIEW_STATUS_DRAFT, [
             'phone' => '+963900000000',
             'summary' => 'Backend engineer',
@@ -91,6 +95,8 @@ class CVUpdateConfirmationWorkflowTest extends TestCase
             ->assertJsonPath('data.pending_cv_update', null)
             ->assertJsonPath('data.already_confirmed', false);
         $this->assertSame($cv->id, $user->jobSeekerProfile->refresh()->primary_cv_file_id);
+        $this->assertSame('available_from_date', $user->jobSeekerProfile->availability_status->value);
+        $this->assertSame($availableFrom, $user->jobSeekerProfile->available_from->format('Y-m-d'));
         $this->assertDatabaseHas('experiences', ['title' => 'API Engineer', 'source_cv_file_id' => $cv->id]);
 
         $this->withToken($this->tokenFor($user))->postJson("/api/v1/cv/{$cv->id}/confirm")
@@ -137,13 +143,14 @@ class CVUpdateConfirmationWorkflowTest extends TestCase
     public function test_pending_or_cancelled_cv_cannot_be_primary_or_used_and_cancelled_parse_job_is_a_no_op(): void
     {
         Storage::fake('local');
-        $user = $this->candidate();
+        $user = $this->candidate(['availability_status' => 'not_available']);
         $cv = $this->reviewCV($user, CVFile::REVIEW_MODE_INITIAL_IMPORT, CVFile::REVIEW_STATUS_DRAFT, [], false);
         Storage::disk('local')->put($cv->stored_path, 'pdf');
 
         $this->withToken($this->tokenFor($user))->postJson("/api/v1/cv/{$cv->id}/make-primary")
             ->assertConflict()->assertJsonPath('code', 'CV_NOT_USABLE_FOR_APPLICATION');
         $this->withToken($this->tokenFor($user))->postJson("/api/v1/cv/{$cv->id}/cancel")->assertOk();
+        $this->assertSame('not_available', $user->jobSeekerProfile->refresh()->availability_status->value);
 
         $parser = Mockery::mock(CVParsingService::class);
         $parser->shouldNotReceive('extractText');

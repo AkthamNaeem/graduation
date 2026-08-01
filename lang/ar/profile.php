@@ -49,6 +49,24 @@ return [
             'github_link' => 'أضف حساب GitHub',
             'linkedin_link' => 'أضف حساب لينكدإن',
             'portfolio_link' => 'أضف معرض أعمالك',
+            'availability' => 'حدد جاهزيتك للعمل',
+        ],
+    ],
+    'availability' => [
+        'statuses' => [
+            'available_now' => 'متاح الآن',
+            'available_from_date' => 'متاح من تاريخ',
+            'not_available' => 'غير متاح حاليًا',
+            'availability_not_set' => 'الجاهزية غير محددة',
+        ],
+        'display' => [
+            'available_now' => 'متاح للعمل حاليًا',
+            'available_from_date' => 'متاح للعمل بدءًا من :date',
+            'not_available' => 'غير متاح للعمل حاليًا',
+        ],
+        'validation' => [
+            'date_required' => 'تاريخ الجاهزية مطلوب لهذه الحالة.',
+            'date_not_allowed' => 'تاريخ الجاهزية غير مسموح لهذه الحالة.',
         ],
     ],
     'attention' => [
@@ -105,6 +123,7 @@ return [
         ],
         'actions' => [
             'view' => 'عرض معلومات السيرة',
+            'preview' => 'معاينة السيرة الذاتية',
             'download' => 'تنزيل السيرة الذاتية',
             'update' => 'تحديث السيرة الذاتية',
             'review' => 'مراجعة السيرة الذاتية',

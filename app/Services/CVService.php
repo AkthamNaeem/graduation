@@ -11,6 +11,7 @@ use App\Models\JobSeekerProfile;
 use App\Models\ProfileChangeSuggestion;
 use App\Models\User;
 use App\Services\CV\CandidateCVOperationResolver;
+use App\Services\CV\CVFileAccessService;
 use App\Services\CV\CVFinalizationService;
 use App\Services\CV\CVReviewDraftService;
 use App\Services\CV\CVReviewDraftValidator;
@@ -31,6 +32,7 @@ class CVService
         private readonly CandidateCVOperationResolver $operationResolver,
         private readonly CVStageResolver $stageResolver,
         private readonly CVFinalizationService $finalizationService,
+        private readonly CVFileAccessService $fileAccess,
     ) {}
 
     public function upload(User $user, UploadedFile $file, ?string $versionLabel = null, bool $makePrimary = false): CVFile
@@ -386,7 +388,41 @@ class CVService
     public function downloadable(User $user, CVFile $cvFile): CVFile
     {
         $cvFile = $this->ownedCVFile($user, $cvFile);
-        $this->assertFileExists($cvFile);
+        $this->fileAccess->assertDownloadable($cvFile);
+        $this->auditLogService->record('cv.downloaded', $user, CVFile::class, $cvFile->id, null, null, [
+            'cv_file_id' => $cvFile->id,
+            'user_id' => $user->id,
+            'actor_id' => $user->id,
+        ]);
+
+        return $cvFile;
+    }
+
+    public function previewable(User $user, CVFile $cvFile): CVFile
+    {
+        $cvFile = $this->ownedCVFile($user, $cvFile);
+        $profile = JobSeekerProfile::query()
+            ->where('user_id', $user->id)
+            ->select(['id', 'user_id', 'primary_cv_file_id'])
+            ->firstOrFail();
+        $isCurrent = $profile->primary_cv_file_id === $cvFile->id
+            && $cvFile->isConfirmedUsableForApplication();
+        $isPending = $cvFile->isActivePendingWorkflow();
+
+        if (! $isCurrent && ! $isPending) {
+            throw new CVLifecycleException(
+                __('domain_errors.CV_PREVIEW_FORBIDDEN'),
+                'CV_PREVIEW_FORBIDDEN',
+                403,
+            );
+        }
+
+        $this->fileAccess->assertPreviewable($cvFile);
+        $this->auditLogService->record('cv.previewed', $user, CVFile::class, $cvFile->id, null, null, [
+            'cv_file_id' => $cvFile->id,
+            'user_id' => $user->id,
+            'actor_id' => $user->id,
+        ]);
 
         return $cvFile;
     }

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\JobSeekerAvailabilityStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -21,10 +22,21 @@ class JobSeekerProfile extends Model
         'phone',
         'location',
         'city_id',
+        'availability_status',
+        'available_from',
         'portfolio_url',
         'linkedin_url',
         'github_url',
     ];
+
+    /** @return array<string, string> */
+    protected function casts(): array
+    {
+        return [
+            'availability_status' => JobSeekerAvailabilityStatus::class,
+            'available_from' => 'date:Y-m-d',
+        ];
+    }
 
     public function user(): BelongsTo
     {

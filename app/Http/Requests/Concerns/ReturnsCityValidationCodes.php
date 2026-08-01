@@ -14,7 +14,9 @@ trait ReturnsCityValidationCodes
         $errors = $validator->errors()->toArray();
         $attribute = collect(['city_id', 'profile.city_id', 'edited_value.city_id'])
             ->first(fn (string $key): bool => array_key_exists($key, $errors));
-        $code = is_string($attribute) ? $this->cityValidationCode(data_get($this->all(), $attribute)) : null;
+        $code = is_string($attribute)
+            ? $this->cityValidationCode(data_get($this->all(), $attribute))
+            : $this->additionalValidationCode($errors);
 
         throw new HttpResponseException(ApiResponse::error(
             message: __('api.validation_failed'),
@@ -22,6 +24,12 @@ trait ReturnsCityValidationCodes
             status: 422,
             code: $code,
         ));
+    }
+
+    /** @param array<string, mixed> $errors */
+    protected function additionalValidationCode(array $errors): ?string
+    {
+        return null;
     }
 
     private function cityValidationCode(mixed $value): string

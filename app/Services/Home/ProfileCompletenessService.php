@@ -248,6 +248,15 @@ class ProfileCompletenessService
     private function recommendedLinks(JobSeekerProfile $profile): array
     {
         $recommended = [];
+        if ($profile->availability_status === null) {
+            $recommended[] = [
+                'key' => 'availability',
+                'label' => __('profile.completeness.items.availability'),
+                'target' => ['type' => 'profile_section', 'value' => 'availability'],
+                'required' => false,
+            ];
+        }
+
         foreach ([
             'github_link' => $profile->github_url,
             'linkedin_link' => $profile->linkedin_url,

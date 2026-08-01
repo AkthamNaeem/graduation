@@ -3,7 +3,6 @@
 namespace App\Http\Resources\Api\V1;
 
 use App\Data\ProfilePageData;
-use App\Models\CVFile;
 use App\Support\NameInitials;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -26,6 +25,8 @@ class ProfilePageResource extends JsonResource
             'phone' => $profile->phone,
             'location' => $profile->location,
             'city' => CityResource::make($profile->city),
+            'availability_status' => $profile->availability_status?->value,
+            'available_from' => $profile->available_from?->format('Y-m-d'),
             'portfolio_url' => $profile->portfolio_url,
             'linkedin_url' => $profile->linkedin_url,
             'github_url' => $profile->github_url,
@@ -52,6 +53,7 @@ class ProfilePageResource extends JsonResource
                 'education_count' => $profile->education->count(),
                 'skills_count' => $profile->skills->count(),
                 'professional_links_count' => count($this->professionalLinks),
+                'availability' => ProfileAvailabilityResource::make($profile),
             ],
             'professional_profile' => [
                 'summary' => $profile->summary,
@@ -75,7 +77,7 @@ class ProfilePageResource extends JsonResource
             ),
             'profile_completeness' => $this->profileCompleteness,
             'attention_items' => ProfileAttentionItemResource::collection($this->attentionItems),
-            'current_cv' => $this->currentCV instanceof CVFile
+            'current_cv' => $this->currentCV !== null
                 ? CurrentCVResource::make($this->currentCV)
                 : null,
             'pending_cv_update' => $this->pendingCVUpdate !== null

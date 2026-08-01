@@ -3112,6 +3112,270 @@
                     ]
                 }
             ]
+        },
+        {
+            "name": "CV Secure Preview and Profile Availability",
+            "description": "Task 5 secure PDF preview, explicit DOCX behavior, and optional job-seeker availability scenarios.",
+            "auth": {
+                "type": "bearer",
+                "bearer": [
+                    {
+                        "key": "token",
+                        "value": "{{job_seeker_token}}",
+                        "type": "string"
+                    }
+                ]
+            },
+            "item": [
+                {
+                    "name": "CV Preview - Current PDF",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{base_url}}/cv/{{primary_cv_file_id}}/preview",
+                        "description": "Expected 200 application/pdf with inline disposition, private no-store caching, and no storage metadata."
+                    }
+                },
+                {
+                    "name": "CV Preview - Pending PDF",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{base_url}}/cv/{{pending_cv_file_id}}/preview"
+                    }
+                },
+                {
+                    "name": "CV Preview - DOCX Unsupported",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{base_url}}/cv/{{docx_cv_file_id}}/preview",
+                        "description": "Expected 415 CV_PREVIEW_NOT_SUPPORTED with download as the only file action."
+                    }
+                },
+                {
+                    "name": "CV Preview - Download DOCX",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{base_url}}/cv/{{docx_cv_file_id}}/download",
+                        "description": "Expected attachment disposition."
+                    }
+                },
+                {
+                    "name": "CV Preview - Missing File",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{base_url}}/cv/{{missing_cv_file_id}}/preview",
+                        "description": "Expected 404 CV_FILE_NOT_FOUND without a storage path."
+                    }
+                },
+                {
+                    "name": "CV Preview - Unauthorized",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{base_url}}/cv/{{primary_cv_file_id}}/preview",
+                        "auth": {
+                            "type": "noauth"
+                        }
+                    }
+                },
+                {
+                    "name": "CV Preview - Other User File",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{base_url}}/cv/{{other_user_cv_file_id}}/preview",
+                        "description": "Expected 404 for a CV owned by another job seeker."
+                    }
+                },
+                {
+                    "name": "CV Preview - Cancelled CV",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{base_url}}/cv/{{cancelled_cv_file_id}}/preview",
+                        "description": "Expected CV_PREVIEW_FORBIDDEN."
+                    }
+                },
+                {
+                    "name": "Profile Availability - Available Now",
+                    "request": {
+                        "method": "PUT",
+                        "url": "{{base_url}}/profile",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"availability_status\": \"available_now\",\n    \"available_from\": null\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "Profile Availability - Available From Date",
+                    "request": {
+                        "method": "PUT",
+                        "url": "{{base_url}}/profile",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"availability_status\": \"available_from_date\",\n    \"available_from\": \"{{availability_date}}\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "Profile Availability - Not Available",
+                    "request": {
+                        "method": "PUT",
+                        "url": "{{base_url}}/profile",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"availability_status\": \"not_available\",\n    \"available_from\": null\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "Profile Availability - Clear Availability",
+                    "request": {
+                        "method": "PUT",
+                        "url": "{{base_url}}/profile",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"availability_status\": null,\n    \"available_from\": null\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "Profile Availability - Missing Required Date",
+                    "request": {
+                        "method": "PUT",
+                        "url": "{{base_url}}/profile",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"availability_status\": \"available_from_date\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Expected PROFILE_AVAILABILITY_DATE_REQUIRED."
+                    }
+                },
+                {
+                    "name": "Profile Availability - Date Not Allowed",
+                    "request": {
+                        "method": "PUT",
+                        "url": "{{base_url}}/profile",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"availability_status\": \"available_now\",\n    \"available_from\": \"{{availability_date}}\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Expected PROFILE_AVAILABILITY_DATE_NOT_ALLOWED."
+                    }
+                },
+                {
+                    "name": "Profile Availability - Past Date",
+                    "request": {
+                        "method": "PUT",
+                        "url": "{{base_url}}/profile",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"availability_status\": \"available_from_date\",\n    \"available_from\": \"2020-01-01\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "description": "Expected PROFILE_AVAILABILITY_DATE_IN_PAST."
+                    }
+                },
+                {
+                    "name": "Profile Availability - Arabic",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{base_url}}/profile",
+                        "header": [
+                            {
+                                "key": "Accept-Language",
+                                "value": "ar"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "name": "Profile Availability - English",
+                    "request": {
+                        "method": "GET",
+                        "url": "{{base_url}}/profile",
+                        "header": [
+                            {
+                                "key": "Accept-Language",
+                                "value": "en"
+                            }
+                        ]
+                    }
+                }
+            ]
         }
     ],
     "variable": [

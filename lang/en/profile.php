@@ -49,6 +49,24 @@ return [
             'github_link' => 'Add your GitHub profile',
             'linkedin_link' => 'Add your LinkedIn profile',
             'portfolio_link' => 'Add your portfolio',
+            'availability' => 'Set your availability for work',
+        ],
+    ],
+    'availability' => [
+        'statuses' => [
+            'available_now' => 'Available now',
+            'available_from_date' => 'Available from a date',
+            'not_available' => 'Not currently available',
+            'availability_not_set' => 'Availability not set',
+        ],
+        'display' => [
+            'available_now' => 'Available for work now',
+            'available_from_date' => 'Available for work from :date',
+            'not_available' => 'Not currently available for work',
+        ],
+        'validation' => [
+            'date_required' => 'An availability date is required for this status.',
+            'date_not_allowed' => 'An availability date is not allowed for this status.',
         ],
     ],
     'attention' => [
@@ -105,6 +123,7 @@ return [
         ],
         'actions' => [
             'view' => 'View CV details',
+            'preview' => 'Preview CV',
             'download' => 'Download CV',
             'update' => 'Update CV',
             'review' => 'Review CV',

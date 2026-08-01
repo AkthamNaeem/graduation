@@ -66,7 +66,7 @@ class ProfilePageCompletenessServiceTest extends TestCase
         $this->assertSame(0, $result['missing_items_count']);
         $this->assertNull($result['next_item']);
         $this->assertSame(
-            ['github_link', 'linkedin_link', 'portfolio_link'],
+            ['availability', 'github_link', 'linkedin_link', 'portfolio_link'],
             array_column($result['recommended_items'], 'key'),
         );
     }

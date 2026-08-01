@@ -82,6 +82,18 @@ class CVController extends Controller
         return $this->privateStorage->downloadResponse($cvFile->disk, $cvFile->stored_path, $cvFile->original_name, $cvFile->mime_type);
     }
 
+    public function preview(CVLifecycleRequest $request, CVFile $cvFile): StreamedResponse
+    {
+        $cvFile = $this->cvService->previewable($request->user(), $cvFile);
+
+        return $this->privateStorage->inlineResponse(
+            $cvFile->disk,
+            $cvFile->stored_path,
+            $cvFile->original_name,
+            $cvFile->mime_type,
+        );
+    }
+
     public function show(ShowCVRequest $request, CVFile $cvFile): JsonResponse
     {
         return ApiResponse::success(

@@ -8,6 +8,8 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\HeaderUtils;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
@@ -123,7 +125,7 @@ class PrivateFileStorageService
     public function downloadResponse(string $disk, string $path, string $originalName, ?string $mimeType = null): StreamedResponse
     {
         $stream = $this->readStream($disk, $path);
-        $filename = basename(str_replace(["\r", "\n", "\0"], '', $originalName)) ?: 'download';
+        $filename = $this->safeFilename($originalName, 'download');
 
         return response()->streamDownload(function () use ($stream): void {
             try {
@@ -135,6 +137,33 @@ class PrivateFileStorageService
             'Content-Type' => $mimeType ?: 'application/octet-stream',
             'X-Content-Type-Options' => 'nosniff',
             'Cache-Control' => 'private, no-store',
+            'Pragma' => 'no-cache',
+        ]);
+    }
+
+    public function inlineResponse(string $disk, string $path, string $originalName, string $mimeType): StreamedResponse
+    {
+        $stream = $this->readStream($disk, $path);
+        $filename = $this->safeFilename($originalName, 'cv.pdf');
+        $fallback = preg_replace('/[^A-Za-z0-9._-]/', '_', Str::ascii($filename)) ?: 'cv.pdf';
+
+        return response()->stream(function () use ($stream): void {
+            try {
+                fpassthru($stream);
+            } finally {
+                fclose($stream);
+            }
+        }, 200, [
+            'Content-Type' => $mimeType,
+            'Content-Disposition' => HeaderUtils::makeDisposition(
+                ResponseHeaderBag::DISPOSITION_INLINE,
+                $filename,
+                $fallback,
+            ),
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, no-store',
+            'Pragma' => 'no-cache',
+            'Accept-Ranges' => 'none',
         ]);
     }
 
@@ -265,5 +294,13 @@ class PrivateFileStorageService
         } catch (Throwable $exception) {
             $this->logFailure('failed_write_cleanup', $disk, $path, $exception, true);
         }
+    }
+
+    private function safeFilename(string $originalName, string $fallback): string
+    {
+        $filename = basename(str_replace(["\r", "\n", "\0"], '', $originalName));
+        $filename = trim((string) preg_replace('/[\x00-\x1F\x7F]/u', '', $filename));
+
+        return $filename !== '' ? $filename : $fallback;
     }
 }
