@@ -8,6 +8,7 @@ use App\Enums\UserRole;
 use App\Models\JobSeekerProfile;
 use App\Models\ProfileChangeSuggestion;
 use App\Models\User;
+use App\Services\CV\CandidateCVStateResolver;
 use App\Services\Home\ProfileCompletenessService;
 
 class ProfilePageService
@@ -16,6 +17,7 @@ class ProfilePageService
         private readonly ProfileExperienceCalculator $experienceCalculator,
         private readonly ProfileCompletenessService $profileCompletenessService,
         private readonly ProfileAttentionResolver $profileAttentionResolver,
+        private readonly CandidateCVStateResolver $candidateCVStateResolver,
     ) {}
 
     public function get(User $user): ProfilePageData
@@ -37,32 +39,50 @@ class ProfilePageService
                 'skills' => fn ($query) => $query
                     ->orderBy('skills.name')
                     ->orderBy('skills.id'),
-                'latestConfirmedCVFile' => fn ($query) => $query->select([
-                    'cv_files.id',
-                    'cv_files.user_id',
-                    'cv_files.stored_path',
-                    'cv_files.disk',
-                    'cv_files.status',
-                    'cv_files.confirmed_at',
-                    'cv_files.archived_at',
+                'primaryCVFile' => fn ($query) => $query->select([
+                    'id',
+                    'user_id',
+                    'original_name',
+                    'stored_path',
+                    'disk',
+                    'mime_type',
+                    'extension',
+                    'size_bytes',
+                    'status',
+                    'confirmed_at',
+                    'archived_at',
+                    'created_at',
+                    'updated_at',
                 ]),
                 'latestUnconfirmedCVFile' => fn ($query) => $query
                     ->select([
                         'cv_files.id',
                         'cv_files.user_id',
+                        'cv_files.original_name',
+                        'cv_files.mime_type',
+                        'cv_files.extension',
+                        'cv_files.size_bytes',
                         'cv_files.status',
                         'cv_files.review_mode',
                         'cv_files.review_status',
                         'cv_files.confirmed_at',
                         'cv_files.archived_at',
+                        'cv_files.created_at',
                         'cv_files.updated_at',
                     ])
+                    ->with(['parsingResult' => fn ($parsingResult) => $parsingResult->select([
+                        'id',
+                        'cv_file_id',
+                        'reviewed_at',
+                        'created_at',
+                    ])])
                     ->withCount(['profileChangeSuggestions as pending_suggestions_count' => fn ($suggestions) => $suggestions
                         ->where('status', ProfileChangeSuggestion::STATUS_PENDING)
                         ->where('suggestion_type', '!=', ProfileChangeSuggestion::TYPE_IGNORE)]),
             ])
             ->firstOrFail();
 
+        $cvState = $this->candidateCVStateResolver->resolve($user, $profile);
         $profileCompleteness = $this->profileCompletenessService
             ->calculateForProfilePage($user, $profile);
 
@@ -73,6 +93,8 @@ class ProfilePageService
             allowedActions: $user->role === UserRole::JOB_SEEKER ? ProfileAction::values() : [],
             profileCompleteness: $profileCompleteness,
             attentionItems: $this->profileAttentionResolver->resolve($profile, $profileCompleteness),
+            currentCV: $cvState['current_cv'],
+            pendingCVUpdate: $cvState['pending_cv_update'],
         );
     }
 

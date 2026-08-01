@@ -22,10 +22,11 @@ class ProfileCompletenessAttentionTest extends TestCase
     public function test_profile_returns_complete_contract_and_latest_pending_cv_attention_in_english(): void
     {
         [$user, $profile] = $this->completeProfile();
-        $this->cv($user, [
+        $confirmed = $this->cv($user, [
             'status' => 'parsed',
             'confirmed_at' => now()->subMinute(),
         ]);
+        $profile->update(['primary_cv_file_id' => $confirmed->id]);
         $pending = $this->cv($user, ['status' => 'processing']);
 
         $response = $this->withHeader('Accept-Language', 'en')
@@ -126,11 +127,12 @@ class ProfileCompletenessAttentionTest extends TestCase
 
     public function test_home_and_profile_use_the_same_completeness_percentage(): void
     {
-        [$user] = $this->completeProfile();
-        $this->cv($user, [
+        [$user, $profile] = $this->completeProfile();
+        $confirmed = $this->cv($user, [
             'status' => 'parsed',
             'confirmed_at' => now(),
         ]);
+        $profile->update(['primary_cv_file_id' => $confirmed->id]);
         $token = $this->tokenFor($user);
 
         $profilePercentage = $this->withToken($token)

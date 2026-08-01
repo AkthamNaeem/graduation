@@ -2,13 +2,19 @@
 
 namespace App\Services;
 
+use App\Enums\CandidateCVStage;
 use App\Enums\ProfileAttentionAction;
 use App\Enums\ProfileAttentionType;
 use App\Models\CVFile;
 use App\Models\JobSeekerProfile;
+use App\Services\CV\CVStageResolver;
 
 class ProfileAttentionResolver
 {
+    public function __construct(
+        private readonly CVStageResolver $stageResolver,
+    ) {}
+
     /**
      * @param  array<string, mixed>  $completeness
      * @return list<array<string, mixed>>
@@ -21,7 +27,7 @@ class ProfileAttentionResolver
             : null;
 
         if ($cv instanceof CVFile) {
-            $type = $this->cvType($cv);
+            $type = $this->cvType($this->stageResolver->resolve($cv));
             if ($type instanceof ProfileAttentionType) {
                 $items[] = $this->cvItem($cv, $type);
             }
@@ -50,41 +56,16 @@ class ProfileAttentionResolver
         return array_values($deduplicated);
     }
 
-    private function cvType(CVFile $cv): ?ProfileAttentionType
+    private function cvType(CandidateCVStage $stage): ?ProfileAttentionType
     {
-        if ($cv->status === 'failed') {
-            return ProfileAttentionType::CV_PROCESSING_FAILED;
-        }
-
-        if (in_array($cv->status, ['uploaded', 'processing'], true)) {
-            return ProfileAttentionType::CV_PROCESSING;
-        }
-
-        if ($cv->status !== 'parsed') {
-            return null;
-        }
-
-        if ($cv->review_mode === CVFile::REVIEW_MODE_INITIAL_IMPORT
-            && $cv->review_status === CVFile::REVIEW_STATUS_DRAFT) {
-            return ProfileAttentionType::CV_FIRST_REVIEW_REQUIRED;
-        }
-
-        if ($cv->review_mode !== CVFile::REVIEW_MODE_PROFILE_SYNC) {
-            return null;
-        }
-
-        if ($cv->review_status === CVFile::REVIEW_STATUS_READY_TO_APPLY) {
-            return ProfileAttentionType::CV_FINAL_CONFIRMATION_REQUIRED;
-        }
-
-        if (in_array($cv->review_status, [
-            CVFile::REVIEW_STATUS_COMPARISON_PENDING,
-            CVFile::REVIEW_STATUS_DECISIONS_PENDING,
-        ], true) || (int) ($cv->pending_suggestions_count ?? 0) > 0) {
-            return ProfileAttentionType::CV_DIFFERENCES_REVIEW_REQUIRED;
-        }
-
-        return null;
+        return match ($stage) {
+            CandidateCVStage::FAILED => ProfileAttentionType::CV_PROCESSING_FAILED,
+            CandidateCVStage::PROCESSING => ProfileAttentionType::CV_PROCESSING,
+            CandidateCVStage::FIRST_REVIEW => ProfileAttentionType::CV_FIRST_REVIEW_REQUIRED,
+            CandidateCVStage::DIFFERENCES_REVIEW => ProfileAttentionType::CV_DIFFERENCES_REVIEW_REQUIRED,
+            CandidateCVStage::FINAL_CONFIRMATION => ProfileAttentionType::CV_FINAL_CONFIRMATION_REQUIRED,
+            CandidateCVStage::CONFIRMED => null,
+        };
     }
 
     /** @return array<string, mixed> */

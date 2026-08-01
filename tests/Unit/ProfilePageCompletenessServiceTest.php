@@ -199,10 +199,11 @@ class ProfilePageCompletenessServiceTest extends TestCase
             $skill = Skill::create(['name' => $name, 'slug' => strtolower($name)]);
             $profile->skills()->attach($skill->id);
         }
-        CVFile::create($this->cvAttributes($user, [
+        $confirmedCV = CVFile::create($this->cvAttributes($user, [
             'status' => 'parsed',
             'confirmed_at' => now()->subMinute(),
         ]));
+        $profile->update(['primary_cv_file_id' => $confirmedCV->id]);
 
         return [$user, $profile];
     }
@@ -228,7 +229,7 @@ class ProfilePageCompletenessServiceTest extends TestCase
             'experiences',
             'education',
             'skills',
-            'latestConfirmedCVFile',
+            'primaryCVFile',
         ]);
 
         return app(ProfileCompletenessService::class)->calculateForProfilePage($user, $loaded);

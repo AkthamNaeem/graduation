@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Api\V1;
 
 use App\Data\ProfilePageData;
+use App\Models\CVFile;
 use App\Support\NameInitials;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -74,6 +75,12 @@ class ProfilePageResource extends JsonResource
             ),
             'profile_completeness' => $this->profileCompleteness,
             'attention_items' => ProfileAttentionItemResource::collection($this->attentionItems),
+            'current_cv' => $this->currentCV instanceof CVFile
+                ? CurrentCVResource::make($this->currentCV)
+                : null,
+            'pending_cv_update' => $this->pendingCVUpdate !== null
+                ? PendingCVUpdateResource::make($this->pendingCVUpdate)
+                : null,
             'allowed_actions' => $this->allowedActions,
             'created_at' => $profile->created_at?->toISOString(),
             'updated_at' => $profile->updated_at?->toISOString(),

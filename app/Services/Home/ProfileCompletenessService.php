@@ -171,7 +171,7 @@ class ProfileCompletenessService
 
         return $user->jobSeekerProfile()
             ->withCount(['experiences', 'education', 'skills'])
-            ->with('latestConfirmedCVFile')
+            ->with('primaryCVFile')
             ->firstOrFail();
     }
 
@@ -186,21 +186,18 @@ class ProfileCompletenessService
 
     private function hasConfirmedCV(User $user, JobSeekerProfile $profile): bool
     {
-        if ($profile->relationLoaded('latestConfirmedCVFile')) {
-            $cv = $profile->latestConfirmedCVFile;
-
-            return $cv instanceof CVFile
-                && $cv->user_id === $user->id
-                && $cv->confirmed_at !== null
-                && $cv->status === 'parsed'
-                && $cv->isUsableForApplication();
-        }
-
-        // Compatibility for callers that still provide the legacy, partially-selected relation.
         $cv = $profile->relationLoaded('primaryCVFile') ? $profile->primaryCVFile : null;
 
+        if (! $cv instanceof CVFile || $cv->user_id !== $user->id) {
+            return false;
+        }
+
+        if (array_key_exists('status', $cv->getAttributes())) {
+            return $cv->isConfirmedUsableForApplication();
+        }
+
+        // Compatibility for protected Home callers that select only legacy pointer fields.
         return $cv instanceof CVFile
-            && $cv->user_id === $user->id
             && $cv->confirmed_at !== null
             && $cv->archived_at === null;
     }

@@ -1160,6 +1160,87 @@
             },
             "item": [
                 {
+                    "name": "Profile - No CV",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "Accept-Language", "value": "en"}],
+                        "description": "Use a job seeker without CV files. Expects current_cv and pending_cv_update to be null.",
+                        "url": "{{base_url}}/profile"
+                    }
+                },
+                {
+                    "name": "Profile - Current CV Only",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "Accept-Language", "value": "en"}],
+                        "description": "Use a profile whose primary CV is confirmed, parsed, unarchived, and usable. Expects one safe current_cv and no pending update.",
+                        "url": "{{base_url}}/profile"
+                    }
+                },
+                {
+                    "name": "Profile - Current CV With Processing Update",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "Accept-Language", "value": "en"}],
+                        "description": "Use a valid current CV plus a newer uploaded/processing unconfirmed CV. Current remains usable and pending stage is processing.",
+                        "url": "{{base_url}}/profile"
+                    }
+                },
+                {
+                    "name": "Profile - Initial CV First Review",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "Accept-Language", "value": "en"}],
+                        "description": "Use an unconfirmed parsed initial_import draft without a valid current CV. Expects initial_upload and first_review.",
+                        "url": "{{base_url}}/profile"
+                    }
+                },
+                {
+                    "name": "Profile - CV Differences Review",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "Accept-Language", "value": "en"}],
+                        "description": "Use a profile_sync pending CV with comparison or decisions pending. Expects differences_review and review_cv_changes.",
+                        "url": "{{base_url}}/profile"
+                    }
+                },
+                {
+                    "name": "Profile - CV Final Confirmation",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "Accept-Language", "value": "en"}],
+                        "description": "Use a profile_sync pending CV in ready_to_apply. Expects final_confirmation and confirm_cv_review.",
+                        "url": "{{base_url}}/profile"
+                    }
+                },
+                {
+                    "name": "Profile - CV Processing Failed",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "Accept-Language", "value": "en"}],
+                        "description": "Use a latest unconfirmed failed CV. Expects failed stage and upload_cv without internal error details.",
+                        "url": "{{base_url}}/profile"
+                    }
+                },
+                {
+                    "name": "Profile - Arabic CV Contract",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "Accept-Language", "value": "ar"}],
+                        "description": "Returns Arabic Current/Pending stage, operation, and next-action labels.",
+                        "url": "{{base_url}}/profile"
+                    }
+                },
+                {
+                    "name": "Profile - English CV Contract",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "Accept-Language", "value": "en"}],
+                        "description": "Returns English Current/Pending stage, operation, and next-action labels.",
+                        "url": "{{base_url}}/profile"
+                    }
+                },
+                {
                     "name": "Profile - Complete Profile",
                     "request": {
                         "method": "GET",

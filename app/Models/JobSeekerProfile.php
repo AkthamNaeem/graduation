@@ -52,7 +52,7 @@ class JobSeekerProfile extends Model
     public function latestUnconfirmedCVFile(): HasOne
     {
         return $this->hasOne(CVFile::class, 'user_id', 'user_id')
-            ->ofMany(['id' => 'max'], fn ($query) => $query
+            ->ofMany(['created_at' => 'max', 'id' => 'max'], fn ($query) => $query
                 ->whereNull('confirmed_at')
                 ->whereNull('archived_at'));
     }

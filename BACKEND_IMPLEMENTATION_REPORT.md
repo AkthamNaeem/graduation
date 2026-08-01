@@ -3380,6 +3380,168 @@ Details, and Withdraw requests. No frontend, commit, or push is included.
 - Both modified Postman collection files parse as valid JSON.
 - `git diff --check`: passed. No commit or push was created.
 
+## Single Current CV Contract
+
+### Starting state and preserved work
+
+Task 3 started on a clean `master` working tree, two local commits ahead of
+`github/master`. The Profile Page aggregation from Task 1 and the centralized
+completeness/attention implementation from Task 2 were retained and extended.
+No frontend, migration, PDF preview, cancel-update flow, application snapshot,
+or suggestion comparison/decision redesign was introduced.
+
+The pre-existing CV API manages multiple records through list, metadata,
+make-primary, archive, restore, download, parsed result, review draft,
+confirmation, and suggestion endpoints. It stores parsing state as
+`uploaded`, `processing`, `parsed`, or `failed`; review mode as
+`initial_import` or `profile_sync`; and review status as `draft`,
+`comparison_pending`, `decisions_pending`, `ready_to_apply`, or `applied`.
+`primary_cv_file_id` is the existing authoritative pointer.
+
+### Current and pending selection
+
+`CurrentCVResolver` returns only `primaryCVFile`, and only when it belongs to
+the authenticated user, is confirmed, parsed, unarchived, has usable storage
+metadata, and passes `CVFile::isUsableForApplication()`. It intentionally does
+not fall back to another confirmed row when the pointer is corrupt or invalid;
+the API returns `current_cv: null` and completeness reports the confirmed-CV
+requirement as missing.
+
+The pending state is the newest owned CV whose `confirmed_at` and
+`archived_at` are null. A constrained `ofMany` relation orders by
+`created_at DESC`, then `id DESC`, so at most one pending object is exposed.
+Older legacy pending files remain stored and are neither returned nor deleted.
+Current and pending resolution are independent: a processing/reviewing upload
+does not replace the existing current CV. Confirmation promotes the newly
+confirmed CV to `primary_cv_file_id` inside the existing confirmation
+transaction; the comparison, draft, decisions, and confirmation response
+flows themselves are unchanged.
+
+### Stage, operation, progress, and actions
+
+`CVStageResolver` is the single mapper used by both the pending contract and
+Task 2 attention cards. Its deterministic mapping is:
+
+- valid confirmed CV → `confirmed`;
+- `failed` parsing status → `failed`;
+- `uploaded` or `processing` → `processing`;
+- parsed `initial_import` + `draft` → `first_review`;
+- parsed `profile_sync` + comparison/decision state, or pending suggestion
+  count → `differences_review`;
+- parsed `ready_to_apply` (or inconsistent applied-without-confirmation legacy
+  state) → `final_confirmation`.
+
+Confirmed state wins over stale review fields. Final confirmation is evaluated
+before pending differences, so a stale suggestion count cannot downgrade it.
+Unknown transitional values map conservatively to processing without exposing
+an actionable review button.
+
+Operation is `initial_upload` when no valid current CV exists and `update` when
+one does. Progress is derived, not stored: upload is complete for a persisted
+CV, text extraction is true only when the minimal parsing-result relation
+exists, parsing is complete only for `parsed`, and review is complete when the
+workflow has reached final confirmation.
+
+Next actions are typed as `wait_for_processing` (non-actionable),
+`review_extracted_cv`, `review_cv_changes`, `confirm_cv_review`, or `upload_cv`.
+Current allowed actions are `view`, `download`, and `update`; view means the
+existing CV metadata endpoint, not inline PDF preview. Pending allowed actions
+are `view_status`, `review`, or `confirm` according to stage. Cancel is not
+exposed.
+
+### Profile contract and consistency
+
+`GET /api/v1/profile` now adds `current_cv` and `pending_cv_update`; both are
+null when absent. The current resource contains safe file metadata, localized
+confirmed stage, timestamps, confirmed usability, and allowed actions. It does
+not expose `version_label`, primary/archive capabilities, archived state,
+storage path, disk, or parsing payloads. The pending resource contains safe
+metadata, localized operation/stage, derived progress, localized typed next
+action, `can_use_for_application: false`, allowed actions, and timestamps.
+
+Completeness now evaluates the same strict primary CV resolved as current, so
+`confirmed_cv` is complete if and only if `current_cv` is valid. Attention uses
+the same stage mapper as `pending_cv_update`, preventing failed, processing,
+first-review, differences, or final-confirmation contradictions. A valid
+current CV stays usable and keeps completeness unchanged while a pending update
+is reviewed.
+
+The application workflow had allowed real unconfirmed workflow CVs because the
+legacy usability helper validates only storage availability. A narrow guard
+now rejects uploaded/processing/reviewing pending CVs with
+`CV_NOT_USABLE_FOR_APPLICATION`. Parsed legacy records with no review metadata
+retain backward compatibility. This is the only application change and is
+required to enforce the pending contract.
+
+### Legacy compatibility, privacy, localization, and performance
+
+The existing `GET /cv`, metadata, make-primary, archive, restore, download,
+parsed, review, confirm, and suggestion routes and their response resources are
+unchanged. Multiple-version and primary/archive endpoints are retained as
+legacy APIs, but are deprecated for the new mobile/web Profile UI. No HTTP
+deprecation headers were added.
+
+English and Arabic translations cover all candidate stages, initial/update
+operations, next actions, and allowed-action concepts. The Profile endpoint
+remains job-seeker-only: guests receive 401 and employer/admin users receive
+403. Current/pending queries are user-scoped and never serialize raw text,
+parsed/reviewed JSON, internal parsing errors, confidence, suggestion content,
+storage paths, disks, archived files, old files, or another user's IDs.
+
+Only the primary CV, newest pending CV, a minimal parsing-result projection,
+and a pending non-ignore suggestion count are eager-loaded. No CV history,
+parsed JSON, raw text, or suggestion collection is loaded. Query-count tests
+enforce a maximum of 16 Profile queries and no growth beyond a one-query
+tolerance when expanding from one state to 20 old CVs and 20 suggestions.
+
+### Files, Postman, and verification
+
+New runtime components are `CandidateCVStage`, `CandidateCVOperation`,
+`CurrentCVResolver`, `CVStageResolver`, `CandidateCVStateResolver`,
+`CurrentCVResource`, and `PendingCVUpdateResource`. Profile data/service/resource,
+the CV and profile models, completeness, attention, Home loading, application
+CV validation, and the two existing confirmation services were updated. New
+coverage is provided by `CVStageResolverTest` and
+`SingleCurrentCVContractTest`; Task 2 fixtures were aligned with the now
+authoritative primary pointer.
+
+Both Postman Profile folders retain all Task 1 and Task 2 requests and add the
+nine requested Task 3 examples: no CV, current only, current plus processing
+update, first review, differences, final confirmation, failed, Arabic, and
+English contracts. No specialized `/cv/current-state` endpoint was added
+because Profile already loads the complete page state and no standalone reload
+consumer currently requires it.
+
+### Verification results
+
+- Complete Laravel suite: **963 passed, 2 expected opt-in S3 skips, 28,233
+  assertions, 0 failed**.
+- New Task 3 stage/contract suite: **18 passed, 160 assertions**.
+- Focused Profile, Home, CV, Applications, and Activity regressions: **205
+  passed, 1,746 assertions**.
+- Protected Phase 17/18 baseline checks: **7 passed, 10,073 assertions** after
+  approving only the intentional `CVFile` invariant change in their existing
+  allowlists.
+- `php artisan route:list --path=api/v1/profile`: passed and shows the existing
+  17 Profile routes; no new page endpoint was introduced.
+- `php artisan route:list --path=api/v1/cv`: passed and shows all 15 existing CV
+  routes, including legacy primary/archive/restore endpoints.
+- `php artisan migrate:fresh --seed --force`: passed on an isolated temporary
+  SQLite database, which was removed afterward. No migration was added.
+- Laravel Pint on every changed/new PHP file: passed. Repository-wide
+  `vendor/bin/pint --test` still reports pre-existing style violations in
+  unrelated files; they were not reformatted.
+- `php -l`: passed for every changed/new PHP file.
+- Both Postman collections parse as valid JSON and contain exactly nine Task 3
+  Profile requests each.
+- `git diff --check`: passed; Git emitted only the existing Postman CRLF-to-LF
+  working-copy warnings.
+- `composer audit`: unavailable. Composer could not write its external cache
+  and the connection to `repo.packagist.org:443` was blocked. No dependency
+  vulnerability-status claim is made.
+
+No commit or push was created for Task 3.
+
 ## Profile Completeness and Attention Items
 
 ### Scope and preserved Profile Page work

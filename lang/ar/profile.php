@@ -89,4 +89,31 @@ return [
             'complete_profile' => 'إكمال الملف الشخصي',
         ],
     ],
+    'cv_contract' => [
+        'stages' => [
+            'processing' => 'جاري تحليل السيرة الذاتية',
+            'first_review' => 'مراجعة البيانات المستخرجة',
+            'differences_review' => 'مراجعة التغييرات',
+            'final_confirmation' => 'جاهزة للتأكيد النهائي',
+            'confirmed' => 'جاهزة للتقديم',
+            'failed' => 'تعذر تحليل السيرة الذاتية',
+        ],
+        'operations' => [
+            'initial_upload' => 'إضافة السيرة الذاتية',
+            'update' => 'تحديث السيرة الذاتية',
+        ],
+        'actions' => [
+            'view' => 'عرض معلومات السيرة',
+            'download' => 'تنزيل السيرة الذاتية',
+            'update' => 'تحديث السيرة الذاتية',
+            'review' => 'مراجعة السيرة الذاتية',
+            'confirm' => 'تأكيد السيرة الذاتية',
+            'view_status' => 'عرض الحالة',
+            'wait_for_processing' => 'جاري التحليل',
+            'upload_cv' => 'رفع ملف آخر',
+            'review_extracted_cv' => 'مراجعة السيرة المستخرجة',
+            'review_cv_changes' => 'مراجعة التغييرات',
+            'confirm_cv_review' => 'تأكيد مراجعة السيرة',
+        ],
+    ],
 ];

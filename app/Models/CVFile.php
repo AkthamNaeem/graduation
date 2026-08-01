@@ -84,6 +84,13 @@ class CVFile extends Model
             && filled($this->stored_path);
     }
 
+    public function isConfirmedUsableForApplication(): bool
+    {
+        return $this->confirmed_at !== null
+            && $this->status === 'parsed'
+            && $this->isUsableForApplication();
+    }
+
     public function nextAction(): string
     {
         if (in_array($this->status, ['uploaded', 'processing'], true)) {

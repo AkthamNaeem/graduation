@@ -213,6 +213,11 @@ class CVService
             $this->reviewDraftService->apply($profile, $lockedCV, $draft);
 
             $lockedCV->forceFill(['review_status' => CVFile::REVIEW_STATUS_APPLIED, 'confirmed_at' => now()])->save();
+            $previousPrimary = $profile->primary_cv_file_id;
+            if ($previousPrimary !== $lockedCV->id) {
+                $profile->forceFill(['primary_cv_file_id' => $lockedCV->id])->save();
+                $this->recordPrimaryChange($user, $lockedCV, $previousPrimary, $lockedCV->id);
+            }
             $this->auditLogService->record('cv.initial_import_applied', $user, CVFile::class, $lockedCV->id, null, null, [
                 'cv_file_id' => $lockedCV->id,
                 'actor_id' => $user->id,

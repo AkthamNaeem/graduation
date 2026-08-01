@@ -469,6 +469,8 @@ class FinalHandoverDocumentationTest extends TestCase
             'app/Http/Resources/Api/V1/JobSeekerProfileResource.php',
             'app/Http/Resources/Api/V1/RankedCandidateResource.php',
             'app/Http/Resources/Api/V1/RecommendedJobResource.php',
+            // Approved Single Current CV contract invariant.
+            'app/Models/CVFile.php',
             'app/Models/JobPosting.php',
             'app/Models/JobSeekerProfile.php',
             'app/Services/ApplicationInformationRequestService.php',

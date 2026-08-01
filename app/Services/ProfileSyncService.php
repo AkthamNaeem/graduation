@@ -190,6 +190,17 @@ class ProfileSyncService
             }
 
             $lockedCV->forceFill(['review_mode' => CVFile::REVIEW_MODE_PROFILE_SYNC, 'review_status' => CVFile::REVIEW_STATUS_APPLIED, 'confirmed_at' => now()])->save();
+            $previousPrimary = $profile->primary_cv_file_id;
+            if ($previousPrimary !== $lockedCV->id) {
+                $profile->forceFill(['primary_cv_file_id' => $lockedCV->id])->save();
+                $this->auditLogService->record('cv.primary_changed', $user, CVFile::class, $lockedCV->id, null, null, [
+                    'cv_file_id' => $lockedCV->id,
+                    'user_id' => $user->id,
+                    'previous_primary_cv_file_id' => $previousPrimary,
+                    'new_primary_cv_file_id' => $lockedCV->id,
+                    'actor_id' => $user->id,
+                ]);
+            }
 
             return $this->applicationResult($user, $lockedCV, false);
         });

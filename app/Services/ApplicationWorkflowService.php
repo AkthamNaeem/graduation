@@ -409,6 +409,13 @@ class ApplicationWorkflowService
             throw new CVLifecycleException(__('domain_errors.CV_NOT_USABLE_FOR_APPLICATION'), 'CV_NOT_USABLE_FOR_APPLICATION');
         }
 
+        $legacyCVWithoutReviewMetadata = $cvFile->status === 'parsed'
+            && $cvFile->review_mode === null
+            && $cvFile->review_status === null;
+        if (! $cvFile->isConfirmedUsableForApplication() && ! $legacyCVWithoutReviewMetadata) {
+            throw new CVLifecycleException(__('domain_errors.CV_NOT_USABLE_FOR_APPLICATION'), 'CV_NOT_USABLE_FOR_APPLICATION');
+        }
+
         return $cvFile;
     }
 

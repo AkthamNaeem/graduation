@@ -2,6 +2,7 @@
 
 namespace App\Data;
 
+use App\Models\CVFile;
 use App\Models\JobSeekerProfile;
 
 final readonly class ProfilePageData
@@ -11,6 +12,7 @@ final readonly class ProfilePageData
      * @param  list<string>  $allowedActions
      * @param  array<string, mixed>  $profileCompleteness
      * @param  list<array<string, mixed>>  $attentionItems
+     * @param  array<string, mixed>|null  $pendingCVUpdate
      */
     public function __construct(
         public JobSeekerProfile $profile,
@@ -19,5 +21,7 @@ final readonly class ProfilePageData
         public array $allowedActions,
         public array $profileCompleteness,
         public array $attentionItems,
+        public ?CVFile $currentCV,
+        public ?array $pendingCVUpdate,
     ) {}
 }

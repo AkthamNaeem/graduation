@@ -89,4 +89,31 @@ return [
             'complete_profile' => 'Complete profile',
         ],
     ],
+    'cv_contract' => [
+        'stages' => [
+            'processing' => 'Processing CV',
+            'first_review' => 'Review extracted CV',
+            'differences_review' => 'Review changes',
+            'final_confirmation' => 'Ready for final confirmation',
+            'confirmed' => 'Ready for applications',
+            'failed' => 'CV processing failed',
+        ],
+        'operations' => [
+            'initial_upload' => 'Add CV',
+            'update' => 'Update CV',
+        ],
+        'actions' => [
+            'view' => 'View CV details',
+            'download' => 'Download CV',
+            'update' => 'Update CV',
+            'review' => 'Review CV',
+            'confirm' => 'Confirm CV',
+            'view_status' => 'View status',
+            'wait_for_processing' => 'Processing CV',
+            'upload_cv' => 'Upload another CV',
+            'review_extracted_cv' => 'Review extracted CV',
+            'review_cv_changes' => 'Review CV changes',
+            'confirm_cv_review' => 'Confirm CV review',
+        ],
+    ],
 ];
