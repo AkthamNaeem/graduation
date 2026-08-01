@@ -9,10 +9,13 @@ use App\Models\CVFile;
 use App\Models\Interview;
 use App\Models\JobSeekerProfile;
 use App\Models\ProfileChangeSuggestion;
+use App\Services\CandidateActionResolver;
 use Illuminate\Database\Eloquent\Builder;
 
 class HomeActionResolver
 {
+    public function __construct(private readonly CandidateActionResolver $candidateActions) {}
+
     /**
      * @param  array<string, mixed>  $profileCompleteness
      * @return array<string, mixed>|null
@@ -73,11 +76,12 @@ class HomeActionResolver
         $attempt = $assignment->testAttempts
             ->sortByDesc('started_at')
             ->first();
+        $testState = $this->candidateActions->test($assignment);
 
         return [
-            'type' => $attempt === null ? 'pending_test' : 'started_test',
+            'type' => $testState['state'] === 'not_started' ? 'pending_test' : 'started_test',
             'priority' => 100,
-            'title' => $attempt === null
+            'title' => $testState['state'] === 'not_started'
                 ? __('home.actions.test_required')
                 : __('home.actions.test_incomplete'),
             'subtitle' => $assignment->test?->title,
@@ -87,7 +91,7 @@ class HomeActionResolver
                 'type' => 'test_assignment',
                 'id' => $assignment->id,
             ],
-            'action_label' => $attempt === null
+            'action_label' => $testState['state'] === 'not_started'
                 ? __('home.actions.start_test')
                 : __('home.actions.continue_test'),
         ];
@@ -117,14 +121,16 @@ class HomeActionResolver
             return null;
         }
 
+        $interviewState = $this->candidateActions->interview($interview);
+
         $companyName = $interview->jobApplication?->jobPosting?->company?->name;
 
         return [
-            'type' => $interview->confirmed_at === null
+            'type' => $interviewState['requires_action']
                 ? 'interview_confirmation'
                 : 'upcoming_interview',
             'priority' => 90,
-            'title' => $interview->confirmed_at === null
+            'title' => $interviewState['requires_action']
                 ? __('home.actions.interview_confirmation')
                 : __('home.actions.upcoming_interview'),
             'subtitle' => $companyName === null
@@ -141,7 +147,7 @@ class HomeActionResolver
                 'type' => 'interview',
                 'id' => $interview->id,
             ],
-            'action_label' => $interview->confirmed_at === null
+            'action_label' => $interviewState['requires_action']
                 ? __('home.actions.confirm_attendance')
                 : __('home.actions.view_details'),
         ];
@@ -172,6 +178,10 @@ class HomeActionResolver
             ->first();
 
         if ($informationRequest === null) {
+            return null;
+        }
+
+        if (! $this->candidateActions->informationRequest($informationRequest)['requires_action']) {
             return null;
         }
 

@@ -3379,3 +3379,168 @@ Details, and Withdraw requests. No frontend, commit, or push is included.
 - Laravel Pint on changed PHP files: passed.
 - Both modified Postman collection files parse as valid JSON.
 - `git diff --check`: passed. No commit or push was created.
+
+## Activity Page Backend Aggregation (2026-08-01)
+
+### Goal and baseline
+
+The mobile and web Activity page now use one job-seeker endpoint,
+`GET /api/v1/activity`, instead of merging applications, tests, interviews,
+information requests, and notifications in the client. Work started on branch
+`master` with a clean working tree. The existing Applications page expansion
+was already present in the repository and was preserved; no frontend files,
+commit, or push are part of this implementation.
+
+### Existing implementation reused
+
+The aggregation reuses Sanctum, `user.active`, `ApiResponse`, the current
+notification read/count endpoints, `ApplicationPageService`,
+`HomeActionResolver`, `TestAttemptTimingService`, interview lifecycle rules,
+`ApplicationInformationRequest::canBeRespondedTo()`, and the existing
+idempotent event listeners. `CandidateActionResolver` is the small shared
+classification layer used by Applications, Home, and Activity, avoiding a
+second copy of the candidate action rules. No `activity_events` table or
+parallel read-state API was added.
+
+### Endpoint and contract
+
+`GET /api/v1/activity` is inside `auth:sanctum` and `user.active`; its Form
+Request authorizes `job_seeker` only. It accepts `search`, `group`, `type[]`,
+`sort_by`, `sort_direction`, `date_from`, `date_to`, `timezone`, `per_page`,
+`page`, and `schedule_limit`. `per_page` is 1–100, `schedule_limit` is 1–20,
+and the default schedule limit is 5. The stable response sections are:
+`summary`, `upcoming_schedule`, `requires_action`, and paginated `feed`.
+
+Activity types are the public enum values `test`, `interview`,
+`information_request`, `application_status`, `application_reminder`, and
+`final_decision`. Actions use typed targets and the values `start_test`,
+`continue_test`, `submit_information`, `confirm_interview`, `view_interview`,
+`view_application`, and `view_test_result`; backend or frontend route strings
+are not returned.
+
+### Groups, dates, and timezone
+
+- `all` returns current candidate attention items, the upcoming schedule, the
+  historical notification feed, and summary counts.
+- `requires_action` returns direct current actions and their related schedule;
+  its historical `feed.data` is intentionally empty.
+- `today` matches an item's occurrence, start, or due time against the local
+  calendar day.
+- `this_week` uses Monday 00:00 through Sunday 23:59:59 in the requested IANA
+  timezone.
+
+The timezone defaults to `config('app.timezone')` and affects calendar-window
+calculation only. Response timestamps remain ISO 8601. Date-range boundaries
+are interpreted in that timezone and converted to UTC for database queries.
+
+### Current actions and schedule
+
+Current action queries always start from the authenticated user's
+`JobSeekerProfile`. The latest non-superseded, unsubmitted test assignment is
+classified as Start or Continue from its latest attempt and effective
+deadline. Scheduled/rescheduled future interviews require confirmation only
+while `confirmed_at` is null. Pending information requests use their response,
+status, due date, and `canBeRespondedTo()` rule. Overdue items never receive a
+forbidden mutation action.
+
+The schedule combines test/effective deadlines, interview starts, and pending
+information-request due dates. Submitted tests, superseded retakes, completed
+or cancelled interviews, and responded/cancelled information requests are
+excluded. Items are deduplicated by `activity_key`, sorted by the nearest time,
+and limited after the three bounded SQL queries are merged.
+
+Priority is deterministic: overdue direct attention, due within 24 hours,
+unconfirmed interviews, in-progress tests, new tests, information requests,
+and then historical updates. Paginated feed priority/occurrence/due ordering is
+applied in SQL before pagination, with driver-specific JSON expressions for
+SQLite, PostgreSQL, and MySQL-compatible connections.
+
+### Feed, summary, deduplication, and read state
+
+Notifications remain the historical feed. New notifications are augmented in
+`NotificationService` with `activity_version`, stable `activity_key`, safe
+application/job/company identifiers and labels, `resource_type`,
+`resource_id`, `activity_type`, `action_type`, and `occurred_at`, while all old
+payload keys remain intact. Legacy notifications without this contract use
+safe title/message and known ID-key fallbacks; IDs are never parsed from prose.
+
+`requires_action` and `upcoming_schedule` come only from current domain
+entities, while `feed` comes only from notifications. This prevents a
+notification from becoming a duplicate current action. Deduplication within a
+section uses `activity_key`. Notification `is_read`/`read_at` are independent
+from `requires_action`; clients continue to use the existing notification read
+endpoints.
+
+Summary counts are candidate-scoped and independent of feed pagination. In
+this contract, `all` is the filtered historical feed plus filtered current
+attention items. `today` and `this_week` use the same definition with their
+calendar windows. Type counts use the same two sources. `unread_notifications`
+is the user's authoritative unread notification count.
+
+### Search, privacy, and performance
+
+Search is pushed into SQL for notification title/message/structured job and
+company fields and for domain job title, company, location, and Arabic/English
+city names; information-request message is included where applicable. All
+domain relations are eager-loaded in bounded batches. Feed application context
+is hydrated in one candidate-scoped query, avoiding per-item queries. Internal
+application notes, actor IDs, interview evaluation/private notes, test reviewer
+notes, and internal rejection reasons are neither queried for presentation nor
+serialized.
+
+Existing indexes already cover notification user/date and read state,
+application status history, assignment deadlines and retake lookup, attempt
+lookup/effective deadline, interview application/schedule, and information
+request application/status and due date. Migration
+`2026_08_01_000004_add_activity_feed_notification_index.php` adds only the
+missing `(user_id, type, created_at)` feed-filter index.
+
+### Localization, clients, and tests
+
+English and Arabic translations cover the API message, validation, Activity
+types, actions, and generated current-item titles. Both mobile and web Postman
+collections contain All, Requires Action, Today, This Week, Tests, Interviews,
+Information Requests, Search, Date Range, Arabic, and English requests plus a
+saved response example.
+
+`ActivityPageTest` covers guest/employer authorization, job-seeker access,
+validation, candidate scoping, unified actions/schedule/feed/summary,
+Start/Continue Test, interview confirmation, information requests,
+deduplication, read state, groups, search, type filters, timezone localization,
+legacy/structured notifications, and private-field absence. Existing
+Applications, Home, Notification, Test Deadline, Interview Lifecycle, and
+Information Request suites are also run as regression coverage.
+
+Scheduled reminder delivery was not added. The repository has no established
+recruitment reminder scheduler/deduplication store, and introducing one would
+expand this aggregation task into a new delivery subsystem. Upcoming schedule
+is complete without reminder notifications; the versioned notification
+payload and `activity_key` provide the idempotency marker for a future focused
+reminder implementation.
+
+### Verification results
+
+- Complete Laravel suite: **905 passed, 2 expected opt-in S3 skips, 27,450
+  assertions, 0 failed**. One preceding run exposed a one-second timing flake in
+  the unrelated `EmailVerificationServiceTest`; that test passed immediately in
+  isolation and the subsequent complete suite passed.
+- Focused Activity feature/unit suite: **10 passed, 87 assertions**.
+- Existing Notification, Applications, Home, Test Deadline, Interview
+  Lifecycle, and Information Request regression set: **49 passed, 446
+  assertions**.
+- Protected handover and recommendation E2E checks: **7 passed, 10,077
+  assertions** after explicitly approving the three intentional shared-service
+  changes in their baseline allowlists.
+- `php artisan migrate:fresh --seed --force`: passed on an isolated temporary
+  SQLite database; the temporary file was removed after verification.
+- `php artisan route:list --path=api/v1/activity`: passed and shows exactly one
+  `GET|HEAD api/v1/activity` route.
+- `composer audit`: passed with **no security vulnerability advisories**.
+- Laravel Pint on every PHP file changed by this implementation: passed. The
+  repository-wide `vendor/bin/pint --test` still reports pre-existing style
+  violations in unrelated files; they were not reformatted because this task
+  explicitly forbids unrelated refactors.
+- `php -l`: passed for every changed/new PHP file.
+- Both Postman collections parse as valid JSON and each contains 11 Activity
+  requests.
+- `git diff --check`: passed. No commit or push was created.

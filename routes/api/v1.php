@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\Activity\ActivityController;
 use App\Http\Controllers\Api\V1\Admin\AdminCompanyController;
 use App\Http\Controllers\Api\V1\Admin\AdminCompanyMemberController;
 use App\Http\Controllers\Api\V1\Admin\AdminReportController;
@@ -90,6 +91,8 @@ Route::prefix('company-invitations')
     });
 
 Route::middleware(['auth:sanctum', 'user.active'])->group(function (): void {
+    Route::get('activity', [ActivityController::class, 'index'])->name('activity.index');
+
     Route::get('applications/{jobApplication}/internal-notes', [ApplicationInternalNoteController::class, 'index'])->name('applications.internal-notes.index');
     Route::post('applications/{jobApplication}/internal-notes', [ApplicationInternalNoteController::class, 'store'])->name('applications.internal-notes.store');
     Route::get('application-internal-notes/{note}', [ApplicationInternalNoteController::class, 'show'])->withTrashed()->name('application-internal-notes.show');

@@ -458,6 +458,10 @@ class FinalHandoverDocumentationTest extends TestCase
             'app/Http/Controllers/Api/V1/Application/JobApplicationController.php',
             'app/Http/Requests/Api/V1/Application/MyJobApplicationIndexRequest.php',
             'app/Models/JobApplication.php',
+            // Approved Activity-page aggregation and versioned notification feed.
+            'app/Services/ApplicationPageService.php',
+            'app/Services/Home/HomeActionResolver.php',
+            'app/Services/NotificationService.php',
             // Approved structured Syrian-city API, matching, and CV integration.
             'app/Http/Requests/Api/V1/Auth/JobSeekerRegisterRequest.php',
             'app/Http/Requests/Api/V1/Profile/UpdateJobSeekerProfileRequest.php',

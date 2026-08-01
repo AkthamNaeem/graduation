@@ -17,6 +17,8 @@ use Illuminate\Support\Collection;
 
 class ApplicationPageService
 {
+    public function __construct(private readonly CandidateActionResolver $candidateActions) {}
+
     /** @var array<int, string> */
     private const TERMINAL_STATUSES = ['accepted', 'rejected', 'withdrawn'];
 
@@ -245,12 +247,14 @@ class ApplicationPageService
         $attempt = $test?->testAttempt;
         $information = $application->latestInformationRequest;
         $interview = $application->upcomingInterview ?? $application->latestInterview;
-        $testAction = $status === 'test_pending' && $test !== null && $attempt?->submitted_at === null;
+        $testState = $test === null ? null : $this->candidateActions->test($test);
+        $testAction = $status === 'test_pending' && ($testState['requires_action'] ?? false);
         $informationAction = $status === 'need_more_information'
-            && $information?->canBeRespondedTo() === true;
+            && $information !== null
+            && $this->candidateActions->informationRequest($information)['requires_action'];
         $interviewAction = $status === 'interview_scheduled'
             && $application->upcomingInterview !== null
-            && $application->upcomingInterview->confirmed_at === null;
+            && $this->candidateActions->interview($application->upcomingInterview)['requires_action'];
 
         $nextAction = $this->nextAction($testAction, $informationAction, $interviewAction, $test, $information, $application->upcomingInterview);
         $allowed = ['view'];

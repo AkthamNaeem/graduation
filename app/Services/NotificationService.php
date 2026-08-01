@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\JobApplication;
 use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
@@ -20,13 +21,21 @@ class NotificationService
         string $message,
         array $data = [],
     ): Notification {
-        return Notification::query()->create([
+        $data = $this->activityPayload($type, $data);
+        $notification = Notification::query()->create([
             'user_id' => $user->id,
             'type' => $type,
             'title' => $title,
             'message' => $message,
             'data' => $data === [] ? null : $data,
         ]);
+
+        if (($data['activity_key'] ?? null) === null) {
+            $data['activity_key'] = 'notification:'.$notification->id;
+            $notification->forceFill(['data' => $data])->save();
+        }
+
+        return $notification;
     }
 
     /**
@@ -122,5 +131,78 @@ class NotificationService
         $user = User::query()->findOrFail($userId);
 
         return $this->unreadCount($user);
+    }
+
+    /**
+     * Adds the versioned, privacy-safe Activity feed contract while retaining all
+     * legacy keys consumed by existing clients.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function activityPayload(string $notificationType, array $data): array
+    {
+        $applicationId = $data['application_id'] ?? $data['job_application_id'] ?? null;
+        if (is_numeric($applicationId)) {
+            $application = JobApplication::query()
+                ->with('jobPosting.company')
+                ->find((int) $applicationId);
+            $job = $application?->jobPosting;
+            $company = $job?->company;
+            $data['job_posting_id'] ??= $job?->id;
+            $data['job_title'] ??= $job?->title;
+            $data['company_id'] ??= $company?->id;
+            $data['company_name'] ??= $company?->name;
+        }
+
+        $activityType = match (true) {
+            str_starts_with($notificationType, 'test.') => 'test',
+            str_starts_with($notificationType, 'interview.') => 'interview',
+            str_contains($notificationType, 'information') => 'information_request',
+            str_starts_with($notificationType, 'final.'), in_array($data['status'] ?? null, ['accepted', 'rejected'], true) => 'final_decision',
+            str_contains($notificationType, 'reminder') => 'application_reminder',
+            default => 'application_status',
+        };
+        [$resourceType, $resourceId] = $this->activityResource($data);
+        $actionType = match (true) {
+            $notificationType === 'test.assigned', $notificationType === 'test.retake_granted' => 'start_test',
+            $notificationType === 'test.evaluated' => 'view_test_result',
+            in_array($notificationType, ['interview.scheduled', 'interview.rescheduled'], true) => 'confirm_interview',
+            str_contains($notificationType, 'interview.') => 'view_interview',
+            $notificationType === 'application.information_requested' => 'submit_information',
+            str_starts_with($notificationType, 'application.'), str_starts_with($notificationType, 'final.') => 'view_application',
+            default => 'none',
+        };
+
+        return array_merge($data, [
+            'activity_version' => 1,
+            'activity_key' => $data['activity_key'] ?? null,
+            'application_id' => $applicationId,
+            'job_posting_id' => $data['job_posting_id'] ?? $data['job_id'] ?? null,
+            'resource_type' => $resourceType,
+            'resource_id' => $resourceId,
+            'activity_type' => $activityType,
+            'action_type' => $actionType,
+            'occurred_at' => $data['occurred_at'] ?? now()->toISOString(),
+        ]);
+    }
+
+    /** @param array<string, mixed> $data @return array{0:?string,1:?int} */
+    private function activityResource(array $data): array
+    {
+        foreach ([
+            'test_attempt_id' => 'test_attempt',
+            'test_assignment_id' => 'test_assignment',
+            'interview_id' => 'interview',
+            'information_request_id' => 'information_request',
+            'application_id' => 'application',
+            'job_application_id' => 'application',
+        ] as $key => $type) {
+            if (is_numeric($data[$key] ?? null)) {
+                return [$type, (int) $data[$key]];
+            }
+        }
+
+        return [null, null];
     }
 }

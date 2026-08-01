@@ -2786,6 +2786,27 @@
                     ]
                 }
             ]
+        },
+        {
+            "name": "Activity",
+            "description": "Unified job-seeker Activity aggregation. The All request includes a saved 200 response example.",
+            "item": [
+                {
+                    "name": "Activity - All",
+                    "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{job_seeker_token}}", "type": "string"}]}, "method": "GET", "header": [{"key": "Accept-Language", "value": "en", "type": "text"}], "url": "{{base_url}}/activity?group=all&sort_by=priority&sort_direction=desc&per_page=15&schedule_limit=5"},
+                    "response": [{"name": "200 OK - Activity Contract", "status": "OK", "code": 200, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"success\": true,\n  \"message\": \"Activity retrieved successfully.\",\n  \"data\": {\n    \"summary\": {\"all\": 0, \"requires_action\": 0, \"today\": 0, \"this_week\": 0, \"tests\": 0, \"interviews\": 0, \"information_requests\": 0, \"status_updates\": 0, \"unread_notifications\": 0},\n    \"upcoming_schedule\": [],\n    \"requires_action\": [],\n    \"feed\": {\"data\": [], \"meta\": {\"current_page\": 1, \"last_page\": 1, \"per_page\": 15, \"total\": 0}}\n  }\n}"}]
+                },
+                {"name": "Activity - Requires Action", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{job_seeker_token}}", "type": "string"}]}, "method": "GET", "url": "{{base_url}}/activity?group=requires_action"}},
+                {"name": "Activity - Today", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{job_seeker_token}}", "type": "string"}]}, "method": "GET", "url": "{{base_url}}/activity?group=today&timezone=Asia/Damascus"}},
+                {"name": "Activity - This Week", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{job_seeker_token}}", "type": "string"}]}, "method": "GET", "url": "{{base_url}}/activity?group=this_week&timezone=Asia/Damascus"}},
+                {"name": "Activity - Tests", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{job_seeker_token}}", "type": "string"}]}, "method": "GET", "url": "{{base_url}}/activity?type[]=test"}},
+                {"name": "Activity - Interviews", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{job_seeker_token}}", "type": "string"}]}, "method": "GET", "url": "{{base_url}}/activity?type[]=interview"}},
+                {"name": "Activity - Information Requests", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{job_seeker_token}}", "type": "string"}]}, "method": "GET", "url": "{{base_url}}/activity?type[]=information_request"}},
+                {"name": "Activity - Search", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{job_seeker_token}}", "type": "string"}]}, "method": "GET", "url": "{{base_url}}/activity?search=backend"}},
+                {"name": "Activity - Date Range", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{job_seeker_token}}", "type": "string"}]}, "method": "GET", "url": "{{base_url}}/activity?date_from=2026-08-01&date_to=2026-08-07&timezone=Asia/Damascus"}},
+                {"name": "Activity - Arabic", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{job_seeker_token}}", "type": "string"}]}, "method": "GET", "header": [{"key": "Accept-Language", "value": "ar", "type": "text"}], "url": "{{base_url}}/activity"}},
+                {"name": "Activity - English", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{job_seeker_token}}", "type": "string"}]}, "method": "GET", "header": [{"key": "Accept-Language", "value": "en", "type": "text"}], "url": "{{base_url}}/activity"}}
+            ]
         }
     ],
     "variable": [
