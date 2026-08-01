@@ -1594,11 +1594,11 @@
                     ]
                 },
                 {
-                    "name": "My Applications",
+                    "name": "My Applications - All",
                     "request": {
                         "method": "GET",
-                        "description": "Mobile App / Job Seeker: list own applications with a candidate-safe status timeline. Historical applications remain readable when the company is pending, rejected, or suspended. Internal hiring notes and actor identities are intentionally excluded.",
-                        "url": "{{base_url}}/applications/my"
+                        "description": "Mobile App / Job Seeker: list all own applications with tab counts, workflow actions, priority sorting, and candidate-safe summaries.",
+                        "url": "{{base_url}}/applications/my?group=all&sort_by=priority&sort_direction=desc&per_page=15"
                     },
                     "event": [
                         {
@@ -1612,6 +1612,54 @@
                             }
                         }
                     ]
+                },
+                {
+                    "name": "My Applications - Active",
+                    "request": {
+                        "method": "GET",
+                        "description": "Mobile App / Job Seeker: list non-terminal applications.",
+                        "url": "{{base_url}}/applications/my?group=active&sort_by=priority&sort_direction=desc&per_page=15"
+                    }
+                },
+                {
+                    "name": "My Applications - Requires Action",
+                    "request": {
+                        "method": "GET",
+                        "description": "Mobile App / Job Seeker: list applications with a pending test, respondable information request, or interview confirmation.",
+                        "url": "{{base_url}}/applications/my?group=requires_action&sort_by=priority&sort_direction=desc&per_page=15"
+                    }
+                },
+                {
+                    "name": "My Applications - Completed",
+                    "request": {
+                        "method": "GET",
+                        "description": "Mobile App / Job Seeker: list accepted, rejected, and withdrawn applications.",
+                        "url": "{{base_url}}/applications/my?group=completed&sort_by=updated_at&sort_direction=desc&per_page=15"
+                    }
+                },
+                {
+                    "name": "My Applications - Search",
+                    "request": {
+                        "method": "GET",
+                        "description": "Mobile App / Job Seeker: search by job title, company, location text, or localized city name.",
+                        "url": "{{base_url}}/applications/my?search=backend&group=all"
+                    }
+                },
+                {
+                    "name": "My Applications - Filter by Status",
+                    "request": {
+                        "method": "GET",
+                        "description": "Mobile App / Job Seeker: filter by one or more official application status slugs.",
+                        "url": "{{base_url}}/applications/my?status[]=under_review&status[]=shortlisted"
+                    }
+                },
+                {
+                    "name": "My Applications - Priority Sorting",
+                    "request": {
+                        "method": "GET",
+                        "description": "Mobile App / Job Seeker: order overdue actions, upcoming deadlines and interviews, active applications, then terminal applications.",
+                        "url": "{{base_url}}/applications/my?sort_by=priority&sort_direction=desc&per_page=15"
+                    }
                 },
                 {
                     "name": "Application Details",

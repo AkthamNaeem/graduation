@@ -1,6 +1,23 @@
 <?php
 
 return [
+    'application_groups' => [
+        'all' => 'الكل',
+        'active' => 'قيد المتابعة',
+        'requires_action' => 'تحتاج إجراء',
+        'completed' => 'منتهية',
+    ],
+    'application_action_types' => [
+        'complete_test' => 'إكمال الاختبار',
+        'submit_information' => 'إرسال المعلومات',
+        'confirm_interview' => 'تأكيد المقابلة',
+        'view_interview' => 'عرض المقابلة',
+        'none' => 'لا يوجد إجراء',
+    ],
+    'application_event_types' => [
+        'test' => 'اختبار',
+        'interview' => 'مقابلة',
+    ],
     'user_roles' => [
         'admin' => 'مسؤول',
         'job_seeker' => 'باحث عن عمل',

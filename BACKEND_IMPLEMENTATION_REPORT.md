@@ -3281,3 +3281,101 @@ contract is documented in `docs/SYRIAN_CITIES_API.md`.
 - Postman Web, Mobile, and Environment JSON parsing: passed.
 - Route registration and `git diff --check`: passed.
 - No frontend change, commit, or push was performed.
+
+## Applications Page Backend Expansion (2026-08-01)
+
+### Repository state and reused implementation
+
+Work started from a clean `master` worktree tracking `origin/master`. The
+existing `GET /api/v1/applications/my`, application details, withdrawal,
+tests, interviews, information requests, `ApplicationWorkflowService`,
+candidate-safe resources, policies, localization, and `ApiResponse` pagination
+shape were retained. No duplicate applications-list endpoint was added.
+
+### List contract
+
+`GET /api/v1/applications/my` now accepts:
+
+- `search`: job title, company name, location text, or Arabic/English city.
+- `group`: `all` (default), `active`, `requires_action`, or `completed`.
+- `status[]`: one or more official application-status slugs.
+- `sort_by`: `priority` (default), `updated_at`, `created_at`,
+  `last_status_changed_at`, or `deadline`.
+- `sort_direction`: `desc` (default) or `asc`.
+- `per_page`: 1–100, default 15.
+
+The established response envelope remains unchanged: list items are under
+`data.data`, Laravel pagination is under `data.meta`, and the stable tab
+counts are under `data.meta.counts`. Counts are calculated for all applications
+owned by the authenticated candidate and are independent of pagination.
+
+Groups are defined as follows: `all` includes every owned application;
+`active` excludes `accepted`, `rejected`, and `withdrawn`; `completed` includes
+exactly those three terminal states; and `requires_action` is relation-aware.
+It includes an unsubmitted latest test assignment while the application is
+`test_pending`, a pending/respondable latest information request while the
+application is `need_more_information`, or an upcoming scheduled interview
+that still requires candidate confirmation while the application is
+`interview_scheduled`.
+
+Priority ordering is performed before pagination in SQL. It places overdue
+required actions first, then other required actions, upcoming interviews,
+upcoming tests, recently changed applications, other active applications, and
+terminal applications. Ties use the latest status-history timestamp descending.
+
+### Candidate presentation and safety
+
+Candidate application list/detail resources now expose `requires_action`,
+localized `next_action`, `allowed_actions`, `last_status_changed_at`,
+`upcoming_event`, a minimal `current_test`, and a minimal
+`relevant_interview`. The presentation decisions live in
+`ApplicationPageService`, not in the controller or resource. The timeline
+continues to omit internal notes and actor ids, and interview summaries omit
+evaluation and internal company fields. List relations are eager-loaded with
+a fixed query shape; complete test answers, private interview evaluation data,
+and internal notes are not loaded.
+
+### Reapplication policy and migrations
+
+The former absolute `(job_posting_id, job_seeker_profile_id)` unique key was
+removed by `2026_08_01_000002_allow_terminal_job_reapplications.php` and
+replaced with a lookup index. `checkDuplicateApplication()` now rejects only
+an existing non-terminal application. The existing transaction and locked job
+posting row serialize competing submissions for the same job, so two active
+applications cannot pass the check concurrently through the application API.
+Reapplication is allowed after `accepted`, `rejected`, or `withdrawn` without
+deleting historical data.
+
+### Company logo decision
+
+No prior logo field was present. A focused implementation was added through
+`2026_08_01_000003_add_logo_path_to_companies.php`. The existing company
+profile update API accepts JPEG, PNG, or WebP images up to 2 MiB, supports
+replacement and `remove_logo`, deletes replaced files, and returns `logo_url`
+from `CompanyResource`. It reuses Laravel's configured public disk rather than
+introducing a media library.
+
+### Tests and client documentation
+
+`ApplicationsPageTest` covers authorization, candidate scoping, search,
+groups, status filtering, counts, pagination independence, required-action
+types, overdue priority, safe details, validation, and reapplication after
+rejected/withdrawn states. `CompanyLogoTest` covers upload, replacement,
+deletion, and invalid/empty files. The mobile Postman collection contains All,
+Active, Requires Action, Completed, Search, Status Filter, Priority Sorting,
+Details, and Withdraw requests. No frontend, commit, or push is included.
+
+### Final verification results
+
+- Complete Laravel suite: **895 passed, 2 expected opt-in S3 skips, 27,203
+  assertions, 0 failed**.
+- Focused applications, logo, protected-baseline, and recommendation E2E set:
+  **15 passed, 10,151 assertions**.
+- `php artisan migrate:fresh --seed --force`: passed against an isolated
+  temporary SQLite database; all migrations and the full project seeder ran.
+- `php artisan route:list --path=api/v1/applications`: passed; the existing
+  applications routes remain registered with no new duplicate list endpoint.
+- `composer audit`: passed with **no security vulnerability advisories**.
+- Laravel Pint on changed PHP files: passed.
+- Both modified Postman collection files parse as valid JSON.
+- `git diff --check`: passed. No commit or push was created.

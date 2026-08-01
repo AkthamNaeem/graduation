@@ -14,6 +14,7 @@ class JobApplicationResource extends JsonResource
     public function toArray(Request $request): array
     {
         $manager = $this->viewerIsManager($request);
+        $page = $this->getAttribute('application_page');
 
         return [
             'id' => $this->id,
@@ -60,6 +61,13 @@ class JobApplicationResource extends JsonResource
                     'can_respond' => ! $manager && $this->latestInformationRequest->canBeRespondedTo(),
                 ],
             ),
+            'requires_action' => $this->when($page !== null, $page['requires_action'] ?? false),
+            'next_action' => $this->when($page !== null, $page['next_action'] ?? null),
+            'allowed_actions' => $this->when($page !== null, $page['allowed_actions'] ?? []),
+            'last_status_changed_at' => $this->when($page !== null, $page['last_status_changed_at'] ?? null),
+            'upcoming_event' => $this->when($page !== null, $page['upcoming_event'] ?? null),
+            'current_test' => $this->when($page !== null, $page['current_test'] ?? null),
+            'relevant_interview' => $this->when($page !== null, $page['relevant_interview'] ?? null),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

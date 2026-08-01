@@ -52,14 +52,37 @@ class JobApplication extends Model
         return $this->hasMany(ApplicationStatusHistory::class)->orderBy('id');
     }
 
+    public function latestStatusHistory(): HasOne
+    {
+        return $this->hasOne(ApplicationStatusHistory::class)->latestOfMany();
+    }
+
     public function applicationTestAssignments(): HasMany
     {
         return $this->hasMany(ApplicationTestAssignment::class)->latest();
     }
 
+    public function latestTestAssignment(): HasOne
+    {
+        return $this->hasOne(ApplicationTestAssignment::class)->latestOfMany();
+    }
+
     public function interviews(): HasMany
     {
         return $this->hasMany(Interview::class)->latest('scheduled_at')->latest('id');
+    }
+
+    public function upcomingInterview(): HasOne
+    {
+        return $this->hasOne(Interview::class)
+            ->ofMany(['scheduled_at' => 'min', 'id' => 'min'], function ($query): void {
+                $query->where('status', 'scheduled')->where('scheduled_at', '>=', now());
+            });
+    }
+
+    public function latestInterview(): HasOne
+    {
+        return $this->hasOne(Interview::class)->ofMany(['scheduled_at' => 'max', 'id' => 'max']);
     }
 
     public function informationRequests(): HasMany

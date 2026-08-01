@@ -22,4 +22,10 @@ return [
     'terminal_immutable' => 'Terminal application states cannot be changed.',
     'information_open' => 'Submit or cancel the open information request before changing this application status.',
     'additional_information_endpoint' => 'Use the information request endpoint to request additional information.',
+    'validation' => [
+        'group' => 'The selected application group is invalid.',
+        'sort_by' => 'The selected application sort field is invalid.',
+        'sort_direction' => 'The selected sort direction is invalid.',
+        'status' => 'One or more selected application statuses are invalid.',
+    ],
 ];

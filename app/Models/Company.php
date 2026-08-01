@@ -16,6 +16,7 @@ class Company extends Model
         'website',
         'location',
         'description',
+        'logo_path',
         'approval_status',
         'owner_setup_required',
     ];

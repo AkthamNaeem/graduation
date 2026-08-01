@@ -34,6 +34,8 @@ class UpdateCompanyRequest extends FormRequest
             'website' => ['sometimes', 'nullable', 'url', 'max:255'],
             'location' => ['sometimes', 'nullable', 'string', 'max:255'],
             'description' => ['sometimes', 'nullable', 'string'],
+            'logo' => ['sometimes', 'nullable', 'file', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'remove_logo' => ['sometimes', 'boolean'],
         ];
     }
 }

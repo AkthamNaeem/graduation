@@ -2217,6 +2217,84 @@
             ]
         },
         {
+            "name": "05A Job Seeker - Applications Page",
+            "description": "Web job seeker applications page. All list variants retain Laravel pagination and expose tab counts in data.meta.counts.",
+            "item": [
+                {
+                    "name": "My Applications - All",
+                    "request": {
+                        "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{job_seeker_token}}", "type": "string"}]},
+                        "method": "GET",
+                        "url": "{{base_url}}/applications/my?group=all&sort_by=priority&sort_direction=desc&per_page=15"
+                    }
+                },
+                {
+                    "name": "My Applications - Active",
+                    "request": {
+                        "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{job_seeker_token}}", "type": "string"}]},
+                        "method": "GET",
+                        "url": "{{base_url}}/applications/my?group=active&sort_by=priority&per_page=15"
+                    }
+                },
+                {
+                    "name": "My Applications - Requires Action",
+                    "request": {
+                        "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{job_seeker_token}}", "type": "string"}]},
+                        "method": "GET",
+                        "url": "{{base_url}}/applications/my?group=requires_action&sort_by=priority&per_page=15"
+                    }
+                },
+                {
+                    "name": "My Applications - Completed",
+                    "request": {
+                        "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{job_seeker_token}}", "type": "string"}]},
+                        "method": "GET",
+                        "url": "{{base_url}}/applications/my?group=completed&sort_by=updated_at&sort_direction=desc"
+                    }
+                },
+                {
+                    "name": "My Applications - Search",
+                    "request": {
+                        "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{job_seeker_token}}", "type": "string"}]},
+                        "method": "GET",
+                        "url": "{{base_url}}/applications/my?search=backend"
+                    }
+                },
+                {
+                    "name": "My Applications - Filter by Status",
+                    "request": {
+                        "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{job_seeker_token}}", "type": "string"}]},
+                        "method": "GET",
+                        "url": "{{base_url}}/applications/my?status[]=under_review&status[]=shortlisted"
+                    }
+                },
+                {
+                    "name": "My Applications - Priority Sorting",
+                    "request": {
+                        "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{job_seeker_token}}", "type": "string"}]},
+                        "method": "GET",
+                        "url": "{{base_url}}/applications/my?sort_by=priority&sort_direction=desc"
+                    }
+                },
+                {
+                    "name": "Application Details",
+                    "request": {
+                        "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{job_seeker_token}}", "type": "string"}]},
+                        "method": "GET",
+                        "url": "{{base_url}}/applications/{{application_id}}"
+                    }
+                },
+                {
+                    "name": "Withdraw Application",
+                    "request": {
+                        "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{job_seeker_token}}", "type": "string"}]},
+                        "method": "POST",
+                        "url": "{{base_url}}/applications/{{application_id}}/withdraw"
+                    }
+                }
+            ]
+        },
+        {
             "name": "06 Employer - Applications Pipeline",
             "item": [
                 {

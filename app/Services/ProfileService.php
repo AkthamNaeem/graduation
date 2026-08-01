@@ -11,6 +11,11 @@ use App\Models\JobSeekerProfile;
 use App\Models\Skill;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class ProfileService
 {
@@ -138,18 +143,53 @@ class ProfileService
             CompanyPermission::UPDATE_COMPANY,
             $company,
         );
-        $before = $company->only(array_keys($data));
+        $logo = $data['logo'] ?? null;
+        $removeLogo = (bool) ($data['remove_logo'] ?? false);
+        unset($data['logo'], $data['remove_logo']);
+        $auditKeys = array_keys($data);
+        if ($logo instanceof UploadedFile || $removeLogo) {
+            $auditKeys[] = 'logo_path';
+        }
+        $before = $company->only($auditKeys);
+        $oldLogoPath = $company->logo_path;
+        $newLogoPath = null;
 
-        $company->update($data);
+        if ($logo instanceof UploadedFile) {
+            $newLogoPath = $logo->store("company-logos/{$company->id}", 'public');
+            if (! is_string($newLogoPath)) {
+                throw ValidationException::withMessages([
+                    'logo' => [__('companies.logo_storage_failed')],
+                ]);
+            }
+            $data['logo_path'] = $newLogoPath;
+        } elseif ($removeLogo) {
+            $data['logo_path'] = null;
+        }
 
-        $this->auditLogService->record(
-            'company.updated',
-            $user,
-            Company::class,
-            $company->id,
-            $before,
-            $company->only(array_keys($data)),
-        );
+        try {
+            DB::transaction(function () use ($company, $data, $user, $before, $auditKeys): void {
+                $company->update($data);
+
+                $this->auditLogService->record(
+                    'company.updated',
+                    $user,
+                    Company::class,
+                    $company->id,
+                    $before,
+                    $company->only($auditKeys),
+                );
+            });
+        } catch (Throwable $exception) {
+            if ($newLogoPath !== null) {
+                Storage::disk('public')->delete($newLogoPath);
+            }
+
+            throw $exception;
+        }
+
+        if (($logo instanceof UploadedFile || $removeLogo) && $oldLogoPath !== null && $oldLogoPath !== $company->logo_path) {
+            Storage::disk('public')->delete($oldLogoPath);
+        }
 
         return $company->load(['employerProfiles.user']);
     }

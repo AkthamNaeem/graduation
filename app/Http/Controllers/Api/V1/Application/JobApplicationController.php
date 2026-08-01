@@ -39,13 +39,15 @@ class JobApplicationController extends Controller
 
     public function my(MyJobApplicationIndexRequest $request): JsonResponse
     {
+        $result = $this->applicationWorkflowService->getMyApplications(
+            $request->user('sanctum'),
+            $request->validated(),
+        );
+
         return ApiResponse::success(
-            data: JobApplicationResource::collection(
-                $this->applicationWorkflowService->getMyApplications(
-                    $request->user('sanctum'),
-                    $request->integer('per_page', 15),
-                ),
-            ),
+            data: JobApplicationResource::collection($result['applications'])->additional([
+                'meta' => ['counts' => $result['counts']],
+            ]),
             message: __('applications.list_retrieved'),
         );
     }

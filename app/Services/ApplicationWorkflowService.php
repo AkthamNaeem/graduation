@@ -61,6 +61,7 @@ class ApplicationWorkflowService
         private readonly ApplicationScreeningAnswerService $screeningAnswerService,
         private readonly CompanyRecruitmentAccessService $companyAccessService,
         private readonly PrivateFileStorageService $privateStorage,
+        private readonly ApplicationPageService $applicationPageService,
     ) {}
 
     /**
@@ -337,6 +338,7 @@ class ApplicationWorkflowService
         $exists = JobApplication::query()
             ->where('job_posting_id', $jobPosting->id)
             ->where('job_seeker_profile_id', $profile->id)
+            ->whereHas('applicationStatus', fn ($query) => $query->whereNotIn('slug', self::TERMINAL_STATUSES))
             ->exists();
 
         if ($exists) {
@@ -347,17 +349,12 @@ class ApplicationWorkflowService
     }
 
     /**
-     * @return LengthAwarePaginator<int, JobApplication>
+     * @param  array<string, mixed>  $filters
+     * @return array{applications: LengthAwarePaginator<int, JobApplication>, counts: array<string, int>}
      */
-    public function getMyApplications(User $user, int $perPage = 15): LengthAwarePaginator
+    public function getMyApplications(User $user, array $filters = []): array
     {
-        $profileId = $user->jobSeekerProfile?->id;
-
-        return JobApplication::query()
-            ->with($this->applicationRelations(candidateSafe: true))
-            ->where('job_seeker_profile_id', $profileId)
-            ->latest()
-            ->paginate($perPage);
+        return $this->applicationPageService->getMyApplications($user, $filters);
     }
 
     /**
@@ -373,10 +370,22 @@ class ApplicationWorkflowService
 
     public function getApplication(User $viewer, JobApplication $jobApplication): JobApplication
     {
-        return $this->loadApplication(
+        $application = $this->loadApplication(
             $jobApplication,
             candidateSafe: $viewer->role === UserRole::JOB_SEEKER,
         );
+
+        if ($viewer->role === UserRole::JOB_SEEKER) {
+            $application->loadMissing([
+                'latestStatusHistory',
+                'latestTestAssignment.testAttempt',
+                'upcomingInterview',
+                'latestInterview',
+            ]);
+            $this->applicationPageService->attachPresentation($application, $viewer);
+        }
+
+        return $application;
     }
 
     private function resolveApplicationCV(User $user, JobSeekerProfile $profile, mixed $requestedId): CVFile

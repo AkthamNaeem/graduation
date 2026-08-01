@@ -1,6 +1,23 @@
 <?php
 
 return [
+    'application_groups' => [
+        'all' => 'All',
+        'active' => 'In progress',
+        'requires_action' => 'Requires action',
+        'completed' => 'Completed',
+    ],
+    'application_action_types' => [
+        'complete_test' => 'Complete test',
+        'submit_information' => 'Submit information',
+        'confirm_interview' => 'Confirm interview',
+        'view_interview' => 'View interview',
+        'none' => 'No action',
+    ],
+    'application_event_types' => [
+        'test' => 'Test',
+        'interview' => 'Interview',
+    ],
     'user_roles' => [
         'admin' => 'Administrator',
         'job_seeker' => 'Job seeker',
