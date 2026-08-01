@@ -3380,6 +3380,158 @@ Details, and Withdraw requests. No frontend, commit, or push is included.
 - Both modified Postman collection files parse as valid JSON.
 - `git diff --check`: passed. No commit or push was created.
 
+## Immutable Application Snapshot
+
+### Previous behavior and design decision
+
+Applications stored foreign keys to the candidate profile and selected CV.
+Employer detail responses therefore read current profile rows, while CV
+download read the mutable source object. Structured screening tables already
+preserved question and option text, but there was no single versioned contract
+representing exactly what the candidate submitted.
+
+The implementation adds one independent `ApplicationSnapshot` per
+`JobApplication`. The snapshot owns JSON copies of the submitted profile and
+answers plus a physically separate private CV object. This avoids coupling an
+old application to later profile edits, CV replacement, archival, or source
+object overwrite. Job-posting snapshotting and application-status workflow
+changes remain outside this task.
+
+### Schema and versioning
+
+Migration `2026_08_02_000002_create_application_snapshots_table.php` creates
+`application_snapshots` with a unique foreign key to `job_applications`,
+`schema_version`, profile and answer JSON documents, source CV ID, original
+name, MIME, extension, physical size, SHA-256 checksum, private disk/path,
+origin, accuracy, and capture timestamps. Source CV ID is intentionally
+historical metadata rather than a foreign key, so deleting a source row cannot
+rewrite the captured identifier. Schema version `1` is emitted in API details
+and provides an explicit future migration boundary.
+
+The profile contract captures candidate/profile identity, name and email,
+headline, summary, phone, free-form location, localized city identifiers and
+names, availability status/date, portfolio/LinkedIn/GitHub links, experiences,
+education, and skills. Experience, education, and skill provenance fields are
+also retained. Dates are normalized and collection order is stable.
+
+The answer contract includes source question ID, captured text, type, required
+flag, sort order, all captured options, answer presence and typed value, and
+the selected option text/IDs. The pre-existing normalized screening snapshot
+tables remain the response source for the legacy `screening_answers` field and
+are not redesigned.
+
+### CV storage, integrity, and transaction flow
+
+The selected eligible CV is streamed to
+`application-snapshots/{application_id}/cv/{year}/{month}/{uuid}.{extension}`
+on its private source disk. The service validates readable non-empty PDF/DOCX
+metadata, measures physical size, writes with private visibility, verifies the
+object, and compares source/target SHA-256 digests. Neither disk nor stored path
+is serialized.
+
+Modern workflow records must select the confirmed current/primary CV; a
+confirmed non-current file is rejected with
+`APPLICATION_CURRENT_CV_REQUIRED`. The narrow parsed-CV compatibility branch
+for records predating review metadata is retained so Tasks 1–5 and legacy
+applications are not broken.
+
+Submission locks the profile, CV, job, and screening questions using the
+existing workflow, rejects duplicate active applications, creates the
+application, copies/persists its snapshot, persists normalized answers, and
+appends initial history within one database transaction. The submitted event
+remains after-commit. If snapshot persistence fails, the copied object is
+removed immediately. If any later database operation or commit fails, the
+outer workflow removes the already-copied object after rollback. Cleanup
+failures use sanitized structured storage logs without exposing a path.
+
+Database uniqueness and the existing locked active-application duplicate
+check prevent two snapshots for one application and prevent duplicate active
+submissions from producing an orphan object. The snapshot service rejects a
+second capture, and the backfill command rechecks existence under a row lock,
+making retries idempotent.
+
+### Immutability, API contracts, and privacy
+
+`ApplicationSnapshot` rejects ORM update and direct-delete operations. There
+is no update/delete endpoint or mutation service. Application deletion may
+still cascade its owned snapshot row according to the existing aggregate
+lifecycle; normal profile/CV/application updates cannot mutate it.
+
+Candidate and owning-company detail responses now include:
+
+```text
+snapshot_status: { key: available | not_available, value: localized label }
+submitted_snapshot:
+  schema_version, origin, accuracy, captured_at
+  profile
+  answers
+  cv: source_cv_file_id, original_name, mime_type, extension,
+      size_bytes, checksum_sha256, preview_supported,
+      preview_url, download_url
+```
+
+Legacy detail responses explicitly return `snapshot_status.key=not_available` and
+`submitted_snapshot=null`; they do not substitute the current profile as
+historical data. List endpoints select only snapshot ID, CV summary metadata,
+origin/accuracy, and capture time, and expose `submitted_cv_name` and
+`snapshot_captured_at` without loading either JSON document. Employer
+application loading no longer eager-loads the current candidate profile.
+
+`GET /api/v1/applications/{application}/cv/preview` streams only a snapshot PDF
+inline with `private, no-store`, `nosniff`, and no range support. DOCX returns
+typed `415 APPLICATION_SNAPSHOT_CV_PREVIEW_NOT_SUPPORTED` with download as the
+allowed action. The existing download route streams the snapshot as an
+attachment. Both routes reuse the existing application policy: candidate owner
+or a company member with `VIEW_APPLICATIONS` for the owning company. Snapshot
+existence, path safety, physical size, supported MIME/extension, and checksum
+are revalidated before access. The pre-snapshot download fallback remains only
+for legacy application compatibility.
+
+### Legacy backfill, audit, and performance
+
+`php artisan applications:backfill-snapshots` processes applications without a
+snapshot in bounded ID chunks. It supports `--dry-run`, repeatable
+`--application-id`, and `--chunk`; it changes no application status and emits no
+notification. Created records use `origin=backfilled` and
+`accuracy=best_available`, making the historical limitation explicit. Missing
+profiles/CVs or unreadable source objects are reported per application without
+aborting the batch. A second run skips captured applications and creates no
+extra file.
+
+Creation records `application.snapshot_created`,
+`application.snapshot_backfilled`, `application.snapshot_file_copied`, and
+`application.submitted` audit actions with IDs, schema/origin,
+checksum, and size but no profile, answer, disk, or path content. Backfill uses
+a null system actor. Detail loading adds one bounded has-one query; list
+loading selects only scalar summary columns. Profile collections are eager
+loaded once during capture, preventing per-item serialization queries.
+
+### Tests, Postman, and verification
+
+`ApplicationSnapshotTest` covers full profile/answer capture, independent CV
+copy/checksum, immutable historical reads after live profile/CV changes,
+candidate and company authorization, secure PDF preview, DOCX fallback,
+transaction rollback and object compensation, explicit legacy responses,
+dry-run/scoped/idempotent backfill, audit records, and model immutability.
+Existing application, screening, privacy, and primary-CV suites remain
+regression coverage.
+
+Both Web and Mobile Postman collections contain an `Immutable Application
+Snapshot` folder with every implemented HTTP scenario requested by the task.
+The dry-run and execute backfill scenarios are documented as CLI-only because
+no HTTP administration endpoint was introduced.
+
+Final verification: **999 tests passed, 2 expected opt-in S3 tests skipped,
+29,018 assertions, and 0 failures**. The focused snapshot suite contains 8
+tests. `migrate:fresh --seed --force` passed on an isolated temporary SQLite
+database and the temporary file was removed. Both application and employer
+route inventories passed. Changed-file Pint, PHP lint, `git diff --check`, and
+both Postman JSON parses passed. Repository-wide Pint reports only known style
+violations in unrelated files. `composer audit` could not reach Packagist in
+the restricted environment, and escalation was rejected because dependency
+metadata could include private package names; no security-audit success is
+claimed. No commit or push was created.
+
 ## CV Secure Preview and Profile Availability
 
 ### Repository state and preserved work

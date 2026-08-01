@@ -20,6 +20,7 @@ use App\Models\User;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 class ApplicationWorkflowService
 {
@@ -62,6 +63,7 @@ class ApplicationWorkflowService
         private readonly CompanyRecruitmentAccessService $companyAccessService,
         private readonly PrivateFileStorageService $privateStorage,
         private readonly ApplicationPageService $applicationPageService,
+        private readonly ApplicationSnapshotService $applicationSnapshotService,
     ) {}
 
     /**
@@ -91,37 +93,70 @@ class ApplicationWorkflowService
             ]);
         }
 
-        return DB::transaction(function () use ($jobPosting, $profile, $user, $applicationData): JobApplication {
-            $lockedProfile = JobSeekerProfile::query()->lockForUpdate()->findOrFail($profile->id);
-            $selectedCvFileId = $this->resolveApplicationCV($user, $lockedProfile, $applicationData['selected_cv_file_id'] ?? null)->id;
-            $lockedJobPosting = JobPosting::query()->lockForUpdate()->findOrFail($jobPosting->id);
-            $this->assertJobAcceptsApplications($lockedJobPosting);
-            $this->checkDuplicateApplication($lockedJobPosting, $profile);
-            $screeningPlan = $this->screeningAnswerService->buildPlan(
-                $lockedJobPosting,
-                $applicationData['screening_answers'] ?? [],
-            );
+        $createdSnapshot = null;
+        $databaseCommitted = false;
 
-            $submittedStatus = $this->statusBySlug(self::STATUS_SUBMITTED);
+        try {
+            return DB::transaction(function () use ($jobPosting, $profile, $user, $applicationData, &$createdSnapshot, &$databaseCommitted): JobApplication {
+                $lockedProfile = JobSeekerProfile::query()->lockForUpdate()->findOrFail($profile->id);
+                $selectedCvFile = $this->resolveApplicationCV($user, $lockedProfile, $applicationData['selected_cv_file_id'] ?? null);
+                $lockedJobPosting = JobPosting::query()->lockForUpdate()->findOrFail($jobPosting->id);
+                $this->assertJobAcceptsApplications($lockedJobPosting);
+                $this->checkDuplicateApplication($lockedJobPosting, $profile);
+                $screeningPlan = $this->screeningAnswerService->buildPlan(
+                    $lockedJobPosting,
+                    $applicationData['screening_answers'] ?? [],
+                );
 
-            $application = JobApplication::create([
-                'job_posting_id' => $lockedJobPosting->id,
-                'job_seeker_profile_id' => $profile->id,
-                'selected_cv_file_id' => $selectedCvFileId,
-                'application_status_id' => $submittedStatus->id,
-                'cover_letter' => $applicationData['cover_letter'] ?? null,
-                'consent_to_share_profile' => true,
-                'screening_answers' => null,
-            ]);
+                $submittedStatus = $this->statusBySlug(self::STATUS_SUBMITTED);
 
-            $this->screeningAnswerService->persistSnapshots($application, $screeningPlan);
+                $application = JobApplication::create([
+                    'job_posting_id' => $lockedJobPosting->id,
+                    'job_seeker_profile_id' => $profile->id,
+                    'selected_cv_file_id' => $selectedCvFile->id,
+                    'application_status_id' => $submittedStatus->id,
+                    'cover_letter' => $applicationData['cover_letter'] ?? null,
+                    'consent_to_share_profile' => true,
+                    'screening_answers' => null,
+                ]);
 
-            $this->recordHistory($application, null, $submittedStatus, $user);
+                $createdSnapshot = $this->applicationSnapshotService->capture(
+                    $application,
+                    $lockedProfile,
+                    $selectedCvFile,
+                    $screeningPlan,
+                );
+                $this->screeningAnswerService->persistSnapshots($application, $screeningPlan);
+                $this->recordHistory($application, null, $submittedStatus, $user);
 
-            DB::afterCommit(fn (): array => event(new ApplicationSubmitted($application->id)));
+                $this->auditLogService->record(
+                    'application.submitted',
+                    $user,
+                    JobApplication::class,
+                    $application->id,
+                    null,
+                    ['status' => self::STATUS_SUBMITTED],
+                    [
+                        'job_posting_id' => $application->job_posting_id,
+                        'snapshot_id' => $createdSnapshot->id,
+                        'schema_version' => $createdSnapshot->schema_version,
+                    ],
+                );
 
-            return $this->loadApplication($application, candidateSafe: true);
-        });
+                DB::afterCommit(function () use (&$databaseCommitted): void {
+                    $databaseCommitted = true;
+                });
+                DB::afterCommit(fn (): array => event(new ApplicationSubmitted($application->id)));
+
+                return $this->loadApplication($application, candidateSafe: true);
+            });
+        } catch (Throwable $exception) {
+            if ($createdSnapshot !== null && ! $databaseCommitted) {
+                $this->applicationSnapshotService->cleanupSnapshotFile($createdSnapshot);
+            }
+
+            throw $exception;
+        }
     }
 
     private function assertJobAcceptsApplications(JobPosting $jobPosting): void
@@ -415,6 +450,13 @@ class ApplicationWorkflowService
         if (! $cvFile->isConfirmedUsableForApplication() && ! $legacyCVWithoutReviewMetadata) {
             throw new CVLifecycleException(__('domain_errors.CV_NOT_USABLE_FOR_APPLICATION'), 'CV_NOT_USABLE_FOR_APPLICATION');
         }
+        if (! $legacyCVWithoutReviewMetadata && (int) $profile->primary_cv_file_id !== $cvFile->id) {
+            throw new CVLifecycleException(
+                __('domain_errors.APPLICATION_CURRENT_CV_REQUIRED'),
+                'APPLICATION_CURRENT_CV_REQUIRED',
+                422,
+            );
+        }
 
         return $cvFile;
     }
@@ -428,13 +470,16 @@ class ApplicationWorkflowService
 
     private function loadApplication(JobApplication $jobApplication, bool $candidateSafe = false): JobApplication
     {
-        return $jobApplication->load($this->applicationRelations($candidateSafe, includeScreeningAnswers: true));
+        $application = $jobApplication->load($this->applicationRelations($candidateSafe, includeScreeningAnswers: true, includeSnapshotDetails: true));
+        $application->setAttribute('include_submitted_snapshot', true);
+
+        return $application;
     }
 
     /**
      * @return array<int, string>
      */
-    private function applicationRelations(bool $candidateSafe = false, bool $includeScreeningAnswers = false): array
+    private function applicationRelations(bool $candidateSafe = false, bool $includeScreeningAnswers = false, bool $includeSnapshotDetails = false): array
     {
         $relations = [
             'jobPosting.company',
@@ -445,6 +490,9 @@ class ApplicationWorkflowService
             'statusHistory.fromStatus',
             'statusHistory.toStatus',
             'latestInformationRequest.response',
+            $includeSnapshotDetails
+                ? 'snapshot'
+                : 'snapshot:id,job_application_id,source_cv_file_id,cv_original_name,cv_mime_type,cv_extension,cv_size_bytes,captured_at,origin,accuracy',
         ];
 
         if ($includeScreeningAnswers) {
@@ -453,9 +501,6 @@ class ApplicationWorkflowService
         }
 
         if (! $candidateSafe) {
-            $relations[] = 'jobSeekerProfile.user';
-            $relations[] = 'jobSeekerProfile.city';
-            $relations[] = 'jobSeekerProfile.skills';
             $relations[] = 'statusHistory.changedBy';
         }
 

@@ -2,6 +2,7 @@
 
 use App\Exceptions\ApplicationInformationRequestException;
 use App\Exceptions\ApplicationInternalNoteException;
+use App\Exceptions\ApplicationSnapshotException;
 use App\Exceptions\CompanyManagementException;
 use App\Exceptions\CVLifecycleException;
 use App\Exceptions\EmailVerificationException;
@@ -55,6 +56,19 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
+        $exceptions->render(function (ApplicationSnapshotException $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return ApiResponse::error(
+                message: $exception->getMessage(),
+                errors: $exception->errors,
+                status: $exception->status,
+                code: $exception->errorCode,
+            );
+        });
+
         $exceptions->render(function (CompanyManagementException $exception, Request $request) {
             if (! $request->is('api/*')) {
                 return null;

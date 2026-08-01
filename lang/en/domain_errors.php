@@ -137,4 +137,13 @@ return [
     'TEST_SCORE_CONFIGURATION_IMMUTABLE' => 'This test score configuration cannot be changed because the test has already been assigned.',
     'TEST_SCORE_CONFIGURATION_INVALID' => 'The test score configuration is invalid.',
     'USER_SUSPENDED' => 'Your account is suspended.',
+    'APPLICATION_SNAPSHOT_ALREADY_EXISTS' => 'An immutable snapshot already exists for this application.',
+    'APPLICATION_SNAPSHOT_NOT_AVAILABLE' => 'The application snapshot is not available.',
+    'APPLICATION_SNAPSHOT_CV_UNAVAILABLE' => 'The submitted CV snapshot is unavailable.',
+    'APPLICATION_SNAPSHOT_CV_NOT_FOUND' => 'The submitted CV snapshot file was not found.',
+    'APPLICATION_SNAPSHOT_CV_PREVIEW_NOT_SUPPORTED' => 'Preview is not supported for this submitted CV format.',
+    'APPLICATION_SNAPSHOT_CHECKSUM_MISMATCH' => 'The submitted CV snapshot failed its integrity check.',
+    'APPLICATION_SNAPSHOT_SOURCE_INCOMPLETE' => 'The legacy application does not have enough source data to create a snapshot.',
+    'APPLICATION_SNAPSHOT_CV_COPY_FAILED' => 'The submitted CV could not be copied into immutable application storage.',
+    'APPLICATION_CURRENT_CV_REQUIRED' => 'The confirmed current CV must be used for this application.',
 ];

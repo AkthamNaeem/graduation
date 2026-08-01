@@ -401,4 +401,16 @@ return [
             'suspended' => 'User suspended',
         ],
     ],
+    'application_snapshot_origins' => [
+        'captured_at_submission' => 'Captured at submission',
+        'backfilled' => 'Backfilled from the best available data',
+    ],
+    'application_snapshot_accuracies' => [
+        'exact' => 'Exact submission state',
+        'best_available' => 'Best available legacy data',
+    ],
+    'application_snapshot_statuses' => [
+        'available' => 'Submitted data is available',
+        'not_available' => 'Legacy submitted data is not available',
+    ],
 ];

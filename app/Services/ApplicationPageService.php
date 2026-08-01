@@ -71,6 +71,7 @@ class ApplicationPageService
                 'jobPosting.company',
                 'jobPosting.city',
                 'selectedCvFile',
+                'snapshot:id,job_application_id,source_cv_file_id,cv_original_name,cv_mime_type,cv_extension,cv_size_bytes,captured_at,origin,accuracy',
                 'applicationStatus',
                 'latestStatusHistory',
                 'latestInformationRequest.response',

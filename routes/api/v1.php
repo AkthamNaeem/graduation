@@ -101,6 +101,7 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function (): void {
     Route::get('application-internal-notes/{note}/revisions', [ApplicationInternalNoteController::class, 'revisions'])->withTrashed()->name('application-internal-notes.revisions.index');
     Route::get('applications/{jobApplication}/information-requests', [ApplicationInformationRequestController::class, 'index'])->name('applications.information-requests.index');
     Route::get('applications/{jobApplication}/cv/download', [JobApplicationController::class, 'downloadCV'])->name('applications.cv.download');
+    Route::get('applications/{jobApplication}/cv/preview', [JobApplicationController::class, 'previewCV'])->name('applications.cv.preview');
     Route::post('applications/{jobApplication}/information-requests', [ApplicationInformationRequestController::class, 'store'])->name('applications.information-requests.store');
     Route::get('information-requests/{informationRequest}', [ApplicationInformationRequestController::class, 'show'])->name('information-requests.show');
     Route::patch('information-requests/{informationRequest}', [ApplicationInformationRequestController::class, 'update'])->name('information-requests.update');

@@ -111,4 +111,9 @@ class JobApplication extends Model
     {
         return $this->hasMany(JobApplicationScreeningAnswer::class);
     }
+
+    public function snapshot(): HasOne
+    {
+        return $this->hasOne(ApplicationSnapshot::class);
+    }
 }

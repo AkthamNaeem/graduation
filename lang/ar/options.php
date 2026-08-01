@@ -401,4 +401,16 @@ return [
             'suspended' => 'تم إيقاف المستخدم',
         ],
     ],
+    'application_snapshot_origins' => [
+        'captured_at_submission' => 'تم حفظها وقت التقديم',
+        'backfilled' => 'تمت تعبئتها من أفضل بيانات متاحة',
+    ],
+    'application_snapshot_accuracies' => [
+        'exact' => 'بيانات مطابقة لوقت التقديم',
+        'best_available' => 'أفضل بيانات قديمة متاحة',
+    ],
+    'application_snapshot_statuses' => [
+        'available' => 'بيانات التقديم متاحة',
+        'not_available' => 'بيانات التقديم القديمة غير متاحة',
+    ],
 ];

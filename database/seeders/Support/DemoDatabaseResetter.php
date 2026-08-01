@@ -47,6 +47,7 @@ final class DemoDatabaseResetter
         'job_application_screening_answers',
         'job_application_screening_question_options',
         'job_application_screening_questions',
+        'application_snapshots',
         'application_status_histories',
         'job_applications',
         'job_screening_question_options',

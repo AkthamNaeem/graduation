@@ -514,13 +514,12 @@ class TestService
             $relations[] = 'jobApplication.jobPosting.company';
             $relations[] = 'jobApplication.jobPosting.skills';
             $relations[] = 'jobApplication.selectedCvFile';
+            $relations[] = 'jobApplication.snapshot';
             $relations[] = 'jobApplication.applicationStatus';
             $relations[] = 'jobApplication.statusHistory.fromStatus';
             $relations[] = 'jobApplication.statusHistory.toStatus';
 
             if (! $candidateSafe) {
-                $relations[] = 'jobApplication.jobSeekerProfile.user';
-                $relations[] = 'jobApplication.jobSeekerProfile.skills';
                 $relations[] = 'jobApplication.statusHistory.changedBy';
             }
         }
@@ -548,6 +547,7 @@ class TestService
             'applicationTestAssignment.jobApplication.jobPosting.company',
             'applicationTestAssignment.jobApplication.jobPosting.skills',
             'applicationTestAssignment.jobApplication.selectedCvFile',
+            'applicationTestAssignment.jobApplication.snapshot',
             'applicationTestAssignment.jobApplication.applicationStatus',
             'applicationTestAssignment.jobApplication.statusHistory.fromStatus',
             'applicationTestAssignment.jobApplication.statusHistory.toStatus',
@@ -556,8 +556,6 @@ class TestService
         $relations[] = 'evaluatedBy';
         $relations[] = 'testAnswers.grading';
         $relations[] = 'applicationTestAssignment.assignedBy';
-        $relations[] = 'applicationTestAssignment.jobApplication.jobSeekerProfile.user';
-        $relations[] = 'applicationTestAssignment.jobApplication.jobSeekerProfile.skills';
         $relations[] = 'applicationTestAssignment.jobApplication.statusHistory.changedBy';
 
         return $relations;

@@ -137,4 +137,13 @@ return [
     'TEST_SCORE_CONFIGURATION_IMMUTABLE' => 'لا يمكن تغيير إعداد درجات الاختبار لأنه عُيّن مسبقًا.',
     'TEST_SCORE_CONFIGURATION_INVALID' => 'إعداد درجات الاختبار غير صالح.',
     'USER_SUSPENDED' => 'حسابك موقوف.',
+    'APPLICATION_SNAPSHOT_ALREADY_EXISTS' => 'توجد للطلب لقطة ثابتة مسبقًا.',
+    'APPLICATION_SNAPSHOT_NOT_AVAILABLE' => 'لقطة الطلب غير متاحة.',
+    'APPLICATION_SNAPSHOT_CV_UNAVAILABLE' => 'نسخة السيرة الذاتية المرسلة غير متاحة.',
+    'APPLICATION_SNAPSHOT_CV_NOT_FOUND' => 'لم يُعثر على ملف نسخة السيرة الذاتية.',
+    'APPLICATION_SNAPSHOT_CV_PREVIEW_NOT_SUPPORTED' => 'المعاينة غير مدعومة لصيغة نسخة السيرة الذاتية هذه.',
+    'APPLICATION_SNAPSHOT_CHECKSUM_MISMATCH' => 'فشل التحقق من سلامة نسخة السيرة الذاتية.',
+    'APPLICATION_SNAPSHOT_SOURCE_INCOMPLETE' => 'لا يحتوي الطلب القديم على بيانات مصدر كافية لإنشاء لقطة.',
+    'APPLICATION_SNAPSHOT_CV_COPY_FAILED' => 'تعذر نسخ السيرة الذاتية إلى التخزين الثابت للطلب.',
+    'APPLICATION_CURRENT_CV_REQUIRED' => 'يجب استخدام السيرة الذاتية الحالية والمؤكدة لهذا الطلب.',
 ];

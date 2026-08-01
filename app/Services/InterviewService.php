@@ -404,9 +404,9 @@ class InterviewService
             'evaluation.evaluatedBy', 'evaluation.items', 'statusHistory.changedBy', 'scheduleChanges.changedBy',
         ];
         if ($includeApplicationContext) {
-            array_push($relations, 'jobApplication.jobPosting.company', 'jobApplication.jobPosting.skills', 'jobApplication.selectedCvFile', 'jobApplication.applicationStatus');
+            array_push($relations, 'jobApplication.jobPosting.company', 'jobApplication.jobPosting.skills', 'jobApplication.selectedCvFile', 'jobApplication.snapshot', 'jobApplication.applicationStatus');
             if (! $candidateSafe) {
-                array_push($relations, 'jobApplication.jobSeekerProfile.user', 'jobApplication.jobSeekerProfile.skills', 'jobApplication.statusHistory.fromStatus', 'jobApplication.statusHistory.toStatus', 'jobApplication.statusHistory.changedBy');
+                array_push($relations, 'jobApplication.statusHistory.fromStatus', 'jobApplication.statusHistory.toStatus', 'jobApplication.statusHistory.changedBy');
             }
         }
 

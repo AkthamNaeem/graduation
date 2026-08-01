@@ -15,6 +15,11 @@ class JobApplicationResource extends JsonResource
     {
         $manager = $this->viewerIsManager($request);
         $page = $this->getAttribute('application_page');
+        $snapshotLoaded = $this->relationLoaded('snapshot');
+        $snapshot = $snapshotLoaded ? $this->snapshot : null;
+        $snapshotHasDetails = $snapshot !== null
+            && array_key_exists('profile_snapshot', $snapshot->getAttributes());
+        $includeSubmittedSnapshot = (bool) $this->getAttribute('include_submitted_snapshot');
 
         return [
             'id' => $this->id,
@@ -25,12 +30,24 @@ class JobApplicationResource extends JsonResource
             'status' => ApplicationStatusResource::make($this->whenLoaded('applicationStatus')),
             'job_posting' => JobPostingResource::make($this->whenLoaded('jobPosting')),
             'job_seeker_profile' => $this->when(
-                $manager && $this->relationLoaded('jobSeekerProfile'),
+                $manager && $snapshot === null && $this->relationLoaded('jobSeekerProfile'),
                 fn () => new JobSeekerProfileResource($this->jobSeekerProfile),
             ),
             'selected_cv' => $this->when(
-                $this->relationLoaded('selectedCvFile'),
-                fn (): ?array => $this->selectedCvFile === null ? null : [
+                $snapshot !== null || $this->relationLoaded('selectedCvFile'),
+                fn (): ?array => $snapshot !== null ? [
+                    'id' => $snapshot->source_cv_file_id,
+                    'original_name' => $snapshot->cv_original_name,
+                    'version_label' => null,
+                    'mime_type' => $snapshot->cv_mime_type,
+                    'extension' => $snapshot->cv_extension,
+                    'size_bytes' => $snapshot->cv_size_bytes,
+                    'download_url' => route('v1.applications.cv.download', ['jobApplication' => $this->id]),
+                    'preview_url' => strtolower($snapshot->cv_extension) === 'pdf'
+                        ? route('v1.applications.cv.preview', ['jobApplication' => $this->id])
+                        : null,
+                    'uploaded_at' => null,
+                ] : ($this->selectedCvFile === null ? null : [
                     'id' => $this->selectedCvFile->id,
                     'original_name' => $this->selectedCvFile->original_name,
                     'version_label' => $this->selectedCvFile->version_label,
@@ -39,7 +56,20 @@ class JobApplicationResource extends JsonResource
                     'size_bytes' => $this->selectedCvFile->size_bytes,
                     'download_url' => route('v1.applications.cv.download', ['jobApplication' => $this->id]),
                     'uploaded_at' => $this->selectedCvFile->created_at?->toISOString(),
-                ],
+                ]),
+            ),
+            'snapshot_status' => $this->when(
+                $snapshotLoaded,
+                fn () => LocalizedValue::make(
+                    $snapshot === null ? 'not_available' : 'available',
+                    'application_snapshot_statuses',
+                ),
+            ),
+            'submitted_cv_name' => $this->when($snapshotLoaded, $snapshot?->cv_original_name),
+            'snapshot_captured_at' => $this->when($snapshotLoaded, $snapshot?->captured_at?->toISOString()),
+            'submitted_snapshot' => $this->when(
+                $includeSubmittedSnapshot,
+                fn () => $snapshotHasDetails ? new ApplicationSnapshotResource($snapshot) : null,
             ),
             'cover_letter' => $this->cover_letter,
             'consent_to_share_profile' => $this->consent_to_share_profile,

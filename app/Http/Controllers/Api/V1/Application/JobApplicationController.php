@@ -13,6 +13,7 @@ use App\Http\Requests\Api\V1\Application\WithdrawJobApplicationRequest;
 use App\Http\Resources\Api\V1\JobApplicationResource;
 use App\Models\JobApplication;
 use App\Models\JobPosting;
+use App\Services\ApplicationSnapshotCVAccessService;
 use App\Services\ApplicationWorkflowService;
 use App\Services\PrivateFileStorageService;
 use App\Support\ApiResponse;
@@ -24,6 +25,7 @@ class JobApplicationController extends Controller
     public function __construct(
         private readonly ApplicationWorkflowService $applicationWorkflowService,
         private readonly PrivateFileStorageService $privateStorage,
+        private readonly ApplicationSnapshotCVAccessService $snapshotCVAccess,
     ) {}
 
     public function store(StoreJobApplicationRequest $request, JobPosting $jobPosting): JsonResponse
@@ -64,12 +66,37 @@ class JobApplicationController extends Controller
 
     public function downloadCV(ShowJobApplicationRequest $request, JobApplication $jobApplication): StreamedResponse
     {
+        if ($jobApplication->snapshot()->exists()) {
+            $snapshot = $this->snapshotCVAccess->snapshotFor($jobApplication);
+            $this->snapshotCVAccess->assertDownloadable($snapshot);
+
+            return $this->privateStorage->downloadResponse(
+                $snapshot->cv_disk,
+                $snapshot->cv_stored_path,
+                $snapshot->cv_original_name,
+                $snapshot->cv_mime_type,
+            );
+        }
+
         $cvFile = $jobApplication->selectedCvFile()->first();
         if ($cvFile === null || ! $this->privateStorage->exists($cvFile->disk, $cvFile->stored_path)) {
             throw new CVLifecycleException(__('domain_errors.CV_FILE_UNAVAILABLE'), 'CV_FILE_UNAVAILABLE', 404);
         }
 
         return $this->privateStorage->downloadResponse($cvFile->disk, $cvFile->stored_path, $cvFile->original_name, $cvFile->mime_type);
+    }
+
+    public function previewCV(ShowJobApplicationRequest $request, JobApplication $jobApplication): StreamedResponse
+    {
+        $snapshot = $this->snapshotCVAccess->snapshotFor($jobApplication);
+        $this->snapshotCVAccess->assertPreviewable($snapshot);
+
+        return $this->privateStorage->inlineResponse(
+            $snapshot->cv_disk,
+            $snapshot->cv_stored_path,
+            $snapshot->cv_original_name,
+            $snapshot->cv_mime_type,
+        );
     }
 
     public function withdraw(WithdrawJobApplicationRequest $request, JobApplication $jobApplication): JsonResponse

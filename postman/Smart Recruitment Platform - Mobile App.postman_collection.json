@@ -3376,6 +3376,426 @@
                     }
                 }
             ]
+        },
+        {
+            "name": "Immutable Application Snapshot",
+            "description": "Task 6 API scenarios. The backfill dry-run and execution are implemented as the applications:backfill-snapshots Artisan command, so they are intentionally omitted from Postman.",
+            "item": [
+                {
+                    "name": "Application Snapshot - Submit With Current CV",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{job_seeker_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "url": "{{base_url}}/jobs/{{job_id}}/applications",
+                        "description": "Creates the application and immutable snapshot atomically from the confirmed primary/current CV.",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"consent_to_share_profile\": true,\n  \"screening_answers\": []\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('snapshot captured', () => { const d=pm.response.json().data; pm.expect(pm.response.code).to.eql(201); pm.expect(d.snapshot_status.key).to.eql('available'); pm.expect(d.submitted_snapshot.schema_version).to.eql(1); });",
+                                    "if (pm.response.code === 201) pm.environment.set('application_id', pm.response.json().data.id);"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Application Snapshot - Profile Data Captured",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{job_seeker_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "url": "{{base_url}}/applications/{{application_id}}",
+                        "description": "Inspect submitted_snapshot.profile identity, location, availability, experience, education, skills, and links."
+                    }
+                },
+                {
+                    "name": "Application Snapshot - CV File Captured",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{job_seeker_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "url": "{{base_url}}/applications/{{application_id}}",
+                        "description": "Inspect independent CV metadata and SHA-256 checksum; storage disk/path remain private."
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('snapshot CV metadata is safe', () => { const cv=pm.response.json().data.submitted_snapshot.cv; pm.expect(cv.checksum_sha256).to.match(/^[a-f0-9]{64}$/); pm.expect(cv).not.to.have.property('stored_path'); pm.expect(cv).not.to.have.property('disk'); });"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "Application Snapshot - Screening Answers Captured",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{job_seeker_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "url": "{{base_url}}/applications/{{application_id}}",
+                        "description": "Inspect immutable screening question text, type, options, and answers."
+                    }
+                },
+                {
+                    "name": "Application Snapshot - Duplicate Submission Conflict",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{job_seeker_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "url": "{{base_url}}/jobs/{{job_id}}/applications",
+                        "description": "Repeat while an active application exists; no second application, snapshot, or file copy is created.",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"consent_to_share_profile\": true,\n  \"screening_answers\": []\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "Application Snapshot - CV Copy Failure",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{job_seeker_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "url": "{{base_url}}/jobs/{{job_id}}/applications",
+                        "description": "Failure-injection scenario: make the current CV object unreadable or snapshot storage unavailable; expect a typed error and no side effects.",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"consent_to_share_profile\": true,\n  \"screening_answers\": []\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "Application Snapshot - Profile Update Does Not Change Submission",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{job_seeker_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "url": "{{base_url}}/applications/{{application_id}}",
+                        "description": "After updating the live profile, submitted_snapshot.profile retains its captured values."
+                    }
+                },
+                {
+                    "name": "Application Snapshot - CV Update Does Not Change Submission",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{job_seeker_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "url": "{{base_url}}/applications/{{application_id}}/cv/download",
+                        "description": "After replacing or archiving the live CV, downloads the independent captured copy."
+                    }
+                },
+                {
+                    "name": "Application Snapshot - New Application Uses New Data",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{job_seeker_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "url": "{{base_url}}/jobs/{{new_job_id}}/applications",
+                        "description": "A later application to another job captures the new current profile and CV without altering earlier snapshots.",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"consent_to_share_profile\": true,\n  \"screening_answers\": []\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "Application Snapshot - Candidate Details",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{job_seeker_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "url": "{{base_url}}/applications/{{application_id}}"
+                    }
+                },
+                {
+                    "name": "Application Snapshot - Candidate CV Preview",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{job_seeker_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "url": "{{base_url}}/applications/{{application_id}}/cv/preview",
+                        "description": "PDF is inline/private/no-store; DOCX returns 415 and remains downloadable."
+                    }
+                },
+                {
+                    "name": "Application Snapshot - Candidate CV Download",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{job_seeker_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "url": "{{base_url}}/applications/{{application_id}}/cv/download"
+                    }
+                },
+                {
+                    "name": "Application Snapshot - Other Candidate Forbidden",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{job_seeker_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "url": "{{base_url}}/applications/{{application_id}}",
+                        "description": "Replace with a different job-seeker token; expected 403."
+                    }
+                },
+                {
+                    "name": "Application Snapshot - Employer Details",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{employer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "url": "{{base_url}}/applications/{{application_id}}",
+                        "description": "Owning-company detail uses submitted_snapshot instead of the live candidate profile."
+                    }
+                },
+                {
+                    "name": "Application Snapshot - Employer CV Preview",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{employer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "url": "{{base_url}}/applications/{{application_id}}/cv/preview"
+                    }
+                },
+                {
+                    "name": "Application Snapshot - Employer CV Download",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{employer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "url": "{{base_url}}/applications/{{application_id}}/cv/download"
+                    }
+                },
+                {
+                    "name": "Application Snapshot - Other Company Forbidden",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{other_employer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "url": "{{base_url}}/applications/{{application_id}}",
+                        "description": "Expected 403 for a viewer outside the owning company."
+                    }
+                },
+                {
+                    "name": "Application Snapshot - Legacy Application Without Snapshot",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{job_seeker_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "url": "{{base_url}}/applications/{{legacy_application_id}}",
+                        "description": "Returns snapshot_status.key=not_available and submitted_snapshot=null. Backfill dry-run/execute are Artisan commands, not HTTP requests."
+                    },
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test('legacy contract is explicit', () => { const d=pm.response.json().data; pm.expect(d.snapshot_status.key).to.eql('not_available'); pm.expect(d.submitted_snapshot).to.eql(null); });"
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ]
         }
     ],
     "variable": [
