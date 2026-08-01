@@ -29,6 +29,7 @@ use App\Http\Controllers\Api\V1\Profile\ProfileController;
 use App\Http\Controllers\Api\V1\Profile\ProfileSkillController;
 use App\Http\Controllers\Api\V1\Profile\ProfileSuggestionController;
 use App\Http\Controllers\Api\V1\Reference\CityController;
+use App\Http\Controllers\Api\V1\Reference\JobFilterController;
 use App\Http\Controllers\Api\V1\Skill\SkillController;
 use App\Http\Controllers\Api\V1\Test\TestAnswerController;
 use App\Http\Controllers\Api\V1\Test\TestAssignmentController;
@@ -43,6 +44,9 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('reference/cities', [CityController::class, 'index'])
     ->name('reference.cities.index');
+
+Route::get('reference/job-filters', [JobFilterController::class, 'index'])
+    ->name('reference.job-filters.index');
 
 Route::get('home', HomeController::class)
     ->middleware('auth.sanctum.optional')
