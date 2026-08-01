@@ -2,6 +2,7 @@
 
 return [
     'retrieved' => 'Profile retrieved successfully.',
+    'page_retrieved' => 'Profile page retrieved successfully.',
     'updated' => 'Profile updated successfully.',
     'employer_retrieved' => 'Employer profile retrieved successfully.',
     'employer_updated' => 'Employer profile updated successfully.',
@@ -22,4 +23,16 @@ return [
     'suggestion_saved' => 'Profile suggestion decision saved successfully.',
     'suggestion_rejected' => 'Profile suggestion rejected successfully.',
     'suggestions_applied' => 'Accepted profile suggestions applied successfully.',
+    'links' => [
+        'github' => 'GitHub',
+        'linkedin' => 'LinkedIn',
+        'portfolio' => 'Portfolio',
+    ],
+    'actions' => [
+        'edit_profile' => 'Edit profile',
+        'manage_experiences' => 'Manage experiences',
+        'manage_education' => 'Manage education',
+        'manage_skills' => 'Manage skills',
+        'manage_links' => 'Manage professional links',
+    ],
 ];

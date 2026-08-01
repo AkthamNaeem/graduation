@@ -35,9 +35,42 @@ class ProfileService
     public function updateJobSeekerProfile(User $user, array $data): JobSeekerProfile
     {
         $profile = $this->jobSeekerProfile($user);
-        $profile->update($data);
+        $name = $data['name'] ?? null;
+        $updatesName = array_key_exists('name', $data);
+        unset($data['name']);
 
-        return $profile->load(['user', 'city', 'experiences', 'education', 'skills']);
+        $before = [
+            ...($updatesName ? ['name' => $user->name] : []),
+            ...$profile->only(array_keys($data)),
+        ];
+
+        DB::transaction(function () use ($user, $profile, $data, $name, $updatesName, $before): void {
+            if ($updatesName) {
+                $user->update(['name' => $name]);
+            }
+
+            if ($data !== []) {
+                $profile->update($data);
+            }
+
+            $after = [
+                ...($updatesName ? ['name' => $user->name] : []),
+                ...$profile->only(array_keys($data)),
+            ];
+
+            if ($before !== $after) {
+                $this->auditLogService->record(
+                    'profile.updated',
+                    $user,
+                    JobSeekerProfile::class,
+                    $profile->id,
+                    $before,
+                    $after,
+                );
+            }
+        });
+
+        return $profile->refresh()->load('user');
     }
 
     /**

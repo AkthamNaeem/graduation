@@ -22,4 +22,17 @@ return [
     'suggestion_saved' => 'تم حفظ قرار اقتراح الملف الشخصي بنجاح.',
     'suggestion_rejected' => 'تم رفض اقتراح الملف الشخصي بنجاح.',
     'suggestions_applied' => 'تم تطبيق اقتراحات الملف الشخصي المقبولة بنجاح.',
+    'page_retrieved' => 'تم جلب صفحة الملف الشخصي بنجاح.',
+    'links' => [
+        'github' => 'Git هب',
+        'linkedin' => 'لينكدإن',
+        'portfolio' => 'معرض الأعمال',
+    ],
+    'actions' => [
+        'edit_profile' => 'تعديل الملف الشخصي',
+        'manage_experiences' => 'إدارة الخبرات',
+        'manage_education' => 'إدارة التعليم',
+        'manage_skills' => 'إدارة المهارات',
+        'manage_links' => 'إدارة الروابط المهنية',
+    ],
 ];

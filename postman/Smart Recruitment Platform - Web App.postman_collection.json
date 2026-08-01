@@ -1151,6 +1151,109 @@
             ]
         },
         {
+            "name": "03A Job Seeker - Profile Page",
+            "auth": {
+                "type": "bearer",
+                "bearer": [
+                    {"key": "token", "value": "{{job_seeker_token}}", "type": "string"}
+                ]
+            },
+            "item": [
+                {
+                    "name": "Profile - Get Aggregated Profile",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "Accept-Language", "value": "en"}],
+                        "description": "Returns the complete Profile Page contract: identity, career summary, professional profile, sorted experiences/education/skills, professional links, and allowed actions.",
+                        "url": "{{base_url}}/profile"
+                    }
+                },
+                {
+                    "name": "Profile - Get Arabic",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "Accept-Language", "value": "ar"}],
+                        "description": "Returns the aggregated Profile Page with Arabic message, city, source-type, and professional-link labels.",
+                        "url": "{{base_url}}/profile"
+                    }
+                },
+                {
+                    "name": "Profile - Get English",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "Accept-Language", "value": "en"}],
+                        "description": "Returns the aggregated Profile Page with English localized values.",
+                        "url": "{{base_url}}/profile"
+                    }
+                },
+                {
+                    "name": "Profile - Update Name",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {"key": "Content-Type", "value": "application/json"},
+                            {"key": "Accept-Language", "value": "en"}
+                        ],
+                        "description": "Updates users.name transactionally and returns the complete aggregated Profile Page contract.",
+                        "url": "{{base_url}}/profile",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Aktham Naeem\"\n}",
+                            "options": {"raw": {"language": "json"}}
+                        }
+                    }
+                },
+                {
+                    "name": "Profile - Update Professional Information",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {"key": "Content-Type", "value": "application/json"},
+                            {"key": "Accept-Language", "value": "en"}
+                        ],
+                        "description": "Updates the user name and existing professional fields in one transaction.",
+                        "url": "{{base_url}}/profile",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"Aktham Naeem\",\n  \"headline\": \"Senior Backend Developer\",\n  \"summary\": \"Laravel API specialist.\",\n  \"phone\": \"+963123456789\",\n  \"github_url\": \"https://github.com/example\",\n  \"linkedin_url\": \"https://linkedin.com/in/example\",\n  \"portfolio_url\": \"https://example.com\"\n}",
+                            "options": {"raw": {"language": "json"}}
+                        }
+                    }
+                },
+                {
+                    "name": "Profile - Clear Nullable Link",
+                    "request": {
+                        "method": "PUT",
+                        "header": [{"key": "Content-Type", "value": "application/json"}],
+                        "description": "Clears an optional professional link; null links are omitted from professional_links.",
+                        "url": "{{base_url}}/profile",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"portfolio_url\": null\n}",
+                            "options": {"raw": {"language": "json"}}
+                        }
+                    }
+                },
+                {
+                    "name": "Profile - Validation Error",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {"key": "Content-Type", "value": "application/json"},
+                            {"key": "Accept-Language", "value": "ar"}
+                        ],
+                        "description": "Expected 422: name must be a non-empty string and github_url must be a valid URL. No profile data is changed.",
+                        "url": "{{base_url}}/profile",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"name\": \"\",\n  \"github_url\": \"not-a-url\"\n}",
+                            "options": {"raw": {"language": "json"}}
+                        }
+                    }
+                }
+            ]
+        },
+        {
             "name": "03 Employer - Company Profile",
             "item": [
                 {

@@ -3380,6 +3380,136 @@ Details, and Withdraw requests. No frontend, commit, or push is included.
 - Both modified Postman collection files parse as valid JSON.
 - `git diff --check`: passed. No commit or push was created.
 
+## Profile Page Backend Aggregation
+
+### Goal and existing implementation
+
+`GET /api/v1/profile` and `PUT /api/v1/profile` remain the only page-level
+profile endpoints. Previously they returned the shared
+`JobSeekerProfileResource`, which exposes the profile model with loaded user,
+city, experiences, education, and skills. That resource is also used by CV
+review, applications, matching, ranked candidates, authentication, and profile
+skill operations, so changing its contract would create unrelated regressions.
+
+The page endpoints now use the dedicated `ProfilePageResource` backed by
+`ProfilePageService` and `ProfilePageData`. The shared resource and all CV
+versioning, confirmation, preview, completeness, attention-item, application
+snapshot, and frontend behavior remain unchanged. Existing editable scalar
+profile keys and the nested user remain at the top level for backward
+compatibility while the
+canonical page sections are `identity`, `career_summary`,
+`professional_profile`, `experiences`, `education`, `skills`,
+`professional_links`, and `allowed_actions`.
+
+### Identity and initials
+
+Identity reads `id`, `name`, and `email` from the authenticated `User`; all
+other identity fields come from its `JobSeekerProfile`. The city continues to
+use the localized `CityResource`. `NameInitials` derives at most two Unicode
+initials at response time, collapses repeated whitespace, supports Arabic and
+Latin names, and returns `?` for a missing name. It does not persist initials
+or add an avatar column.
+
+### Career summary and experience overlap
+
+`ProfileExperienceCalculator` follows the established candidate-duration
+approach while preserving the matching calculator unchanged. It turns valid
+experience start/end dates into sorted intervals, substitutes today for a
+current role, merges overlapping and one-day-connected periods, ignores
+missing starts and reversed intervals, sums the merged duration, and rounds
+the result to one decimal.
+Counts come from the already eager-loaded collections, including the filtered
+professional-link list, and therefore do not issue per-section count queries.
+
+Experiences are ordered with current roles first, then end date, start date,
+and ID descending. Education is ordered by end date, start date, and ID
+descending because the current schema has no `is_current` or expected
+graduation field. Skills are ordered by name and ID ascending; the pivot's
+unique key prevents duplicates. Page-specific nested resources expose the
+user-facing source and verification fields but omit internal CV file IDs.
+
+### Professional links, actions, and localization
+
+Professional links are derived from existing `github_url`, `linkedin_url`, and
+`portfolio_url` fields in that fixed order. Empty values are omitted, stored
+URLs are returned unchanged, and labels come from Arabic/English translation
+files. `ProfileAction` contains only operations backed by current APIs: edit
+profile, manage experiences, education, skills, and professional links. The
+job-seeker authorization already enforced by the form requests is retained;
+guest requests receive 401 and employer/admin requests receive 403.
+
+### Transactional update and audit
+
+`UpdateJobSeekerProfileRequest` now accepts an optional, filled string `name`
+up to 255 characters alongside the existing nullable profile fields and active
+Syrian-city validation. `ProfileService` separates `name` from profile data and
+updates `users` plus `job_seeker_profiles` within one database transaction.
+Email, role, and status are never accepted. A single `profile.updated` audit
+record captures changed submitted fields, and the response is reloaded through
+the same full aggregation path used by GET.
+
+### Performance and API contract
+
+`ProfilePageService` performs one profile query plus bounded eager-load queries
+for user, city, experiences, education, and skills/pivot. No query is issued
+per experience, education record, skill, or professional link; the query-count
+feature test verifies that growing the experience collection does not grow the
+request query count.
+
+Both successful endpoints retain the project's `success`, `message`, and
+`data` envelope. The canonical `data` contract is:
+
+```text
+identity
+career_summary
+professional_profile
+experiences
+education
+skills
+professional_links
+allowed_actions
+created_at
+updated_at
+```
+
+The mobile and web Postman collections include aggregated GET, Arabic GET,
+English GET, update-name, update-professional-information, clear-nullable-link,
+and validation-error requests. No old request was removed.
+
+### Tests and verification
+
+Focused unit coverage includes Unicode initials and nine duration scenarios:
+empty input, completed/current roles, overlapping/non-overlapping/connected
+periods, missing starts, reversed dates, and one-decimal profile rounding.
+Feature coverage includes the complete aggregated contract, ordering, counts,
+localized links/messages, hidden internal fields, full update response,
+transaction-safe validation, nullable clearing, audit logging, guest/employer/
+admin authorization, and bounded query count. Final command results are
+as follows:
+
+- Focused Profile unit/feature coverage: **23 passed, 84 assertions**.
+- Complete Laravel suite: **928 passed, 2 expected opt-in S3 skips, 27,588
+  assertions, 0 failed**.
+- Protected final-handover and recommendation E2E checks: **7 passed, 10,077
+  assertions** without changing protected tests or matching contracts.
+- `php artisan migrate:fresh --seed --force`: passed against an isolated
+  temporary SQLite database; the configured remote Aiven database was not
+  modified and the temporary file was removed.
+- `php artisan route:list --path=api/v1/profile`: passed and confirms the
+  existing GET/PUT page endpoints without a duplicate page/dashboard route.
+- Manual temporary-server checks passed for English GET, Arabic GET, and an
+  English PUT that changed both name and headline and returned the full page.
+- Laravel Pint passed for every PHP file changed or added by this task. The
+  repository-wide `vendor/bin/pint --test` still reports pre-existing style
+  violations in unrelated files, which were not reformatted.
+- `php -l` passed for every changed/new PHP file.
+- Both Postman collections parse as valid JSON and each contains the seven
+  requested Profile Page requests; no old request was removed.
+- `git diff --check` passed.
+- `composer audit` could not reach Packagist inside the restricted environment.
+  An external-network escalation was rejected because dependency metadata
+  would be sent to Packagist, so no advisory result is claimed.
+
 ## Activity Page Backend Aggregation (2026-08-01)
 
 ### Goal and baseline

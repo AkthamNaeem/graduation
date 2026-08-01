@@ -23,6 +23,7 @@ class UpdateJobSeekerProfileRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'name' => ['sometimes', 'filled', 'string', 'max:255'],
             'headline' => ['sometimes', 'nullable', 'string', 'max:255'],
             'summary' => ['sometimes', 'nullable', 'string'],
             'phone' => ['sometimes', 'nullable', 'string', 'max:50'],
