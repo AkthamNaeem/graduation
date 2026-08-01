@@ -20,12 +20,16 @@ class MatchingService
 
     private readonly EducationLevelNormalizer $educationNormalizer;
 
+    private readonly LocationCompatibilityService $locationCompatibility;
+
     public function __construct(
         ?CandidateExperienceCalculator $experienceCalculator = null,
         ?EducationLevelNormalizer $educationNormalizer = null,
+        ?LocationCompatibilityService $locationCompatibility = null,
     ) {
         $this->experienceCalculator = $experienceCalculator ?? new CandidateExperienceCalculator;
         $this->educationNormalizer = $educationNormalizer ?? new EducationLevelNormalizer;
+        $this->locationCompatibility = $locationCompatibility ?? new LocationCompatibilityService;
     }
 
     /** @return array<string, string> */
@@ -140,7 +144,7 @@ class MatchingService
             throw ValidationException::withMessages(['user' => ['Only job seekers can access recommended jobs.']]);
         }
 
-        $profile = $user->jobSeekerProfile()->with(['skills', 'experiences', 'education'])->first();
+        $profile = $user->jobSeekerProfile()->with(['city', 'skills', 'experiences', 'education'])->first();
         if (! $profile instanceof JobSeekerProfile) {
             throw ValidationException::withMessages([
                 'job_seeker_profile' => ['A job seeker profile is required before recommendations can be computed.'],
@@ -148,7 +152,7 @@ class MatchingService
         }
 
         $jobs = JobPosting::query()
-            ->with(['company', 'skills'])
+            ->with(['company', 'city', 'skills'])
             ->where('status', 'open')
             ->whereHas('company', fn ($query) => $query->where('approval_status', 'approved'))
             ->whereDoesntHave('jobApplications', fn ($query) => $query
@@ -178,10 +182,11 @@ class MatchingService
     /** @return Collection<int, array<string, mixed>> */
     public function rankCandidatesForJob(JobPosting $jobPosting, int $limit = 10): Collection
     {
-        $jobPosting->loadMissing(['company', 'skills']);
+        $jobPosting->loadMissing(['company', 'city', 'skills']);
         $applications = $jobPosting->jobApplications()->with([
             'applicationStatus',
             'jobSeekerProfile.user',
+            'jobSeekerProfile.city',
             'jobSeekerProfile.skills',
             'jobSeekerProfile.experiences',
             'jobSeekerProfile.education',
@@ -219,8 +224,8 @@ class MatchingService
     public function scoreMatch(JobPosting $job, JobSeekerProfile $profile, float $cosineSimilarity): array
     {
         $weights = $this->componentWeights();
-        $job->loadMissing('skills');
-        $profile->loadMissing(['skills', 'experiences', 'education']);
+        $job->loadMissing(['city', 'skills']);
+        $profile->loadMissing(['city', 'skills', 'experiences', 'education']);
         $candidateSkillIds = $profile->skills->pluck('id')->map(fn ($id): int => (int) $id)->flip();
 
         $required = $this->skillComponent(
@@ -238,7 +243,8 @@ class MatchingService
         $experience = $this->experienceComponent($job, $profile, $weights['experience']);
         $education = $this->educationComponent($job, $profile, $weights['education']);
         $text = $this->textComponent($cosineSimilarity, $weights['text_similarity']);
-        $score = $this->roundScore($required['score'] + $nice['score'] + $experience['score'] + $education['score'] + $text['score']);
+        $location = $this->locationCompatibility->evaluate($job, $profile, $weights['location']);
+        $score = $this->roundScore($required['score'] + $nice['score'] + $experience['score'] + $education['score'] + $text['score'] + $location['score']);
 
         $matchedRequired = $required['matched_skills'];
         $missingRequired = $required['missing_skills'];
@@ -249,6 +255,7 @@ class MatchingService
             'experience' => $experience,
             'education' => $education,
             'text_similarity' => $text,
+            'location' => $location,
             // Additive legacy ratios retained for older consumers.
             'skills' => $this->legacySkillRatio($required, $nice),
             'core' => $text['cosine_similarity'],
@@ -268,7 +275,8 @@ class MatchingService
             'matched_required_skills' => $matchedRequired,
             'missing_required_skills' => $missingRequired,
             'matched_nice_to_have_skills' => $matchedNice,
-            'reasons' => $this->reasons($required, $nice, $experience, $education, $text),
+            'location_match' => $location,
+            'reasons' => $this->reasons($required, $nice, $experience, $education, $text, $location),
         ];
     }
 
@@ -395,7 +403,7 @@ class MatchingService
     }
 
     /** @return array<int, array<string, mixed>> */
-    private function reasons(array $required, array $nice, array $experience, array $education, array $text): array
+    private function reasons(array $required, array $nice, array $experience, array $education, array $text, array $location): array
     {
         $reasons = [[
             'code' => 'REQUIRED_SKILLS_MATCH',
@@ -417,6 +425,11 @@ class MatchingService
             ? ['code' => 'EDUCATION_NOT_CONFIGURED', 'message' => 'No education level was configured for this job.', 'value' => 100.0]
             : ['code' => 'EDUCATION_MATCH', 'message' => 'Education level was compared with the job requirement.', 'value' => $this->ratio($education['score'], $education['max_score']) * 100];
         $reasons[] = ['code' => 'TEXT_SIMILARITY', 'message' => 'Professional profile text was compared with the job text.', 'value' => $text['match_percentage']];
+        $reasons[] = [
+            'code' => $location['reason_code'],
+            'message' => $location['message'],
+            'value' => $location['match_percentage'],
+        ];
 
         return $reasons;
     }
@@ -425,7 +438,7 @@ class MatchingService
     private function componentWeights(): array
     {
         $weights = config('matching.components', []);
-        $requiredKeys = ['required_skills', 'nice_to_have_skills', 'experience', 'education', 'text_similarity'];
+        $requiredKeys = ['required_skills', 'nice_to_have_skills', 'experience', 'education', 'text_similarity', 'location'];
         if (array_keys($weights) !== $requiredKeys
             || collect($weights)->contains(fn ($weight): bool => ! is_numeric($weight) || (float) $weight < 0)
             || abs((float) array_sum($weights) - 100.0) > 0.00001) {

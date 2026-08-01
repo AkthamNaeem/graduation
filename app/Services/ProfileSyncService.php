@@ -22,7 +22,10 @@ class ProfileSyncService
 
     private const SOURCE_CV_MERGED = 'cv_merged';
 
-    public function __construct(private readonly AuditLogService $auditLogService) {}
+    public function __construct(
+        private readonly AuditLogService $auditLogService,
+        private readonly CityMatcher $cityMatcher,
+    ) {}
 
     /** @return Collection<int, ProfileChangeSuggestion> */
     public function generateSuggestionsFromParsedCV(User $user, CVFile $cvFile): Collection
@@ -57,6 +60,7 @@ class ProfileSyncService
             $parsed = $result->parsed_json ?? [];
 
             $this->suggestProfileScalars($user, $profile, $lockedCV, $parsed);
+            $this->suggestProfileCity($user, $profile, $lockedCV, $parsed);
             $this->suggestExperiences($user, $profile, $lockedCV, $parsed['experience'] ?? []);
             $this->suggestEducation($user, $profile, $lockedCV, $parsed['education'] ?? []);
             $this->suggestSkills($user, $profile, $lockedCV, $parsed['skills'] ?? []);
@@ -252,6 +256,33 @@ class ProfileSyncService
         }
     }
 
+    /** @param array<string, mixed> $parsed */
+    private function suggestProfileCity(User $user, JobSeekerProfile $profile, CVFile $cvFile, array $parsed): void
+    {
+        $location = $this->cleanString($parsed['location'] ?? null);
+        $city = $this->cityMatcher->match($location);
+        if ($city === null) {
+            return;
+        }
+
+        $current = $profile->city_id === null ? null : (int) $profile->city_id;
+        $incoming = (int) $city->id;
+        $type = $current === null
+            ? ProfileChangeSuggestion::TYPE_ADD
+            : ($current === $incoming ? ProfileChangeSuggestion::TYPE_IGNORE : ProfileChangeSuggestion::TYPE_UPDATE);
+
+        $this->createSuggestion($user, $profile, $cvFile, [
+            'entity_type' => ProfileChangeSuggestion::ENTITY_PROFILE,
+            'suggestion_type' => $type,
+            'old_value' => ['city_id' => $current],
+            'new_value' => ['city_id' => $incoming],
+            'confidence_score' => 0.95,
+            'reason' => $type === ProfileChangeSuggestion::TYPE_IGNORE
+                ? 'The profile city already matches the parsed CV.'
+                : 'A Syrian city was identified from the parsed CV location for review.',
+        ]);
+    }
+
     /** @param array<int, mixed> $items */
     private function suggestExperiences(User $user, JobSeekerProfile $profile, CVFile $cvFile, array $items): void
     {
@@ -390,7 +421,7 @@ class ProfileSyncService
 
     private function applyProfile(JobSeekerProfile $profile, array $value): void
     {
-        $profile->forceFill(collect($value)->only(['phone', 'summary', 'location'])->all())->save();
+        $profile->forceFill(collect($value)->only(['phone', 'summary', 'location', 'city_id'])->all())->save();
     }
 
     private function applyExperience(JobSeekerProfile $profile, ProfileChangeSuggestion $suggestion, array $value): void
@@ -550,7 +581,7 @@ class ProfileSyncService
             'rejected_count' => $suggestions->where('status', ProfileChangeSuggestion::STATUS_REJECTED)->count(),
             'ignored_count' => $suggestions->where('suggestion_type', ProfileChangeSuggestion::TYPE_IGNORE)->count(),
             'already_applied' => $already,
-            'profile' => $this->jobSeekerProfile($user)->load(['user', 'experiences', 'education', 'skills']),
+            'profile' => $this->jobSeekerProfile($user)->load(['user', 'city', 'experiences', 'education', 'skills']),
         ];
     }
 

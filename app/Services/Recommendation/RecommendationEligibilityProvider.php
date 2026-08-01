@@ -23,7 +23,7 @@ final class RecommendationEligibilityProvider implements RecommendationEligibili
         }
 
         $profile = $user->jobSeekerProfile()
-            ->with(['skills', 'experiences', 'education'])
+            ->with(['city', 'skills', 'experiences', 'education'])
             ->first();
         if (! $profile instanceof JobSeekerProfile) {
             throw ValidationException::withMessages([
@@ -34,7 +34,7 @@ final class RecommendationEligibilityProvider implements RecommendationEligibili
         }
 
         $jobs = JobPosting::query()
-            ->with(['company', 'skills'])
+            ->with(['company', 'city', 'skills'])
             ->where('status', 'open')
             ->whereHas(
                 'company',

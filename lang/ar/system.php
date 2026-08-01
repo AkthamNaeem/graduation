@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'profile_city_matched' => 'مدينة الملف الشخصي مطابقة بالفعل للمدينة المستخرجة من السيرة الذاتية.',
+    'profile_city_review' => 'تم التعرف على مدينة سورية من موقع السيرة الذاتية وهي بانتظار مراجعتك.',
     'application_interview_recalculated' => 'أُعيد احتساب حالة مقابلة طلب التوظيف.',
     'interview_closed_no_show' => 'أُغلقت المقابلة بسبب عدم الحضور.',
     'interview_completed_candidate' => 'اكتملت مقابلة المرشح.',

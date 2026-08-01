@@ -8,7 +8,8 @@ return [
         'nice_to_have_skills' => 10,
         'experience' => 20,
         'education' => 10,
-        'text_similarity' => 15,
+        'text_similarity' => 10,
+        'location' => 5,
     ],
 
     'experience_levels' => [

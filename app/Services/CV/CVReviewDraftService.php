@@ -7,11 +7,19 @@ use App\Models\Education;
 use App\Models\Experience;
 use App\Models\JobSeekerProfile;
 use App\Models\Skill;
+use App\Services\CityMatcher;
 use Illuminate\Support\Str;
 
 class CVReviewDraftService
 {
     private const SOURCE_CV_CONFIRMED = 'cv_confirmed';
+
+    private readonly CityMatcher $cityMatcher;
+
+    public function __construct(?CityMatcher $cityMatcher = null)
+    {
+        $this->cityMatcher = $cityMatcher ?? new CityMatcher;
+    }
 
     /**
      * @param  array<string, mixed>  $parsed
@@ -19,11 +27,19 @@ class CVReviewDraftService
      */
     public function build(array $parsed): array
     {
+        $city = $this->cityMatcher->match($parsed['location'] ?? null);
+        $profile = [
+            'phone' => $parsed['phone'] ?? null,
+            'summary' => $parsed['summary'] ?? null,
+            'location' => $parsed['location'] ?? null,
+        ];
+        if ($city !== null) {
+            $profile['city_id'] = $city->id;
+        }
+
         return $this->normalize([
             'profile' => [
-                'phone' => $parsed['phone'] ?? null,
-                'summary' => $parsed['summary'] ?? null,
-                'location' => $parsed['location'] ?? null,
+                ...$profile,
             ],
             'experience' => collect($parsed['experience'] ?? [])->filter(fn (mixed $item): bool => is_array($item))->map(function (array $item): array {
                 return [
@@ -56,12 +72,19 @@ class CVReviewDraftService
     {
         $profile = is_array($draft['profile'] ?? null) ? $draft['profile'] : [];
 
+        $normalizedProfile = [
+            'phone' => $this->clean($profile['phone'] ?? null),
+            'summary' => $this->clean($profile['summary'] ?? null),
+            'location' => $this->clean($profile['location'] ?? null),
+        ];
+        if (array_key_exists('city_id', $profile)) {
+            $normalizedProfile['city_id'] = is_numeric($profile['city_id'])
+                ? (int) $profile['city_id']
+                : $profile['city_id'];
+        }
+
         return [
-            'profile' => [
-                'phone' => $this->clean($profile['phone'] ?? null),
-                'summary' => $this->clean($profile['summary'] ?? null),
-                'location' => $this->clean($profile['location'] ?? null),
-            ],
+            'profile' => $normalizedProfile,
             'experience' => collect($draft['experience'] ?? [])->filter(fn (mixed $item): bool => is_array($item))->map(fn (array $item): array => [
                 'title' => $this->clean($item['title'] ?? null),
                 'company_name' => $this->clean($item['company_name'] ?? null),
@@ -95,7 +118,7 @@ class CVReviewDraftService
     public function apply(JobSeekerProfile $profile, CVFile $cvFile, array $draft): void
     {
         $draft = $this->normalize($draft);
-        $profile->forceFill($draft['profile'])->save();
+        $profile->forceFill(collect($draft['profile'])->only(['phone', 'summary', 'location', 'city_id'])->all())->save();
         $source = ['source_type' => self::SOURCE_CV_CONFIRMED, 'source_cv_file_id' => $cvFile->id, 'user_verified_at' => now()];
 
         foreach ($draft['experience'] as $value) {

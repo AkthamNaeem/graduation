@@ -105,6 +105,7 @@ final readonly class RecommendationResultHydrator implements RecommendationResul
                 'matched_nice_to_have_skills' => (
                     $skillProjection['matched_nice_to_have_skills']
                 ),
+                'location_match' => $stored->breakdown['location'] ?? null,
                 'reasons' => $reasons,
                 'rank' => $index + 1,
                 'recommendation_engine' => $run->engine->value,

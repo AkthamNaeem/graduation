@@ -28,6 +28,7 @@ use App\Http\Controllers\Api\V1\Profile\ExperienceController;
 use App\Http\Controllers\Api\V1\Profile\ProfileController;
 use App\Http\Controllers\Api\V1\Profile\ProfileSkillController;
 use App\Http\Controllers\Api\V1\Profile\ProfileSuggestionController;
+use App\Http\Controllers\Api\V1\Reference\CityController;
 use App\Http\Controllers\Api\V1\Skill\SkillController;
 use App\Http\Controllers\Api\V1\Test\TestAnswerController;
 use App\Http\Controllers\Api\V1\Test\TestAssignmentController;
@@ -39,6 +40,9 @@ use App\Http\Controllers\Api\V1\Test\TestManualGradingController;
 use App\Http\Controllers\Api\V1\Test\TestQuestionController;
 use App\Http\Controllers\Api\V1\Test\TestRetakeController;
 use Illuminate\Support\Facades\Route;
+
+Route::get('reference/cities', [CityController::class, 'index'])
+    ->name('reference.cities.index');
 
 Route::get('home', HomeController::class)
     ->middleware('auth.sanctum.optional')

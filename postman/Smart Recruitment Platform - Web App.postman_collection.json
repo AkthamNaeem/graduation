@@ -30,6 +30,44 @@
     ],
     "item": [
         {
+            "name": "Syrian Cities Integration",
+            "description": "Structured Syrian city support is additive. Keep sending/reading free-text location; city_id is nullable and city is a localized object. Accept-Language controls city.name and matching messages.",
+            "item": [
+                {
+                    "name": "List Active Syrian Cities",
+                    "request": {
+                        "auth": {"type": "noauth"},
+                        "method": "GET",
+                        "header": [{"key": "Accept-Language", "value": "{{locale}}"}],
+                        "url": "{{base_url}}/reference/cities?search=dam&active_only=true",
+                        "description": "Public. Returns active SY cities by default. Query: search (code, Arabic name, English name), active_only (boolean). Response item: {id, code, name, country_code}."
+                    },
+                    "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.test('Cities reference succeeds', () => pm.response.to.have.status(200));", "if (pm.response.code === 200 && pm.response.json().data.length) pm.environment.set('city_id', pm.response.json().data[0].id);"]}}]
+                },
+                {
+                    "name": "Filter Public Jobs by City",
+                    "request": {
+                        "auth": {"type": "noauth"},
+                        "method": "GET",
+                        "header": [{"key": "Accept-Language", "value": "{{locale}}"}],
+                        "url": "{{base_url}}/jobs?city_id={{city_id}}&include_remote=false&sort_by=published_at&sort_direction=desc",
+                        "description": "Exact structured city match. Legacy location search remains separate. Remote jobs are excluded unless include_remote=true. Public visibility still excludes draft/closed jobs and unapproved companies."
+                    }
+                },
+                {
+                    "name": "Create On-site Job With City",
+                    "request": {
+                        "auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{employer_token}}", "type": "string"}]},
+                        "method": "POST",
+                        "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Accept-Language", "value": "{{locale}}"}],
+                        "url": "{{base_url}}/jobs",
+                        "body": {"mode": "raw", "raw": "{\n  \"title\": \"Backend Developer\",\n  \"description\": \"Build recruitment APIs\",\n  \"requirements\": \"Laravel experience\",\n  \"employment_type\": \"full_time\",\n  \"experience_level\": \"mid_level\",\n  \"work_mode\": \"on_site\",\n  \"location\": \"Damascus, Al-Thawra Street\",\n  \"city_id\": {{city_id}}\n}", "options": {"raw": {"language": "json"}}},
+                        "description": "Employer/company authorization is unchanged. city_id is optional but, when present, must identify an active Syrian city. Remote jobs may send city_id=null."
+                    }
+                }
+            ]
+        },
+        {
             "name": "Job Screening Questions",
             "description": "Employer management and public read contract. Questions remain editable for future applications until the job is closed; submitted applications keep immutable snapshots.",
             "item": [
@@ -505,10 +543,10 @@
                                     }
                                 ],
                                 "url": "{{base_url}}/auth/register/job-seeker",
-                                "description": "Creates an unverified job seeker and hashed OTP record. No token or OTP is returned and no delivery occurs.",
+                                "description": "Creates an unverified job seeker and hashed OTP record. Optional location/city_id initialize the profile using active Syrian-city validation. No token or OTP is returned and no delivery occurs.",
                                 "body": {
                                     "mode": "raw",
-                                    "raw": "{\n  \"name\": \"OTP Job Seeker\",\n  \"email\": \"{{otp_job_seeker_email}}\",\n  \"password\": \"password\",\n  \"password_confirmation\": \"password\",\n  \"phone\": \"+1 555 0100\",\n  \"terms_accepted\": true\n}",
+                                    "raw": "{\n  \"name\": \"OTP Job Seeker\",\n  \"email\": \"{{otp_job_seeker_email}}\",\n  \"password\": \"password\",\n  \"password_confirmation\": \"password\",\n  \"phone\": \"+1 555 0100\",\n  \"location\": \"Damascus city centre\",\n  \"city_id\": {{city_id}},\n  \"terms_accepted\": true\n}",
                                     "options": {
                                         "raw": {
                                             "language": "json"

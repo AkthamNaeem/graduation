@@ -2,17 +2,22 @@
 
 namespace App\Http\Requests\Api\V1\CV;
 
+use App\Http\Requests\Concerns\ReturnsCityValidationCodes;
+use App\Rules\ActiveSyrianCity;
 use Illuminate\Validation\Validator;
 
 class UpdateCVReviewDraftRequest extends CVIndexRequest
 {
+    use ReturnsCityValidationCodes;
+
     public function rules(): array
     {
         return [
-            'profile' => ['required', 'array:phone,summary,location'],
+            'profile' => ['required', 'array:phone,summary,location,city_id'],
             'profile.phone' => ['present', 'nullable', 'string', 'max:50'],
             'profile.summary' => ['present', 'nullable', 'string', 'max:5000'],
             'profile.location' => ['present', 'nullable', 'string', 'max:255'],
+            'profile.city_id' => ['bail', 'sometimes', 'nullable', 'integer', new ActiveSyrianCity],
             'experience' => ['present', 'array', 'max:100'],
             'experience.*' => ['array:title,company_name,location,start_date,end_date,is_current,description'],
             'experience.*.title' => ['required', 'string', 'max:255'],

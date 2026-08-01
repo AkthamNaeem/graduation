@@ -6,12 +6,16 @@ use App\Enums\EmploymentType;
 use App\Enums\ExperienceLevel;
 use App\Enums\JobSkillRequirementType;
 use App\Enums\JobWorkMode;
+use App\Http\Requests\Concerns\ReturnsCityValidationCodes;
+use App\Rules\ActiveSyrianCity;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class IndexJobPostingRequest extends FormRequest
 {
+    use ReturnsCityValidationCodes;
+
     protected function prepareForValidation(): void
     {
         $normalized = [];
@@ -37,6 +41,13 @@ class IndexJobPostingRequest extends FormRequest
                 $this->merge(['accepting_applications' => $value]);
             }
         }
+
+        if ($this->has('include_remote')) {
+            $value = filter_var($this->input('include_remote'), FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            if ($value !== null) {
+                $this->merge(['include_remote' => $value]);
+            }
+        }
     }
 
     public function authorize(): bool
@@ -52,6 +63,17 @@ class IndexJobPostingRequest extends FormRequest
         return [
             'search' => ['sometimes', 'nullable', 'string', 'max:255'],
             'location' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'city_id' => ['bail', 'sometimes', 'nullable', 'integer', new ActiveSyrianCity],
+            'city_code' => [
+                'sometimes',
+                'nullable',
+                'string',
+                'max:100',
+                Rule::exists('cities', 'code')->where(fn ($query) => $query
+                    ->where('country_code', 'SY')
+                    ->where('is_active', true)),
+            ],
+            'include_remote' => ['sometimes', 'boolean'],
             'skill' => ['sometimes', 'nullable', 'string', 'max:255'],
             'experience_level' => ['sometimes', 'nullable', Rule::enum(ExperienceLevel::class)],
             'employment_type' => ['sometimes', 'nullable', Rule::enum(EmploymentType::class)],

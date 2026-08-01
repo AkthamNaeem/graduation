@@ -33,6 +33,7 @@ class ReferenceDataSeeder extends Seeder
     public function run(): void
     {
         $this->call(ApplicationStatusSeeder::class);
+        $this->call(CitySeeder::class);
 
         foreach (self::SKILLS as $name) {
             Skill::query()->updateOrCreate(

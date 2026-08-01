@@ -3186,3 +3186,98 @@ free text. Both Postman collections additionally inspect returned presentation
 fields for the exact `{key,value}` shape. Final full-suite, Pint, Composer, JSON,
 and diff-check counts are recorded in the task handoff and the dedicated audit:
 `reports/LOCALIZED_KEY_VALUE_CONTRACT_AUDIT.md`.
+## 42. Structured Syrian Cities (2026-08-01)
+
+### Baseline and design decision
+
+Before this change, `job_seeker_profiles.location` and
+`job_postings.location` were nullable free-text columns. Profile and job
+Requests/Resources/Services already owned those contracts; public search used
+the existing `JobPostingService`; recommendation and employer candidate ranking
+shared `MatchingService` with centralized 100-point weights; localization used
+`SetRequestLocale` plus the existing `lang/en` and `lang/ar` catalogs; CV
+review already separated immutable parsed data, editable initial drafts, and
+candidate-approved profile-sync suggestions. No city/reference model existed.
+
+The implementation adds a `cities` lookup table rather than an enum. Stable
+`id`/`code` values drive relationships and matching; `name_ar`/`name_en` are
+presentation data. Nullable `city_id` foreign keys use `nullOnDelete`, retain
+the original `location` columns unchanged, and preserve all legacy records and
+requests. The seed inventory contains 14 Syrian cities and can be extended
+without schema or business-logic changes. Seeder backfill is deliberately
+limited to exact English/Arabic city names and exact `City, Syria` forms.
+
+### Schema, API, and validation
+
+- Migration `2026_08_01_000001_create_cities_and_add_city_references.php`
+  creates `cities(id, code unique, country_code indexed default SY, name_ar,
+  name_en, is_active indexed, timestamps)` and indexed nullable foreign keys
+  on both profile and job tables.
+- `City`, its inverse relationships, the profile/job `belongsTo` relationships,
+  and `city_id` fillable entries were added.
+- Public `GET /api/v1/reference/cities` accepts `search` and `active_only`,
+  scopes to Syria, defaults to active rows, and returns localized `name`.
+- Profile/job create-update responses add nullable `city`; Home, employer,
+  application, authentication, and public job presentations reuse the same
+  resource. Existing ownership and company policies remain authoritative.
+- Job-seeker registration accepts optional `location` and `city_id` and stores
+  both on the automatically created profile; legacy registration remains
+  unchanged when they are omitted.
+- Writes accept nullable `city_id` and reject non-integer, missing, inactive,
+  or non-Syrian references with localized field errors and stable codes
+  `INVALID_CITY_ID`, `CITY_NOT_FOUND`, `CITY_INACTIVE`, or `CITY_NOT_SYRIAN`.
+- Remote jobs require no city and receive no placeholder. Existing work-mode
+  rules for the free-text location remain unchanged.
+
+### Search, matching, and CV synchronization
+
+Public/employer job queries eager-load cities. `city_id` and optional
+`city_code` are exact relationship filters; they never inspect legacy
+`location`. `include_remote=true` explicitly includes remote jobs alongside a
+city filter. Existing filters, visibility, pagination, and sorting compose as
+before. General text search additionally matches city code and both names.
+
+Matching version 2 keeps a 100-point total: required skills 45,
+nice-to-have skills 10, experience 20, education 10, text similarity 10, and
+location 5. Same-city and remote cases receive 5/5; missing city data is neutral
+at 2.5/5; a different on-site/hybrid city receives 0/5 without exclusion.
+Recommendation and ranked-candidate contracts expose translated reasons,
+`breakdown.location`, and `location_match`. Candidate wording is viewer-aware,
+and no location result performs an application state transition. ML display
+ranking incorporates the same configured component only when actionable while
+preserving the provider payload schema.
+
+CV city recognition is local and deterministic over active Syrian `name_ar`,
+`name_en`, and `code`; there is no fuzzy matching or external API. Initial
+imports add optional `profile.city_id` only to the review draft. Existing
+profiles receive a separate ADD/UPDATE/IGNORE suggestion. Manual data remains
+unchanged until candidate confirmation/final apply, and unknown/ambiguous text
+produces no city id.
+
+### Documentation and verification inventory
+
+Added/updated documentation: `docs/SYRIAN_CITIES_API.md`, README integration
+link, mobile CV review notes, both Postman collections, shared Postman
+environment, and this report. Feature/unit coverage is in
+`CitySupportTest`, `LocationCompatibilityServiceTest`, and the extended
+`MatchingServiceTest`, covering localization, active filtering, profile and job
+writes/removal/backward compatibility, exact search, remote inclusion,
+explainable location states/ranking, and conservative CV suggestions.
+
+Frontend implementation is intentionally out of scope. The complete endpoint,
+request/response, validation, localization, side-effect, and client integration
+contract is documented in `docs/SYRIAN_CITIES_API.md`.
+
+### Final verification
+
+- Complete Laravel suite: **884 passed, 2 expected opt-in skips, 26845
+  assertions, 0 failed**.
+- Focused city, matching, recommendation, CV, and protected-contract suites:
+  passed.
+- Laravel Pint `--test --dirty`: passed after formatting changed PHP files.
+- PHP syntax: passed for all 63 changed or newly added PHP files.
+- Composer strict validation: passed. The project defines no PHPStan, Psalm,
+  or other static-analysis command.
+- Postman Web, Mobile, and Environment JSON parsing: passed.
+- Route registration and `git diff --check`: passed.
+- No frontend change, commit, or push was performed.

@@ -1,6 +1,10 @@
 <?php
 
 return [
+    'CITY_NOT_FOUND' => 'The selected city was not found.',
+    'CITY_INACTIVE' => 'The selected city is inactive.',
+    'CITY_NOT_SYRIAN' => 'The selected city must be in Syria.',
+    'INVALID_CITY_ID' => 'The city id must be a valid integer.',
     'APPLICATION_ALREADY_EXISTS' => 'You have already applied for this job.',
     'APPLICATION_INVALID_STATUS_TRANSITION' => 'The requested application status transition is not allowed.',
     'APPLICATION_INFORMATION_REQUEST_ALREADY_OPEN' => 'There is already an open information request for this application.',

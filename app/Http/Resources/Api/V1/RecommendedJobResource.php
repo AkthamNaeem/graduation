@@ -27,6 +27,7 @@ class RecommendedJobResource extends JsonResource
             'matched_required_skills' => $this->resource['matched_required_skills'],
             'missing_required_skills' => $this->resource['missing_required_skills'],
             'matched_nice_to_have_skills' => $this->resource['matched_nice_to_have_skills'],
+            'location_match' => $this->resource['location_match'],
             'reasons' => collect($this->resource['reasons'])
                 ->map(fn (array $reason): array => RecommendationReasonTranslator::translate($reason))
                 ->values()

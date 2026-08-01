@@ -140,6 +140,7 @@ class EmailVerificationService
         $user = $result['user'];
         $user->loadMissing([
             'jobSeekerProfile.experiences',
+            'jobSeekerProfile.city',
             'jobSeekerProfile.education',
             'jobSeekerProfile.skills',
             'employerProfile.company',

@@ -29,4 +29,13 @@ return ['reasons' => [
     'EDUCATION_NOT_CONFIGURED' => 'No education level was configured for this job.',
     'EDUCATION_MATCH' => 'Education level was compared with the job requirement.',
     'TEXT_SIMILARITY' => 'Professional profile text was compared with the job text.',
+    'SAME_CITY' => 'The job is in your city.',
+    'REMOTE_LOCATION_COMPATIBLE' => 'This remote job is compatible with your location.',
+    'DIFFERENT_CITY' => 'The job is in a different city.',
+    'LOCATION_DATA_MISSING' => 'City data is missing, so location was treated neutrally.',
+], 'candidate_location' => [
+    'same_city' => 'The candidate and job are in the same city.',
+    'different_city' => 'The candidate and job are in different cities.',
+    'remote' => 'The remote job does not penalize the candidate location.',
+    'missing' => 'City data is incomplete, so location was treated neutrally.',
 ]];

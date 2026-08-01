@@ -19,6 +19,7 @@ class JobSeekerProfile extends Model
         'summary',
         'phone',
         'location',
+        'city_id',
         'portfolio_url',
         'linkedin_url',
         'github_url',
@@ -27,6 +28,11 @@ class JobSeekerProfile extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function city(): BelongsTo
+    {
+        return $this->belongsTo(City::class);
     }
 
     public function primaryCVFile(): BelongsTo

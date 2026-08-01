@@ -9,7 +9,9 @@ use App\Enums\JobWorkMode;
 use App\Enums\UserRole;
 use App\Http\Requests\Api\V1\JobPosting\Concerns\NormalizesJobSkillInput;
 use App\Http\Requests\Api\V1\JobPosting\Concerns\ResolvesJobPostingUser;
+use App\Http\Requests\Concerns\ReturnsCityValidationCodes;
 use App\Models\JobPosting;
+use App\Rules\ActiveSyrianCity;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
@@ -20,6 +22,7 @@ class StoreJobPostingRequest extends FormRequest
 {
     use NormalizesJobSkillInput;
     use ResolvesJobPostingUser;
+    use ReturnsCityValidationCodes;
 
     protected function prepareForValidation(): void
     {
@@ -83,6 +86,7 @@ class StoreJobPostingRequest extends FormRequest
             'experience_level' => ['required', Rule::enum(ExperienceLevel::class)],
             'education_level' => ['sometimes', 'nullable', Rule::enum(EducationLevel::class)],
             'location' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'city_id' => ['bail', 'sometimes', 'nullable', 'integer', new ActiveSyrianCity],
             'work_mode' => ['required', Rule::enum(JobWorkMode::class)],
             'salary_min' => ['sometimes', 'nullable', 'numeric', 'min:0'],
             'salary_max' => ['sometimes', 'nullable', 'numeric', 'min:0'],

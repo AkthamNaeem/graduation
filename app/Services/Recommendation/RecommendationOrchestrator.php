@@ -304,6 +304,15 @@ final readonly class RecommendationOrchestrator implements RecommendationOrchest
         }
 
         usort($items, function (array $left, array $right): int {
+            $leftLocationStatus = $left['location_match']['status'] ?? 'missing';
+            $rightLocationStatus = $right['location_match']['status'] ?? 'missing';
+            if ($leftLocationStatus !== 'missing' || $rightLocationStatus !== 'missing') {
+                $displayOrder = $right['score'] <=> $left['score'];
+                if ($displayOrder !== 0) {
+                    return $displayOrder;
+                }
+            }
+
             $scoreOrder = $right['_ml_raw_score'] <=> $left['_ml_raw_score'];
             if ($scoreOrder !== 0) {
                 return $scoreOrder;

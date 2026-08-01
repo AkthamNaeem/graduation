@@ -26,6 +26,7 @@ class JobPosting extends Model
         'experience_level',
         'education_level',
         'location',
+        'city_id',
         'work_mode',
         'salary_min',
         'salary_max',
@@ -51,6 +52,11 @@ class JobPosting extends Model
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
+    }
+
+    public function city(): BelongsTo
+    {
+        return $this->belongsTo(City::class);
     }
 
     public function skills(): BelongsToMany

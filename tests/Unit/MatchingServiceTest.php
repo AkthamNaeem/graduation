@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Enums\UserRole;
+use App\Models\City;
 use App\Models\Company;
 use App\Models\Education;
 use App\Models\Experience;
@@ -130,11 +131,13 @@ class MatchingServiceTest extends TestCase
         $recommendedJobs = $service->recommendJobsForUser($user);
 
         $this->assertCount(1, $recommendedJobs);
-        $this->assertSame(68.66, $recommendedJobs->first()['score']);
+        $this->assertSame(69.94, $recommendedJobs->first()['score']);
         $this->assertSame(1.0, $recommendedJobs->first()['breakdown']['skills']);
         $this->assertSame(0.0, $recommendedJobs->first()['breakdown']['experience']['score']);
         $this->assertSame(0.24, $recommendedJobs->first()['breakdown']['core']);
-        $this->assertSame(3.66, $recommendedJobs->first()['breakdown']['text_similarity']['score']);
+        $this->assertSame(2.44, $recommendedJobs->first()['breakdown']['text_similarity']['score']);
+        $this->assertSame(2.5, $recommendedJobs->first()['breakdown']['location']['score']);
+        $this->assertSame('missing', $recommendedJobs->first()['location_match']['status']);
         $this->assertSame(10.0, $recommendedJobs->first()['breakdown']['education']['score']);
         $this->assertSame('2.0', $recommendedJobs->first()['matching_score_version']);
     }
@@ -165,15 +168,54 @@ class MatchingServiceTest extends TestCase
         $recommendedJobs = $service->recommendJobsForUser($user);
 
         $this->assertCount(1, $recommendedJobs);
-        $this->assertSame(40.0, $recommendedJobs->first()['score']);
+        $this->assertSame(42.5, $recommendedJobs->first()['score']);
         $this->assertSame(0.0, $recommendedJobs->first()['breakdown']['required_skills']['score']);
         $this->assertSame(10.0, $recommendedJobs->first()['breakdown']['nice_to_have_skills']['score']);
         $this->assertTrue($recommendedJobs->first()['breakdown']['nice_to_have_skills']['not_applicable']);
         $this->assertSame(20.0, $recommendedJobs->first()['breakdown']['experience']['score']);
         $this->assertSame(10.0, $recommendedJobs->first()['breakdown']['education']['score']);
         $this->assertSame(0.0, $recommendedJobs->first()['breakdown']['text_similarity']['score']);
+        $this->assertSame(2.5, $recommendedJobs->first()['breakdown']['location']['score']);
         $this->assertSame([], $recommendedJobs->first()['matched_skills']);
         $this->assertSame($job->id, $recommendedJobs->first()['job']->id);
+    }
+
+    public function test_city_component_affects_ranking_without_excluding_different_city_jobs(): void
+    {
+        $service = new MatchingService;
+        $company = $this->company();
+        $damascus = City::create([
+            'code' => 'damascus', 'country_code' => 'SY', 'name_ar' => 'دمشق',
+            'name_en' => 'Damascus', 'is_active' => true,
+        ]);
+        $aleppo = City::create([
+            'code' => 'aleppo', 'country_code' => 'SY', 'name_ar' => 'حلب',
+            'name_en' => 'Aleppo', 'is_active' => true,
+        ]);
+        $user = $this->user('city-ranking@example.com');
+        JobSeekerProfile::create([
+            'user_id' => $user->id, 'headline' => 'Engineer', 'city_id' => $damascus->id,
+        ]);
+
+        $different = $this->jobPostingFor($company, [
+            'title' => 'Equivalent Engineer', 'description' => 'Same professional facts',
+            'city_id' => $aleppo->id, 'work_mode' => 'on_site', 'status' => 'open',
+            'published_at' => now(),
+        ]);
+        $same = $this->jobPostingFor($company, [
+            'title' => 'Equivalent Engineer', 'description' => 'Same professional facts',
+            'city_id' => $damascus->id, 'work_mode' => 'on_site', 'status' => 'open',
+            'published_at' => now()->subDay(),
+        ]);
+
+        $ranked = $service->recommendJobsForUser($user);
+
+        $this->assertCount(2, $ranked);
+        $this->assertSame($same->id, $ranked[0]['job']->id);
+        $this->assertSame('same_city', $ranked[0]['location_match']['status']);
+        $this->assertSame('different_city', $ranked[1]['location_match']['status']);
+        $this->assertContains('SAME_CITY', array_column($ranked[0]['reasons'], 'code'));
+        $this->assertSame($different->id, $ranked[1]['job']->id);
     }
 
     private function company(): Company

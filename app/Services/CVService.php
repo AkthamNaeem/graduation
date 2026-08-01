@@ -9,6 +9,7 @@ use App\Models\CVParsingResult;
 use App\Models\JobSeekerProfile;
 use App\Models\ProfileChangeSuggestion;
 use App\Models\User;
+use App\Rules\ActiveSyrianCity;
 use App\Services\CV\CVReviewDraftService;
 use App\Services\CV\ProfileDataStateService;
 use Illuminate\Http\UploadedFile;
@@ -223,7 +224,7 @@ class CVService
             ]);
 
             return [
-                'profile' => $profile->refresh()->load(['user', 'experiences', 'education', 'skills']),
+                'profile' => $profile->refresh()->load(['user', 'city', 'experiences', 'education', 'skills']),
                 'suggestions' => new Collection,
             ];
         });
@@ -233,10 +234,11 @@ class CVService
     private function validateStoredDraft(array $draft): void
     {
         $validator = Validator::make($draft, [
-            'profile' => ['required', 'array:phone,summary,location'],
+            'profile' => ['required', 'array:phone,summary,location,city_id'],
             'profile.phone' => ['present', 'nullable', 'string', 'max:50'],
             'profile.summary' => ['present', 'nullable', 'string', 'max:5000'],
             'profile.location' => ['present', 'nullable', 'string', 'max:255'],
+            'profile.city_id' => ['bail', 'sometimes', 'nullable', 'integer', new ActiveSyrianCity],
             'experience' => ['present', 'array', 'max:100'],
             'experience.*' => ['array:title,company_name,location,start_date,end_date,is_current,description'],
             'experience.*.title' => ['required', 'string', 'max:255'],

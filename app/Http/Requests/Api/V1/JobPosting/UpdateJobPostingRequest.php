@@ -7,6 +7,7 @@ use App\Enums\EmploymentType;
 use App\Enums\ExperienceLevel;
 use App\Enums\JobWorkMode;
 use App\Models\JobPosting;
+use App\Rules\ActiveSyrianCity;
 use Illuminate\Validation\Rule;
 
 class UpdateJobPostingRequest extends StoreJobPostingRequest
@@ -36,6 +37,7 @@ class UpdateJobPostingRequest extends StoreJobPostingRequest
             'experience_level' => ['sometimes', 'required', Rule::enum(ExperienceLevel::class)],
             'education_level' => ['sometimes', 'nullable', Rule::enum(EducationLevel::class)],
             'location' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'city_id' => ['bail', 'sometimes', 'nullable', 'integer', new ActiveSyrianCity],
             'work_mode' => ['sometimes', 'required', Rule::enum(JobWorkMode::class)],
             'salary_min' => ['sometimes', 'nullable', 'numeric', 'min:0'],
             'salary_max' => ['sometimes', 'nullable', 'numeric', 'min:0'],

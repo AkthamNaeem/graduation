@@ -30,6 +30,8 @@ class RegistrationService
             JobSeekerProfile::create([
                 'user_id' => $user->id,
                 'phone' => $data['phone'] ?? null,
+                'location' => $data['location'] ?? null,
+                'city_id' => $data['city_id'] ?? null,
             ]);
 
             $this->emailVerificationService->issueOtp($user);
@@ -70,6 +72,7 @@ class RegistrationService
     {
         return $user->fresh([
             'jobSeekerProfile.experiences',
+            'jobSeekerProfile.city',
             'jobSeekerProfile.education',
             'jobSeekerProfile.skills',
             'employerProfile.company',

@@ -1,6 +1,10 @@
 <?php
 
 return [
+    'CITY_NOT_FOUND' => 'المدينة المحددة غير موجودة.',
+    'CITY_INACTIVE' => 'المدينة المحددة غير مفعلة.',
+    'CITY_NOT_SYRIAN' => 'يجب أن تكون المدينة المحددة داخل سوريا.',
+    'INVALID_CITY_ID' => 'يجب أن يكون معرّف المدينة رقمًا صحيحًا صالحًا.',
     'APPLICATION_ALREADY_EXISTS' => 'لقد تقدمت إلى هذه الوظيفة مسبقًا.',
     'APPLICATION_INVALID_STATUS_TRANSITION' => 'الانتقال المطلوب بين حالات طلب التوظيف غير مسموح.',
     'APPLICATION_INFORMATION_REQUEST_ALREADY_OPEN' => 'يوجد طلب معلومات مفتوح مسبقًا لطلب التوظيف هذا.',

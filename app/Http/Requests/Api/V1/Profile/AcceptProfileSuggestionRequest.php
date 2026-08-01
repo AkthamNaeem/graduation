@@ -2,11 +2,15 @@
 
 namespace App\Http\Requests\Api\V1\Profile;
 
+use App\Http\Requests\Concerns\ReturnsCityValidationCodes;
 use App\Models\ProfileChangeSuggestion;
+use App\Rules\ActiveSyrianCity;
 use Illuminate\Validation\Validator;
 
 class AcceptProfileSuggestionRequest extends GenerateProfileSuggestionsRequest
 {
+    use ReturnsCityValidationCodes;
+
     /**
      * @return array<string, mixed>
      */
@@ -33,8 +37,15 @@ class AcceptProfileSuggestionRequest extends GenerateProfileSuggestionsRequest
     private function profileRules(ProfileChangeSuggestion $suggestion): array
     {
         $field = array_key_first($suggestion->new_value ?? []);
-        if (! in_array($field, ['phone', 'summary', 'location'], true)) {
+        if (! in_array($field, ['phone', 'summary', 'location', 'city_id'], true)) {
             return ['edited_value' => ['prohibited']];
+        }
+
+        if ($field === 'city_id') {
+            return [
+                'edited_value' => ['sometimes', 'array:city_id'],
+                'edited_value.city_id' => ['bail', 'required_with:edited_value', 'nullable', 'integer', new ActiveSyrianCity],
+            ];
         }
 
         return [

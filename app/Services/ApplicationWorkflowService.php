@@ -422,6 +422,7 @@ class ApplicationWorkflowService
     {
         $relations = [
             'jobPosting.company',
+            'jobPosting.city',
             'jobPosting.skills',
             'selectedCvFile',
             'applicationStatus',
@@ -437,6 +438,7 @@ class ApplicationWorkflowService
 
         if (! $candidateSafe) {
             $relations[] = 'jobSeekerProfile.user';
+            $relations[] = 'jobSeekerProfile.city';
             $relations[] = 'jobSeekerProfile.skills';
             $relations[] = 'statusHistory.changedBy';
         }

@@ -27,6 +27,8 @@ final class SystemGeneratedText
         'New skill found in parsed CV.' => 'profile_skill_new',
         'The CV contains a profile value for review.' => 'profile_value_review',
         'The profile value already matches.' => 'profile_value_matched',
+        'The profile city already matches the parsed CV.' => 'profile_city_matched',
+        'A Syrian city was identified from the parsed CV location for review.' => 'profile_city_review',
         'The selected option exactly matches the correct option.' => 'grading_single_correct',
         'The selected option does not match the correct option.' => 'grading_single_incorrect',
         'The selected option set exactly matches the correct option set.' => 'grading_multiple_correct',

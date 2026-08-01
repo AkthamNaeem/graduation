@@ -2,10 +2,11 @@
 
 namespace App\Http\Resources\Api\V1;
 
+use App\Models\JobSeekerProfile;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @mixin \App\Models\JobSeekerProfile */
+/** @mixin JobSeekerProfile */
 class JobSeekerProfileResource extends JsonResource
 {
     /**
@@ -20,6 +21,7 @@ class JobSeekerProfileResource extends JsonResource
             'summary' => $this->summary,
             'phone' => $this->phone,
             'location' => $this->location,
+            'city' => CityResource::make($this->city),
             'portfolio_url' => $this->portfolio_url,
             'linkedin_url' => $this->linkedin_url,
             'github_url' => $this->github_url,

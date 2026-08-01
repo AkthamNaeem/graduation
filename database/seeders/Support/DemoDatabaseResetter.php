@@ -63,6 +63,7 @@ final class DemoDatabaseResetter
         'employer_profiles',
         'companies',
         'skills',
+        'cities',
         'application_statuses',
         'password_reset_tokens',
         'sessions',

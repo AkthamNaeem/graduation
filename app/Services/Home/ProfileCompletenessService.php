@@ -63,7 +63,7 @@ class ProfileCompletenessService
         }
 
         $this->score(
-            filled($profile?->location),
+            filled($profile?->location) || $profile?->city_id !== null,
             'location',
             [
                 'key' => 'location',

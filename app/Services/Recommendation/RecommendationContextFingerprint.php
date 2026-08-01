@@ -108,6 +108,7 @@ final readonly class RecommendationContextFingerprint implements RecommendationC
                 'experience_level' => $job->experience_level,
                 'education_level' => $job->education_level,
                 'work_mode' => $job->work_mode,
+                'city_id' => $job->city_id,
                 'status' => $job->status,
                 'published_at' => $this->date($job->published_at),
                 'application_deadline' => $this->date($job->application_deadline),
@@ -124,6 +125,7 @@ final readonly class RecommendationContextFingerprint implements RecommendationC
             'candidate' => [
                 'headline' => $profile->headline,
                 'summary' => $profile->summary,
+                'city_id' => $profile->city_id,
                 'total_experience_years' => $this->experienceCalculator->years(
                     $profile->experiences,
                     $eligibility->now,

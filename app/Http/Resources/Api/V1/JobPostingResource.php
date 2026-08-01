@@ -41,6 +41,7 @@ class JobPostingResource extends JsonResource
                 'education_levels',
             ),
             'location' => $this->location,
+            'city' => CityResource::make($this->city),
             'work_mode' => LocalizedValue::make($this->work_mode, 'job_work_modes'),
             'salary_min' => $this->salary_min,
             'salary_max' => $this->salary_max,

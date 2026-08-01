@@ -117,14 +117,14 @@ class ApplicationInformationRequestService
         if (($message === null || $message === '') && $files === []) {
             throw ValidationException::withMessages(['response' => [__('applications.response_required')]]);
         }
-        $application = $request->jobApplication()->with(['jobPosting.company', 'jobSeekerProfile'])->firstOrFail();
+        $application = $request->jobApplication()->with(['jobPosting.company', 'jobPosting.city', 'jobSeekerProfile.city'])->firstOrFail();
         $this->ensureCandidateOwns($actor, $application);
         $this->assertCompanyAvailable($application);
         $stored = $this->storeFiles($request, $files);
 
         try {
             return DB::transaction(function () use ($actor, $request, $message, $stored): ApplicationInformationRequest {
-                $application = JobApplication::query()->with(['applicationStatus', 'jobPosting.company', 'jobSeekerProfile'])->lockForUpdate()->findOrFail($request->job_application_id);
+                $application = JobApplication::query()->with(['applicationStatus', 'jobPosting.company', 'jobPosting.city', 'jobSeekerProfile.city'])->lockForUpdate()->findOrFail($request->job_application_id);
                 $locked = ApplicationInformationRequest::query()->with('response')->lockForUpdate()->findOrFail($request->id);
                 $this->ensureCandidateOwns($actor, $application);
                 $this->assertCompanyAvailable($application);
@@ -306,7 +306,7 @@ class ApplicationInformationRequestService
 
     private function relations(): array
     {
-        return ['items', 'requestedBy:id,name', 'cancelledBy:id,name', 'response.submittedBy:id,name', 'response.attachments', 'jobApplication.applicationStatus', 'jobApplication.jobPosting.company', 'jobApplication.jobSeekerProfile.user'];
+        return ['items', 'requestedBy:id,name', 'cancelledBy:id,name', 'response.submittedBy:id,name', 'response.attachments', 'jobApplication.applicationStatus', 'jobApplication.jobPosting.company', 'jobApplication.jobPosting.city', 'jobApplication.jobSeekerProfile.user', 'jobApplication.jobSeekerProfile.city'];
     }
 
     private function fail(string $message, string $code): never

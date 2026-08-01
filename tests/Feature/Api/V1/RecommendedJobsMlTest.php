@@ -92,6 +92,7 @@ class RecommendedJobsMlTest extends TestCase
                     'experience_level',
                     'education_level',
                     'location',
+                    'city',
                     'work_mode',
                     'salary_min',
                     'salary_max',
@@ -116,6 +117,7 @@ class RecommendedJobsMlTest extends TestCase
                     'matched_required_skills',
                     'missing_required_skills',
                     'matched_nice_to_have_skills',
+                    'location_match',
                     'reasons',
                     'rank',
                     'recommendation_engine',
@@ -128,7 +130,7 @@ class RecommendedJobsMlTest extends TestCase
             ->assertJsonPath('success', true)
             ->assertJsonPath('message', 'Recommended jobs retrieved successfully.')
             ->assertJsonPath('data.0.id', $job->id)
-            ->assertJsonPath('data.0.score', 90)
+            ->assertJsonPath('data.0.score', 90.5)
             ->assertJsonPath('data.0.rank', 1)
             ->assertJsonPath('data.0.recommendation_engine', 'ml_xgbranker')
             ->assertJsonPath('data.0.matching_score_version', 'ml_xgbranker:xgbranker-tuned-v1')

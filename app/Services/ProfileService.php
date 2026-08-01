@@ -24,7 +24,7 @@ class ProfileService
     public function getJobSeekerProfile(User $user): JobSeekerProfile
     {
         return $this->jobSeekerProfile($user)
-            ->load(['user', 'experiences', 'education', 'skills']);
+            ->load(['user', 'city', 'experiences', 'education', 'skills']);
     }
 
     public function updateJobSeekerProfile(User $user, array $data): JobSeekerProfile
@@ -32,7 +32,7 @@ class ProfileService
         $profile = $this->jobSeekerProfile($user);
         $profile->update($data);
 
-        return $profile->load(['user', 'experiences', 'education', 'skills']);
+        return $profile->load(['user', 'city', 'experiences', 'education', 'skills']);
     }
 
     /**
@@ -114,7 +114,7 @@ class ProfileService
             $skill->id => $this->manualSourcePayload(),
         ]);
 
-        return $profile->load(['user', 'experiences', 'education', 'skills']);
+        return $profile->load(['user', 'city', 'experiences', 'education', 'skills']);
     }
 
     public function detachSkill(User $user, Skill $skill): JobSeekerProfile
@@ -122,7 +122,7 @@ class ProfileService
         $profile = $this->jobSeekerProfile($user);
         $profile->skills()->detach($skill->id);
 
-        return $profile->load(['user', 'experiences', 'education', 'skills']);
+        return $profile->load(['user', 'city', 'experiences', 'education', 'skills']);
     }
 
     public function getCompany(User $user): Company

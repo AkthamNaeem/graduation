@@ -8,10 +8,18 @@ use App\Data\RecommendationMl\MlRankResponse;
 use App\Enums\JobSkillRequirementType;
 use App\Models\JobPosting;
 use App\Models\JobSeekerProfile;
+use App\Services\LocationCompatibilityService;
 use App\Support\SystemGeneratedText;
 
 final class MlRecommendationResourceAdapter
 {
+    private readonly LocationCompatibilityService $locationCompatibility;
+
+    public function __construct(?LocationCompatibilityService $locationCompatibility = null)
+    {
+        $this->locationCompatibility = $locationCompatibility ?? new LocationCompatibilityService;
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -39,10 +47,19 @@ final class MlRecommendationResourceAdapter
             ->sort()
             ->values()
             ->all();
+        $location = $this->locationCompatibility->evaluate(
+            $job,
+            $profile,
+            (float) config('matching.components.location', 5),
+        );
+        $locationIsActionable = $location['status'] !== 'missing';
+        $displayScore = $locationIsActionable
+            ? round(($prediction->displayScore * (100 - $location['max_score']) / 100) + $location['score'], 2)
+            : $prediction->displayScore;
 
         return [
             'job' => $job,
-            'score' => $prediction->displayScore,
+            'score' => $displayScore,
             'matching_score_version' => RecommendationEngine::ML_XGBRANKER->value
                 .':'.$response->modelVersion,
             'breakdown' => [
@@ -53,6 +70,7 @@ final class MlRecommendationResourceAdapter
                     'positive_reason_codes' => $positiveCodes,
                     'negative_reason_codes' => $negativeCodes,
                 ],
+                'location' => $location,
             ],
             'matched_skills' => $matchedNames,
             'skill_breakdown' => [
@@ -64,12 +82,17 @@ final class MlRecommendationResourceAdapter
             'matched_required_skills' => $matchedRequired,
             'missing_required_skills' => $missingRequired,
             'matched_nice_to_have_skills' => $matchedNice,
+            'location_match' => $location,
             'reasons' => array_map(
                 fn (string $code): array => [
                     'code' => $code,
                     'message' => __('ai.reasons.'.$code),
                 ],
-                array_values(array_unique([...$positiveCodes, ...$negativeCodes])),
+                array_values(array_unique([
+                    ...$positiveCodes,
+                    ...$negativeCodes,
+                    $location['reason_code'],
+                ])),
             ),
             'recommendation_engine' => RecommendationEngine::ML_XGBRANKER->value,
             'model_version' => $response->modelVersion,

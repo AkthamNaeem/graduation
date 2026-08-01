@@ -1,6 +1,8 @@
 <?php
 
 return [
+    'profile_city_matched' => 'The profile city already matches the parsed CV.',
+    'profile_city_review' => 'A Syrian city was identified from the parsed CV location for review.',
     'application_interview_recalculated' => 'Application interview status recalculated.',
     'interview_closed_no_show' => 'Interview closed as no show.',
     'interview_completed_candidate' => 'Interview completed for candidate.',

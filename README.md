@@ -85,6 +85,7 @@ Never switch production storage before preserving existing instance-local files.
 - [Private-storage migration runbook](docs/PRIVATE_STORAGE_MIGRATION_RUNBOOK.md)
 - [Private-storage recovery runbook](docs/PRIVATE_STORAGE_RECOVERY_RUNBOOK.md)
 - [Mobile CV review flow](docs/MOBILE_CV_REVIEW_FLOW.md)
+- [Syrian cities API and integration contract](docs/SYRIAN_CITIES_API.md)
 
 ## Safe migration commands
 

@@ -178,7 +178,7 @@ class MatchingScoreV2Test extends TestCase
         $this->assertSame(0.0, $this->score($job, $profile)['breakdown']['education']['score']);
     }
 
-    public function test_text_similarity_uses_15_points_and_total_is_sum_of_components(): void
+    public function test_text_similarity_uses_10_points_and_total_includes_location(): void
     {
         [$job, $profile] = $this->scenario();
 
@@ -188,21 +188,23 @@ class MatchingScoreV2Test extends TestCase
             + $components['nice_to_have_skills']['score']
             + $components['experience']['score']
             + $components['education']['score']
-            + $components['text_similarity']['score'];
+            + $components['text_similarity']['score']
+            + $components['location']['score'];
 
-        $this->assertSame(7.5, $components['text_similarity']['score']);
+        $this->assertSame(5.0, $components['text_similarity']['score']);
+        $this->assertSame(5.0, $components['location']['score']);
         $this->assertSame($sum, $result['score']);
         $this->assertSame('2.0', $result['matching_score_version']);
         $this->assertGreaterThanOrEqual(0, $result['score']);
         $this->assertLessThanOrEqual(100, $result['score']);
     }
 
-    public function test_text_similarity_boundaries_award_zero_and_15(): void
+    public function test_text_similarity_boundaries_award_zero_and_10(): void
     {
         [$job, $profile] = $this->scenario();
 
         $this->assertSame(0.0, $this->score($job, $profile, 0)['breakdown']['text_similarity']['score']);
-        $this->assertSame(15.0, $this->score($job, $profile, 1)['breakdown']['text_similarity']['score']);
+        $this->assertSame(10.0, $this->score($job, $profile, 1)['breakdown']['text_similarity']['score']);
     }
 
     public function test_perfect_match_is_exactly_100(): void

@@ -45,7 +45,7 @@ class JobPostingService
     {
         $query = $this->applyFilters(
             JobPosting::query()
-                ->with(['company', 'skills'])
+                ->with(['company', 'city', 'skills'])
                 ->where('status', 'open')
                 ->whereHas('company', fn (Builder $query) => $query->where('approval_status', 'approved')),
             $filters,
@@ -67,7 +67,7 @@ class JobPostingService
                 Company::query()
                     ->findOrFail((int) ($filters['company_id'] ?? 0))
                     ->jobPostings()
-                    ->with(['company', 'skills'])
+                    ->with(['company', 'city', 'skills'])
                     ->latest(),
                 $filters,
             )->paginate($this->perPage($filters));
@@ -77,7 +77,7 @@ class JobPostingService
             $this->employerProfile($user)
                 ->company
                 ->jobPostings()
-                ->with(['company', 'skills'])
+                ->with(['company', 'city', 'skills'])
                 ->latest(),
             $filters,
         )->paginate($this->perPage($filters));
@@ -91,6 +91,7 @@ class JobPostingService
 
         return $jobPosting->loadMissing([
             'company',
+            'city',
             'skills',
             'screeningQuestions' => fn (Relation $query) => $query
                 ->where('is_active', true)
@@ -140,7 +141,7 @@ class JobPostingService
                 ],
             );
 
-            return $jobPosting->load(['company', 'skills']);
+            return $jobPosting->load(['company', 'city', 'skills']);
         });
     }
 
@@ -153,7 +154,7 @@ class JobPostingService
             [$skillsProvided, $skills] = $this->extractSkillItems($data);
             $this->removeSkillContractKeys($data);
             $safeKeys = array_values(array_intersect(array_keys($data), [
-                'title', 'department', 'employment_type', 'experience_level', 'education_level', 'location', 'salary_min', 'salary_max', 'work_mode', 'application_deadline',
+                'title', 'department', 'employment_type', 'experience_level', 'education_level', 'location', 'city_id', 'salary_min', 'salary_max', 'work_mode', 'application_deadline',
             ]));
             $before = $jobPosting->only($safeKeys);
             $previousWorkMode = $jobPosting->work_mode?->value ?? $jobPosting->work_mode;
@@ -196,7 +197,7 @@ class JobPostingService
                 );
             }
 
-            return $jobPosting->load(['company', 'skills']);
+            return $jobPosting->load(['company', 'city', 'skills']);
         });
     }
 
@@ -285,7 +286,7 @@ class JobPostingService
             $jobPosting->only(['status', 'published_at']),
         );
 
-        return $jobPosting->load(['company', 'skills']);
+        return $jobPosting->load(['company', 'city', 'skills']);
     }
 
     public function closeJob(User $actor, JobPosting $jobPosting): JobPosting
@@ -305,7 +306,7 @@ class JobPostingService
             $jobPosting->only(['status']),
         );
 
-        return $jobPosting->load(['company', 'skills']);
+        return $jobPosting->load(['company', 'city', 'skills']);
     }
 
     /**
@@ -327,7 +328,7 @@ class JobPostingService
                 [...$counts, 'job_id' => $jobPosting->id, 'company_id' => $jobPosting->company_id, 'actor_id' => $actor->id],
             );
 
-            return $jobPosting->load(['company', 'skills']);
+            return $jobPosting->load(['company', 'city', 'skills']);
         });
     }
 
@@ -345,7 +346,7 @@ class JobPostingService
             [...$counts, 'job_id' => $jobPosting->id, 'company_id' => $jobPosting->company_id, 'actor_id' => $actor->id],
         );
 
-        return $jobPosting->load(['company', 'skills']);
+        return $jobPosting->load(['company', 'city', 'skills']);
     }
 
     /**
@@ -355,6 +356,9 @@ class JobPostingService
     {
         $search = $filters['search'] ?? null;
         $location = $filters['location'] ?? null;
+        $cityId = $filters['city_id'] ?? null;
+        $cityCode = $filters['city_code'] ?? null;
+        $includeRemote = (bool) ($filters['include_remote'] ?? false);
         $skill = $filters['skill'] ?? null;
         $experienceLevel = $filters['experience_level'] ?? null;
         $employmentType = $filters['employment_type'] ?? null;
@@ -367,12 +371,31 @@ class JobPostingService
         if (filled($search)) {
             $query->where(function (Builder $builder) use ($search): void {
                 $builder->where('title', 'like', '%'.$search.'%')
-                    ->orWhere('description', 'like', '%'.$search.'%');
+                    ->orWhere('description', 'like', '%'.$search.'%')
+                    ->orWhereHas('city', function (Builder $cityQuery) use ($search): void {
+                        $cityQuery->where('name_ar', 'like', '%'.$search.'%')
+                            ->orWhere('name_en', 'like', '%'.$search.'%')
+                            ->orWhere('code', 'like', '%'.$search.'%');
+                    });
             });
         }
 
         if (filled($location)) {
             $query->where('location', 'like', '%'.$location.'%');
+        }
+
+        if (filled($cityId) || filled($cityCode)) {
+            $query->where(function (Builder $builder) use ($cityId, $cityCode, $includeRemote): void {
+                if (filled($cityId)) {
+                    $builder->where('city_id', (int) $cityId);
+                } else {
+                    $builder->whereHas('city', fn (Builder $cityQuery) => $cityQuery->where('code', $cityCode));
+                }
+
+                if ($includeRemote) {
+                    $builder->orWhere('work_mode', JobWorkMode::REMOTE->value);
+                }
+            });
         }
 
         if (filled($experienceLevel)) {

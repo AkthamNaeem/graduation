@@ -19,18 +19,23 @@ class RankedCandidateResource extends JsonResource
         $applicationStatus = $this->resource['application_status'];
         /** @var JobSeekerProfile $jobSeekerProfile */
         $jobSeekerProfile = $this->resource['job_seeker_profile'];
+        $locationMatch = $this->resource['location_match'];
+        $locationMatch['message'] = __('ai.candidate_location.'.$locationMatch['status']);
+        $breakdown = $this->resource['breakdown'];
+        $breakdown['location'] = $locationMatch;
 
         return [
             'job_application_id' => $this->resource['job_application_id'],
             'application_status' => new ApplicationStatusResource($applicationStatus),
             'score' => $this->resource['score'],
             'matching_score_version' => $this->resource['matching_score_version'],
-            'breakdown' => $this->resource['breakdown'],
+            'breakdown' => $breakdown,
             'matched_skills' => $this->resource['matched_skills'],
             'skill_breakdown' => $this->resource['skill_breakdown'],
             'matched_required_skills' => $this->resource['matched_required_skills'],
             'missing_required_skills' => $this->resource['missing_required_skills'],
             'matched_nice_to_have_skills' => $this->resource['matched_nice_to_have_skills'],
+            'location_match' => $locationMatch,
             'reasons' => collect($this->resource['reasons'])
                 ->map(fn (array $reason): array => RecommendationReasonTranslator::translate($reason))
                 ->values()

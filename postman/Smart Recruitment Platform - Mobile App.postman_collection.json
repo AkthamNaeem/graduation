@@ -16,6 +16,43 @@
     },
     "item": [
         {
+            "name": "Syrian Cities",
+            "description": "Mobile integration contract: location remains free text; city_id is nullable input; city is a localized output object. Never translate city names on-device and never branch on city.name.",
+            "item": [
+                {
+                    "name": "List Active Cities",
+                    "request": {
+                        "auth": {"type": "noauth"},
+                        "method": "GET",
+                        "header": [{"key": "Accept-Language", "value": "{{locale}}"}],
+                        "url": "{{base_url}}/reference/cities?active_only=true",
+                        "description": "Public lookup. Optional search matches code, Arabic name, and English name. Save id as city_id; display localized name."
+                    },
+                    "event": [{"listen": "test", "script": {"type": "text/javascript", "exec": ["pm.test('Cities reference succeeds', () => pm.response.to.have.status(200));", "if (pm.response.code === 200 && pm.response.json().data.length) pm.environment.set('city_id', pm.response.json().data[0].id);"]}}]
+                },
+                {
+                    "name": "Update Profile City",
+                    "request": {
+                        "method": "PUT",
+                        "header": [{"key": "Content-Type", "value": "application/json"}, {"key": "Accept-Language", "value": "{{locale}}"}],
+                        "url": "{{base_url}}/profile",
+                        "body": {"mode": "raw", "raw": "{\n  \"location\": \"Al-Mazzeh, near the square\",\n  \"city_id\": {{city_id}}\n}", "options": {"raw": {"language": "json"}}},
+                        "description": "Job seeker only. Send city_id=null to remove the structured city. Omitting city_id preserves it. Legacy location-only requests remain valid."
+                    }
+                },
+                {
+                    "name": "Filter Jobs by City Including Remote",
+                    "request": {
+                        "auth": {"type": "noauth"},
+                        "method": "GET",
+                        "header": [{"key": "Accept-Language", "value": "{{locale}}"}],
+                        "url": "{{base_url}}/jobs?city_id={{city_id}}&include_remote=true",
+                        "description": "city_id is an exact relationship filter. include_remote defaults false. Recommendation and candidate breakdowns expose location/status, score, max_score, message, and a stable reason code."
+                    }
+                }
+            ]
+        },
+        {
             "name": "Home",
             "description": "Unified mobile Home API. Without Authorization it returns guest viewer, hero, latest visible jobs, approved featured companies, and app features. With a valid job-seeker Sanctum bearer token it returns viewer, profile completeness, the highest-priority required action, recommendations, featured companies, latest jobs, and recommendation availability metadata. Invalid/expired tokens return 401. Employer, admin, and suspended-user tokens return 403.\n\nRequired-action order: pending/started test; upcoming interview/confirmation; open information request; parsed CV review; pending profile-sync suggestion; incomplete profile; no action.\n\nFeatured companies: approved only, at least one open non-expired job, ordered by open job count then newest published job, limited to six.\n\nRecommendation failures do not fail Home: the orchestrator's existing matching fallback is used when available; unexpected failures return an empty list with meta.recommendations_available=false.",
             "item": [
@@ -252,14 +289,14 @@
                                 "value": "application/json"
                             }
                         ],
-                        "description": "Mobile App / Job Seeker: create a job seeker account. Requires accepted terms; optional phone is saved on the job seeker profile.",
+                        "description": "Mobile App / Job Seeker: create a job seeker account. Requires accepted terms; optional phone, location, and active Syrian city_id are saved on the job seeker profile.",
                         "url": "{{base_url}}/auth/register/job-seeker",
                         "auth": {
                             "type": "noauth"
                         },
                         "body": {
                             "mode": "raw",
-                            "raw": "{\n  \"name\": \"Jane Applicant\",\n  \"email\": \"{{job_seeker_email}}\",\n  \"phone\": \"+1 555 0100\",\n  \"password\": \"password\",\n  \"password_confirmation\": \"password\",\n  \"terms_accepted\": true\n}",
+                            "raw": "{\n  \"name\": \"Jane Applicant\",\n  \"email\": \"{{job_seeker_email}}\",\n  \"phone\": \"+1 555 0100\",\n  \"location\": \"Damascus city centre\",\n  \"city_id\": {{city_id}},\n  \"password\": \"password\",\n  \"password_confirmation\": \"password\",\n  \"terms_accepted\": true\n}",
                             "options": {
                                 "raw": {
                                     "language": "json"

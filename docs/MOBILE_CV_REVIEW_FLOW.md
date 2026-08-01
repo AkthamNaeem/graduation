@@ -22,7 +22,7 @@ The draft shape is:
 
 ```json
 {
-  "profile": {"phone": null, "summary": null, "location": null},
+  "profile": {"phone": null, "summary": null, "location": null, "city_id": 1},
   "experience": [],
   "education": [],
   "skills": []
@@ -30,6 +30,8 @@ The draft shape is:
 ```
 
 Removing an array item deletes it only from the draft. Confirm applies the complete reviewed draft atomically with CV source tracking. It does not apply unsupported read-only fields and does not create profile-change suggestions. If the profile gained meaningful data after draft creation, confirm returns `409 CV_REVIEW_MODE_STALE` and applies nothing.
+
+`city_id` appears only when the backend confidently recognizes an active Syrian city from the parsed location or when the user selects one while editing the draft. It is optional and nullable. Load display values from `GET /api/v1/reference/cities`; do not translate city names on the client. In profile-sync mode, a detected city is a separate ADD/UPDATE/IGNORE suggestion and never overwrites a manual selection before final apply.
 
 ## Profile synchronization
 
