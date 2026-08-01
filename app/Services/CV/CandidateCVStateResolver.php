@@ -13,6 +13,7 @@ class CandidateCVStateResolver
     public function __construct(
         private readonly CurrentCVResolver $currentCVResolver,
         private readonly CVStageResolver $stageResolver,
+        private readonly CandidateCVOperationResolver $operationResolver,
     ) {}
 
     /**
@@ -28,6 +29,7 @@ class CandidateCVStateResolver
         if (! $pending instanceof CVFile
             || $pending->user_id !== $user->id
             || $pending->archived_at !== null
+            || $pending->cancelled_at !== null
             || $pending->confirmed_at !== null
             || $pending->id === $current?->id) {
             $pending = null;
@@ -36,21 +38,23 @@ class CandidateCVStateResolver
         return [
             'current_cv' => $current,
             'pending_cv_update' => $pending instanceof CVFile
-                ? $this->pendingState($pending, $current)
+                ? $this->pendingState($user, $profile, $pending)
                 : null,
         ];
     }
 
     /** @return array<string, mixed> */
-    private function pendingState(CVFile $pending, ?CVFile $current): array
+    private function pendingState(User $user, JobSeekerProfile $profile, CVFile $pending): array
     {
         $stage = $this->stageResolver->resolve($pending);
 
         return [
             'cv' => $pending,
-            'operation' => $current instanceof CVFile
-                ? CandidateCVOperation::UPDATE
-                : CandidateCVOperation::INITIAL_UPLOAD,
+            'operation' => match ($pending->review_mode) {
+                CVFile::REVIEW_MODE_INITIAL_IMPORT => CandidateCVOperation::INITIAL_UPLOAD,
+                CVFile::REVIEW_MODE_PROFILE_SYNC => CandidateCVOperation::UPDATE,
+                default => $this->operationResolver->resolve($user, $profile),
+            },
             'stage' => $stage,
             'progress' => $this->progress($pending, $stage),
             'next_action' => $this->nextAction($pending, $stage),
@@ -107,10 +111,10 @@ class CandidateCVStateResolver
     {
         return match ($stage) {
             CandidateCVStage::PROCESSING,
-            CandidateCVStage::FAILED => ['view_status'],
+            CandidateCVStage::FAILED => ['view_status', 'cancel'],
             CandidateCVStage::FIRST_REVIEW,
-            CandidateCVStage::DIFFERENCES_REVIEW => ['review'],
-            CandidateCVStage::FINAL_CONFIRMATION => ['confirm'],
+            CandidateCVStage::DIFFERENCES_REVIEW => ['review', 'cancel'],
+            CandidateCVStage::FINAL_CONFIRMATION => ['confirm', 'cancel'],
             CandidateCVStage::CONFIRMED => [],
         };
     }

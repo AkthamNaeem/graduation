@@ -11,6 +11,9 @@ use App\Models\JobSeekerProfile;
 use App\Models\ProfileChangeSuggestion;
 use App\Models\Skill;
 use App\Models\User;
+use App\Services\CV\CVFinalDraftService;
+use App\Services\CV\CVFinalizationService;
+use App\Services\CV\CVProfileSnapshotService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -25,6 +28,9 @@ class ProfileSyncService
     public function __construct(
         private readonly AuditLogService $auditLogService,
         private readonly CityMatcher $cityMatcher,
+        private readonly CVProfileSnapshotService $profileSnapshotService,
+        private readonly CVFinalDraftService $finalDraftService,
+        private readonly CVFinalizationService $finalizationService,
     ) {}
 
     /** @return Collection<int, ProfileChangeSuggestion> */
@@ -49,14 +55,35 @@ class ProfileSyncService
             if ($lockedCV->review_mode === null) {
                 $lockedCV->forceFill(['review_mode' => CVFile::REVIEW_MODE_PROFILE_SYNC])->save();
             }
+            $profile = JobSeekerProfile::query()
+                ->where('user_id', $user->id)
+                ->lockForUpdate()
+                ->firstOrFail()
+                ->load(['experiences', 'education', 'skills']);
+            $snapshot = $this->profileSnapshotService->snapshot($profile);
+            $profileHash = $this->profileSnapshotService->hash($snapshot);
             $existing = $lockedCV->profileChangeSuggestions()->with('cvFile')->where('user_id', $user->id)->latest()->get();
-            if ($existing->isNotEmpty()) {
+            if ($existing->isNotEmpty() && hash_equals((string) $lockedCV->comparison_profile_hash, $profileHash)) {
                 $this->synchronizeReviewStatus($lockedCV);
 
                 return $existing;
             }
-            $result = CVParsingResult::query()->where('cv_file_id', $lockedCV->id)->firstOrFail();
-            $profile = $this->jobSeekerProfile($user)->load(['experiences', 'education', 'skills']);
+            if ($existing->isNotEmpty()) {
+                $lockedCV->profileChangeSuggestions()->delete();
+            }
+            $result = CVParsingResult::query()->where('cv_file_id', $lockedCV->id)->lockForUpdate()->firstOrFail();
+            $result->forceFill([
+                'comparison_base_json' => $snapshot,
+                'reviewed_json' => null,
+                'system_generated_review_json' => null,
+                'final_approved_json' => null,
+                'reviewed_at' => null,
+            ])->save();
+            $lockedCV->forceFill([
+                'comparison_profile_updated_at' => $profile->updated_at,
+                'comparison_profile_hash' => $profileHash,
+                'review_status' => CVFile::REVIEW_STATUS_COMPARISON_PENDING,
+            ])->save();
             $parsed = $result->parsed_json ?? [];
 
             $this->suggestProfileScalars($user, $profile, $lockedCV, $parsed);
@@ -144,78 +171,17 @@ class ProfileSyncService
      */
     public function applyCV(User $user, CVFile $cvFile): array
     {
-        $cvFile = $this->ownedCVFile($user, $cvFile);
+        $result = $this->finalizationService->confirm($user, $this->ownedCVFile($user, $cvFile));
+        $suggestions = $result['suggestions'];
 
-        $result = DB::transaction(function () use ($user, $cvFile): array {
-            $lockedCV = CVFile::query()->lockForUpdate()->findOrFail($cvFile->id);
-            $this->ownedCVFile($user, $lockedCV);
-            if ($lockedCV->archived_at !== null) {
-                throw new CVLifecycleException(__('domain_errors.CV_ARCHIVED_READ_ONLY'), 'CV_ARCHIVED_READ_ONLY');
-            }
-            if ($lockedCV->review_status === CVFile::REVIEW_STATUS_APPLIED) {
-                return $this->applicationResult($user, $lockedCV, true);
-            }
-            if (($lockedCV->review_mode ?? CVFile::REVIEW_MODE_PROFILE_SYNC) !== CVFile::REVIEW_MODE_PROFILE_SYNC) {
-                throw new CVLifecycleException(__('domain_errors.CV_REVIEW_MODE_INVALID'), 'CV_REVIEW_MODE_INVALID');
-            }
-            if ($lockedCV->review_mode === null) {
-                $lockedCV->forceFill(['review_mode' => CVFile::REVIEW_MODE_PROFILE_SYNC])->save();
-            }
-
-            $profile = JobSeekerProfile::query()->where('user_id', $user->id)->lockForUpdate()->firstOrFail();
-            $suggestions = ProfileChangeSuggestion::query()
-                ->where('cv_file_id', $lockedCV->id)
-                ->where('user_id', $user->id)
-                ->orderBy('id')
-                ->lockForUpdate()
-                ->get();
-            if ($lockedCV->review_status !== CVFile::REVIEW_STATUS_READY_TO_APPLY
-                && $suggestions->isNotEmpty()
-                && in_array($lockedCV->review_status, [null, CVFile::REVIEW_STATUS_DECISIONS_PENDING], true)) {
-                $this->synchronizeReviewStatus($lockedCV);
-            }
-            if ($lockedCV->review_status !== CVFile::REVIEW_STATUS_READY_TO_APPLY) {
-                throw new CVLifecycleException(__('domain_errors.CV_SUGGESTIONS_NOT_READY'), 'CV_SUGGESTIONS_NOT_READY');
-            }
-            if ($suggestions->contains(fn (ProfileChangeSuggestion $item): bool => $item->suggestion_type !== ProfileChangeSuggestion::TYPE_IGNORE && $item->status === ProfileChangeSuggestion::STATUS_PENDING)) {
-                throw new CVLifecycleException(__('domain_errors.CV_SUGGESTIONS_PENDING'), 'CV_SUGGESTIONS_PENDING');
-            }
-            foreach ($suggestions->where('status', ProfileChangeSuggestion::STATUS_ACCEPTED)
-                ->where('suggestion_type', '!=', ProfileChangeSuggestion::TYPE_IGNORE) as $suggestion) {
-                $this->applySuggestion($profile, $suggestion);
-                $suggestion->forceFill(['status' => ProfileChangeSuggestion::STATUS_APPLIED, 'applied_at' => now()])->save();
-            }
-            foreach ($suggestions->where('suggestion_type', ProfileChangeSuggestion::TYPE_IGNORE) as $suggestion) {
-                $suggestion->forceFill(['status' => ProfileChangeSuggestion::STATUS_APPLIED, 'applied_at' => now()])->save();
-            }
-
-            $lockedCV->forceFill(['review_mode' => CVFile::REVIEW_MODE_PROFILE_SYNC, 'review_status' => CVFile::REVIEW_STATUS_APPLIED, 'confirmed_at' => now()])->save();
-            $previousPrimary = $profile->primary_cv_file_id;
-            if ($previousPrimary !== $lockedCV->id) {
-                $profile->forceFill(['primary_cv_file_id' => $lockedCV->id])->save();
-                $this->auditLogService->record('cv.primary_changed', $user, CVFile::class, $lockedCV->id, null, null, [
-                    'cv_file_id' => $lockedCV->id,
-                    'user_id' => $user->id,
-                    'previous_primary_cv_file_id' => $previousPrimary,
-                    'new_primary_cv_file_id' => $lockedCV->id,
-                    'actor_id' => $user->id,
-                ]);
-            }
-
-            return $this->applicationResult($user, $lockedCV, false);
-        });
-
-        $this->auditLogService->record('cv.suggestions.applied', $user, CVFile::class, $cvFile->id, null, null, [
-            'cv_file_id' => $cvFile->id,
-            'actor_id' => $user->id,
-            'review_mode' => CVFile::REVIEW_MODE_PROFILE_SYNC,
-            'review_status' => CVFile::REVIEW_STATUS_APPLIED,
-            'applied_count' => $result['applied_count'],
-            'rejected_count' => $result['rejected_count'],
-            'ignored_count' => $result['ignored_count'],
-        ]);
-
-        return $result;
+        return [
+            'applied_count' => $suggestions->where('status', ProfileChangeSuggestion::STATUS_APPLIED)
+                ->where('suggestion_type', '!=', ProfileChangeSuggestion::TYPE_IGNORE)->count(),
+            'rejected_count' => $suggestions->where('status', ProfileChangeSuggestion::STATUS_REJECTED)->count(),
+            'ignored_count' => $suggestions->where('suggestion_type', ProfileChangeSuggestion::TYPE_IGNORE)->count(),
+            'already_applied' => $result['already_confirmed'],
+            'profile' => $result['profile'],
+        ];
     }
 
     /** @param array<int, int> $suggestionIds
@@ -531,7 +497,21 @@ class ProfileSyncService
         $pending = ProfileChangeSuggestion::query()->where('cv_file_id', $cvFile->id)
             ->where('status', ProfileChangeSuggestion::STATUS_PENDING)
             ->where('suggestion_type', '!=', ProfileChangeSuggestion::TYPE_IGNORE)->exists();
-        $cvFile->forceFill(['review_status' => $pending ? CVFile::REVIEW_STATUS_DECISIONS_PENDING : CVFile::REVIEW_STATUS_READY_TO_APPLY])->save();
+        $status = $pending ? CVFile::REVIEW_STATUS_DECISIONS_PENDING : CVFile::REVIEW_STATUS_READY_TO_APPLY;
+        $cvFile->forceFill(['review_status' => $status])->save();
+
+        if ($status === CVFile::REVIEW_STATUS_READY_TO_APPLY) {
+            $profile = JobSeekerProfile::query()->where('user_id', $cvFile->user_id)->first();
+            if ($profile instanceof JobSeekerProfile) {
+                $suggestions = $cvFile->profileChangeSuggestions()->orderBy('id')->get();
+                $draft = $this->finalDraftService->build($profile, $suggestions);
+                CVParsingResult::query()->where('cv_file_id', $cvFile->id)->update([
+                    'reviewed_json' => json_encode($draft, JSON_THROW_ON_ERROR),
+                    'system_generated_review_json' => json_encode($draft, JSON_THROW_ON_ERROR),
+                    'reviewed_at' => now(),
+                ]);
+            }
+        }
     }
 
     private function createSuggestion(User $user, JobSeekerProfile $profile, CVFile $cvFile, array $attributes): ProfileChangeSuggestion
@@ -727,6 +707,9 @@ class ProfileSyncService
 
     private function assertCVMutable(CVFile $cvFile): void
     {
+        if ($cvFile->cancelled_at !== null) {
+            throw new CVLifecycleException(__('domain_errors.CV_ALREADY_CANCELLED'), 'CV_ALREADY_CANCELLED');
+        }
         if ($cvFile->archived_at !== null) {
             throw new CVLifecycleException(__('domain_errors.CV_ARCHIVED_READ_ONLY'), 'CV_ARCHIVED_READ_ONLY');
         }

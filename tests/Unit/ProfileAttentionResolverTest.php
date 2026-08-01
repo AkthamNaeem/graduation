@@ -28,7 +28,7 @@ class ProfileAttentionResolverTest extends TestCase
     {
         $cases = [
             [['status' => 'processing'], ProfileAttentionType::CV_PROCESSING, null],
-            [['status' => 'failed'], ProfileAttentionType::CV_PROCESSING_FAILED, ProfileAttentionAction::UPLOAD_CV],
+            [['status' => 'failed'], ProfileAttentionType::CV_PROCESSING_FAILED, ProfileAttentionAction::CANCEL_CV_REVIEW],
             [[
                 'status' => 'parsed',
                 'review_mode' => CVFile::REVIEW_MODE_INITIAL_IMPORT,

@@ -9,6 +9,9 @@ class CVStageResolver
 {
     public function resolve(CVFile $cv): CandidateCVStage
     {
+        if ($cv->cancelled_at !== null || $cv->review_status === CVFile::REVIEW_STATUS_CANCELLED) {
+            return CandidateCVStage::FAILED;
+        }
         if ($cv->isConfirmedUsableForApplication()) {
             return CandidateCVStage::CONFIRMED;
         }

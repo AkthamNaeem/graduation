@@ -156,6 +156,7 @@ return [
         'decisions_pending' => 'بانتظار القرارات',
         'ready_to_apply' => 'جاهز للتطبيق',
         'applied' => 'تم التطبيق',
+        'cancelled' => 'تم الإلغاء',
     ],
     'cv_next_actions' => [
         'wait_for_parsing' => 'انتظر اكتمال التحليل',
@@ -165,6 +166,7 @@ return [
         'review_suggestions' => 'راجع الاقتراحات',
         'apply_suggestions' => 'طبّق الاقتراحات',
         'completed' => 'مكتمل',
+        'cancelled' => 'ملغى',
     ],
     'profile_entity_types' => [
         'profile' => 'الملف الشخصي',

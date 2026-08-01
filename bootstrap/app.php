@@ -127,14 +127,16 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             $response = ApiResponse::error($exception->getMessage(), $exception->errors, $exception->status, $exception->errorCode);
-            if ($exception->errorCode !== 'SUGGESTION_STALE') {
-                return $response;
+            $payload = array_merge($response->getData(true), ['statusCode' => $exception->status]);
+            if ($exception->data !== null) {
+                $payload['data'] = $exception->data;
+            }
+            if ($exception->errorCode === 'SUGGESTION_STALE') {
+                $payload['suggestion_id'] = $exception->errors['suggestion_id'] ?? null;
+                $payload['entity_type'] = $exception->errors['entity_type'] ?? null;
             }
 
-            return response()->json(array_merge($response->getData(true), [
-                'suggestion_id' => $exception->errors['suggestion_id'] ?? null,
-                'entity_type' => $exception->errors['entity_type'] ?? null,
-            ]), $exception->status);
+            return response()->json($payload, $exception->status);
         });
         $exceptions->render(function (InterviewLifecycleException $exception, Request $request) {
             if (! $request->is('api/*')) {

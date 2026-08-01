@@ -3380,6 +3380,241 @@ Details, and Withdraw requests. No frontend, commit, or push is included.
 - Both modified Postman collection files parse as valid JSON.
 - `git diff --check`: passed. No commit or push was created.
 
+## CV Update Review and Confirmation Workflow
+
+### Repository baseline and preserved contracts
+
+Task 4 started on `master` with a clean working tree and four local commits ahead
+of `github/master`. The existing Profile Page aggregation, Profile Completeness
+and Attention Items, Single Current CV contract, and MySQL reapplication-migration
+fix were treated as the baseline. The implementation preserves the rule that
+`current_cv` is exactly the confirmed CV referenced by
+`job_seeker_profiles.primary_cv_file_id`, while `pending_cv_update` is a separate,
+single, unconfirmed workflow.
+
+The previous review implementation already provided editable initial drafts,
+profile-difference suggestions, reversible decisions, source columns, audit
+logging, and confirmed-CV application validation. Task 4 completes and tightens
+that lifecycle instead of introducing a parallel CV subsystem.
+
+### Corrected operation detection and pending uniqueness
+
+`CandidateCVOperationResolver` classifies an upload as `initial_upload` only when
+the candidate has neither a valid current CV nor meaningful professional profile
+data. Name and email alone do not make an update. Headline, summary, phone,
+location/city, professional links, experience, education, skills, or a valid
+current CV classify the workflow as `update`. The operation is persisted in the
+existing `review_mode` field (`initial_import` or `profile_sync`) so later API
+responses do not recalculate a different operation.
+
+Upload locks the job-seeker profile row and checks for an owned, unconfirmed,
+unarchived, non-cancelled CV before creating another. A duplicate attempt returns
+`409 CV_PENDING_UPDATE_EXISTS` with the pending CV ID and stage. The supporting
+`cv_active_workflow_idx` index keeps that lookup bounded; the transactional lock
+is the cross-database uniqueness authority. Upload and parsing never modify the
+profile or `primary_cv_file_id`, including when legacy clients send
+`make_primary=true`.
+
+### Parsed data, drafts, and comparison base
+
+`raw_text` and `parsed_json` remain private parsing artifacts. They are not
+returned by the review/final-preview resources. `reviewed_json` is the mutable,
+normalized draft containing only supported profile fields, experiences,
+education, and skills. `system_generated_review_json` is a private reference copy
+used to distinguish accepted CV data from user-authored final edits.
+`comparison_base_json`, `comparison_profile_hash`, and
+`comparison_profile_updated_at` capture the exact profile state used for update
+comparison. `final_approved_json` records the validated draft actually committed.
+
+For an initial upload, parsing creates the first-review draft. The owner can edit
+profile fields, add/update/remove experience and education, and add/remove skills
+through `PATCH /api/v1/cv/{cvFile}/review`. Validation covers allowed fields,
+types, URLs, dates, current-job end dates, duplicate IDs/items, skill duplicates,
+and relationship ownership. `POST .../ready-for-confirmation` validates the
+draft and advances initial review to final confirmation. No profile record is
+written before confirm.
+
+### Update comparison and decision contract
+
+An update compares parsed data with the captured profile snapshot and generates
+`ADD`, `UPDATE`, `MERGE`, and `IGNORE` suggestions. Manual values are the default:
+rejecting a proposal means keep current, while accepting chooses the proposal;
+an accepted proposal can carry a validated `edited_value`. Suggestion responses
+expose current/proposed/selected values, allowed decisions, and presentation
+state, but omit owner IDs, internal confidence, reasons, raw text, and storage
+metadata.
+
+Suggestion decisions only update review state. They never mutate the profile.
+All non-IGNORE suggestions must be resolved before the workflow becomes ready.
+When decisions are complete, the backend materializes the true final draft from
+the comparison base and accepted values. If the profile hash differs at confirm,
+the API returns `409 CV_PROFILE_CHANGED_SINCE_COMPARISON`; regenerating suggestions
+rebuilds the comparison safely from the current profile.
+
+### Final preview, edit, and atomic confirmation
+
+`GET /api/v1/cv/{cvFile}/final-preview` reuses the sanitized review contract and
+returns `final_profile`, validation state, allowed actions, and counts for actual
+`added`, `updated`, `merged`, `removed`, and `unchanged` values. Counts compare the
+final draft with the captured base, so a last-minute explicit removal is visible
+even when it was not a parser suggestion. A ready initial or update draft remains
+editable with `PATCH .../review`; invalid or corrupt stored drafts cannot confirm.
+
+Final confirmation locks the profile and CV rows in one short database
+transaction. It rechecks ownership, pending/archived/cancelled state, parsing and
+review readiness, unresolved decisions, profile snapshot hash, draft shape, and
+relationship IDs. It then updates supported profile fields, synchronizes
+experiences, education, and skills, stores the final approved draft, marks the CV
+confirmed/applied, and switches `primary_cv_file_id`. Any late failure rolls back
+all profile, relationship, suggestion, CV, and current-pointer writes.
+
+For update drafts, omission from the final full list is the user's explicit
+deletion decision. Existing relationship IDs must belong to the locked profile;
+new records are inserted once; unchanged records and skill pivots retain their
+metadata. Skills use one bulk insert-ignore plus a bounded fetch and sync, rather
+than one query per skill. Initial upload does not delete pre-existing professional
+data because such data would have classified the operation as an update.
+
+Source policy is explicit. An unchanged retained manual record/pivot stays
+`manual` with its existing metadata. A relationship or skill accepted unchanged
+from the system-generated CV draft becomes `cv_confirmed` with the confirmed CV
+ID and verification time. A value added or changed manually in the editable
+review draft is stored as `manual`, with no source CV ID, and with confirmation as
+its verification time. The schema has no per-field source columns for scalar
+profile fields, so source attribution applies to the existing experience,
+education, and skill-pivot source contract.
+
+After confirmation, the old current CV row and private storage object remain
+intact for legacy application references; only the current pointer changes. The
+new CV becomes usable for applications only after confirmation. Pending,
+cancelled, archived, failed, unavailable, foreign, and otherwise unconfirmed CVs
+remain blocked by both make-primary and application validation.
+
+Confirmation is idempotent for the new current CV: a retry returns success with
+`already_confirmed=true` and does not duplicate relationships, source metadata,
+or audit events. A confirmed CV that is no longer current is not silently
+re-promoted by the confirmation endpoint. Row locks and idempotent relationship
+sync also protect concurrent retries.
+
+### Cancellation, errors, audit, and notifications
+
+`POST /api/v1/cv/{cvFile}/cancel` is owner/job-seeker only. It can close processing,
+first-review, differences-review, or final-confirmation workflows. It rejects a
+current/confirmed CV, records `cancelled_at`, changes the review status to
+`cancelled`, rejects unapplied suggestions, clears transient comparison and draft
+artifacts, leaves profile/current CV unchanged, and returns
+`pending_cv_update=null`. Retry is safe and reports `already_cancelled=true`.
+Private files are retained under the repository's audit/retention policy and are
+hidden from user history/current/pending contracts. The parsing job checks active
+pending state both before expensive parsing and again before saving, so a job that
+finishes after cancellation produces no draft, suggestions, success event, or
+misleading failure.
+
+Stable localized lifecycle errors include:
+
+- `CV_PENDING_UPDATE_EXISTS`, `CV_NOT_PENDING`, `CV_REVIEW_NOT_READY`,
+  `CV_REVIEW_HAS_UNRESOLVED_CHANGES`, and `CV_FINAL_DRAFT_INVALID`.
+- `CV_PROFILE_CHANGED_SINCE_COMPARISON`, `CV_ALREADY_CONFIRMED`,
+  `CV_CANNOT_CANCEL_CURRENT`, `CV_ALREADY_CANCELLED`, and
+  `CV_CONFIRMATION_CONFLICT`.
+
+Existing ownership, archive, storage, and application error codes remain in use
+where they are more specific. English and Arabic translations cover operations,
+stages, decisions, actions, success messages, statuses, validation, and errors.
+
+Audited events are `cv.uploaded`, `cv.parsing_completed`,
+`cv.review_draft_updated`, `cv.suggestion_decision_updated`,
+`cv.ready_for_confirmation`, `cv.confirmed`, `cv.cancelled`,
+`profile.updated_from_cv`, and `cv.current_changed`. Audit metadata contains IDs,
+operation, counts, and pointer changes—not raw CV text, parsed JSON, full drafts,
+AI prompts, or reasoning. No CV lifecycle notifications existed in the repository,
+so this task deliberately did not introduce a new notification subsystem.
+
+### API and client contracts
+
+The final lifecycle endpoints are:
+
+- `POST /api/v1/cv/upload`
+- `GET /api/v1/cv/{cvFile}/review`
+- `PATCH /api/v1/cv/{cvFile}/review`
+- `POST /api/v1/cv/{cvFile}/ready-for-confirmation`
+- `GET /api/v1/cv/{cvFile}/suggestions`
+- the existing accept/reject suggestion endpoints
+- `GET /api/v1/cv/{cvFile}/final-preview`
+- `POST /api/v1/cv/{cvFile}/confirm`
+- `POST /api/v1/cv/{cvFile}/cancel`
+
+Legacy `PUT .../review-draft` remains as an alias. Legacy
+`POST .../suggestions/apply` delegates to the same atomic finalization service and
+cannot bypass final-draft validation or current-CV promotion rules.
+
+Both mobile and web Postman collections now contain ordered Initial Upload,
+Update, and Cancel/Error scenario folders, including all requested `CV Flow - ...`
+requests. The shared environment adds pending and per-decision suggestion IDs.
+
+All endpoints require an active Sanctum user and authorize job seekers only.
+Guest requests return 401, employer/admin requests return 403, owners succeed,
+and another job seeker receives the existing ownership denial. Public resources
+do not expose raw text, storage path/disk, comparison snapshots, system-generated
+reference drafts, internal confidence/reasons, or another user's suggestions.
+
+### Migration, files, performance, and tests
+
+Migration `2026_08_01_000005_add_cv_workflow_state.php` adds cancellation and
+comparison state, the active-workflow lookup index, the private comparison/system
+drafts, and the final-approved draft. New services isolate operation detection,
+snapshot hashing, final-draft building and summarization, validation, relationship
+application, and atomic finalization. Existing CV models, resources, controller,
+job, services, routes, translations, profile aggregation/attention code, Postman
+collections, and focused tests were updated. No frontend, PDF preview, application
+snapshot, commit, or push was created.
+
+Profile aggregation loads one current CV, one pending CV, and only that pending
+workflow's suggestions. Existing query-count regression coverage proves old CVs
+and old suggestions do not grow the profile query count. Final-preview comparison
+is in-memory over the bounded draft, and confirmation bulk-resolves skills.
+
+Focused Task 4 and CV regression verification passes **64 tests with 697
+assertions**. It covers corrected operation detection, pending uniqueness,
+initial review editing/validation, all suggestion types and decisions, stale
+profile conflict/rebuild, actual final-preview counts, explicit relationship
+removal, source provenance, atomic rollback, current promotion/retention,
+idempotency, cancellation, cancelled parsing, application safety, authorization,
+privacy, localization contracts, and prior CV/Profile contracts.
+
+Final verification results for the repository state after Task 4 are:
+
+- Complete Laravel suite: **973 passed, 2 expected opt-in S3 skips, 28,532
+  assertions, 0 failed**.
+- Protected Phase 17 recommendation baseline and final handover documentation
+  checks pass after explicitly allowlisting only the intentional Task 4 files.
+- `php artisan migrate:fresh --seed --force` passes on a unique temporary SQLite
+  database inside `storage/framework/testing`; the database is removed afterward.
+- CV and Profile route inspection passes with **19 CV routes** and **17 Profile
+  routes**, including final preview, ready, confirm, cancel, and suggestion routes.
+- `php -l` passes for every changed/new PHP file, and Pint passes for every PHP
+  file changed by Task 4. Repository-wide Pint still reports pre-existing style
+  findings in unrelated files; Task 4 does not reformat them.
+- Both Postman collections and the shared environment parse as valid JSON. Each
+  collection contains all 18 requested named scenarios plus 3 supporting
+  ready/edit requests in the new workflow folder.
+- `git diff --check` passes (Git emits only the existing CRLF/LF normalization
+  notices for the three Postman JSON files).
+- `composer audit --no-interaction` could not complete: the Composer cache path
+  was not writable and the environment could not connect to
+  `repo.packagist.org:443`. An elevated retry was not authorized because it would
+  disclose dependency metadata (potentially including private package names) to
+  Packagist without explicit approval. No claim is made that dependencies are
+  advisory-free.
+- No commit or push was created.
+
+Manual verification order is: initial upload → first review/edit → ready → final
+preview → confirm/retry; profile-data update without current CV → resolve
+differences → preview → confirm; current-CV update → verify old current remains
+active until confirm; modify profile after comparison → verify conflict/rebuild;
+cancel at each pending stage; and attempt an application with a pending/cancelled
+CV to verify rejection.
+
 ## Single Current CV Contract
 
 ### Starting state and preserved work

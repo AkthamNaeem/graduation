@@ -402,6 +402,28 @@ class FinalHandoverDocumentationTest extends TestCase
             'tests/Feature/Api/V1/EmailVerificationOtpTest.php',
         ];
         $approvedDocumentation = array_merge($approvedDocumentation, [
+            // Approved Task 4 CV update review, confirmation, and cancellation workflow.
+            'app/Exceptions/CVLifecycleException.php',
+            'app/Http/Controllers/Api/V1/CV/CVController.php',
+            'app/Http/Requests/Api/V1/CV/UpdateCVReviewDraftRequest.php',
+            'app/Http/Resources/Api/V1/CVFileResource.php',
+            'app/Http/Resources/Api/V1/CVParsingResultResource.php',
+            'app/Http/Resources/Api/V1/CVReviewResource.php',
+            'app/Http/Resources/Api/V1/ProfileChangeSuggestionResource.php',
+            'app/Jobs/ParseCVFileJob.php',
+            'app/Models/CVFile.php',
+            'app/Models/CVParsingResult.php',
+            'app/Models/JobSeekerProfile.php',
+            'app/Services/CV/CVReviewDraftService.php',
+            'app/Services/CV/ProfileDataStateService.php',
+            'app/Services/CVService.php',
+            'app/Services/ProfileSyncService.php',
+            'bootstrap/app.php',
+            'routes/api/v1.php',
+            'tests/Feature/Api/V1/CVReviewContractTest.php',
+            'tests/Feature/Api/V1/CVReviewFlowTest.php',
+            'tests/Feature/Api/V1/CVTest.php',
+            'tests/Feature/Api/V1/PrimaryCVTest.php',
             // Approved localized key/value API presentation-contract changes.
             'app/Http/Requests/Api/V1/JobPosting/UpdateJobPostingRequest.php',
             'app/Http/Resources/Api/V1/ApplicationInformationRequestResource.php',

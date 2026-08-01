@@ -156,6 +156,7 @@ return [
         'decisions_pending' => 'Decisions pending',
         'ready_to_apply' => 'Ready to apply',
         'applied' => 'Applied',
+        'cancelled' => 'Cancelled',
     ],
     'cv_next_actions' => [
         'wait_for_parsing' => 'Wait for parsing',
@@ -165,6 +166,7 @@ return [
         'review_suggestions' => 'Review suggestions',
         'apply_suggestions' => 'Apply suggestions',
         'completed' => 'Completed',
+        'cancelled' => 'Cancelled',
     ],
     'profile_entity_types' => [
         'profile' => 'Profile',

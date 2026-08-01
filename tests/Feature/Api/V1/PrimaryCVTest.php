@@ -4,8 +4,10 @@ namespace Tests\Feature\Api\V1;
 
 use App\Enums\UserRole;
 use App\Models\ApplicationStatus;
+use App\Models\AuditLog;
 use App\Models\Company;
 use App\Models\CVFile;
+use App\Models\JobApplication;
 use App\Models\JobPosting;
 use App\Models\JobSeekerProfile;
 use App\Models\User;
@@ -29,7 +31,7 @@ class PrimaryCVTest extends TestCase
         $this->seed(ApplicationStatusSeeder::class);
     }
 
-    public function test_first_upload_is_primary_and_later_upload_respects_make_primary(): void
+    public function test_upload_never_becomes_primary_and_duplicate_pending_is_blocked_until_cancel(): void
     {
         $user = $this->jobSeeker();
         $token = $this->tokenFor($user);
@@ -37,20 +39,26 @@ class PrimaryCVTest extends TestCase
         $first = $this->withToken($token)->post('/api/v1/cv/upload', [
             'file' => UploadedFile::fake()->create('first.pdf', 10, 'application/pdf'),
             'version_label' => ' Backend CV ',
-        ])->assertCreated()->assertJsonPath('data.is_primary', true)->assertJsonPath('data.version_label', 'Backend CV');
+        ])->assertCreated()->assertJsonPath('data.is_primary', false)->assertJsonPath('data.version_label', 'Backend CV');
+        $this->assertNull($user->jobSeekerProfile->refresh()->primary_cv_file_id);
 
-        $second = $this->withToken($token)->post('/api/v1/cv/upload', [
+        $this->withToken($token)->post('/api/v1/cv/upload', [
             'file' => UploadedFile::fake()->create('second.pdf', 10, 'application/pdf'),
+        ])->assertConflict()->assertJsonPath('code', 'CV_PENDING_UPDATE_EXISTS');
+
+        $this->withToken($token)->postJson("/api/v1/cv/{$first->json('data.id')}/make-primary")
+            ->assertConflict()->assertJsonPath('code', 'CV_NOT_USABLE_FOR_APPLICATION');
+        $this->withToken($token)->postJson("/api/v1/cv/{$first->json('data.id')}/cancel")->assertOk();
+
+        $replacement = $this->withToken($token)->post('/api/v1/cv/upload', [
+            'file' => UploadedFile::fake()->create('replacement.pdf', 10, 'application/pdf'),
+            'make_primary' => true,
         ])->assertCreated()->assertJsonPath('data.is_primary', false);
 
-        $third = $this->withToken($token)->post('/api/v1/cv/upload', [
-            'file' => UploadedFile::fake()->create('third.pdf', 10, 'application/pdf'),
-            'make_primary' => true,
-        ])->assertCreated()->assertJsonPath('data.is_primary', true);
-
-        $this->assertSame($third->json('data.id'), $user->jobSeekerProfile->refresh()->primary_cv_file_id);
+        $this->assertNull($user->jobSeekerProfile->refresh()->primary_cv_file_id);
+        $this->assertNotSame($first->json('data.id'), $replacement->json('data.id'));
         $this->assertNull(CVFile::findOrFail($first->json('data.id'))->archived_at);
-        $this->assertNull(CVFile::findOrFail($second->json('data.id'))->archived_at);
+        $this->assertNotNull(CVFile::findOrFail($first->json('data.id'))->cancelled_at);
     }
 
     public function test_primary_switch_is_idempotent_and_does_not_change_application_reference(): void
@@ -61,12 +69,12 @@ class PrimaryCVTest extends TestCase
         $application = $this->application($user, $a);
 
         $this->withToken($this->tokenFor($user))->postJson("/api/v1/cv/{$b->id}/make-primary")->assertOk();
-        $auditCount = \App\Models\AuditLog::query()->where('action', 'cv.primary_changed')->count();
+        $auditCount = AuditLog::query()->where('action', 'cv.primary_changed')->count();
         $this->withToken($this->tokenFor($user))->postJson("/api/v1/cv/{$b->id}/make-primary")->assertOk();
 
         $this->assertSame($b->id, $user->jobSeekerProfile->refresh()->primary_cv_file_id);
         $this->assertSame($a->id, $application->refresh()->selected_cv_file_id);
-        $this->assertSame($auditCount, \App\Models\AuditLog::query()->where('action', 'cv.primary_changed')->count());
+        $this->assertSame($auditCount, AuditLog::query()->where('action', 'cv.primary_changed')->count());
     }
 
     public function test_primary_archive_requires_replacement_and_preserves_history(): void
@@ -149,7 +157,13 @@ class PrimaryCVTest extends TestCase
     public function test_archived_cv_is_read_only_but_remains_downloadable_to_owner(): void
     {
         $user = $this->jobSeeker();
-        $cv = $this->cv($user, 'history.pdf', ['archived_at' => now(), 'status' => 'parsed']);
+        $cv = $this->cv($user, 'history.pdf', [
+            'archived_at' => now(),
+            'status' => 'parsed',
+            'confirmed_at' => null,
+            'review_mode' => CVFile::REVIEW_MODE_INITIAL_IMPORT,
+            'review_status' => CVFile::REVIEW_STATUS_DRAFT,
+        ]);
 
         $this->withToken($this->tokenFor($user))->postJson("/api/v1/cv/{$cv->id}/confirm")
             ->assertStatus(409)->assertJsonPath('code', 'CV_ARCHIVED_READ_ONLY');
@@ -173,6 +187,7 @@ class PrimaryCVTest extends TestCase
     {
         $user = User::factory()->create(['role' => UserRole::JOB_SEEKER]);
         JobSeekerProfile::create(['user_id' => $user->id]);
+
         return $user->load('jobSeekerProfile');
     }
 
@@ -182,26 +197,34 @@ class PrimaryCVTest extends TestCase
             'user_id' => $user->id, 'original_name' => $name, 'stored_path' => "cv-files/{$user->id}/{$name}",
             'disk' => 'local', 'mime_type' => 'application/pdf', 'extension' => 'pdf', 'size_bytes' => 100,
             'status' => 'parsed',
+            'review_mode' => CVFile::REVIEW_MODE_INITIAL_IMPORT,
+            'review_status' => CVFile::REVIEW_STATUS_APPLIED,
+            'confirmed_at' => now(),
         ], $extra));
         Storage::disk('local')->put($cv->stored_path, 'cv');
+
         return $cv;
     }
 
     private function job(): JobPosting
     {
         $company = Company::create(['name' => 'CV Lifecycle Co', 'approval_status' => 'approved']);
+
         return JobPosting::create(['company_id' => $company->id, 'title' => 'Engineer', 'description' => 'Build',
             'employment_type' => 'full-time', 'experience_level' => 'mid-level', 'location' => 'Remote',
             'status' => 'open', 'published_at' => now()]);
     }
 
-    private function application(User $user, CVFile $cv): \App\Models\JobApplication
+    private function application(User $user, CVFile $cv): JobApplication
     {
-        return \App\Models\JobApplication::create(['job_posting_id' => $this->job()->id,
+        return JobApplication::create(['job_posting_id' => $this->job()->id,
             'job_seeker_profile_id' => $user->jobSeekerProfile->id, 'selected_cv_file_id' => $cv->id,
             'application_status_id' => ApplicationStatus::where('slug', 'submitted')->value('id'),
             'consent_to_share_profile' => true]);
     }
 
-    private function tokenFor(User $user): string { return $user->createToken(Str::random(10))->plainTextToken; }
+    private function tokenFor(User $user): string
+    {
+        return $user->createToken(Str::random(10))->plainTextToken;
+    }
 }

@@ -26,6 +26,8 @@ class CVFile extends Model
 
     public const REVIEW_STATUS_APPLIED = 'applied';
 
+    public const REVIEW_STATUS_CANCELLED = 'cancelled';
+
     protected $table = 'cv_files';
 
     protected $fillable = [
@@ -40,9 +42,12 @@ class CVFile extends Model
         'status',
         'review_mode',
         'review_status',
+        'comparison_profile_updated_at',
+        'comparison_profile_hash',
         'error_message',
         'confirmed_at',
         'archived_at',
+        'cancelled_at',
     ];
 
     /**
@@ -53,6 +58,8 @@ class CVFile extends Model
         return [
             'confirmed_at' => 'datetime',
             'archived_at' => 'datetime',
+            'cancelled_at' => 'datetime',
+            'comparison_profile_updated_at' => 'datetime',
         ];
     }
 
@@ -79,9 +86,17 @@ class CVFile extends Model
     public function isUsableForApplication(): bool
     {
         return $this->archived_at === null
+            && $this->cancelled_at === null
             && in_array($this->status, ['uploaded', 'processing', 'parsed', 'failed'], true)
             && filled($this->disk)
             && filled($this->stored_path);
+    }
+
+    public function isActivePendingWorkflow(): bool
+    {
+        return $this->confirmed_at === null
+            && $this->archived_at === null
+            && $this->cancelled_at === null;
     }
 
     public function isConfirmedUsableForApplication(): bool
@@ -93,6 +108,9 @@ class CVFile extends Model
 
     public function nextAction(): string
     {
+        if ($this->cancelled_at !== null || $this->review_status === self::REVIEW_STATUS_CANCELLED) {
+            return 'cancelled';
+        }
         if (in_array($this->status, ['uploaded', 'processing'], true)) {
             return 'wait_for_parsing';
         }

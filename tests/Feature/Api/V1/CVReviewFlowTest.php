@@ -12,6 +12,7 @@ use App\Models\JobSeekerProfile;
 use App\Models\ProfileChangeSuggestion;
 use App\Models\Skill;
 use App\Models\User;
+use App\Services\CV\CVProfileSnapshotService;
 use App\Services\CV\CVReviewDraftService;
 use App\Services\CV\ProfileDataStateService;
 use App\Services\CVParsingService;
@@ -84,6 +85,9 @@ class CVReviewFlowTest extends TestCase
         $this->withToken($this->tokenFor($user))->getJson("/api/v1/cv/{$cvFile->id}/review")
             ->assertOk()->assertJsonPath('data.next_action.key', 'review_draft')->assertJsonPath('data.can_edit_draft', true);
 
+        $this->withToken($this->tokenFor($user))->postJson("/api/v1/cv/{$cvFile->id}/ready-for-confirmation")
+            ->assertOk()->assertJsonPath('data.stage.key', 'final_confirmation');
+
         $this->withToken($this->tokenFor($user))->postJson("/api/v1/cv/{$cvFile->id}/confirm")
             ->assertOk()->assertJsonPath('data.profile.location', 'Damascus');
 
@@ -97,7 +101,8 @@ class CVReviewFlowTest extends TestCase
         $this->assertNotSame('Read Only', $user->name);
 
         $counts = [Experience::count(), Education::count(), Skill::count()];
-        $this->withToken($this->tokenFor($user))->postJson("/api/v1/cv/{$cvFile->id}/confirm")->assertStatus(409);
+        $this->withToken($this->tokenFor($user))->postJson("/api/v1/cv/{$cvFile->id}/confirm")
+            ->assertOk()->assertJsonPath('data.already_confirmed', true);
         $this->assertSame($counts, [Experience::count(), Education::count(), Skill::count()]);
     }
 
@@ -114,9 +119,12 @@ class CVReviewFlowTest extends TestCase
         $draft['experience'][0]['is_current'] = true;
         $this->withToken($this->tokenFor($user))->putJson("/api/v1/cv/{$cvFile->id}/review-draft", $draft)->assertUnprocessable();
 
+        $snapshot = app(CVProfileSnapshotService::class);
+        $cvFile->update(['comparison_profile_hash' => $snapshot->currentHash($user->jobSeekerProfile)]);
+        $this->withToken($this->tokenFor($user))->postJson("/api/v1/cv/{$cvFile->id}/ready-for-confirmation")->assertOk();
         $user->jobSeekerProfile->update(['phone' => '+963999']);
         $this->withToken($this->tokenFor($user))->postJson("/api/v1/cv/{$cvFile->id}/confirm")
-            ->assertStatus(409)->assertJsonPath('code', 'CV_REVIEW_MODE_STALE');
+            ->assertStatus(409)->assertJsonPath('code', 'CV_PROFILE_CHANGED_SINCE_COMPARISON');
         $this->assertNull($cvFile->refresh()->confirmed_at);
     }
 
@@ -206,9 +214,7 @@ class CVReviewFlowTest extends TestCase
 
         $user->jobSeekerProfile->update(['phone' => 'C']);
         $this->withToken($this->tokenFor($user))->postJson("/api/v1/cv/{$cvFile->id}/suggestions/apply")
-            ->assertStatus(409)->assertJsonPath('code', 'SUGGESTION_STALE')
-            ->assertJsonPath('suggestion_id', $suggestion->id)
-            ->assertJsonPath('entity_type', 'profile');
+            ->assertStatus(409)->assertJsonPath('code', 'CV_PROFILE_CHANGED_SINCE_COMPARISON');
         $this->assertSame('C', $user->jobSeekerProfile->refresh()->phone);
         $this->assertSame(ProfileChangeSuggestion::STATUS_ACCEPTED, $suggestion->refresh()->status);
         $this->assertNull($cvFile->refresh()->confirmed_at);
@@ -246,6 +252,8 @@ class CVReviewFlowTest extends TestCase
         $draft['education'][] = array_merge($draft['education'][0], ['institution' => 'Remove Me']);
         $draft['skills'] = ['PHP', 'php', ' Laravel '];
 
+        $this->withToken($this->tokenFor($user))->putJson("/api/v1/cv/{$cvFile->id}/review-draft", $draft)->assertUnprocessable();
+        $draft['skills'] = ['PHP', ' Laravel '];
         $this->withToken($this->tokenFor($user))->putJson("/api/v1/cv/{$cvFile->id}/review-draft", $draft)->assertOk();
         $replacement = $draft;
         array_pop($replacement['experience']);
@@ -257,12 +265,15 @@ class CVReviewFlowTest extends TestCase
             ->assertJsonPath('data.reviewed_json.skills', ['PHP', 'Laravel']);
     }
 
-    public function test_initial_import_rolls_back_all_sections_when_a_late_skill_write_fails(): void
+    public function test_initial_import_rolls_back_all_sections_when_a_late_relationship_write_fails(): void
     {
         $user = $this->jobSeeker();
         $cvFile = $this->reviewCV($user, CVFile::REVIEW_MODE_INITIAL_IMPORT, CVFile::REVIEW_STATUS_DRAFT);
-        $cvFile->parsingResult->update(['reviewed_json' => $this->draftPayload()]);
-        Skill::creating(function (): void {
+        $cvFile->parsingResult->update([
+            'reviewed_json' => app(CVReviewDraftService::class)->normalize($this->draftPayload()),
+        ]);
+        $cvFile->update(['review_status' => CVFile::REVIEW_STATUS_READY_TO_APPLY]);
+        Education::creating(function (): void {
             throw new \RuntimeException('synthetic late failure');
         });
 
@@ -272,7 +283,7 @@ class CVReviewFlowTest extends TestCase
         } catch (\RuntimeException $exception) {
             $this->assertSame('synthetic late failure', $exception->getMessage());
         } finally {
-            Skill::flushEventListeners();
+            Education::flushEventListeners();
         }
 
         $profile = $user->jobSeekerProfile->refresh();
@@ -282,7 +293,7 @@ class CVReviewFlowTest extends TestCase
         $this->assertDatabaseCount('experiences', 0);
         $this->assertDatabaseCount('education', 0);
         $this->assertDatabaseCount('job_seeker_skills', 0);
-        $this->assertSame(CVFile::REVIEW_STATUS_DRAFT, $cvFile->refresh()->review_status);
+        $this->assertSame(CVFile::REVIEW_STATUS_READY_TO_APPLY, $cvFile->refresh()->review_status);
         $this->assertNull($cvFile->confirmed_at);
     }
 
@@ -331,7 +342,7 @@ class CVReviewFlowTest extends TestCase
 
         $this->withToken($this->tokenFor($user))->postJson("/api/v1/cv/{$cvFile->id}/suggestions/apply")
             ->assertStatus(409)
-            ->assertJsonPath('code', 'CV_SUGGESTIONS_NOT_READY');
+            ->assertJsonPath('code', 'CV_REVIEW_HAS_UNRESOLVED_CHANGES');
         $this->assertSame('Old', $user->jobSeekerProfile->refresh()->phone);
         $this->assertSame(CVFile::REVIEW_STATUS_COMPARISON_PENDING, $cvFile->refresh()->review_status);
         $this->assertNull($cvFile->confirmed_at);
@@ -352,7 +363,7 @@ class CVReviewFlowTest extends TestCase
         $user->jobSeekerProfile->skills()->attach($skill->id, ['source_type' => 'manual', 'user_verified_at' => now()]);
 
         $this->withToken($this->tokenFor($user))->postJson("/api/v1/cv/{$cvFile->id}/suggestions/apply")
-            ->assertStatus(409)->assertJsonPath('code', 'SUGGESTION_STALE')->assertJsonPath('entity_type', 'skill');
+            ->assertStatus(409)->assertJsonPath('code', 'CV_PROFILE_CHANGED_SINCE_COMPARISON');
         $this->assertDatabaseHas('job_seeker_skills', [
             'job_seeker_profile_id' => $user->jobSeekerProfile->id, 'skill_id' => $skill->id, 'source_type' => 'manual',
         ]);
@@ -374,7 +385,7 @@ class CVReviewFlowTest extends TestCase
         $experience->update(['description' => 'Manual newer value']);
 
         $this->withToken($this->tokenFor($user))->postJson("/api/v1/cv/{$cvFile->id}/suggestions/apply")
-            ->assertStatus(409)->assertJsonPath('code', 'SUGGESTION_STALE');
+            ->assertStatus(409)->assertJsonPath('code', 'CV_PROFILE_CHANGED_SINCE_COMPARISON');
         $this->assertSame('Manual newer value', $experience->refresh()->description);
     }
 

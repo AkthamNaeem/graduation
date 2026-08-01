@@ -10,6 +10,8 @@ use App\Models\JobSeekerProfile;
 use App\Models\ProfileChangeSuggestion;
 use App\Models\Skill;
 use App\Models\User;
+use App\Services\CV\CVFinalDraftService;
+use App\Services\CV\CVProfileSnapshotService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -182,7 +184,7 @@ class ProfileSuggestionTest extends TestCase
             ])
             ->assertOk()
             ->assertJsonPath('data.status.key', 'rejected')
-            ->assertJsonPath('data.reason', 'Not relevant.');
+            ->assertJsonMissingPath('data.reason');
 
         $this->assertDatabaseCount('experiences', 0);
     }
@@ -207,6 +209,24 @@ class ProfileSuggestionTest extends TestCase
             'entity_type' => ProfileChangeSuggestion::ENTITY_EDUCATION,
             'new_value' => ['institution' => 'State University', 'degree' => 'BSc'],
         ]));
+        $snapshotService = app(CVProfileSnapshotService::class);
+        $snapshot = $snapshotService->snapshot($user->jobSeekerProfile);
+        $draft = app(CVFinalDraftService::class)->build(
+            $user->jobSeekerProfile,
+            collect([$experience, $education]),
+        );
+        $cvFile->parsingResult->forceFill([
+            'comparison_base_json' => $snapshot,
+            'reviewed_json' => $draft,
+            'system_generated_review_json' => $draft,
+            'reviewed_at' => now(),
+        ])->save();
+        $cvFile->forceFill([
+            'review_mode' => CVFile::REVIEW_MODE_PROFILE_SYNC,
+            'review_status' => CVFile::REVIEW_STATUS_READY_TO_APPLY,
+            'comparison_profile_hash' => $snapshotService->hash($snapshot),
+            'comparison_profile_updated_at' => $user->jobSeekerProfile->updated_at,
+        ])->save();
 
         $this->withToken($this->tokenFor($user))
             ->postJson('/api/v1/profile/suggestions/apply-bulk', [
@@ -226,6 +246,7 @@ class ProfileSuggestionTest extends TestCase
         ]);
         $this->assertSame(ProfileChangeSuggestion::STATUS_APPLIED, $experience->refresh()->status);
         $this->assertSame(ProfileChangeSuggestion::STATUS_APPLIED, $education->refresh()->status);
+        $this->assertSame($cvFile->id, $user->jobSeekerProfile->refresh()->primary_cv_file_id);
     }
 
     public function test_duplicate_experience_is_not_blindly_duplicated(): void

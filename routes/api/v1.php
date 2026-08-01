@@ -178,8 +178,12 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function (): void {
     Route::get('cv/{cvFile}/download', [CVController::class, 'download'])->name('cv.download');
     Route::get('cv/{cvFile}/parsed', [CVController::class, 'parsed'])->name('cv.parsed');
     Route::get('cv/{cvFile}/review', [CVController::class, 'review'])->name('cv.review');
+    Route::get('cv/{cvFile}/final-preview', [CVController::class, 'review'])->name('cv.final-preview');
+    Route::patch('cv/{cvFile}/review', [CVController::class, 'updateReviewDraft'])->name('cv.review.update');
     Route::put('cv/{cvFile}/review-draft', [CVController::class, 'updateReviewDraft'])->name('cv.review-draft.update');
+    Route::post('cv/{cvFile}/ready-for-confirmation', [CVController::class, 'readyForConfirmation'])->name('cv.ready-for-confirmation');
     Route::post('cv/{cvFile}/confirm', [CVController::class, 'confirm'])->name('cv.confirm');
+    Route::post('cv/{cvFile}/cancel', [CVController::class, 'cancel'])->name('cv.cancel');
     Route::get('cv/{cvFile}/suggestions', [ProfileSuggestionController::class, 'index'])->name('cv.suggestions.index');
     Route::post('cv/{cvFile}/suggestions/generate', [ProfileSuggestionController::class, 'generate'])->name('cv.suggestions.generate');
     Route::post('cv/{cvFile}/suggestions/apply', [ProfileSuggestionController::class, 'apply'])->name('cv.suggestions.apply');

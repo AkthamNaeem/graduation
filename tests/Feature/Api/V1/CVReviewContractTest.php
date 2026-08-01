@@ -46,8 +46,10 @@ class CVReviewContractTest extends TestCase
             ->assertJsonStructure(['data' => [
                 'parsing_status', 'review_mode', 'review_status', 'next_action', 'can_edit_draft',
                 'can_generate_suggestions', 'can_apply_suggestions', 'editable_sections', 'read_only_sections',
-                'parsed_json', 'reviewed_json',
+                'operation', 'stage', 'draft', 'reviewed_json', 'validation_summary', 'allowed_actions',
             ]]);
+        $this->withToken($this->tokenFor($user))->getJson("/api/v1/cv/{$cvFile->id}/review")
+            ->assertJsonMissingPath('data.parsed_json');
         $this->withToken($this->tokenFor($user))->getJson("/api/v1/cv/{$cvFile->id}")
             ->assertOk()->assertJsonPath('data.next_action.key', 'review_draft');
     }
@@ -382,8 +384,9 @@ class CVReviewContractTest extends TestCase
         $corrupt = $emptyDraft;
         $corrupt['profile']['phone'] = ['not-a-string'];
         $cvFile->parsingResult()->update(['reviewed_json' => $corrupt]);
+        $cvFile->update(['review_status' => CVFile::REVIEW_STATUS_READY_TO_APPLY]);
         $this->withToken($token)->postJson("/api/v1/cv/{$cvFile->id}/confirm")->assertUnprocessable();
-        $this->assertSame('draft', $cvFile->refresh()->review_status);
+        $this->assertSame(CVFile::REVIEW_STATUS_READY_TO_APPLY, $cvFile->refresh()->review_status);
         $this->assertNull($user->jobSeekerProfile->refresh()->phone);
     }
 
@@ -434,7 +437,7 @@ class CVReviewContractTest extends TestCase
         $experience->delete();
         $education->update(['description' => 'Manual']);
         $this->withToken($token)->postJson("/api/v1/cv/{$cvFile->id}/suggestions/apply")
-            ->assertStatus(409)->assertJsonPath('code', 'SUGGESTION_STALE');
+            ->assertStatus(409)->assertJsonPath('code', 'CV_PROFILE_CHANGED_SINCE_COMPARISON');
 
         $cvFile->update(['archived_at' => now()]);
         $this->withToken($token)->postJson("/api/v1/cv/{$cvFile->id}/suggestions/apply")
@@ -449,6 +452,7 @@ class CVReviewContractTest extends TestCase
         $draft = ['profile' => ['phone' => $marker, 'summary' => null, 'location' => null], 'experience' => [], 'education' => [], 'skills' => []];
         $token = $this->tokenFor($user);
         $this->withToken($token)->putJson("/api/v1/cv/{$cvFile->id}/review-draft", $draft)->assertOk();
+        $this->withToken($token)->postJson("/api/v1/cv/{$cvFile->id}/ready-for-confirmation")->assertOk();
         $this->withToken($token)->postJson("/api/v1/cv/{$cvFile->id}/confirm")->assertOk();
 
         $syncUser = $this->jobSeeker(['headline' => 'Engineer', 'phone' => 'Old']);

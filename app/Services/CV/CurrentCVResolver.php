@@ -12,7 +12,7 @@ class CurrentCVResolver
     {
         $cv = $profile->relationLoaded('primaryCVFile')
             ? $profile->primaryCVFile
-            : null;
+            : $profile->primaryCVFile()->first();
 
         if (! $cv instanceof CVFile
             || $cv->user_id !== $user->id

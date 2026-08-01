@@ -17,6 +17,9 @@ class CVParsingResult extends Model
         'raw_text',
         'parsed_json',
         'reviewed_json',
+        'comparison_base_json',
+        'system_generated_review_json',
+        'final_approved_json',
         'reviewed_at',
     ];
 
@@ -28,6 +31,9 @@ class CVParsingResult extends Model
         return [
             'parsed_json' => 'array',
             'reviewed_json' => 'array',
+            'comparison_base_json' => 'array',
+            'system_generated_review_json' => 'array',
+            'final_approved_json' => 'array',
             'reviewed_at' => 'datetime',
         ];
     }

@@ -17,7 +17,6 @@ class CVParsingResultResource extends JsonResource
         return [
             'id' => $this->id,
             'cv_file_id' => $this->cv_file_id,
-            'raw_text' => $this->raw_text,
             'parsed_json' => $this->parsed_json,
             'reviewed_json' => $this->reviewed_json,
             'reviewed_at' => $this->reviewed_at?->toISOString(),

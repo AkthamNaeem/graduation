@@ -11,6 +11,7 @@ class CVLifecycleException extends RuntimeException
         public readonly string $errorCode,
         public readonly int $status = 409,
         public readonly array $errors = [],
+        public readonly mixed $data = null,
     ) {
         parent::__construct($message);
     }

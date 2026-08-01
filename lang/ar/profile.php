@@ -86,6 +86,7 @@ return [
             'review_extracted_cv' => 'مراجعة السيرة المستخرجة',
             'review_cv_changes' => 'مراجعة تغييرات السيرة',
             'confirm_cv_review' => 'تأكيد مراجعة السيرة',
+            'cancel_cv_review' => 'إلغاء مراجعة السيرة',
             'complete_profile' => 'إكمال الملف الشخصي',
         ],
     ],
@@ -114,6 +115,8 @@ return [
             'review_extracted_cv' => 'مراجعة السيرة المستخرجة',
             'review_cv_changes' => 'مراجعة التغييرات',
             'confirm_cv_review' => 'تأكيد مراجعة السيرة',
+            'cancel_cv_review' => 'إلغاء مراجعة السيرة',
+            'cancel' => 'إلغاء تحديث السيرة',
         ],
     ],
 ];

@@ -86,6 +86,7 @@ return [
             'review_extracted_cv' => 'Review extracted CV',
             'review_cv_changes' => 'Review CV changes',
             'confirm_cv_review' => 'Confirm CV review',
+            'cancel_cv_review' => 'Cancel CV review',
             'complete_profile' => 'Complete profile',
         ],
     ],
@@ -114,6 +115,8 @@ return [
             'review_extracted_cv' => 'Review extracted CV',
             'review_cv_changes' => 'Review CV changes',
             'confirm_cv_review' => 'Confirm CV review',
+            'cancel_cv_review' => 'Cancel CV review',
+            'cancel' => 'Cancel CV update',
         ],
     ],
 ];

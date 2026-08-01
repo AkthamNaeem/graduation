@@ -13,6 +13,8 @@ use App\Models\JobSeekerProfile;
 use App\Models\ProfileChangeSuggestion;
 use App\Models\Skill;
 use App\Models\User;
+use App\Services\CV\CVProfileSnapshotService;
+use App\Services\CV\CVReviewDraftService;
 use Database\Seeders\ApplicationStatusSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -156,7 +158,10 @@ class SingleCurrentCVContractTest extends TestCase
                 ->assertJsonPath('data.identity.id', $user->id)
                 ->assertJsonPath('data.current_cv', null)
                 ->assertJsonPath('data.pending_cv_update.id', $pending->id)
-                ->assertJsonPath('data.pending_cv_update.operation.key', 'initial_upload')
+                ->assertJsonPath(
+                    'data.pending_cv_update.operation.key',
+                    ($attributes['review_mode'] ?? null) === CVFile::REVIEW_MODE_PROFILE_SYNC ? 'update' : 'initial_upload',
+                )
                 ->assertJsonPath('data.pending_cv_update.stage.key', $stage)
                 ->assertJsonPath('data.pending_cv_update.next_action.type.key', $nextAction)
                 ->assertJsonPath('data.pending_cv_update.can_use_for_application', false)
@@ -207,7 +212,7 @@ class SingleCurrentCVContractTest extends TestCase
             ->assertJsonPath('data.pending_cv_update.stage.label', 'مراجعة التغييرات')
             ->assertJsonPath('data.pending_cv_update.next_action.type.key', 'review_cv_changes')
             ->assertJsonPath('data.pending_cv_update.next_action.type.label', 'مراجعة التغييرات')
-            ->assertJsonPath('data.pending_cv_update.allowed_actions', ['review'])
+            ->assertJsonPath('data.pending_cv_update.allowed_actions', ['review', 'cancel'])
             ->assertJsonPath('data.profile_completeness.percentage', 100)
             ->assertJsonPath('data.attention_items.0.type.key', 'cv_differences_review_required')
             ->assertJsonPath('data.attention_items.0.meta.changes_count', 1);
@@ -317,6 +322,15 @@ class SingleCurrentCVContractTest extends TestCase
             'review_mode' => CVFile::REVIEW_MODE_PROFILE_SYNC,
             'review_status' => CVFile::REVIEW_STATUS_READY_TO_APPLY,
         ]);
+        CVParsingResult::create([
+            'cv_file_id' => $pending->id,
+            'raw_text' => '',
+            'parsed_json' => [],
+            'reviewed_json' => app(CVReviewDraftService::class)->normalize(
+                app(CVProfileSnapshotService::class)->snapshot($profile),
+            ),
+            'reviewed_at' => now(),
+        ]);
         $token = $this->tokenFor($user);
 
         $this->withToken($token)->getJson('/api/v1/profile')
@@ -326,7 +340,7 @@ class SingleCurrentCVContractTest extends TestCase
             ->assertJsonPath('data.pending_cv_update.stage.key', 'final_confirmation');
 
         $this->withToken($token)
-            ->postJson("/api/v1/cv/{$pending->id}/suggestions/apply")
+            ->postJson("/api/v1/cv/{$pending->id}/confirm")
             ->assertOk();
 
         $this->assertSame($pending->id, $profile->refresh()->primary_cv_file_id);

@@ -99,7 +99,7 @@ class CVTest extends TestCase
         Storage::disk('local')->assertExists($cvFile->stored_path);
         $this->assertSame('failed', $cvFile->status);
         $this->assertSame('OPENAI_AUTHENTICATION_FAILED', $cvFile->error_message);
-        $this->assertSame($cvFile->id, $profile->primary_cv_file_id);
+        $this->assertNull($profile->primary_cv_file_id);
         $this->assertDatabaseCount('cv_parsing_results', 0);
         $this->assertDatabaseHas('cv_files', ['id' => $cvFile->id]);
     }
@@ -302,7 +302,7 @@ class CVTest extends TestCase
             ->assertJsonPath('success', false);
     }
 
-    public function test_confirm_generates_review_suggestions_without_applying_profile_data(): void
+    public function test_generate_endpoint_prepares_review_suggestions_without_applying_profile_data(): void
     {
         $user = $this->jobSeeker();
         $user->jobSeekerProfile->update(['phone' => '+1 555 EXISTING']);
@@ -335,10 +335,9 @@ class CVTest extends TestCase
         ]);
 
         $this->withToken($this->tokenFor($user))
-            ->postJson("/api/v1/cv/{$cvFile->id}/confirm")
-            ->assertOk()
+            ->postJson("/api/v1/cv/{$cvFile->id}/suggestions/generate")
+            ->assertCreated()
             ->assertJsonPath('success', true)
-            ->assertJsonPath('data.profile.phone', '+1 555 EXISTING')
             ->assertJsonFragment([
                 'entity_type' => ['key' => 'experience', 'value' => 'Work experience'],
                 'suggestion_type' => ['key' => 'add', 'value' => 'Add'],
@@ -361,8 +360,8 @@ class CVTest extends TestCase
         $this->assertDatabaseCount('job_seeker_skills', 0);
 
         $this->withToken($this->tokenFor($user))
-            ->postJson("/api/v1/cv/{$cvFile->id}/confirm")
-            ->assertOk()
+            ->postJson("/api/v1/cv/{$cvFile->id}/suggestions/generate")
+            ->assertCreated()
             ->assertJsonPath('success', true);
 
         $this->assertDatabaseCount('profile_change_suggestions', 4);

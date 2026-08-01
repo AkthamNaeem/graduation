@@ -249,6 +249,8 @@ return [
         'current_end_date' => 'The end date must be null for a current experience.',
         'unexpected_fields' => 'The payload contains unexpected fields.',
         'end_date_order' => 'The end date must be after or equal to the start date.',
+        'duplicate_draft_item' => 'The reviewed draft contains a duplicate item.',
+        'invalid_draft_relationship' => 'The reviewed draft references an invalid profile item (:id).',
     ],
 
 ];

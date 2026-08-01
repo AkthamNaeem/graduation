@@ -51,6 +51,7 @@ class ProfilePageService
                     'status',
                     'confirmed_at',
                     'archived_at',
+                    'cancelled_at',
                     'created_at',
                     'updated_at',
                 ]),
@@ -67,6 +68,7 @@ class ProfilePageService
                         'cv_files.review_status',
                         'cv_files.confirmed_at',
                         'cv_files.archived_at',
+                        'cv_files.cancelled_at',
                         'cv_files.created_at',
                         'cv_files.updated_at',
                     ])

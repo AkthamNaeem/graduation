@@ -2,14 +2,18 @@
 
 namespace App\Jobs;
 
+use App\Enums\CandidateCVOperation;
 use App\Exceptions\CVParserException;
 use App\Models\CVFile;
 use App\Models\CVParsingResult;
+use App\Models\JobSeekerProfile;
 use App\Services\AuditLogService;
+use App\Services\CV\CandidateCVOperationResolver;
+use App\Services\CV\CVProfileSnapshotService;
 use App\Services\CV\CVReviewDraftService;
-use App\Services\CV\ProfileDataStateService;
 use App\Services\CVParsingService;
 use App\Services\PrivateFileStorageService;
+use App\Services\ProfileSyncService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
@@ -27,15 +31,19 @@ class ParseCVFileJob implements ShouldQueue
         CVParsingService $cvParsingService,
         ?AuditLogService $auditLogService = null,
         ?PrivateFileStorageService $privateStorage = null,
-        ?ProfileDataStateService $profileDataStateService = null,
+        ?CandidateCVOperationResolver $operationResolver = null,
         ?CVReviewDraftService $reviewDraftService = null,
+        ?CVProfileSnapshotService $profileSnapshotService = null,
+        ?ProfileSyncService $profileSyncService = null,
     ): void {
         $auditLogService ??= app(AuditLogService::class);
         $privateStorage ??= app(PrivateFileStorageService::class);
-        $profileDataStateService ??= app(ProfileDataStateService::class);
+        $operationResolver ??= app(CandidateCVOperationResolver::class);
         $reviewDraftService ??= app(CVReviewDraftService::class);
+        $profileSnapshotService ??= app(CVProfileSnapshotService::class);
+        $profileSyncService ??= app(ProfileSyncService::class);
         $this->cvFile->refresh();
-        if ($this->cvFile->archived_at !== null) {
+        if (! $this->cvFile->isActivePendingWorkflow()) {
             return;
         }
 
@@ -80,28 +88,64 @@ class ParseCVFileJob implements ShouldQueue
             $rawText = $cvParsingService->extractText($path);
             $parsedJson = $cvParsingService->parseText($rawText);
 
-            DB::transaction(function () use ($rawText, $parsedJson, $profileDataStateService, $reviewDraftService): void {
+            $saved = DB::transaction(function () use ($rawText, $parsedJson, $operationResolver, $reviewDraftService, $profileSnapshotService): bool {
                 $cvFile = CVFile::query()->lockForUpdate()->findOrFail($this->cvFile->id);
+                if (! $cvFile->isActivePendingWorkflow()) {
+                    return false;
+                }
                 $result = CVParsingResult::query()->firstOrCreate(
                     ['cv_file_id' => $cvFile->id],
                     ['raw_text' => $rawText, 'parsed_json' => $parsedJson],
                 );
 
                 $state = ['status' => 'parsed', 'error_message' => null];
-                if ($cvFile->review_mode === null) {
-                    $profile = $cvFile->user->jobSeekerProfile()->lockForUpdate()->first();
-                    $hasData = $profile === null || $profileDataStateService->hasMeaningfulData($profile);
-                    $state['review_mode'] = $hasData ? CVFile::REVIEW_MODE_PROFILE_SYNC : CVFile::REVIEW_MODE_INITIAL_IMPORT;
-                    $state['review_status'] = $hasData ? CVFile::REVIEW_STATUS_COMPARISON_PENDING : CVFile::REVIEW_STATUS_DRAFT;
+                $profile = $cvFile->user->jobSeekerProfile()->lockForUpdate()->first();
+                $mode = $cvFile->review_mode;
+                if ($profile instanceof JobSeekerProfile) {
+                    $profileSnapshot = $profileSnapshotService->snapshot($profile);
+                    $result->forceFill(['comparison_base_json' => $profileSnapshot])->save();
+                    $state['comparison_profile_updated_at'] = $profile->updated_at;
+                    $state['comparison_profile_hash'] = $profileSnapshotService->hash($profileSnapshot);
+                }
+                if ($mode === null && $profile instanceof JobSeekerProfile) {
+                    $operation = $operationResolver->resolve($cvFile->user, $profile);
+                    $mode = $operation === CandidateCVOperation::INITIAL_UPLOAD
+                        ? CVFile::REVIEW_MODE_INITIAL_IMPORT
+                        : CVFile::REVIEW_MODE_PROFILE_SYNC;
+                    $state['review_mode'] = $mode;
+                } elseif ($mode === null) {
+                    // Legacy CV rows may predate the mandatory candidate profile invariant.
+                    // Parsing stays non-destructive and exposes an initial draft until the
+                    // account is repaired through the normal profile lifecycle.
+                    $mode = CVFile::REVIEW_MODE_INITIAL_IMPORT;
+                    $state['review_mode'] = $mode;
+                }
+                $initial = $mode === CVFile::REVIEW_MODE_INITIAL_IMPORT;
+                $state['review_status'] = $initial
+                    ? CVFile::REVIEW_STATUS_DRAFT
+                    : CVFile::REVIEW_STATUS_COMPARISON_PENDING;
+                if ($initial) {
+                    $draft = $reviewDraftService->build($result->parsed_json);
                     $result->forceFill([
-                        'reviewed_json' => $hasData ? null : $reviewDraftService->build($result->parsed_json),
-                        'reviewed_at' => $hasData ? null : now(),
+                        'reviewed_json' => $draft,
+                        'system_generated_review_json' => $draft,
+                        'reviewed_at' => now(),
                     ])->save();
                 }
 
                 $cvFile->forceFill($state)->save();
                 $this->cvFile = $cvFile;
+
+                return true;
             });
+            if (! $saved) {
+                return;
+            }
+            if ($this->cvFile->review_mode === CVFile::REVIEW_MODE_PROFILE_SYNC
+                && $this->cvFile->user->jobSeekerProfile()->exists()) {
+                $profileSyncService->generateSuggestionsFromParsedCV($this->cvFile->user, $this->cvFile);
+                $this->cvFile->refresh();
+            }
             $auditLogService->record('cv.parsing_completed', $this->cvFile->user, CVFile::class, $this->cvFile->id, null, null, [
                 'cv_file_id' => $this->cvFile->id, 'user_id' => $this->cvFile->user_id,
                 'parsing_status' => 'parsed', 'actor_id' => $this->cvFile->user_id,
@@ -114,6 +158,10 @@ class ParseCVFileJob implements ShouldQueue
                 'normalization' => $parsedJson['_meta']['normalization'] ?? null,
             ]);
         } catch (Throwable $exception) {
+            $this->cvFile->refresh();
+            if (! $this->cvFile->isActivePendingWorkflow()) {
+                return;
+            }
             $this->cvFile->forceFill([
                 'status' => 'failed',
                 'error_message' => $exception instanceof CVParserException

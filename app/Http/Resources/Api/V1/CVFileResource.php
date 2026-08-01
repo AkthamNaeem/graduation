@@ -23,7 +23,7 @@ class CVFileResource extends JsonResource
                 ->value('primary_cv_file_id'));
         }
         $primaryId = $request->attributes->get($cacheKey);
-        $usable = $this->isUsableForApplication();
+        $usable = $this->isConfirmedUsableForApplication();
 
         return [
             'id' => $this->id,
@@ -39,9 +39,11 @@ class CVFileResource extends JsonResource
             'next_action' => LocalizedValue::make($this->nextAction(), 'cv_next_actions'),
             'is_primary' => $primaryId === $this->id,
             'is_archived' => $this->archived_at !== null,
+            'is_cancelled' => $this->cancelled_at !== null,
             'can_set_primary' => $this->archived_at === null && $usable && $primaryId !== $this->id,
-            'can_archive' => $this->archived_at === null,
+            'can_archive' => $this->archived_at === null && $this->cancelled_at === null && $this->confirmed_at !== null,
             'can_restore' => $this->archived_at !== null,
+            'can_cancel' => $this->isActivePendingWorkflow(),
             'can_use_for_application' => $usable,
             'confirmed_at' => $this->confirmed_at?->toISOString(),
             'parsing_result' => CVParsingResultResource::make($this->whenLoaded('parsingResult')),

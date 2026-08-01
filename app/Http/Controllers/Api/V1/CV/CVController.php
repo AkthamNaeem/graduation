@@ -13,6 +13,7 @@ use App\Http\Requests\Api\V1\CV\ShowParsedCVRequest;
 use App\Http\Requests\Api\V1\CV\UpdateCVMetadataRequest;
 use App\Http\Requests\Api\V1\CV\UpdateCVReviewDraftRequest;
 use App\Http\Requests\Api\V1\CV\UploadCVRequest;
+use App\Http\Resources\Api\V1\CurrentCVResource;
 use App\Http\Resources\Api\V1\CVFileResource;
 use App\Http\Resources\Api\V1\CVParsingResultResource;
 use App\Http\Resources\Api\V1\CVReviewResource;
@@ -113,6 +114,29 @@ class CVController extends Controller
         );
     }
 
+    public function readyForConfirmation(CVLifecycleRequest $request, CVFile $cvFile): JsonResponse
+    {
+        return ApiResponse::success(
+            new CVReviewResource($this->cvService->readyForConfirmation($request->user(), $cvFile)),
+            __('cv.ready_for_confirmation'),
+        );
+    }
+
+    public function cancel(CVLifecycleRequest $request, CVFile $cvFile): JsonResponse
+    {
+        $result = $this->cvService->cancel($request->user(), $cvFile);
+        $profile = $request->user()->jobSeekerProfile()->with('primaryCVFile')->firstOrFail();
+        $current = $profile->primaryCVFile?->isConfirmedUsableForApplication()
+            ? $profile->primaryCVFile
+            : null;
+
+        return ApiResponse::success([
+            'current_cv' => $current === null ? null : new CurrentCVResource($current),
+            'pending_cv_update' => null,
+            'already_cancelled' => $result['already_cancelled'],
+        ], __('cv.cancelled'));
+    }
+
     public function confirm(ConfirmCVRequest $request, CVFile $cvFile): JsonResponse
     {
         $review = $this->cvService->confirm($request->user(), $cvFile);
@@ -121,8 +145,12 @@ class CVController extends Controller
             data: [
                 'profile' => new JobSeekerProfileResource($review['profile']),
                 'suggestions' => ProfileChangeSuggestionResource::collection($review['suggestions']),
+                'current_cv' => new CurrentCVResource($review['cv']),
+                'pending_cv_update' => null,
+                'applied_changes' => $review['applied_changes'],
+                'already_confirmed' => $review['already_confirmed'],
             ],
-            message: __('cv.review_ready'),
+            message: __('cv.confirmed'),
         );
     }
 }

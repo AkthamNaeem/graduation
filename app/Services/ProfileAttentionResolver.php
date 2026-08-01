@@ -100,8 +100,8 @@ class ProfileAttentionResolver
         return match ($type) {
             ProfileAttentionType::CV_PROCESSING => null,
             ProfileAttentionType::CV_PROCESSING_FAILED => [
-                'type' => ProfileAttentionAction::UPLOAD_CV->value,
-                'target' => ['type' => 'cv_upload', 'id' => null],
+                'type' => ProfileAttentionAction::CANCEL_CV_REVIEW->value,
+                'target' => ['type' => 'cv_review', 'id' => $cv->id],
             ],
             ProfileAttentionType::CV_FIRST_REVIEW_REQUIRED => [
                 'type' => ProfileAttentionAction::REVIEW_EXTRACTED_CV->value,

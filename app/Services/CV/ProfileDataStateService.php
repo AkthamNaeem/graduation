@@ -16,7 +16,8 @@ class ProfileDataStateService
 
         $profile->loadMissing(['experiences:id,job_seeker_profile_id', 'education:id,job_seeker_profile_id', 'skills:id']);
 
-        return $profile->experiences->isNotEmpty()
+        return $profile->city_id !== null
+            || $profile->experiences->isNotEmpty()
             || $profile->education->isNotEmpty()
             || $profile->skills->isNotEmpty();
     }

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\CandidateCVOperation;
 use App\Exceptions\CVLifecycleException;
 use App\Jobs\ParseCVFileJob;
 use App\Models\CVFile;
@@ -9,15 +10,14 @@ use App\Models\CVParsingResult;
 use App\Models\JobSeekerProfile;
 use App\Models\ProfileChangeSuggestion;
 use App\Models\User;
-use App\Rules\ActiveSyrianCity;
+use App\Services\CV\CandidateCVOperationResolver;
+use App\Services\CV\CVFinalizationService;
 use App\Services\CV\CVReviewDraftService;
-use App\Services\CV\ProfileDataStateService;
+use App\Services\CV\CVReviewDraftValidator;
+use App\Services\CV\CVStageResolver;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class CVService
@@ -26,8 +26,11 @@ class CVService
         private readonly ProfileSyncService $profileSyncService,
         private readonly AuditLogService $auditLogService,
         private readonly PrivateFileStorageService $privateStorage,
-        private readonly ProfileDataStateService $profileDataStateService,
         private readonly CVReviewDraftService $reviewDraftService,
+        private readonly CVReviewDraftValidator $reviewDraftValidator,
+        private readonly CandidateCVOperationResolver $operationResolver,
+        private readonly CVStageResolver $stageResolver,
+        private readonly CVFinalizationService $finalizationService,
     ) {}
 
     public function upload(User $user, UploadedFile $file, ?string $versionLabel = null, bool $makePrimary = false): CVFile
@@ -41,6 +44,32 @@ class CVService
                     ->lockForUpdate()
                     ->firstOrFail();
 
+                $pending = CVFile::query()
+                    ->where('user_id', $user->id)
+                    ->whereNull('confirmed_at')
+                    ->whereNull('archived_at')
+                    ->whereNull('cancelled_at')
+                    ->latest('id')
+                    ->lockForUpdate()
+                    ->first();
+                if ($pending instanceof CVFile) {
+                    $stage = $this->stageResolver->resolve($pending);
+                    throw new CVLifecycleException(
+                        __('domain_errors.CV_PENDING_UPDATE_EXISTS'),
+                        'CV_PENDING_UPDATE_EXISTS',
+                        errors: ['cv' => [__('cv.pending_update_exists_help')]],
+                        data: [
+                            'pending_cv_id' => $pending->id,
+                            'stage' => [
+                                'key' => $stage->value,
+                                'label' => __("profile.cv_contract.stages.{$stage->value}"),
+                            ],
+                        ],
+                    );
+                }
+
+                $operation = $this->operationResolver->resolve($user, $profile);
+
                 $cvFile = CVFile::query()->create([
                     'user_id' => $user->id,
                     'original_name' => basename($file->getClientOriginalName()),
@@ -51,23 +80,19 @@ class CVService
                     'extension' => $stored->extension,
                     'size_bytes' => $stored->sizeBytes,
                     'status' => 'uploaded',
+                    'review_mode' => $operation === CandidateCVOperation::INITIAL_UPLOAD
+                        ? CVFile::REVIEW_MODE_INITIAL_IMPORT
+                        : CVFile::REVIEW_MODE_PROFILE_SYNC,
                 ]);
-
-                $previousPrimary = $profile->primary_cv_file_id;
-                if ($previousPrimary === null || $makePrimary) {
-                    $profile->forceFill(['primary_cv_file_id' => $cvFile->id])->save();
-                }
 
                 $this->auditLogService->record('cv.uploaded', $user, CVFile::class, $cvFile->id, null, null, [
                     'cv_file_id' => $cvFile->id,
                     'user_id' => $user->id,
                     'parsing_status' => 'uploaded',
                     'actor_id' => $user->id,
+                    'operation' => $operation->value,
+                    'make_primary_requested' => $makePrimary,
                 ]);
-
-                if ($profile->primary_cv_file_id !== $previousPrimary) {
-                    $this->recordPrimaryChange($user, $cvFile, $previousPrimary, $profile->primary_cv_file_id);
-                }
 
                 return $cvFile;
             });
@@ -92,6 +117,7 @@ class CVService
     {
         return $user->cvFiles()
             ->when(! request()->boolean('include_archived'), fn ($query) => $query->whereNull('archived_at'))
+            ->whereNull('cancelled_at')
             ->when(request()->filled('status'), fn ($query) => $query->where('status', request()->string('status')->toString()))
             ->latest()
             ->paginate($perPage);
@@ -114,7 +140,10 @@ class CVService
 
     public function getReview(User $user, CVFile $cvFile): CVFile
     {
-        return $this->ownedCVFile($user, $cvFile)->load('parsingResult');
+        return $this->ownedCVFile($user, $cvFile)->load([
+            'parsingResult',
+            'profileChangeSuggestions' => fn ($query) => $query->where('user_id', $user->id)->orderBy('id'),
+        ]);
     }
 
     /**
@@ -128,8 +157,10 @@ class CVService
             $lockedCV = CVFile::query()->lockForUpdate()->findOrFail($cvFile->id);
             $this->ownedCVFile($user, $lockedCV);
             $this->assertMutable($lockedCV);
-            if ($lockedCV->review_mode !== CVFile::REVIEW_MODE_INITIAL_IMPORT
-                || $lockedCV->review_status !== CVFile::REVIEW_STATUS_DRAFT
+            $editableInitialDraft = $lockedCV->review_mode === CVFile::REVIEW_MODE_INITIAL_IMPORT
+                && $lockedCV->review_status === CVFile::REVIEW_STATUS_DRAFT;
+            $editableFinalDraft = $lockedCV->review_status === CVFile::REVIEW_STATUS_READY_TO_APPLY;
+            if ((! $editableInitialDraft && ! $editableFinalDraft)
                 || $lockedCV->confirmed_at !== null) {
                 throw new CVLifecycleException(__('domain_errors.CV_REVIEW_DRAFT_NOT_EDITABLE'), 'CV_REVIEW_DRAFT_NOT_EDITABLE');
             }
@@ -138,6 +169,7 @@ class CVService
             if (! $result instanceof CVParsingResult) {
                 throw new CVLifecycleException(__('domain_errors.CV_REVIEW_DRAFT_NOT_EDITABLE'), 'CV_REVIEW_DRAFT_NOT_EDITABLE');
             }
+            $this->reviewDraftValidator->validate($normalized);
             $result->forceFill(['reviewed_json' => $normalized, 'reviewed_at' => now()])->save();
             $this->auditLogService->record('cv.review_draft_updated', $user, CVFile::class, $lockedCV->id, null, null, [
                 'cv_file_id' => $lockedCV->id,
@@ -158,133 +190,76 @@ class CVService
      */
     public function confirm(User $user, CVFile $cvFile): array
     {
-        $cvFile = $this->ownedCVFile($user, $cvFile)->load('parsingResult');
-        $this->assertMutable($cvFile);
-
-        if (! $cvFile->parsingResult instanceof CVParsingResult) {
-            abort(404);
-        }
-
-        if ($cvFile->review_mode === CVFile::REVIEW_MODE_INITIAL_IMPORT) {
-            return $this->confirmInitialImport($user, $cvFile);
-        }
-
-        if ($cvFile->confirmed_at !== null || $cvFile->review_status === CVFile::REVIEW_STATUS_APPLIED) {
-            throw ValidationException::withMessages(['cv' => [__('cv.already_confirmed')]]);
-        }
-
-        return DB::transaction(function () use ($user, $cvFile): array {
-            $profile = $user->jobSeekerProfile()->firstOrFail();
-            $suggestions = $this->profileSyncService->generateSuggestionsFromParsedCV($user, $cvFile);
-
-            return [
-                'profile' => $profile->load(['user', 'experiences', 'education', 'skills']),
-                'suggestions' => $suggestions,
-            ];
-        });
+        return $this->finalizationService->confirm($user, $this->ownedCVFile($user, $cvFile));
     }
 
-    /**
-     * @return array{profile: JobSeekerProfile, suggestions: Collection<int, ProfileChangeSuggestion>}
-     */
-    private function confirmInitialImport(User $user, CVFile $cvFile): array
+    public function readyForConfirmation(User $user, CVFile $cvFile): CVFile
     {
-        return DB::transaction(function () use ($user, $cvFile): array {
+        return DB::transaction(function () use ($user, $cvFile): CVFile {
             $lockedCV = CVFile::query()->lockForUpdate()->findOrFail($cvFile->id);
             $this->assertOwned($user, $lockedCV);
             $this->assertMutable($lockedCV);
             if ($lockedCV->review_mode !== CVFile::REVIEW_MODE_INITIAL_IMPORT
                 || $lockedCV->review_status !== CVFile::REVIEW_STATUS_DRAFT
-                || $lockedCV->confirmed_at !== null) {
-                throw new CVLifecycleException(__('domain_errors.CV_REVIEW_NOT_CONFIRMABLE'), 'CV_REVIEW_NOT_CONFIRMABLE');
+                || $lockedCV->status !== 'parsed') {
+                throw new CVLifecycleException(__('domain_errors.CV_REVIEW_NOT_READY'), 'CV_REVIEW_NOT_READY');
             }
-
-            $profile = JobSeekerProfile::query()->where('user_id', $user->id)->lockForUpdate()->firstOrFail();
-            if ($this->profileDataStateService->hasMeaningfulData($profile)) {
-                throw new CVLifecycleException(__('domain_errors.CV_REVIEW_MODE_STALE'), 'CV_REVIEW_MODE_STALE');
-            }
-
             $result = CVParsingResult::query()->where('cv_file_id', $lockedCV->id)->lockForUpdate()->firstOrFail();
-            $draft = $result->reviewed_json;
-            if (! is_array($draft)) {
-                throw new CVLifecycleException(__('domain_errors.CV_REVIEW_DRAFT_INVALID'), 'CV_REVIEW_DRAFT_INVALID', 422);
+            if (! is_array($result->reviewed_json)) {
+                throw new CVLifecycleException(__('domain_errors.CV_FINAL_DRAFT_INVALID'), 'CV_FINAL_DRAFT_INVALID', 422);
             }
-            $this->validateStoredDraft($draft);
-            $this->reviewDraftService->apply($profile, $lockedCV, $draft);
-
-            $lockedCV->forceFill(['review_status' => CVFile::REVIEW_STATUS_APPLIED, 'confirmed_at' => now()])->save();
-            $previousPrimary = $profile->primary_cv_file_id;
-            if ($previousPrimary !== $lockedCV->id) {
-                $profile->forceFill(['primary_cv_file_id' => $lockedCV->id])->save();
-                $this->recordPrimaryChange($user, $lockedCV, $previousPrimary, $lockedCV->id);
-            }
-            $this->auditLogService->record('cv.initial_import_applied', $user, CVFile::class, $lockedCV->id, null, null, [
+            $this->reviewDraftValidator->validate($result->reviewed_json);
+            $lockedCV->forceFill(['review_status' => CVFile::REVIEW_STATUS_READY_TO_APPLY])->save();
+            $this->auditLogService->record('cv.ready_for_confirmation', $user, CVFile::class, $lockedCV->id, null, null, [
                 'cv_file_id' => $lockedCV->id,
                 'actor_id' => $user->id,
-                'review_mode' => $lockedCV->review_mode,
-                'review_status' => CVFile::REVIEW_STATUS_APPLIED,
-                'experience_count' => count($draft['experience']),
-                'education_count' => count($draft['education']),
-                'skill_count' => count($draft['skills']),
             ]);
 
-            return [
-                'profile' => $profile->refresh()->load(['user', 'city', 'experiences', 'education', 'skills']),
-                'suggestions' => new Collection,
-            ];
+            return $lockedCV->refresh()->load('parsingResult');
         });
     }
 
-    /** @param array<string, mixed> $draft */
-    private function validateStoredDraft(array $draft): void
+    /** @return array{cv:CVFile,already_cancelled:bool} */
+    public function cancel(User $user, CVFile $cvFile): array
     {
-        $validator = Validator::make($draft, [
-            'profile' => ['required', 'array:phone,summary,location,city_id'],
-            'profile.phone' => ['present', 'nullable', 'string', 'max:50'],
-            'profile.summary' => ['present', 'nullable', 'string', 'max:5000'],
-            'profile.location' => ['present', 'nullable', 'string', 'max:255'],
-            'profile.city_id' => ['bail', 'sometimes', 'nullable', 'integer', new ActiveSyrianCity],
-            'experience' => ['present', 'array', 'max:100'],
-            'experience.*' => ['array:title,company_name,location,start_date,end_date,is_current,description'],
-            'experience.*.title' => ['required', 'string', 'max:255'],
-            'experience.*.company_name' => ['required', 'string', 'max:255'],
-            'experience.*.location' => ['present', 'nullable', 'string', 'max:255'],
-            'experience.*.start_date' => ['present', 'nullable', 'date'],
-            'experience.*.end_date' => ['present', 'nullable', 'date'],
-            'experience.*.is_current' => ['required', 'boolean'],
-            'experience.*.description' => ['present', 'nullable', 'string', 'max:10000'],
-            'education' => ['present', 'array', 'max:100'],
-            'education.*' => ['array:institution,degree,field_of_study,start_date,end_date,description'],
-            'education.*.institution' => ['required', 'string', 'max:255'],
-            'education.*.degree' => ['present', 'nullable', 'string', 'max:255'],
-            'education.*.field_of_study' => ['present', 'nullable', 'string', 'max:255'],
-            'education.*.start_date' => ['present', 'nullable', 'date'],
-            'education.*.end_date' => ['present', 'nullable', 'date'],
-            'education.*.description' => ['present', 'nullable', 'string', 'max:10000'],
-            'skills' => ['present', 'array', 'max:100'],
-            'skills.*' => ['required', 'string', 'max:150'],
-        ]);
-        $validator->after(function ($validator) use ($draft): void {
-            $unexpected = array_diff(array_keys($draft), ['profile', 'experience', 'education', 'skills']);
-            if ($unexpected !== []) {
-                $validator->errors()->add('payload', 'The payload contains unexpected fields.');
+        return DB::transaction(function () use ($user, $cvFile): array {
+            $profile = JobSeekerProfile::query()->where('user_id', $user->id)->lockForUpdate()->firstOrFail();
+            $lockedCV = CVFile::query()->lockForUpdate()->findOrFail($cvFile->id);
+            $this->assertOwned($user, $lockedCV);
+            if ($lockedCV->cancelled_at !== null) {
+                return ['cv' => $lockedCV, 'already_cancelled' => true];
+            }
+            if ($lockedCV->confirmed_at !== null || $profile->primary_cv_file_id === $lockedCV->id) {
+                throw new CVLifecycleException(
+                    __('domain_errors.CV_CANNOT_CANCEL_CURRENT'),
+                    'CV_CANNOT_CANCEL_CURRENT',
+                );
+            }
+            if (! $lockedCV->isActivePendingWorkflow()) {
+                throw new CVLifecycleException(__('domain_errors.CV_NOT_PENDING'), 'CV_NOT_PENDING');
             }
 
-            foreach (['experience', 'education'] as $section) {
-                foreach ($draft[$section] ?? [] as $index => $item) {
-                    if (! is_array($item)) {
-                        continue;
-                    }
-                    if (! empty($item['start_date']) && ! empty($item['end_date']) && strtotime($item['end_date']) < strtotime($item['start_date'])) {
-                        $validator->errors()->add("{$section}.{$index}.end_date", 'The end date must be after or equal to the start date.');
-                    }
-                    if ($section === 'experience' && ($item['is_current'] ?? false) && ($item['end_date'] ?? null) !== null) {
-                        $validator->errors()->add("{$section}.{$index}.end_date", 'The end date must be null for a current experience.');
-                    }
-                }
-            }
+            $lockedCV->profileChangeSuggestions()
+                ->where('status', '!=', ProfileChangeSuggestion::STATUS_APPLIED)
+                ->update(['status' => ProfileChangeSuggestion::STATUS_REJECTED, 'decided_at' => now()]);
+            CVParsingResult::query()->where('cv_file_id', $lockedCV->id)->update([
+                'reviewed_json' => null,
+                'comparison_base_json' => null,
+                'system_generated_review_json' => null,
+                'final_approved_json' => null,
+                'reviewed_at' => null,
+            ]);
+            $lockedCV->forceFill([
+                'cancelled_at' => now(),
+                'review_status' => CVFile::REVIEW_STATUS_CANCELLED,
+            ])->save();
+            $this->auditLogService->record('cv.cancelled', $user, CVFile::class, $lockedCV->id, null, null, [
+                'cv_file_id' => $lockedCV->id,
+                'actor_id' => $user->id,
+            ]);
+
+            return ['cv' => $lockedCV->refresh(), 'already_cancelled' => false];
         });
-        $validator->validate();
     }
 
     public function updateLabel(User $user, CVFile $cvFile, ?string $versionLabel): CVFile
@@ -313,6 +288,12 @@ class CVService
             $target = CVFile::query()->lockForUpdate()->findOrFail($cvFile->id);
             $this->assertOwned($user, $target);
             $this->assertAvailableAndUsable($target);
+            if (! $target->isConfirmedUsableForApplication()) {
+                throw new CVLifecycleException(
+                    __('domain_errors.CV_NOT_USABLE_FOR_APPLICATION'),
+                    'CV_NOT_USABLE_FOR_APPLICATION',
+                );
+            }
 
             $previous = $profile->primary_cv_file_id;
             if ($previous !== $target->id) {
@@ -330,6 +311,9 @@ class CVService
             $profile = JobSeekerProfile::query()->where('user_id', $user->id)->lockForUpdate()->firstOrFail();
             $target = CVFile::query()->lockForUpdate()->findOrFail($cvFile->id);
             $this->assertOwned($user, $target);
+            if ($target->confirmed_at === null || $target->cancelled_at !== null) {
+                throw new CVLifecycleException(__('domain_errors.CV_NOT_PENDING'), 'CV_NOT_PENDING');
+            }
             if ($target->archived_at !== null) {
                 throw new CVLifecycleException(__('domain_errors.CV_ALREADY_ARCHIVED'), 'CV_ALREADY_ARCHIVED');
             }
@@ -338,7 +322,7 @@ class CVService
             if ($previousPrimary === $target->id) {
                 $otherUsableExists = CVFile::query()
                     ->where('user_id', $user->id)->whereKeyNot($target->id)->whereNull('archived_at')
-                    ->get()->contains(fn (CVFile $candidate): bool => $candidate->isUsableForApplication());
+                    ->get()->contains(fn (CVFile $candidate): bool => $candidate->isConfirmedUsableForApplication());
 
                 if ($otherUsableExists && $replacementId === null) {
                     throw new CVLifecycleException(__('domain_errors.CV_PRIMARY_REPLACEMENT_REQUIRED'), 'CV_PRIMARY_REPLACEMENT_REQUIRED');
@@ -382,6 +366,9 @@ class CVService
             if ($target->archived_at === null) {
                 throw new CVLifecycleException(__('domain_errors.CV_NOT_ARCHIVED'), 'CV_NOT_ARCHIVED');
             }
+            if ($target->confirmed_at === null || $target->cancelled_at !== null) {
+                throw new CVLifecycleException(__('domain_errors.CV_NOT_USABLE'), 'CV_NOT_USABLE');
+            }
 
             $target->forceFill(['archived_at' => null])->save();
             if ($profile->primary_cv_file_id === null) {
@@ -406,6 +393,9 @@ class CVService
 
     public function assertMutable(CVFile $cvFile): void
     {
+        if ($cvFile->cancelled_at !== null) {
+            throw new CVLifecycleException(__('domain_errors.CV_ALREADY_CANCELLED'), 'CV_ALREADY_CANCELLED');
+        }
         if ($cvFile->archived_at !== null) {
             throw new CVLifecycleException(__('domain_errors.CV_ARCHIVED_READ_ONLY'), 'CV_ARCHIVED_READ_ONLY');
         }

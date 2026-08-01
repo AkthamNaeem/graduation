@@ -54,7 +54,8 @@ class JobSeekerProfile extends Model
         return $this->hasOne(CVFile::class, 'user_id', 'user_id')
             ->ofMany(['created_at' => 'max', 'id' => 'max'], fn ($query) => $query
                 ->whereNull('confirmed_at')
-                ->whereNull('archived_at'));
+                ->whereNull('archived_at')
+                ->whereNull('cancelled_at'));
     }
 
     public function experiences(): HasMany

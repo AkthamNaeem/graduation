@@ -29,9 +29,13 @@ class CVReviewDraftService
     {
         $city = $this->cityMatcher->match($parsed['location'] ?? null);
         $profile = [
+            'headline' => null,
             'phone' => $parsed['phone'] ?? null,
             'summary' => $parsed['summary'] ?? null,
             'location' => $parsed['location'] ?? null,
+            'portfolio_url' => null,
+            'linkedin_url' => null,
+            'github_url' => null,
         ];
         if ($city !== null) {
             $profile['city_id'] = $city->id;
@@ -73,9 +77,13 @@ class CVReviewDraftService
         $profile = is_array($draft['profile'] ?? null) ? $draft['profile'] : [];
 
         $normalizedProfile = [
+            'headline' => $this->clean($profile['headline'] ?? null),
             'phone' => $this->clean($profile['phone'] ?? null),
             'summary' => $this->clean($profile['summary'] ?? null),
             'location' => $this->clean($profile['location'] ?? null),
+            'portfolio_url' => $this->clean($profile['portfolio_url'] ?? null),
+            'linkedin_url' => $this->clean($profile['linkedin_url'] ?? null),
+            'github_url' => $this->clean($profile['github_url'] ?? null),
         ];
         if (array_key_exists('city_id', $profile)) {
             $normalizedProfile['city_id'] = is_numeric($profile['city_id'])
@@ -85,23 +93,29 @@ class CVReviewDraftService
 
         return [
             'profile' => $normalizedProfile,
-            'experience' => collect($draft['experience'] ?? [])->filter(fn (mixed $item): bool => is_array($item))->map(fn (array $item): array => [
-                'title' => $this->clean($item['title'] ?? null),
-                'company_name' => $this->clean($item['company_name'] ?? null),
-                'location' => $this->clean($item['location'] ?? null),
-                'start_date' => $this->clean($item['start_date'] ?? null),
-                'end_date' => ($item['is_current'] ?? false) ? null : $this->clean($item['end_date'] ?? null),
-                'is_current' => (bool) ($item['is_current'] ?? false),
-                'description' => $this->clean($item['description'] ?? null),
-            ])->values()->all(),
-            'education' => collect($draft['education'] ?? [])->filter(fn (mixed $item): bool => is_array($item))->map(fn (array $item): array => [
-                'institution' => $this->clean($item['institution'] ?? null),
-                'degree' => $this->clean($item['degree'] ?? null),
-                'field_of_study' => $this->clean($item['field_of_study'] ?? null),
-                'start_date' => $this->clean($item['start_date'] ?? null),
-                'end_date' => $this->clean($item['end_date'] ?? null),
-                'description' => $this->clean($item['description'] ?? null),
-            ])->values()->all(),
+            'experience' => collect($draft['experience'] ?? [])->filter(fn (mixed $item): bool => is_array($item))->map(function (array $item): array {
+                return array_filter([
+                    'id' => isset($item['id']) && is_numeric($item['id']) ? (int) $item['id'] : null,
+                    'title' => $this->clean($item['title'] ?? null),
+                    'company_name' => $this->clean($item['company_name'] ?? null),
+                    'location' => $this->clean($item['location'] ?? null),
+                    'start_date' => $this->clean($item['start_date'] ?? null),
+                    'end_date' => ($item['is_current'] ?? false) ? null : $this->clean($item['end_date'] ?? null),
+                    'is_current' => (bool) ($item['is_current'] ?? false),
+                    'description' => $this->clean($item['description'] ?? null),
+                ], fn (mixed $value, string $key): bool => $key !== 'id' || $value !== null, ARRAY_FILTER_USE_BOTH);
+            })->values()->all(),
+            'education' => collect($draft['education'] ?? [])->filter(fn (mixed $item): bool => is_array($item))->map(function (array $item): array {
+                return array_filter([
+                    'id' => isset($item['id']) && is_numeric($item['id']) ? (int) $item['id'] : null,
+                    'institution' => $this->clean($item['institution'] ?? null),
+                    'degree' => $this->clean($item['degree'] ?? null),
+                    'field_of_study' => $this->clean($item['field_of_study'] ?? null),
+                    'start_date' => $this->clean($item['start_date'] ?? null),
+                    'end_date' => $this->clean($item['end_date'] ?? null),
+                    'description' => $this->clean($item['description'] ?? null),
+                ], fn (mixed $value, string $key): bool => $key !== 'id' || $value !== null, ARRAY_FILTER_USE_BOTH);
+            })->values()->all(),
             'skills' => collect($draft['skills'] ?? [])
                 ->filter(fn (mixed $skill): bool => is_string($skill))
                 ->map(fn (string $skill): string => trim($skill))
@@ -118,7 +132,9 @@ class CVReviewDraftService
     public function apply(JobSeekerProfile $profile, CVFile $cvFile, array $draft): void
     {
         $draft = $this->normalize($draft);
-        $profile->forceFill(collect($draft['profile'])->only(['phone', 'summary', 'location', 'city_id'])->all())->save();
+        $profile->forceFill(collect($draft['profile'])->only([
+            'headline', 'phone', 'summary', 'location', 'city_id', 'portfolio_url', 'linkedin_url', 'github_url',
+        ])->all())->save();
         $source = ['source_type' => self::SOURCE_CV_CONFIRMED, 'source_cv_file_id' => $cvFile->id, 'user_verified_at' => now()];
 
         foreach ($draft['experience'] as $value) {
