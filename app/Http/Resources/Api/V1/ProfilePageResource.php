@@ -72,6 +72,8 @@ class ProfilePageResource extends JsonResource
                 ],
                 $this->professionalLinks,
             ),
+            'profile_completeness' => $this->profileCompleteness,
+            'attention_items' => ProfileAttentionItemResource::collection($this->attentionItems),
             'allowed_actions' => $this->allowedActions,
             'created_at' => $profile->created_at?->toISOString(),
             'updated_at' => $profile->updated_at?->toISOString(),

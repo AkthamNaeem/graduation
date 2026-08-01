@@ -3380,6 +3380,151 @@ Details, and Withdraw requests. No frontend, commit, or push is included.
 - Both modified Postman collection files parse as valid JSON.
 - `git diff --check`: passed. No commit or push was created.
 
+## Profile Completeness and Attention Items
+
+### Scope and preserved Profile Page work
+
+The repository started this task on `master`, one local commit ahead of
+`github/master`, with a clean working tree. The existing Task 1 Profile Page
+aggregation was preserved: `ProfilePageService`, `ProfilePageResource`, the
+experience calculator, the expanded `GET /api/v1/profile` response, and the
+transactional name support in `PUT /api/v1/profile` remain the foundation of
+the implementation. No frontend, migration, CV lifecycle endpoint, Current CV
+contract, archive/restore/primary behavior, or upload/confirmation flow was
+changed.
+
+The existing `ProfileCompletenessService`, already used by Home, defined seven
+required groups totaling 100%. It was extended instead of creating a second
+calculator. Its compact Home response remains backward compatible, including
+the legacy `confirmed_primary_cv` Home key, while the Profile Page uses the
+neutral `confirmed_cv` key and a richer contract. A regression test verifies
+that Home and Profile return the same percentage.
+
+### Completeness definition and contract
+
+The retained weights are basic information 15, professional profile 15,
+location 10, experience 20, education 15, skills 15, and confirmed CV 10.
+Basic information requires user name, email, and profile phone; professional
+profile requires both headline and summary; location accepts `city_id` or the
+legacy text value; experience and education require at least one record; and
+skills require at least three records.
+
+A confirmed CV must belong to the user, be confirmed, unarchived, parsed, and
+pass `CVFile::isUsableForApplication()`. The newest usable confirmed CV is
+resolved independently from the newest unconfirmed CV. Consequently, uploading
+a newer CV for processing or review does not remove the 10% already earned by
+an older valid confirmed CV. Failed or still-processing CVs are never counted
+as complete.
+
+GitHub, LinkedIn, and portfolio links are optional. Missing links appear under
+`recommended_items` with `required: false`; they do not change the percentage
+or `is_complete`. The response now includes integer `percentage`,
+`is_complete`, completed and missing counts, typed completed and missing item
+lists, optional recommendations, and the first required `next_item`.
+
+Missing items use the deterministic order: basic information, professional
+headline, professional summary, location, experience, education, skills, then
+confirmed CV. Headline and summary are returned separately when either part of
+the 15% professional group is absent.
+
+### Attention resolution
+
+`ProfileAttentionResolver` produces at most one most-specific CV item for the
+latest owned, unconfirmed, unarchived CV, plus at most one profile-incomplete
+item. Items are deduplicated by `attention_key` and sorted by numeric priority,
+then the CV update timestamp and ID for stable ties.
+
+Supported types and priorities are:
+
+- `cv_processing_failed` (110): latest CV status is `failed`; exposes only a
+  safe `upload_cv` action.
+- `cv_differences_review_required` (100): parsed `profile_sync` review is in
+  comparison/decision state or has pending non-ignore suggestions; exposes
+  `review_cv_changes` and only the aggregate `changes_count`.
+- `cv_first_review_required` (95): parsed `initial_import` review is still a
+  draft; exposes `review_extracted_cv`.
+- `cv_final_confirmation_required` (92): parsed `profile_sync` review is
+  `ready_to_apply` but unconfirmed; exposes `confirm_cv_review`.
+- `cv_processing` (90): latest CV status is `uploaded` or `processing`; no
+  premature review action is returned.
+- `profile_incomplete` (40): one card based on completeness, whose
+  `complete_profile` action reuses `next_item.target`.
+
+The serialized action targets use only `cv_upload`, `cv`, `cv_review`, and
+`profile_section`; no frontend routes are embedded. `cv_missing` was
+intentionally not added because the single `profile_incomplete` card already
+covers a missing confirmed CV without duplicate content.
+
+### Data loading, privacy, localization, and API
+
+`ProfilePageService` passes its already-loaded profile to both services. The
+user, city, experiences, education, skills, newest confirmed CV, and newest
+unconfirmed CV are eager-loaded in bounded queries. Both latest-CV relations
+use constrained `ofMany` subqueries so a newer ineligible row cannot hide an
+older eligible one. CV eager loads select only state and identity columns;
+pending suggestions are counted with one scoped `withCount` subquery and their
+payloads are not loaded. Existing query-count coverage confirms that the
+number of Profile queries remains constant as nested rows grow. Task 2 also
+asserts a maximum of 15 queries and no growth beyond a one-query tolerance when
+pending suggestions increase from one to twenty.
+
+`GET /api/v1/profile` remains the only page-loading endpoint and is still
+restricted to job seekers (guest 401; employer/admin 403). Its existing data is
+unchanged and now also returns `profile_completeness` and `attention_items`.
+Resources serialize localized typed values only. Parsed JSON, full CV text,
+parsing exceptions, suggestion values/reasons, confidence scores, and data or
+IDs belonging to another user are not returned.
+
+English and Arabic translations cover completeness items and recommendations,
+all six attention types, titles, descriptions, info/warning/error severities,
+and all five actions. Feature coverage exercises both `Accept-Language: en`
+and `Accept-Language: ar`.
+
+### Files and client examples
+
+New runtime files are the three Profile Attention enums,
+`ProfileAttentionResolver`, and `ProfileAttentionItemResource`. New automated
+coverage is in `ProfilePageCompletenessServiceTest`,
+`ProfileAttentionResolverTest`, and `ProfileCompletenessAttentionTest`.
+Modified runtime files are `ProfileCompletenessService`, `HomeService`,
+`JobSeekerProfile`, `ProfilePageService`, `ProfilePageData`, and
+`ProfilePageResource`, plus the English and Arabic profile translations.
+
+Both mobile and web Postman collections remain valid JSON and retain all Task
+1 requests. Each Profile folder now also contains the nine requested Task 2
+requests for complete/incomplete profiles, all five CV attention stages, and
+Arabic/English completeness.
+
+### Verification
+
+- Complete Laravel suite: **945 passed, 2 expected opt-in S3 skips, 27,957
+  assertions, 0 failed**.
+- New Task 2 unit/feature set: **17 passed, 141 assertions**.
+- Task 2 plus existing Profile Page and Home focused regression set: **27 passed, 209
+  assertions** after the final eager-load optimization.
+- `php artisan route:list --path=api/v1/profile`: passed; the existing Profile
+  routes remain registered and no completeness/attention endpoint was added.
+- `php artisan migrate:fresh --seed --force`: passed against an isolated
+  temporary SQLite database, which was removed afterward.
+- Laravel Pint on every PHP file changed or added for Task 2: passed. The
+  repository-wide `vendor/bin/pint --test` still reports pre-existing style
+  violations in unrelated files; they were intentionally not reformatted.
+- `php -l`: passed for every changed/new PHP file.
+- Both Postman collections parse successfully and contain exactly nine new
+  Task 2 Profile requests each.
+- `git diff --check`: passed (Git emitted only its existing CRLF-to-LF warning
+  for the two Postman working-copy files).
+- `composer audit`: unavailable. Composer could not write its external cache
+  and network access to `repo.packagist.org:443` was blocked, so no claim about
+  dependency vulnerability status is made.
+
+Manual verification can use a job-seeker token with `GET /api/v1/profile` and
+switch `Accept-Language` between `ar` and `en`. Seed or select each documented
+CV review state to inspect the corresponding single CV attention card, and
+compare `data.profile_completeness.percentage` with `GET /api/v1/home`. No
+optional `cv_missing` card was implemented for the deduplication reason above;
+all required scope is implemented. No commit or push was created.
+
 ## Profile Page Backend Aggregation
 
 ### Goal and existing implementation

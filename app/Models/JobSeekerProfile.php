@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class JobSeekerProfile extends Model
 {
@@ -38,6 +39,22 @@ class JobSeekerProfile extends Model
     public function primaryCVFile(): BelongsTo
     {
         return $this->belongsTo(CVFile::class, 'primary_cv_file_id');
+    }
+
+    public function latestConfirmedCVFile(): HasOne
+    {
+        return $this->hasOne(CVFile::class, 'user_id', 'user_id')
+            ->ofMany(['id' => 'max'], fn ($query) => $query
+                ->whereNotNull('confirmed_at')
+                ->whereNull('archived_at'));
+    }
+
+    public function latestUnconfirmedCVFile(): HasOne
+    {
+        return $this->hasOne(CVFile::class, 'user_id', 'user_id')
+            ->ofMany(['id' => 'max'], fn ($query) => $query
+                ->whereNull('confirmed_at')
+                ->whereNull('archived_at'));
     }
 
     public function experiences(): HasMany

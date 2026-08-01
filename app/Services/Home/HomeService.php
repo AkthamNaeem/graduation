@@ -86,7 +86,15 @@ class HomeService
 
         $profile = $user->jobSeekerProfile()
             ->withCount(['experiences', 'education', 'skills'])
-            ->with('primaryCVFile:id,user_id,confirmed_at,archived_at')
+            ->with(['latestConfirmedCVFile' => fn ($query) => $query->select([
+                'cv_files.id',
+                'cv_files.user_id',
+                'cv_files.stored_path',
+                'cv_files.disk',
+                'cv_files.status',
+                'cv_files.confirmed_at',
+                'cv_files.archived_at',
+            ])])
             ->firstOrFail();
         $profileCompleteness = $this->profileCompletenessService->calculate(
             $user,

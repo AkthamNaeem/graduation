@@ -1160,6 +1160,87 @@
             },
             "item": [
                 {
+                    "name": "Profile - Complete Profile",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "Accept-Language", "value": "en"}],
+                        "description": "Use a complete job-seeker profile with at least one experience, one education record, three skills, and a usable confirmed CV. Expects profile_completeness.percentage = 100.",
+                        "url": "{{base_url}}/profile"
+                    }
+                },
+                {
+                    "name": "Profile - Incomplete Profile",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "Accept-Language", "value": "en"}],
+                        "description": "Use an incomplete job-seeker profile. Expects prioritized missing_items, next_item, and one profile_incomplete attention item.",
+                        "url": "{{base_url}}/profile"
+                    }
+                },
+                {
+                    "name": "Profile - CV Processing Attention",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "Accept-Language", "value": "en"}],
+                        "description": "Use a latest unconfirmed CV with uploaded or processing status. Expects one cv_processing attention item.",
+                        "url": "{{base_url}}/profile"
+                    }
+                },
+                {
+                    "name": "Profile - CV Failed Attention",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "Accept-Language", "value": "en"}],
+                        "description": "Use a latest unconfirmed failed CV. Expects cv_processing_failed with the upload_cv action and no internal error details.",
+                        "url": "{{base_url}}/profile"
+                    }
+                },
+                {
+                    "name": "Profile - First CV Review Attention",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "Accept-Language", "value": "en"}],
+                        "description": "Use a parsed initial_import CV in draft review status. Expects cv_first_review_required.",
+                        "url": "{{base_url}}/profile"
+                    }
+                },
+                {
+                    "name": "Profile - CV Differences Attention",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "Accept-Language", "value": "en"}],
+                        "description": "Use a parsed profile_sync CV with pending comparison/decisions. Expects cv_differences_review_required and a safe changes_count.",
+                        "url": "{{base_url}}/profile"
+                    }
+                },
+                {
+                    "name": "Profile - Final Confirmation Attention",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "Accept-Language", "value": "en"}],
+                        "description": "Use a parsed profile_sync CV in ready_to_apply review status. Expects cv_final_confirmation_required.",
+                        "url": "{{base_url}}/profile"
+                    }
+                },
+                {
+                    "name": "Profile - Arabic Completeness",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "Accept-Language", "value": "ar"}],
+                        "description": "Returns Arabic completeness labels, attention titles/descriptions, severities, and action labels.",
+                        "url": "{{base_url}}/profile"
+                    }
+                },
+                {
+                    "name": "Profile - English Completeness",
+                    "request": {
+                        "method": "GET",
+                        "header": [{"key": "Accept-Language", "value": "en"}],
+                        "description": "Returns English completeness labels, attention titles/descriptions, severities, and action labels.",
+                        "url": "{{base_url}}/profile"
+                    }
+                },
+                {
                     "name": "Profile - Get Aggregated Profile",
                     "request": {
                         "method": "GET",
