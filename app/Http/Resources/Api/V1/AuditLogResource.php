@@ -18,7 +18,7 @@ class AuditLogResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'action' => LocalizedValue::make($this->action, 'audit_actions'),
+            'action' => $this->localizedAction(),
             'entity_type' => $this->entity_type,
             'entity' => LocalizedValue::make(
                 Str::snake(class_basename($this->entity_type)),
@@ -34,5 +34,18 @@ class AuditLogResource extends JsonResource
             'user_agent' => $this->user_agent,
             'created_at' => $this->created_at?->toISOString(),
         ];
+    }
+
+    /** @return array{key:string,value:string} */
+    private function localizedAction(): array
+    {
+        if ($this->action === 'application.cv_summary_generated') {
+            return [
+                'key' => $this->action,
+                'value' => __('cv_summary.audit_action'),
+            ];
+        }
+
+        return LocalizedValue::make($this->action, 'audit_actions');
     }
 }

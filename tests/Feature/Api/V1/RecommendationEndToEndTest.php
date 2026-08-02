@@ -611,6 +611,14 @@ class RecommendationEndToEndTest extends TestCase
             'tests/Unit/FinalHandoverDocumentationTest.php',
             'tests/Unit/MatchingScoreV2Test.php',
             'tests/Unit/MatchingServiceTest.php',
+            // Approved employer-facing LLM CV summary workflow.
+            '.env.example',
+            'app/Http/Resources/Api/V1/AuditLogResource.php',
+            'app/Models/JobApplication.php',
+            'app/Policies/JobApplicationPolicy.php',
+            'lang/ar/applications.php',
+            'lang/en/applications.php',
+            'routes/api.php',
         ]);
         foreach ($baseline['files'] as $entry) {
             $file = base_path($entry['path']);

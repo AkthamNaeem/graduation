@@ -1,0 +1,396 @@
+<?php
+
+namespace Tests\Feature\Api\V1;
+
+use App\Enums\CompanyRole;
+use App\Enums\UserRole;
+use App\Models\ApplicationStatus;
+use App\Models\AuditLog;
+use App\Models\Company;
+use App\Models\CVFile;
+use App\Models\CVParsingResult;
+use App\Models\EmployerProfile;
+use App\Models\JobApplication;
+use App\Models\JobPosting;
+use App\Models\JobSeekerProfile;
+use App\Models\User;
+use Database\Seeders\ApplicationStatusSeeder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
+use Tests\TestCase;
+
+class ApplicationCVSummaryTest extends TestCase
+{
+    use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->seed(ApplicationStatusSeeder::class);
+        config([
+            'cv_summary.provider' => 'openai',
+            'cv_summary.openai.api_key' => 'test-key',
+            'cv_summary.openai.model' => 'gpt-5-mini',
+        ]);
+    }
+
+    public function test_company_manager_can_generate_and_reuse_job_specific_cv_summary(): void
+    {
+        [$company, $employer, $candidate, $application] = $this->scenario();
+        Http::fake(['api.openai.com/*' => Http::response($this->openAIResponse(), 200)]);
+
+        $endpoint = "/api/v1/applications/{$application->id}/cv-summary";
+
+        $this->withToken($this->tokenFor($employer))
+            ->postJson($endpoint)
+            ->assertOk()
+            ->assertJsonPath('data.locale', 'en')
+            ->assertJsonPath('data.headline', 'Backend candidate aligned with Laravel API work')
+            ->assertJsonPath('data.generation.provider', 'openai')
+            ->assertJsonCount(1, 'data.strengths')
+            ->assertJsonCount(1, 'data.gaps');
+
+        $this->withToken($this->tokenFor($employer))
+            ->postJson($endpoint)
+            ->assertOk()
+            ->assertJsonPath('data.headline', 'Backend candidate aligned with Laravel API work');
+
+        $this->withToken($this->tokenFor($employer))
+            ->getJson($endpoint)
+            ->assertOk()
+            ->assertJsonPath('data.headline', 'Backend candidate aligned with Laravel API work');
+
+        Http::assertSentCount(1);
+        Http::assertSent(function (Request $request): bool {
+            return $request->url() === 'https://api.openai.com/v1/responses'
+                && $request['store'] === false
+                && $request['text']['format']['type'] === 'json_schema'
+                && $request['text']['format']['strict'] === true
+                && $request['text']['format']['schema']['required'] === [
+                    'headline',
+                    'summary',
+                    'strengths',
+                    'gaps',
+                    'evidence',
+                ];
+        });
+
+        $this->assertDatabaseHas('application_cv_summaries', [
+            'job_application_id' => $application->id,
+            'source_cv_file_id' => $application->selected_cv_file_id,
+            'locale' => 'en',
+            'provider' => 'openai',
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'action' => 'application.cv_summary_generated',
+            'entity_id' => $application->id,
+            'actor_user_id' => $employer->id,
+        ]);
+
+        $audit = AuditLog::query()->where('action', 'application.cv_summary_generated')->firstOrFail();
+        $this->assertSame($application->id, $audit->metadata['application_id']);
+        $this->assertSame('en', $audit->metadata['locale']);
+        $this->assertSame('openai', $audit->metadata['provider']);
+        $this->assertSame('gpt-5-mini', $audit->metadata['model']);
+        $this->assertSame('1.0', $audit->metadata['prompt_version']);
+        $this->assertSame(64, strlen($audit->metadata['input_hash']));
+        $this->assertIsInt($audit->metadata['summary_id']);
+        $this->assertStringNotContainsString('Backend Developer. Laravel REST APIs.', json_encode($audit->toArray()));
+    }
+
+    public function test_job_seeker_and_other_company_employer_cannot_access_cv_summary(): void
+    {
+        [$company, $employer, $candidate, $application] = $this->scenario();
+        $otherCompany = Company::create(['name' => 'Other Company', 'approval_status' => 'approved']);
+        $otherEmployer = $this->employer('other-employer@example.com', $otherCompany);
+
+        $this->withToken($this->tokenFor($candidate))
+            ->getJson("/api/v1/applications/{$application->id}/cv-summary")
+            ->assertForbidden();
+
+        $this->withToken($this->tokenFor($otherEmployer))
+            ->getJson("/api/v1/applications/{$application->id}/cv-summary")
+            ->assertForbidden();
+
+        $this->withToken($this->tokenFor($otherEmployer))
+            ->postJson("/api/v1/applications/{$application->id}/cv-summary")
+            ->assertForbidden();
+
+        Http::assertNothingSent();
+    }
+
+    public function test_provider_failure_returns_stable_error_and_persists_nothing(): void
+    {
+        [$company, $employer, $candidate, $application] = $this->scenario();
+        Http::fake(['api.openai.com/*' => Http::response([], 429)]);
+
+        $this->withToken($this->tokenFor($employer))
+            ->postJson("/api/v1/applications/{$application->id}/cv-summary")
+            ->assertStatus(503)
+            ->assertJsonPath('code', 'CV_SUMMARY_RATE_LIMITED');
+
+        $this->assertDatabaseCount('application_cv_summaries', 0);
+        Http::assertSentCount(3);
+    }
+
+    public function test_force_true_regenerates_and_replaces_the_cached_summary(): void
+    {
+        [, $employer, , $application] = $this->scenario();
+        Http::fake(['api.openai.com/*' => Http::response($this->openAIResponse(), 200)]);
+        $endpoint = "/api/v1/applications/{$application->id}/cv-summary";
+        $token = $this->tokenFor($employer);
+
+        $this->withToken($token)->postJson($endpoint)->assertOk();
+        $this->withToken($token)->postJson($endpoint, ['force' => true])->assertOk();
+
+        Http::assertSentCount(2);
+        $this->assertDatabaseCount('application_cv_summaries', 1);
+        $this->assertDatabaseCount('audit_logs', 2);
+    }
+
+    public function test_member_without_manage_applications_can_view_but_cannot_generate(): void
+    {
+        [$company, , , $application] = $this->scenario();
+        $interviewer = $this->employer('interviewer@example.com', $company, CompanyRole::INTERVIEWER);
+
+        $this->withToken($this->tokenFor($interviewer))
+            ->getJson("/api/v1/applications/{$application->id}/cv-summary")
+            ->assertOk()
+            ->assertJsonPath('data', null);
+
+        $this->withToken($this->tokenFor($interviewer))
+            ->postJson("/api/v1/applications/{$application->id}/cv-summary")
+            ->assertForbidden();
+
+        Http::assertNothingSent();
+    }
+
+    public function test_invalid_structured_output_is_rejected_without_persistence(): void
+    {
+        [, $employer, , $application] = $this->scenario();
+        $response = $this->openAIResponse();
+        $response['output'][0]['content'][0]['text'] = json_encode([
+            'headline' => 'Incomplete summary',
+            'summary' => 'Missing required evidence.',
+            'strengths' => [],
+            'gaps' => [],
+        ], JSON_THROW_ON_ERROR);
+        Http::fake(['api.openai.com/*' => Http::response($response, 200)]);
+
+        $this->withToken($this->tokenFor($employer))
+            ->postJson("/api/v1/applications/{$application->id}/cv-summary")
+            ->assertStatus(502)
+            ->assertJsonPath('code', 'CV_SUMMARY_INVALID_RESPONSE');
+
+        $this->assertDatabaseCount('application_cv_summaries', 0);
+        $this->assertDatabaseCount('audit_logs', 0);
+    }
+
+    public function test_separate_summaries_are_cached_for_english_and_arabic(): void
+    {
+        [, $employer, , $application] = $this->scenario();
+        Http::fake(['api.openai.com/*' => Http::response($this->openAIResponse(), 200)]);
+        $endpoint = "/api/v1/applications/{$application->id}/cv-summary";
+        $token = $this->tokenFor($employer);
+
+        $this->withToken($token)->postJson($endpoint)->assertJsonPath('data.locale', 'en');
+        $this->withHeader('Accept-Language', 'ar')
+            ->withToken($token)
+            ->postJson($endpoint)
+            ->assertJsonPath('data.locale', 'ar');
+
+        Http::assertSentCount(2);
+        $this->assertDatabaseHas('application_cv_summaries', [
+            'job_application_id' => $application->id,
+            'locale' => 'en',
+        ]);
+        $this->assertDatabaseHas('application_cv_summaries', [
+            'job_application_id' => $application->id,
+            'locale' => 'ar',
+        ]);
+    }
+
+    public function test_changed_job_data_invalidates_the_cached_input_hash(): void
+    {
+        [, $employer, , $application] = $this->scenario();
+        Http::fake(['api.openai.com/*' => Http::response($this->openAIResponse(), 200)]);
+        $endpoint = "/api/v1/applications/{$application->id}/cv-summary";
+        $token = $this->tokenFor($employer);
+
+        $this->withToken($token)->postJson($endpoint)->assertOk();
+        $originalHash = (string) $application->cvSummaries()->firstOrFail()->input_hash;
+        $application->jobPosting()->update(['description' => 'Updated role description requiring event sourcing.']);
+        $this->withToken($token)->postJson($endpoint)->assertOk();
+
+        Http::assertSentCount(2);
+        $this->assertNotSame($originalHash, (string) $application->cvSummaries()->firstOrFail()->input_hash);
+    }
+
+    public function test_insufficient_professional_source_returns_422_without_calling_openai(): void
+    {
+        [, $employer, , $application] = $this->scenario();
+        $application->jobSeekerProfile()->update(['headline' => null, 'summary' => null]);
+        $application->selectedCvFile->parsingResult()->delete();
+
+        $this->withToken($this->tokenFor($employer))
+            ->postJson("/api/v1/applications/{$application->id}/cv-summary")
+            ->assertStatus(422)
+            ->assertJsonPath('code', 'CV_SUMMARY_SOURCE_UNAVAILABLE');
+
+        Http::assertNothingSent();
+        $this->assertDatabaseCount('application_cv_summaries', 0);
+    }
+
+    public function test_sensitive_candidate_data_is_removed_from_the_openai_request(): void
+    {
+        [, $employer, $candidate, $application] = $this->scenario();
+        $candidate->update(['name' => 'Sensitive Candidate', 'email' => 'private@example.test']);
+        $application->jobSeekerProfile()->update(['phone' => '+963 944 123 456']);
+        $application->selectedCvFile->parsingResult()->update([
+            'reviewed_json' => [
+                'full_name' => 'Sensitive Candidate',
+                'contact' => [
+                    'email' => 'private@example.test',
+                    'phone' => '+963 944 123 456',
+                ],
+                'personal' => [
+                    'birth_date' => '1990-01-01',
+                    'nationality' => 'Sensitive Nationality',
+                    'gender' => 'Sensitive Gender',
+                    'religion' => 'Sensitive Religion',
+                    'disability' => 'Sensitive Disability',
+                ],
+                'summary' => 'Sensitive Candidate builds APIs. Contact private@example.test.',
+                'skills' => ['Laravel'],
+            ],
+        ]);
+        Http::fake(['api.openai.com/*' => Http::response($this->openAIResponse(), 200)]);
+
+        $this->withToken($this->tokenFor($employer))
+            ->postJson("/api/v1/applications/{$application->id}/cv-summary")
+            ->assertOk();
+
+        Http::assertSent(function (Request $request): bool {
+            $payload = json_encode($request->data(), JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+
+            foreach ([
+                'Sensitive Candidate',
+                'private@example.test',
+                '+963 944 123 456',
+                '1990-01-01',
+                'Sensitive Nationality',
+                'Sensitive Gender',
+                'Sensitive Religion',
+                'Sensitive Disability',
+            ] as $sensitiveValue) {
+                $this->assertStringNotContainsString($sensitiveValue, $payload);
+            }
+
+            $this->assertStringContainsString('untrusted data', $request['input'][0]['content'][0]['text']);
+
+            return true;
+        });
+    }
+
+    /** @return array{Company, User, User, JobApplication} */
+    private function scenario(): array
+    {
+        $company = Company::create(['name' => 'Acme Hiring', 'approval_status' => 'approved']);
+        $employer = $this->employer('employer@example.com', $company);
+        $candidate = User::factory()->create([
+            'email' => 'candidate@example.com',
+            'role' => UserRole::JOB_SEEKER,
+        ]);
+        $profile = JobSeekerProfile::create([
+            'user_id' => $candidate->id,
+            'headline' => 'Backend Developer',
+            'summary' => 'Builds Laravel REST APIs.',
+        ]);
+        $job = JobPosting::create([
+            'company_id' => $company->id,
+            'title' => 'Backend Developer',
+            'description' => 'Build recruitment APIs with Laravel.',
+            'requirements' => 'Laravel and Docker experience.',
+            'employment_type' => 'full_time',
+            'experience_level' => 'junior',
+            'work_mode' => 'remote',
+            'status' => 'open',
+            'published_at' => now(),
+        ]);
+        $cv = CVFile::create([
+            'user_id' => $candidate->id,
+            'original_name' => 'candidate.pdf',
+            'stored_path' => 'cv-files/candidate.pdf',
+            'disk' => 'local',
+            'mime_type' => 'application/pdf',
+            'extension' => 'pdf',
+            'size_bytes' => 1000,
+            'status' => 'parsed',
+        ]);
+        CVParsingResult::create([
+            'cv_file_id' => $cv->id,
+            'raw_text' => 'Backend Developer. Laravel REST APIs.',
+            'parsed_json' => [
+                'summary' => 'Backend developer focused on Laravel APIs.',
+                'experience' => [],
+                'education' => [],
+                'skills' => ['Laravel', 'REST APIs'],
+            ],
+        ]);
+        $status = ApplicationStatus::query()->where('slug', 'submitted')->firstOrFail();
+        $application = JobApplication::create([
+            'job_posting_id' => $job->id,
+            'job_seeker_profile_id' => $profile->id,
+            'selected_cv_file_id' => $cv->id,
+            'application_status_id' => $status->id,
+            'consent_to_share_profile' => true,
+        ]);
+
+        return [$company, $employer, $candidate->load('jobSeekerProfile'), $application];
+    }
+
+    private function employer(string $email, Company $company, ?CompanyRole $role = null): User
+    {
+        $user = User::factory()->create(['email' => $email, 'role' => UserRole::EMPLOYER]);
+        EmployerProfile::create([
+            'user_id' => $user->id,
+            'company_id' => $company->id,
+            'company_role' => $role,
+        ]);
+
+        return $user->load('employerProfile.company');
+    }
+
+    private function tokenFor(User $user): string
+    {
+        return $user->createToken(Str::random(10))->plainTextToken;
+    }
+
+    /** @return array<string, mixed> */
+    private function openAIResponse(): array
+    {
+        $summary = [
+            'headline' => 'Backend candidate aligned with Laravel API work',
+            'summary' => 'The candidate has explicit Laravel REST API experience relevant to the role.',
+            'strengths' => ['Laravel REST API experience is explicitly evidenced.'],
+            'gaps' => ['Docker experience is not evidenced in the supplied data.'],
+            'evidence' => [[
+                'statement' => 'Laravel REST API experience',
+                'source' => 'Selected CV summary and verified profile',
+            ]],
+        ];
+
+        return [
+            'id' => 'resp_test_cv_summary',
+            'output' => [[
+                'content' => [[
+                    'type' => 'output_text',
+                    'text' => json_encode($summary, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
+                ]],
+            ]],
+        ];
+    }
+}

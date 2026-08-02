@@ -28,4 +28,13 @@ return [
         'sort_direction' => 'The selected sort direction is invalid.',
         'status' => 'One or more selected application statuses are invalid.',
     ],
+    'cv_summary_retrieved' => 'AI CV summary retrieved successfully.',
+    'cv_summary_generated' => 'AI CV summary generated successfully.',
+    'cv_summary_not_found' => 'No AI CV summary has been generated for this application and language.',
+    'cv_summary_disabled' => 'AI CV summarization is currently disabled.',
+    'cv_summary_provider_unavailable' => 'The AI CV summary provider is currently unavailable.',
+    'cv_summary_invalid_response' => 'The AI provider returned an invalid CV summary.',
+    'cv_summary_timeout' => 'The AI CV summary request timed out.',
+    'cv_summary_rate_limited' => 'Too many AI CV summary requests. Try again later.',
+    'cv_summary_disclaimer' => 'AI-generated assistance only. Verify the summary against the candidate profile and CV before making any decision.',
 ];

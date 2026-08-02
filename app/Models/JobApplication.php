@@ -100,6 +100,11 @@ class JobApplication extends Model
         return $this->hasMany(ApplicationInternalNote::class);
     }
 
+    public function cvSummaries(): HasMany
+    {
+        return $this->hasMany(ApplicationCVSummary::class);
+    }
+
     public function screeningQuestionSnapshots(): HasMany
     {
         return $this->hasMany(JobApplicationScreeningQuestion::class)
