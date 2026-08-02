@@ -28,13 +28,11 @@ class NotificationStreamController extends Controller
             $lastId = $cursor;
             $deadline = microtime(true) + $duration;
             $lastHeartbeat = 0.0;
+            $lastUnreadCount = $this->unreadCount($user->id);
 
             $this->emit('connected', [
                 'cursor' => $lastId,
-                'unread_count' => Notification::query()
-                    ->where('user_id', $user->id)
-                    ->whereNull('read_at')
-                    ->count(),
+                'unread_count' => $lastUnreadCount,
                 'server_time' => now()->toISOString(),
             ]);
 
@@ -52,12 +50,11 @@ class NotificationStreamController extends Controller
                     $this->emit('notification.created', $resource, $lastId);
                 }
 
-                if ($notifications->isNotEmpty()) {
+                $unreadCount = $this->unreadCount($user->id);
+                if ($unreadCount !== $lastUnreadCount) {
+                    $lastUnreadCount = $unreadCount;
                     $this->emit('unread-count.updated', [
-                        'unread_count' => Notification::query()
-                            ->where('user_id', $user->id)
-                            ->whereNull('read_at')
-                            ->count(),
+                        'unread_count' => $lastUnreadCount,
                     ]);
                 }
 
@@ -92,6 +89,14 @@ class NotificationStreamController extends Controller
         echo 'event: '.$event."\n";
         echo 'data: '.json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR)."\n\n";
         $this->flush();
+    }
+
+    private function unreadCount(int $userId): int
+    {
+        return Notification::query()
+            ->where('user_id', $userId)
+            ->whereNull('read_at')
+            ->count();
     }
 
     private function flush(): void
