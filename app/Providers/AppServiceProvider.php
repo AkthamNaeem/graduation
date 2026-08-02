@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Contracts\CV\CVTextParser;
+use App\Contracts\CVSummary\CVSummaryClient;
 use App\Contracts\Recommendation\RecommendationContextFingerprintContract;
 use App\Contracts\Recommendation\RecommendationEligibilityProviderContract;
 use App\Contracts\Recommendation\RecommendationMlClientFactoryContract;
@@ -14,6 +15,7 @@ use App\Contracts\Recommendation\RecommendationResultStoreContract;
 use App\Contracts\RecommendationMl\RecommendationMlClientContract;
 use App\Data\Recommendation\RecommendationPersistenceConfiguration;
 use App\Enums\UserRole;
+use App\Exceptions\CVSummaryGenerationException;
 use App\Models\ApplicationInternalNote;
 use App\Models\ApplicationTestAssignment;
 use App\Models\Interview;
@@ -32,6 +34,8 @@ use App\Services\CandidateExperienceCalculator;
 use App\Services\CV\GroqCVTextParser;
 use App\Services\CV\OpenAICVTextParser;
 use App\Services\CV\RuleBasedCVTextParser;
+use App\Services\CVSummary\GroqCVSummaryClient;
+use App\Services\CVSummary\OpenAICVSummaryClient;
 use App\Services\EducationLevelNormalizer;
 use App\Services\MatchingService;
 use App\Services\Recommendation\RecommendationContextFingerprint;
@@ -62,6 +66,18 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->bind(CVSummaryClient::class, function ($app): CVSummaryClient {
+            return match (config('cv_summary.provider', 'openai')) {
+                'openai' => $app->make(OpenAICVSummaryClient::class),
+                'groq' => $app->make(GroqCVSummaryClient::class),
+                default => throw new CVSummaryGenerationException(
+                    __('cv_summary.invalid_provider'),
+                    'CV_SUMMARY_INVALID_PROVIDER',
+                    500,
+                ),
+            };
+        });
+
         $this->app->bind(
             RecommendationEligibilityProviderContract::class,
             RecommendationEligibilityProvider::class,

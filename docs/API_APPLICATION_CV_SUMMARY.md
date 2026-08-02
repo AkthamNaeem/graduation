@@ -15,7 +15,31 @@ OPENAI_CV_SUMMARY_CONNECT_TIMEOUT=10
 CV_SUMMARY_MAX_SOURCE_CHARACTERS=30000
 ```
 
-The implementation reuses OpenAI's Responses API pattern already used by CV parsing. Requests set `store=false` and require a strict JSON schema.
+Select exactly one summary provider:
+
+```env
+CV_SUMMARY_PROVIDER=openai
+```
+
+or:
+
+```env
+CV_SUMMARY_PROVIDER=groq
+```
+
+Groq uses the existing `GROQ_API_KEY` shared with CV Parsing, while keeping model and timeout settings independent:
+
+```env
+GROQ_API_KEY=
+GROQ_CV_SUMMARY_MODEL=openai/gpt-oss-20b
+GROQ_CV_SUMMARY_TIMEOUT=60
+GROQ_CV_SUMMARY_CONNECT_TIMEOUT=10
+GROQ_CV_SUMMARY_MAX_COMPLETION_TOKENS=2048
+GROQ_CV_SUMMARY_REASONING_EFFORT=low
+GROQ_CV_SUMMARY_TEMPERATURE=0.2
+```
+
+OpenAI uses the Responses API with `store=false` and a strict JSON schema. Groq uses Chat Completions with a strict JSON schema, with one local-contract-validated `json_object` attempt only when Groq returns `json_validate_failed`. There is no automatic provider fallback in either direction. Changing the selected provider or its model invalidates the existing input hash and regenerates the summary. Provider failures never persist a partial summary.
 
 ## GET `/api/v1/applications/{application}/cv-summary`
 

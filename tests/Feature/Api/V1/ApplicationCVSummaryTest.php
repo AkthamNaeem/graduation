@@ -14,11 +14,13 @@ use App\Models\JobApplication;
 use App\Models\JobPosting;
 use App\Models\JobSeekerProfile;
 use App\Models\User;
+use App\Services\CVSummary\ApplicationCVSummaryService;
 use Database\Seeders\ApplicationStatusSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Tests\TestCase;
 
 class ApplicationCVSummaryTest extends TestCase
@@ -295,6 +297,270 @@ class ApplicationCVSummaryTest extends TestCase
         });
     }
 
+    public function test_groq_provider_generates_caches_forces_and_audits_a_private_summary(): void
+    {
+        [, $employer, $candidate, $application] = $this->scenario();
+        $this->configureGroq();
+        $candidate->update(['name' => 'Sensitive Candidate', 'email' => 'private@example.test']);
+        $application->jobSeekerProfile()->update(['phone' => '+963 944 123 456']);
+        $application->selectedCvFile->parsingResult()->update([
+            'reviewed_json' => [
+                'full_name' => 'Sensitive Candidate',
+                'contact' => [
+                    'email' => 'private@example.test',
+                    'phone' => '+963 944 123 456',
+                ],
+                'personal' => [
+                    'birth_date' => '1990-01-01',
+                    'nationality' => 'Sensitive Nationality',
+                    'gender' => 'Sensitive Gender',
+                    'religion' => 'Sensitive Religion',
+                    'disability' => 'Sensitive Disability',
+                ],
+                'summary' => 'Sensitive Candidate builds Laravel APIs. Contact private@example.test.',
+                'skills' => ['Laravel'],
+            ],
+        ]);
+        Http::fake(['api.groq.com/*' => Http::response($this->groqResponse(), 200)]);
+        $endpoint = "/api/v1/applications/{$application->id}/cv-summary";
+        $token = $this->tokenFor($employer);
+
+        $this->withToken($token)
+            ->postJson($endpoint)
+            ->assertOk()
+            ->assertJsonPath('data.generation.provider', 'groq')
+            ->assertJsonPath('data.generation.model', 'openai/gpt-oss-20b');
+        $this->withToken($token)->postJson($endpoint)->assertOk();
+        $this->withToken($token)->postJson($endpoint, ['force' => true])->assertOk();
+
+        Http::assertSentCount(2);
+        Http::assertSent(function (Request $request): bool {
+            $payload = json_encode($request->data(), JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+
+            $this->assertSame('https://api.groq.com/openai/v1/chat/completions', $request->url());
+            $this->assertSame('Bearer groq-summary-test-key', $request->header('Authorization')[0] ?? null);
+            $this->assertSame('json_schema', $request['response_format']['type']);
+            $this->assertSame('application_cv_summary', $request['response_format']['json_schema']['name']);
+            $this->assertTrue($request['response_format']['json_schema']['strict']);
+            $this->assertArrayNotHasKey('store', $request->data());
+
+            foreach ([
+                'Sensitive Candidate',
+                'private@example.test',
+                '+963 944 123 456',
+                '1990-01-01',
+                'Sensitive Nationality',
+                'Sensitive Gender',
+                'Sensitive Religion',
+                'Sensitive Disability',
+            ] as $sensitiveValue) {
+                $this->assertStringNotContainsString($sensitiveValue, $payload);
+            }
+
+            return true;
+        });
+        $this->assertDatabaseHas('application_cv_summaries', [
+            'job_application_id' => $application->id,
+            'provider' => 'groq',
+            'model' => 'openai/gpt-oss-20b',
+            'provider_request_id' => 'chatcmpl_cv_summary',
+        ]);
+        $this->assertDatabaseCount('application_cv_summaries', 1);
+        $this->assertDatabaseCount('audit_logs', 2);
+        $audit = AuditLog::query()->latest('id')->firstOrFail();
+        $this->assertSame('groq', $audit->metadata['provider']);
+        $this->assertSame('openai/gpt-oss-20b', $audit->metadata['model']);
+    }
+
+    public function test_provider_and_groq_model_changes_invalidate_the_cached_input_hash(): void
+    {
+        [, $employer, , $application] = $this->scenario();
+        Http::fake([
+            'api.openai.com/*' => Http::response($this->openAIResponse(), 200),
+            'api.groq.com/*' => Http::response($this->groqResponse(), 200),
+        ]);
+        $endpoint = "/api/v1/applications/{$application->id}/cv-summary";
+        $token = $this->tokenFor($employer);
+
+        $this->withToken($token)->postJson($endpoint)->assertOk();
+        $openAIHash = (string) $application->cvSummaries()->firstOrFail()->input_hash;
+
+        $this->configureGroq();
+        $this->app->make(ApplicationCVSummaryService::class)->generate(
+            $application->fresh(),
+            $employer,
+            'en',
+        );
+        $groqSummary = $application->cvSummaries()->firstOrFail();
+        $this->assertSame('groq', $groqSummary->provider);
+        $this->assertNotSame($openAIHash, $groqSummary->input_hash);
+
+        config()->set('cv_summary.groq.model', 'openai/gpt-oss-120b');
+        $this->app->make(ApplicationCVSummaryService::class)->generate(
+            $application->fresh(),
+            $employer,
+            'en',
+        );
+        $changedModelSummary = $application->cvSummaries()->firstOrFail();
+        $this->assertSame('openai/gpt-oss-120b', $changedModelSummary->model);
+        $this->assertNotSame($groqSummary->input_hash, $changedModelSummary->input_hash);
+
+        Http::assertSentCount(3);
+        $this->assertDatabaseCount('application_cv_summaries', 1);
+    }
+
+    public function test_groq_json_object_fallback_is_locally_validated_and_persisted(): void
+    {
+        [, $employer, , $application] = $this->scenario();
+        $this->configureGroq();
+        Http::fakeSequence()
+            ->push($this->groqJsonValidationFailure(), 400)
+            ->push($this->groqResponse(), 200);
+
+        $this->withToken($this->tokenFor($employer))
+            ->postJson("/api/v1/applications/{$application->id}/cv-summary")
+            ->assertOk()
+            ->assertJsonPath('data.generation.provider', 'groq');
+
+        Http::assertSentCount(2);
+        $requests = Http::recorded();
+        $this->assertSame('json_schema', $requests[0][0]['response_format']['type']);
+        $this->assertSame('json_object', $requests[1][0]['response_format']['type']);
+        $this->assertArrayNotHasKey('json_schema', $requests[1][0]['response_format']);
+        $this->assertDatabaseHas('application_cv_summaries', [
+            'job_application_id' => $application->id,
+            'provider' => 'groq',
+            'provider_request_id' => 'chatcmpl_cv_summary',
+        ]);
+    }
+
+    public function test_groq_rate_limit_never_persists_a_summary(): void
+    {
+        [, $employer, , $application] = $this->scenario();
+        $this->configureGroq();
+        Http::fake(['api.groq.com/*' => Http::response([], 429)]);
+
+        $this->withToken($this->tokenFor($employer))
+            ->postJson("/api/v1/applications/{$application->id}/cv-summary")
+            ->assertStatus(503)
+            ->assertJsonPath('code', 'CV_SUMMARY_RATE_LIMITED');
+
+        Http::assertSentCount(3);
+        $this->assertDatabaseCount('application_cv_summaries', 0);
+        $this->assertDatabaseCount('audit_logs', 0);
+    }
+
+    #[DataProvider('groqHttpFailureProvider')]
+    public function test_groq_http_failures_never_persist_a_summary(int $status, string $code, int $attempts): void
+    {
+        [, $employer, , $application] = $this->scenario();
+        $this->configureGroq();
+        Http::fake(['api.groq.com/*' => Http::response([], $status)]);
+
+        $this->withToken($this->tokenFor($employer))
+            ->postJson("/api/v1/applications/{$application->id}/cv-summary")
+            ->assertStatus(503)
+            ->assertJsonPath('code', $code);
+
+        Http::assertSentCount($attempts);
+        $this->assertDatabaseCount('application_cv_summaries', 0);
+        $this->assertDatabaseCount('audit_logs', 0);
+    }
+
+    public static function groqHttpFailureProvider(): array
+    {
+        return [
+            'unauthorized' => [401, 'CV_SUMMARY_AUTHENTICATION_FAILED', 1],
+            'forbidden' => [403, 'CV_SUMMARY_AUTHENTICATION_FAILED', 1],
+            'provider unavailable' => [500, 'CV_SUMMARY_PROVIDER_UNAVAILABLE', 3],
+        ];
+    }
+
+    #[DataProvider('groqInvalidSummaryProvider')]
+    public function test_groq_invalid_summary_never_persists_a_record(string $content): void
+    {
+        [, $employer, , $application] = $this->scenario();
+        $this->configureGroq();
+        Http::fake(['api.groq.com/*' => Http::response([
+            'id' => 'chatcmpl_invalid',
+            'choices' => [['message' => ['content' => $content]]],
+        ], 200)]);
+
+        $this->withToken($this->tokenFor($employer))
+            ->postJson("/api/v1/applications/{$application->id}/cv-summary")
+            ->assertStatus(502)
+            ->assertJsonPath('code', 'CV_SUMMARY_INVALID_RESPONSE');
+
+        Http::assertSentCount(1);
+        $this->assertDatabaseCount('application_cv_summaries', 0);
+        $this->assertDatabaseCount('audit_logs', 0);
+    }
+
+    public static function groqInvalidSummaryProvider(): array
+    {
+        return [
+            'invalid JSON' => ['{bad'],
+            'contract mismatch' => ['{}'],
+        ];
+    }
+
+    public function test_failed_groq_json_object_fallback_never_persists_or_attempts_a_third_request(): void
+    {
+        [, $employer, , $application] = $this->scenario();
+        $this->configureGroq();
+        Http::fakeSequence()
+            ->push($this->groqJsonValidationFailure(), 400)
+            ->push([
+                'id' => 'chatcmpl_invalid_fallback',
+                'choices' => [['message' => ['content' => '{bad']]],
+            ], 200);
+
+        $this->withToken($this->tokenFor($employer))
+            ->postJson("/api/v1/applications/{$application->id}/cv-summary")
+            ->assertStatus(502)
+            ->assertJsonPath('code', 'CV_SUMMARY_INVALID_RESPONSE');
+
+        Http::assertSentCount(2);
+        $this->assertDatabaseCount('application_cv_summaries', 0);
+        $this->assertDatabaseCount('audit_logs', 0);
+    }
+
+    public function test_groq_supports_separate_english_and_arabic_summaries(): void
+    {
+        [, $employer, , $application] = $this->scenario();
+        $this->configureGroq();
+        Http::fake(['api.groq.com/*' => Http::response($this->groqResponse(), 200)]);
+        $endpoint = "/api/v1/applications/{$application->id}/cv-summary";
+        $token = $this->tokenFor($employer);
+
+        $this->withToken($token)->postJson($endpoint)->assertJsonPath('data.locale', 'en');
+        $this->withHeader('Accept-Language', 'ar')
+            ->withToken($token)
+            ->postJson($endpoint)
+            ->assertJsonPath('data.locale', 'ar');
+
+        Http::assertSentCount(2);
+        $requests = Http::recorded();
+        $this->assertStringContainsString('Return the output in English', $requests[0][0]['messages'][0]['content']);
+        $this->assertStringContainsString('Return the output in Arabic', $requests[1][0]['messages'][0]['content']);
+        $this->assertDatabaseCount('application_cv_summaries', 2);
+    }
+
+    public function test_unknown_summary_provider_returns_a_stable_error_without_http_or_persistence(): void
+    {
+        [, $employer, , $application] = $this->scenario();
+        config()->set('cv_summary.provider', 'unknown');
+        Http::fake();
+
+        $this->withToken($this->tokenFor($employer))
+            ->postJson("/api/v1/applications/{$application->id}/cv-summary")
+            ->assertStatus(500)
+            ->assertJsonPath('code', 'CV_SUMMARY_INVALID_PROVIDER');
+
+        Http::assertNothingSent();
+        $this->assertDatabaseCount('application_cv_summaries', 0);
+    }
+
     /** @return array{Company, User, User, JobApplication} */
     private function scenario(): array
     {
@@ -369,6 +635,18 @@ class ApplicationCVSummaryTest extends TestCase
         return $user->createToken(Str::random(10))->plainTextToken;
     }
 
+    private function configureGroq(string $model = 'openai/gpt-oss-20b'): void
+    {
+        config([
+            'cv_summary.provider' => 'groq',
+            'cv_summary.groq.api_key' => 'groq-summary-test-key',
+            'cv_summary.groq.model' => $model,
+            'cv_summary.groq.max_completion_tokens' => 2048,
+            'cv_summary.groq.reasoning_effort' => 'low',
+            'cv_summary.groq.temperature' => 0.2,
+        ]);
+    }
+
     /** @return array<string, mixed> */
     private function openAIResponse(): array
     {
@@ -391,6 +669,33 @@ class ApplicationCVSummaryTest extends TestCase
                     'text' => json_encode($summary, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),
                 ]],
             ]],
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function groqResponse(): array
+    {
+        $openAIResponse = $this->openAIResponse();
+
+        return [
+            'id' => 'chatcmpl_cv_summary',
+            'choices' => [[
+                'message' => [
+                    'content' => $openAIResponse['output'][0]['content'][0]['text'],
+                ],
+            ]],
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function groqJsonValidationFailure(): array
+    {
+        return [
+            'error' => [
+                'message' => 'Provider body must not be exposed.',
+                'type' => 'invalid_request_error',
+                'code' => 'json_validate_failed',
+            ],
         ];
     }
 }

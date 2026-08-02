@@ -2,13 +2,14 @@
 
 namespace App\Services\CVSummary;
 
+use App\Contracts\CVSummary\CVSummaryClient;
 use App\Exceptions\CVSummaryGenerationException;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use JsonException;
 
-class OpenAICVSummaryClient
+class OpenAICVSummaryClient implements CVSummaryClient
 {
     private const ENDPOINT = 'https://api.openai.com/v1/responses';
 
@@ -23,14 +24,6 @@ class OpenAICVSummaryClient
      */
     public function generate(array $source, string $locale): array
     {
-        if (config('cv_summary.provider', 'openai') !== 'openai') {
-            throw new CVSummaryGenerationException(
-                __('cv_summary.invalid_provider'),
-                'CV_SUMMARY_INVALID_PROVIDER',
-                500,
-            );
-        }
-
         $apiKey = trim((string) config('cv_summary.openai.api_key'));
         if ($apiKey === '') {
             throw new CVSummaryGenerationException(
@@ -64,6 +57,16 @@ class OpenAICVSummaryClient
             'data' => $data,
             'request_id' => is_string($payload['id'] ?? null) ? $payload['id'] : null,
         ];
+    }
+
+    public function provider(): string
+    {
+        return 'openai';
+    }
+
+    public function model(): string
+    {
+        return (string) config('cv_summary.openai.model', 'gpt-5-mini');
     }
 
     /** @param array<string, mixed> $source */
@@ -168,7 +171,7 @@ class OpenAICVSummaryClient
     private function requestBody(array $source, string $locale): array
     {
         return [
-            'model' => (string) config('cv_summary.openai.model', 'gpt-5-mini'),
+            'model' => $this->model(),
             'store' => false,
             'input' => [
                 [

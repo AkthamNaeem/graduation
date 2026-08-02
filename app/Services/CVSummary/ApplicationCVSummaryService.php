@@ -2,6 +2,7 @@
 
 namespace App\Services\CVSummary;
 
+use App\Contracts\CVSummary\CVSummaryClient;
 use App\Exceptions\CVSummaryGenerationException;
 use App\Models\ApplicationCVSummary;
 use App\Models\JobApplication;
@@ -48,7 +49,7 @@ class ApplicationCVSummaryService
     ];
 
     public function __construct(
-        private readonly OpenAICVSummaryClient $client,
+        private readonly CVSummaryClient $client,
         private readonly AuditLogService $auditLogService,
     ) {}
 
@@ -77,9 +78,12 @@ class ApplicationCVSummaryService
         ]);
 
         $source = $this->buildSource($application);
+        $provider = $this->client->provider();
+        $model = $this->client->model();
         $inputHash = hash('sha256', json_encode([
+            'provider' => $provider,
             'prompt_version' => (string) config('cv_summary.prompt_version', '1.0'),
-            'model' => (string) config('cv_summary.openai.model', 'gpt-5-mini'),
+            'model' => $model,
             'locale' => $locale,
             'source' => $source,
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
@@ -100,8 +104,8 @@ class ApplicationCVSummaryService
             [
                 'source_cv_file_id' => $application->selected_cv_file_id,
                 'generated_by_user_id' => $actor->id,
-                'provider' => 'openai',
-                'model' => (string) config('cv_summary.openai.model', 'gpt-5-mini'),
+                'provider' => $provider,
+                'model' => $model,
                 'prompt_version' => (string) config('cv_summary.prompt_version', '1.0'),
                 'input_hash' => $inputHash,
                 'headline' => $data['headline'],
