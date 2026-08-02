@@ -18,6 +18,10 @@ class CandidateTestQuestionResource extends JsonResource
             'question_type' => LocalizedValue::make($this->question_type, 'test_question_types'),
             'order_index' => $this->order_index,
             'is_required' => $this->is_required,
+            'image_url' => $this->image_path === null ? null : route('v1.test-attempts.questions.image.show', [
+                'testAttempt' => $request->route('testAttempt'),
+                'question' => $this->id,
+            ]),
             'options' => CandidateTestOptionResource::collection($this->whenLoaded('options')),
         ];
     }

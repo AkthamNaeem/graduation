@@ -16,6 +16,8 @@ return [
     'skill_created' => 'Skill created successfully.',
     'skill_updated' => 'Skill updated successfully.',
     'skill_deleted' => 'Skill deleted successfully.',
+    'skill_icon_updated' => 'Skill icon updated successfully.',
+    'skill_icon_removed' => 'Skill icon removed successfully.',
     'skill_in_use' => 'Skill is used by profiles or jobs and cannot be hard-deleted.',
     'skill_detach_first' => 'Detach the skill from related profiles and jobs before deleting it.',
     'audit_logs' => 'Audit logs retrieved successfully.',

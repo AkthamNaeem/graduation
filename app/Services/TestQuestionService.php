@@ -17,6 +17,7 @@ class TestQuestionService
         private readonly TestService $testService,
         private readonly TestScorePolicyService $scorePolicyService,
         private readonly AuditLogService $auditLogService,
+        private readonly PrivateFileStorageService $privateStorage,
     ) {}
 
     /** @return Collection<int, TestQuestion> */
@@ -95,6 +96,7 @@ class TestQuestionService
     public function deleteQuestion(Test $test, TestQuestion $question, ?User $actor = null): void
     {
         $this->ensureQuestionBelongsToTest($test, $question);
+        $imagePath = $question->image_path;
         DB::transaction(function () use ($test, $question, $actor): void {
             $lockedTest = Test::query()->lockForUpdate()->findOrFail($test->id);
             $this->testService->ensureTestIsMutable($lockedTest);
@@ -108,6 +110,10 @@ class TestQuestionService
             $lockedQuestion->id = $questionId;
             $this->auditScoreMutation('test.question_deleted', $lockedTest, $lockedQuestion, $actor, $previousPoints, null, $previousMax, $newMax);
         });
+
+        if ($imagePath !== null) {
+            $this->privateStorage->delete($this->privateStorage->privateDisk(), $imagePath);
+        }
     }
 
     /** @param array<int, array{question_id:int, order_index:int}> $items */

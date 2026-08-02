@@ -35,6 +35,7 @@ class TestAttemptContentService
                 'question_type',
                 'order_index',
                 'is_required',
+                'image_path',
             ])
             ->with(['options' => fn ($query) => $query->select([
                 'id',
@@ -46,5 +47,13 @@ class TestAttemptContentService
             ->orderBy('order_index')
             ->orderBy('id')
             ->get();
+    }
+
+    public function question(TestAttempt $attempt, TestQuestion $question): TestQuestion
+    {
+        $authorizedQuestion = $this->questions($attempt)->firstWhere('id', $question->id);
+        abort_unless($authorizedQuestion instanceof TestQuestion, 404);
+
+        return $authorizedQuestion;
     }
 }

@@ -7,6 +7,7 @@ use App\Models\Skill;
 use App\Support\LocalizedValue;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 /** @mixin Skill */
 class SkillResource extends JsonResource
@@ -20,6 +21,7 @@ class SkillResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'slug' => $this->slug,
+            'icon_url' => $this->icon_path === null ? null : Storage::disk('public')->url($this->icon_path),
             'requirement_type' => $this->whenPivotLoaded(
                 'job_posting_skills',
                 fn () => LocalizedValue::make($this->pivot->requirement_type instanceof JobSkillRequirementType

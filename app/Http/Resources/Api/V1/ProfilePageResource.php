@@ -6,6 +6,7 @@ use App\Data\ProfilePageData;
 use App\Support\NameInitials;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 /** @mixin ProfilePageData */
 class ProfilePageResource extends JsonResource
@@ -42,9 +43,9 @@ class ProfilePageResource extends JsonResource
                 'location' => $profile->location,
                 'city' => CityResource::make($profile->city),
                 'avatar' => [
-                    'type' => 'initials',
+                    'type' => $user->avatar_path === null ? 'initials' : 'image',
                     'initials' => NameInitials::from($user->name),
-                    'url' => null,
+                    'url' => $user->avatar_path === null ? null : Storage::disk('public')->url($user->avatar_path),
                 ],
             ],
             'career_summary' => [

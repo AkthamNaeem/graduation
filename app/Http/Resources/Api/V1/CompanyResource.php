@@ -24,6 +24,7 @@ class CompanyResource extends JsonResource
             'location' => $this->location,
             'description' => $this->description,
             'logo_url' => $this->logo_path === null ? null : Storage::disk('public')->url($this->logo_path),
+            'cover_image_url' => $this->cover_image_path === null ? null : Storage::disk('public')->url($this->cover_image_path),
             'approval_status' => LocalizedValue::make($this->approval_status, 'company_approval_statuses'),
             'has_owner' => $this->when(
                 array_key_exists('owner_count', $this->resource->getAttributes()),

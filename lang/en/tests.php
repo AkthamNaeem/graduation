@@ -19,6 +19,8 @@ return [
     'question_created' => 'Test question created successfully.',
     'question_updated' => 'Test question updated successfully.',
     'question_deleted' => 'Test question deleted successfully.',
+    'question_image_updated' => 'Test question image updated successfully.',
+    'question_image_removed' => 'Test question image removed successfully.',
     'questions_reordered' => 'Test questions reordered successfully.',
     'option_created' => 'Test option created successfully.',
     'option_updated' => 'Test option updated successfully.',

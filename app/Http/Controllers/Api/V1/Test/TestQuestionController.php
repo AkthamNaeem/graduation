@@ -12,19 +12,25 @@ use App\Http\Requests\Api\V1\Test\ShowTestQuestionRequest;
 use App\Http\Requests\Api\V1\Test\StoreTestOptionRequest;
 use App\Http\Requests\Api\V1\Test\StoreTestQuestionRequest;
 use App\Http\Requests\Api\V1\Test\UpdateTestOptionRequest;
+use App\Http\Requests\Api\V1\Test\UpdateTestQuestionImageRequest;
 use App\Http\Requests\Api\V1\Test\UpdateTestQuestionRequest;
 use App\Http\Resources\Api\V1\TestOptionResource;
 use App\Http\Resources\Api\V1\TestQuestionResource;
 use App\Models\Test;
 use App\Models\TestOption;
 use App\Models\TestQuestion;
+use App\Services\OptionalImageService;
 use App\Services\TestQuestionService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TestQuestionController extends Controller
 {
-    public function __construct(private readonly TestQuestionService $service) {}
+    public function __construct(
+        private readonly TestQuestionService $service,
+        private readonly OptionalImageService $images,
+    ) {}
 
     public function index(IndexTestQuestionRequest $request, Test $test): JsonResponse
     {
@@ -51,6 +57,27 @@ class TestQuestionController extends Controller
         $this->service->deleteQuestion($test, $question, $request->user('sanctum'));
 
         return ApiResponse::success(null, __('tests.question_deleted'));
+    }
+
+    public function updateImage(UpdateTestQuestionImageRequest $request, Test $test, TestQuestion $question): JsonResponse
+    {
+        return ApiResponse::success(
+            new TestQuestionResource($this->images->updateQuestionImage($request->user('sanctum'), $test, $question, $request->file('image'))),
+            __('tests.question_image_updated'),
+        );
+    }
+
+    public function showImage(UpdateTestQuestionImageRequest $request, Test $test, TestQuestion $question): StreamedResponse
+    {
+        return $this->images->questionImageResponse($question);
+    }
+
+    public function destroyImage(UpdateTestQuestionImageRequest $request, Test $test, TestQuestion $question): JsonResponse
+    {
+        return ApiResponse::success(
+            new TestQuestionResource($this->images->removeQuestionImage($request->user('sanctum'), $test, $question)),
+            __('tests.question_image_removed'),
+        );
     }
 
     public function reorder(ReorderTestQuestionRequest $request, Test $test): JsonResponse

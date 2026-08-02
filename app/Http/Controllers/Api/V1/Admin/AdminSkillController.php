@@ -6,18 +6,22 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Admin\DeleteAdminRequest;
 use App\Http\Requests\Api\V1\Admin\IndexAdminSkillRequest;
 use App\Http\Requests\Api\V1\Admin\StoreAdminSkillRequest;
+use App\Http\Requests\Api\V1\Admin\UpdateAdminSkillIconRequest;
 use App\Http\Requests\Api\V1\Admin\UpdateAdminSkillRequest;
 use App\Http\Resources\Api\V1\SkillResource;
 use App\Models\Skill;
 use App\Services\AuditLogService;
+use App\Services\OptionalImageService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class AdminSkillController extends Controller
 {
     public function __construct(
         private readonly AuditLogService $auditLogService,
+        private readonly OptionalImageService $images,
     ) {}
 
     public function index(IndexAdminSkillRequest $request): JsonResponse
@@ -96,7 +100,12 @@ class AdminSkillController extends Controller
         }
 
         $before = $skill->only(['name', 'slug']);
+        $iconPath = $skill->icon_path;
         $skill->delete();
+
+        if ($iconPath !== null) {
+            Storage::disk('public')->delete($iconPath);
+        }
 
         $this->auditLogService->record(
             'skill.deleted',
@@ -109,6 +118,22 @@ class AdminSkillController extends Controller
         return ApiResponse::success(
             data: null,
             message: __('admin.skill_deleted'),
+        );
+    }
+
+    public function updateIcon(UpdateAdminSkillIconRequest $request, Skill $skill): JsonResponse
+    {
+        return ApiResponse::success(
+            data: new SkillResource($this->images->updateSkillIcon($request->user('sanctum'), $skill, $request->file('image'))),
+            message: __('admin.skill_icon_updated'),
+        );
+    }
+
+    public function destroyIcon(UpdateAdminSkillIconRequest $request, Skill $skill): JsonResponse
+    {
+        return ApiResponse::success(
+            data: new SkillResource($this->images->removeSkillIcon($request->user('sanctum'), $skill)),
+            message: __('admin.skill_icon_removed'),
         );
     }
 

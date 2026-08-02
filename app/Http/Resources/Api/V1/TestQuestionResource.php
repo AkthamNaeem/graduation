@@ -20,6 +20,10 @@ class TestQuestionResource extends JsonResource
             'order_index' => $this->order_index,
             'points' => $this->points,
             'is_required' => $this->is_required,
+            'image_url' => $this->image_path === null ? null : route('v1.tests.questions.image.show', [
+                'test' => $this->test_id,
+                'question' => $this->id,
+            ]),
             'options' => TestOptionResource::collection($this->whenLoaded('options')),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),

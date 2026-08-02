@@ -13,6 +13,7 @@ class Skill extends Model
     protected $fillable = [
         'name',
         'slug',
+        'icon_path',
     ];
 
     public function jobSeekerProfiles(): BelongsToMany

@@ -4,6 +4,8 @@ return [
     'retrieved' => 'Profile retrieved successfully.',
     'page_retrieved' => 'Profile page retrieved successfully.',
     'updated' => 'Profile updated successfully.',
+    'avatar_updated' => 'Avatar updated successfully.',
+    'avatar_removed' => 'Avatar removed successfully.',
     'employer_retrieved' => 'Employer profile retrieved successfully.',
     'employer_updated' => 'Employer profile updated successfully.',
     'experiences_retrieved' => 'Experiences retrieved successfully.',

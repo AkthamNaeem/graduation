@@ -179,6 +179,7 @@ return [
         'professionalism_score' => 'درجة الاحترافية',
     ],
     'custom_messages' => [
+        'image_storage_failed' => 'تعذر تخزين الصورة. يرجى المحاولة مرة أخرى.',
         'requested_item_labels_unique' => 'يجب أن تكون عناوين العناصر المطلوبة فريدة دون اعتبار حالة الأحرف.',
         'name_taken' => 'الاسم مستخدم مسبقًا.',
         'plain_text_only' => 'يجب أن يحتوي النص على نص عادي فقط.',

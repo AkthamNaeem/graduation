@@ -19,6 +19,7 @@ class TestQuestion extends Model
         'order_index',
         'points',
         'is_required',
+        'image_path',
     ];
 
     protected function casts(): array

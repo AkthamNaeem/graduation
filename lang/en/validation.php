@@ -232,6 +232,7 @@ return [
     'custom_messages' => [
         'requested_item_labels_unique' => 'Requested item labels must be unique (case-insensitive).',
         'name_taken' => 'The name has already been taken.',
+        'image_storage_failed' => 'The image could not be stored. Please try again.',
         'plain_text_only' => 'The body must contain plain text only.',
         'internal_note_unauthorized' => 'This internal note action is not authorized.',
         'skill_filter_required' => 'The skill requirement filter requires the skill filter.',

@@ -18,4 +18,6 @@ return [
     'public_registration_disabled' => 'Public employer registration is disabled. Accept a company invitation instead.',
     'not_approved' => 'Recruitment activity for this company is currently unavailable.',
     'logo_storage_failed' => 'The company logo could not be stored. Please try again.',
+    'cover_image_updated' => 'Company cover image updated successfully.',
+    'cover_image_removed' => 'Company cover image removed successfully.',
 ];

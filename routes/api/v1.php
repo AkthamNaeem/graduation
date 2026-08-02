@@ -27,6 +27,7 @@ use App\Http\Controllers\Api\V1\Profile\EducationController;
 use App\Http\Controllers\Api\V1\Profile\EmployerProfileController;
 use App\Http\Controllers\Api\V1\Profile\ExperienceController;
 use App\Http\Controllers\Api\V1\Profile\ProfileController;
+use App\Http\Controllers\Api\V1\Profile\ProfileImageController;
 use App\Http\Controllers\Api\V1\Profile\ProfileSkillController;
 use App\Http\Controllers\Api\V1\Profile\ProfileSuggestionController;
 use App\Http\Controllers\Api\V1\Reference\CityController;
@@ -153,6 +154,9 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function (): void {
             Route::patch('skills/{skill}', [AdminSkillController::class, 'update'])->name('skills.patch');
             Route::put('skills/{skill}', [AdminSkillController::class, 'update'])->name('skills.update');
             Route::delete('skills/{skill}', [AdminSkillController::class, 'destroy'])->name('skills.destroy');
+            Route::post('skills/{skill}/icon', [AdminSkillController::class, 'updateIcon'])->name('skills.icon.store');
+            Route::patch('skills/{skill}/icon', [AdminSkillController::class, 'updateIcon'])->name('skills.icon.update');
+            Route::delete('skills/{skill}/icon', [AdminSkillController::class, 'destroyIcon'])->name('skills.icon.destroy');
 
             Route::get('tests', [AdminTestController::class, 'index'])->name('tests.index');
             Route::post('tests', [AdminTestController::class, 'store'])->name('tests.store');
@@ -162,6 +166,9 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function (): void {
 
     Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::post('profile/avatar', [ProfileImageController::class, 'updateAvatar'])->name('profile.avatar.store');
+    Route::patch('profile/avatar', [ProfileImageController::class, 'updateAvatar'])->name('profile.avatar.update');
+    Route::delete('profile/avatar', [ProfileImageController::class, 'destroyAvatar'])->name('profile.avatar.destroy');
     Route::apiResource('profile/experiences', ExperienceController::class)
         ->names('profile.experiences');
     Route::apiResource('profile/education', EducationController::class)
@@ -195,6 +202,9 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function (): void {
 
     Route::get('company', [CompanyController::class, 'show'])->name('company.show');
     Route::put('company', [CompanyController::class, 'update'])->name('company.update');
+    Route::post('company/cover-image', [CompanyController::class, 'updateCover'])->name('company.cover-image.store');
+    Route::patch('company/cover-image', [CompanyController::class, 'updateCover'])->name('company.cover-image.update');
+    Route::delete('company/cover-image', [CompanyController::class, 'destroyCover'])->name('company.cover-image.destroy');
     Route::get('company/members', [CompanyTeamController::class, 'members'])->name('company.members.index');
     Route::post('company/invitations', [CompanyTeamController::class, 'invite'])->name('company.invitations.store');
     Route::get('company/invitations', [CompanyTeamController::class, 'invitations'])->name('company.invitations.index');
@@ -250,6 +260,10 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function (): void {
         Route::put('tests/{test}/questions/{question}', [TestQuestionController::class, 'update'])->name('tests.questions.update');
         Route::patch('tests/{test}/questions/{question}', [TestQuestionController::class, 'update'])->name('tests.questions.patch');
         Route::delete('tests/{test}/questions/{question}', [TestQuestionController::class, 'destroy'])->name('tests.questions.destroy');
+        Route::get('tests/{test}/questions/{question}/image', [TestQuestionController::class, 'showImage'])->name('tests.questions.image.show');
+        Route::post('tests/{test}/questions/{question}/image', [TestQuestionController::class, 'updateImage'])->name('tests.questions.image.store');
+        Route::patch('tests/{test}/questions/{question}/image', [TestQuestionController::class, 'updateImage'])->name('tests.questions.image.update');
+        Route::delete('tests/{test}/questions/{question}/image', [TestQuestionController::class, 'destroyImage'])->name('tests.questions.image.destroy');
         Route::post('tests/{test}/questions/{question}/options', [TestQuestionController::class, 'storeOption'])->name('tests.questions.options.store');
         Route::post('tests/{test}/questions/{question}/options/reorder', [TestQuestionController::class, 'reorderOptions'])->name('tests.questions.options.reorder');
         Route::put('tests/{test}/questions/{question}/options/{option}', [TestQuestionController::class, 'updateOption'])->name('tests.questions.options.update');
@@ -280,6 +294,7 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function (): void {
         Route::post('tests/{applicationTestAssignment}/submit', [TestAttemptController::class, 'submit'])->name('tests.submit');
         Route::get('test-attempts/{testAttempt}/answers', [TestAnswerController::class, 'index'])->name('test-attempts.answers.index');
         Route::get('test-attempts/{testAttempt}/questions', [TestAttemptQuestionController::class, 'index'])->name('test-attempts.questions.index');
+        Route::get('test-attempts/{testAttempt}/questions/{question}/image', [TestAttemptQuestionController::class, 'showImage'])->name('test-attempts.questions.image.show');
         Route::get('test-attempts/{testAttempt}/result', [TestAttemptController::class, 'result'])->name('test-attempts.result');
         Route::post('test-attempts/{testAttempt}/gradings/bulk', [TestManualGradingController::class, 'bulk'])->name('test-attempts.gradings.bulk');
         Route::put('test-attempts/{testAttempt}/answers/{question}/grading', [TestManualGradingController::class, 'upsert'])->name('test-attempts.answers.grading.update');

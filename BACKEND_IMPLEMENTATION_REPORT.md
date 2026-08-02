@@ -3380,6 +3380,57 @@ Details, and Withdraw requests. No frontend, commit, or push is included.
 - Both modified Postman collection files parse as valid JSON.
 - `git diff --check`: passed. No commit or push was created.
 
+## Optional image fields (2026-08-02)
+
+Implemented nullable image support for `users.avatar_path`,
+`companies.cover_image_path`, `test_questions.image_path`, and
+`skills.icon_path`. The existing `Skill`/`skills` Admin catalog is the
+project's job-classification entity; no parallel category table or module was
+created. Public avatar, cover, and icon assets reuse Laravel's existing
+`public` disk. Test-question images use the configured private durable disk and
+are exposed only through manager- or attempt-authorized streaming endpoints.
+
+Upload/replacement and idempotent DELETE endpoints were added without changing
+registration, authentication, existing JSON update contracts, test scoring,
+or company `logo_path`. Database failure cleanup, post-commit old-file cleanup,
+company/test/admin authorization, candidate privacy, nullable resource URLs,
+audit actions, SQLite migration/rollback, validation limits, Flutter/Next.js
+notes, request examples, and the full endpoint matrix are documented in
+`docs/OPTIONAL_IMAGE_FIELDS_API.md`. Both Postman collections include an
+`Optional Image Fields` folder.
+
+### Optional image verification results
+
+- Latest GitHub `master` was fetched successfully and remained at `0acd0bf`;
+  `feature/optional-image-fields` contains that commit.
+- Focused optional-image suite: **8 passed, 100 assertions**. It covers valid
+  upload, no-file/null behavior, replacement, idempotent removal, MIME/size
+  rejection, unauthenticated/role/company isolation, private candidate access,
+  unchanged company logo, and public/private orphan cleanup after forced
+  database failure.
+- Existing Profile, Company, Auth, Tests/Test Questions, Admin Skills,
+  authorization, and private-storage suites passed in focused regression runs.
+- Complete Laravel suite: **1063 passed, 2 expected opt-in S3 skips, 3
+  failures, 24,519 assertions**. Two failures are protected Phase 17/final
+  handover hash baselines that intentionally reject any source change; both
+  identify the first changed feature file (`app/Models/Skill.php`). The third
+  was an unrelated attachment-download ordering flake and its complete test
+  class passed immediately in isolation (**4 passed, 32 assertions**).
+- The new migration passed SQLite `migrate:fresh`, `rollback --step=1`, and
+  `migrate` against an isolated temporary database. The temporary database was
+  removed. A local MySQL service was unavailable; the configured remote Aiven
+  database was deliberately not mutated for verification, so live MySQL
+  execution remains an environment verification item. The migration uses only
+  portable nullable string add/drop operations supported by MySQL and SQLite.
+- `php artisan route:list --path=api/v1` passed and lists all image endpoints.
+- Laravel Pint passes for every changed/new PHP file. Repository-wide
+  `vendor/bin/pint --test` still reports pre-existing formatting violations in
+  33 unrelated files; none is part of this change.
+- Both Postman collections parse as valid JSON and contain 10 requests in the
+  `Optional Image Fields` folder.
+- `php -l` passed for all changed/new PHP files and `git diff --check` passed.
+  No commit or push was created.
+
 ## Immutable Application Snapshot
 
 ### Previous behavior and design decision

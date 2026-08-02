@@ -8263,6 +8263,22 @@
                     ]
                 }
             ]
+        },
+        {
+            "name": "Optional Image Fields",
+            "description": "All image fields remain optional. Uploads use multipart/form-data with image; omit the field for no change and use DELETE for removal.",
+            "item": [
+                {"name": "Upload or Replace Avatar", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{job_seeker_token}}", "type": "string"}]}, "method": "POST", "header": [{"key": "Accept", "value": "application/json"}], "body": {"mode": "formdata", "formdata": [{"key": "image", "type": "file", "src": "", "description": "Optional JPG, JPEG, PNG, or WEBP; max 2 MB."}]}, "url": "{{base_url}}/profile/avatar"}},
+                {"name": "Remove Avatar", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{job_seeker_token}}", "type": "string"}]}, "method": "DELETE", "url": "{{base_url}}/profile/avatar"}},
+                {"name": "Upload or Replace Company Cover", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{employer_token}}", "type": "string"}]}, "method": "POST", "header": [{"key": "Accept", "value": "application/json"}], "body": {"mode": "formdata", "formdata": [{"key": "image", "type": "file", "src": "", "description": "Optional JPG, JPEG, PNG, or WEBP; max 5 MB."}]}, "url": "{{base_url}}/company/cover-image"}},
+                {"name": "Remove Company Cover", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{employer_token}}", "type": "string"}]}, "method": "DELETE", "url": "{{base_url}}/company/cover-image"}},
+                {"name": "Upload or Replace Test Question Image", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{employer_token}}", "type": "string"}]}, "method": "POST", "header": [{"key": "Accept", "value": "application/json"}], "body": {"mode": "formdata", "formdata": [{"key": "image", "type": "file", "src": "", "description": "Optional JPG, JPEG, PNG, or WEBP; max 5 MB."}]}, "url": "{{base_url}}/tests/{{test_id}}/questions/{{question_id}}/image"}},
+                {"name": "View Managed Test Question Image", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{employer_token}}", "type": "string"}]}, "method": "GET", "url": "{{base_url}}/tests/{{test_id}}/questions/{{question_id}}/image"}},
+                {"name": "Remove Test Question Image", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{employer_token}}", "type": "string"}]}, "method": "DELETE", "url": "{{base_url}}/tests/{{test_id}}/questions/{{question_id}}/image"}},
+                {"name": "View Candidate Attempt Question Image", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{job_seeker_token}}", "type": "string"}]}, "method": "GET", "description": "Only the candidate who owns a started attempt can access this private image.", "url": "{{base_url}}/test-attempts/{{test_attempt_id}}/questions/{{question_id}}/image"}},
+                {"name": "Upload or Replace Skill Icon", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{admin_token}}", "type": "string"}]}, "method": "POST", "header": [{"key": "Accept", "value": "application/json"}], "body": {"mode": "formdata", "formdata": [{"key": "image", "type": "file", "src": "", "description": "Optional JPG, JPEG, PNG, or WEBP; max 2 MB."}]}, "url": "{{base_url}}/admin/skills/{{skill_id}}/icon"}},
+                {"name": "Remove Skill Icon", "request": {"auth": {"type": "bearer", "bearer": [{"key": "token", "value": "{{admin_token}}", "type": "string"}]}, "method": "DELETE", "url": "{{base_url}}/admin/skills/{{skill_id}}/icon"}}
+            ]
         }
     ],
     "event": [

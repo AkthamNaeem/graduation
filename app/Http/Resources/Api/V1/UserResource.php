@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Support\LocalizedValue;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 /** @mixin User */
 class UserResource extends JsonResource
@@ -21,6 +22,7 @@ class UserResource extends JsonResource
             'email' => $this->email,
             'role' => LocalizedValue::make($this->role, 'user_roles'),
             'status' => LocalizedValue::make($this->status, 'user_statuses'),
+            'avatar_url' => $this->avatar_path === null ? null : Storage::disk('public')->url($this->avatar_path),
             'email_verified_at' => $this->email_verified_at?->toISOString(),
             'is_email_verified' => $this->email_verified_at !== null,
             'job_seeker_profile' => $this->when(
