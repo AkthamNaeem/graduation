@@ -13,7 +13,10 @@ class NotificationStreamController extends Controller
     public function __invoke(Request $request): StreamedResponse
     {
         $user = $request->user();
-        $cursor = max(0, (int) ($request->query('cursor') ?? $request->header('Last-Event-ID', 0)));
+        $suppliedCursor = $request->query('cursor') ?? $request->header('Last-Event-ID');
+        $cursor = $suppliedCursor === null
+            ? (int) Notification::query()->where('user_id', $user->id)->max('id')
+            : max(0, (int) $suppliedCursor);
         $duration = max(5, min(55, (int) config('realtime_notifications.stream.duration_seconds', 25)));
         $pollMicroseconds = max(250, (int) config('realtime_notifications.stream.poll_interval_milliseconds', 1000)) * 1000;
         $batchSize = max(1, min(100, (int) config('realtime_notifications.stream.batch_size', 50)));
