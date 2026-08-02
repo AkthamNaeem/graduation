@@ -41,10 +41,11 @@ FCM HTTP v1 delivers push notifications. The backend creates a signed service-ac
 2. `NotificationObserver` dispatches `SendNotificationPushJob` after the current database transaction commits.
 3. The job runs on the `notifications` queue.
 4. One `push_deliveries` row is created per notification/device pair.
-5. Successful sends store the FCM message name and `sent_at`.
+5. Successful sends store the FCM message name and `sent_at`; failed sends store `failed_at` and a sanitized error.
 6. Transient failures retry with backoff: 10 seconds, 60 seconds, then 300 seconds.
 7. FCM `UNREGISTERED`/invalid registration tokens are disabled automatically.
 8. Previously successful device deliveries are skipped on job retry.
+9. Jobs are limited to four attempts, use bounded backoff, and time out before the documented worker timeout.
 
 ## API contract
 
@@ -200,7 +201,8 @@ Stores provider, status, attempts, provider message ID, errors, and send time. A
 - Each stream query is scoped to the authenticated user's `user_id`.
 - Device deletion verifies ownership and returns 404 for cross-user access.
 - Service-account secrets never enter API responses, notifications, audit metadata, or logs.
-- Push payloads contain the existing privacy-safe notification payload; internal notes, private scores, and protected evaluation details must continue to be excluded by the domain notification listeners.
+- Push data uses an explicit navigation-field allowlist. Internal notes, private scores, OTPs, secrets, and protected evaluation details are excluded even if they are ever added to the database notification payload.
+- Firebase response bodies and raw device tokens are not stored in delivery errors or dispatch logs.
 - FCM tokens are credentials for delivery and must not be exposed through list endpoints.
 
 ## Verification

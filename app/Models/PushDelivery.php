@@ -19,6 +19,7 @@ class PushDelivery extends Model
         'attempts',
         'last_error',
         'sent_at',
+        'failed_at',
     ];
 
     protected function casts(): array
@@ -26,6 +27,7 @@ class PushDelivery extends Model
         return [
             'attempts' => 'integer',
             'sent_at' => 'datetime',
+            'failed_at' => 'datetime',
         ];
     }
 

@@ -35,6 +35,7 @@ return new class extends Migration
             $table->unsignedSmallInteger('attempts')->default(0);
             $table->text('last_error')->nullable();
             $table->timestamp('sent_at')->nullable();
+            $table->timestamp('failed_at')->nullable();
             $table->timestamps();
 
             $table->unique(['notification_id', 'device_token_id']);

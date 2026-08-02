@@ -619,6 +619,8 @@ class RecommendationEndToEndTest extends TestCase
             'lang/ar/applications.php',
             'lang/en/applications.php',
             'routes/api.php',
+            // Approved realtime notification provider registration.
+            'bootstrap/providers.php',
         ]);
         foreach ($baseline['files'] as $entry) {
             $file = base_path($entry['path']);

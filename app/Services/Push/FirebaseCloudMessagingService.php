@@ -5,6 +5,8 @@ namespace App\Services\Push;
 use App\Models\DeviceToken;
 use App\Models\Notification;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\Response;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
@@ -36,7 +38,7 @@ class FirebaseCloudMessagingService
                             'title' => $notification->title,
                             'body' => $notification->message,
                         ],
-                        'data' => $this->stringifyData(array_merge($notification->data ?? [], [
+                        'data' => $this->stringifyData(array_merge($this->safeData($notification->data ?? []), [
                             'notification_id' => $notification->id,
                             'notification_type' => $notification->type,
                         ])),
@@ -64,16 +66,14 @@ class FirebaseCloudMessagingService
             ];
         }
 
-        $status = (string) $response->json('error.status');
-        $body = $response->body();
-        $tokenInvalid = in_array($status, ['NOT_FOUND', 'INVALID_ARGUMENT'], true)
-            && (str_contains($body, 'UNREGISTERED') || str_contains($body, 'registration token'));
-
-        if ($tokenInvalid) {
+        if ($this->isInvalidTokenResponse($response)) {
             return ['message_id' => null, 'token_invalid' => true];
         }
 
-        throw new RuntimeException('FCM request failed: '.$status.' '.$response->body());
+        $status = preg_replace('/[^A-Z0-9_]/', '', strtoupper((string) $response->json('error.status', 'UNKNOWN')));
+        $status = $status === '' ? 'UNKNOWN' : $status;
+
+        throw new RuntimeException('FCM request failed with status '.$status.'.');
     }
 
     private function accessToken(): string
@@ -106,8 +106,56 @@ class FirebaseCloudMessagingService
 
             $response->throw();
 
-            return (string) $response->json('access_token');
+            $accessToken = (string) $response->json('access_token');
+            if ($accessToken === '') {
+                throw new RuntimeException('FCM OAuth response did not contain an access token.');
+            }
+
+            return $accessToken;
         });
+    }
+
+    /** @param array<string,mixed> $data @return array<string,mixed> */
+    private function safeData(array $data): array
+    {
+        return Arr::only($data, [
+            'activity_version',
+            'activity_key',
+            'application_id',
+            'job_application_id',
+            'job_posting_id',
+            'job_id',
+            'company_id',
+            'invitation_id',
+            'test_attempt_id',
+            'test_assignment_id',
+            'test_id',
+            'interview_id',
+            'information_request_id',
+            'response_id',
+            'resource_type',
+            'resource_id',
+            'activity_type',
+            'action_type',
+            'status',
+            'scheduled_start_at',
+            'scheduled_end_at',
+            'due_at',
+            'deadline_at',
+            'occurred_at',
+        ]);
+    }
+
+    private function isInvalidTokenResponse(Response $response): bool
+    {
+        $status = (string) $response->json('error.status');
+        if (! in_array($status, ['NOT_FOUND', 'INVALID_ARGUMENT'], true)) {
+            return false;
+        }
+
+        return collect($response->json('error.details', []))
+            ->contains(fn (mixed $detail): bool => is_array($detail)
+                && in_array($detail['errorCode'] ?? null, ['UNREGISTERED', 'INVALID_ARGUMENT'], true));
     }
 
     /** @return array{client_email:string,private_key:string} */

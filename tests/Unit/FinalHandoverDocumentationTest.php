@@ -555,6 +555,8 @@ class FinalHandoverDocumentationTest extends TestCase
             'lang/ar/applications.php',
             'lang/en/applications.php',
             'routes/api.php',
+            // Approved realtime notification provider registration.
+            'bootstrap/providers.php',
         ]);
         foreach ($baseline['files'] as $entry) {
             $this->assertRelativeRepositoryPath($entry['path']);
