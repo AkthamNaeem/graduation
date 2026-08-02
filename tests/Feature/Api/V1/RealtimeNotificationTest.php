@@ -75,10 +75,17 @@ class RealtimeNotificationTest extends TestCase
         $this->assertTrue($deviceToken->fresh()->is_active);
     }
 
-    public function test_creating_any_notification_dispatches_the_push_job(): void
+    public function test_creating_a_notification_dispatches_push_only_when_enabled_and_device_is_active(): void
     {
         Queue::fake();
+        config()->set('realtime_notifications.push.enabled', true);
         $user = User::factory()->create();
+        DeviceToken::query()->create([
+            'user_id' => $user->id,
+            'token' => 'active-token',
+            'platform' => 'android',
+            'is_active' => true,
+        ]);
 
         $notification = Notification::query()->create([
             'user_id' => $user->id,
@@ -91,6 +98,22 @@ class RealtimeNotificationTest extends TestCase
             SendNotificationPushJob::class,
             fn (SendNotificationPushJob $job): bool => $job->notificationId === $notification->id,
         );
+    }
+
+    public function test_push_job_is_not_dispatched_when_push_is_disabled(): void
+    {
+        Queue::fake();
+        config()->set('realtime_notifications.push.enabled', false);
+        $user = User::factory()->create();
+
+        Notification::query()->create([
+            'user_id' => $user->id,
+            'type' => 'application.status_changed',
+            'title' => 'Application updated',
+            'message' => 'Your application status changed.',
+        ]);
+
+        Queue::assertNothingPushed();
     }
 
     public function test_realtime_and_device_routes_require_authentication(): void
