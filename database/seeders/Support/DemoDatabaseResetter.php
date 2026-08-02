@@ -19,6 +19,8 @@ final class DemoDatabaseResetter
     private const TABLES = [
         'event_side_effect_executions',
         'personal_access_tokens',
+        'push_deliveries',
+        'device_tokens',
         'notifications',
         'audit_logs',
         'recommendation_items',
@@ -85,9 +87,6 @@ final class DemoDatabaseResetter
         Schema::disableForeignKeyConstraints();
 
         try {
-            // SQLite cannot toggle PRAGMA foreign_keys while RefreshDatabase
-            // holds an outer transaction. Break the nullable self-reference
-            // explicitly so the ordered deletes remain valid there as well.
             if (Schema::hasTable('application_test_assignments')) {
                 DB::table('application_test_assignments')->update([
                     'series_root_assignment_id' => null,
