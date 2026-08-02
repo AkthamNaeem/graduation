@@ -23,6 +23,7 @@ use App\Models\JobApplication;
 use App\Models\TestAttempt;
 use App\Services\ApplicationWorkflowService;
 use Database\Seeders\FullProjectSeeder;
+use Database\Seeders\Support\DemoDatabaseResetter;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -38,6 +39,7 @@ class FullProjectSeederTest extends TestCase
     private const COUNTED_TABLES = [
         'users',
         'companies',
+        'company_invitations',
         'job_seeker_profiles',
         'cv_files',
         'job_postings',
@@ -58,6 +60,25 @@ class FullProjectSeederTest extends TestCase
         parent::setUp();
         Storage::fake('local');
         Http::preventStrayRequests();
+    }
+
+    public function test_reset_inventory_deletes_mysql_child_tables_before_their_parents(): void
+    {
+        $tables = DemoDatabaseResetter::tables();
+
+        foreach (['company_invitations', 'email_verification_otps', 'password_reset_otps'] as $table) {
+            $this->assertContains($table, $tables);
+        }
+
+        $this->assertTrue(
+            array_search('company_invitations', $tables, true) < array_search('companies', $tables, true),
+        );
+
+        foreach (['company_invitations', 'email_verification_otps', 'password_reset_otps'] as $table) {
+            $this->assertTrue(
+                array_search($table, $tables, true) < array_search('users', $tables, true),
+            );
+        }
     }
 
     public function test_full_project_seeder_is_destructive_and_rerunnable_with_stable_counts_and_files(): void
