@@ -3424,7 +3424,7 @@ Migration `2026_08_08_000001_create_interview_video_sessions_table.php` creates:
 | Table | Purpose and constraints |
 | --- | --- |
 | `interview_video_sessions` | One row per enabled interview; unique cascading `interview_id`, unique opaque `room_name`, provider, enabled flag, and only the operational timestamps that webhook processing updates |
-| `livekit_webhook_events` | Unique provider event ID, session FK, event type, and processed time for retry-safe idempotency; raw payloads, credentials, and participant data are not stored |
+| `livekit_webhook_events` | Unique provider event ID, session FK, event type, and processed time for retry-safe idempotency; its composite index uses the MySQL-safe explicit name `lk_webhook_session_type_idx`; raw payloads, credentials, and participant data are not stored |
 
 No existing Interview row is changed or backfilled. Historical and manual-link
 interviews therefore remain non-LiveKit interviews. Rollback drops only these
@@ -3611,7 +3611,7 @@ return `LIVEKIT_NOT_CONFIGURED`.
 ### Tests, Postman, and non-goals
 
 The pre-change Interview/privacy/notification/event baseline was **67 passed,
-421 assertions**. Focused LiveKit coverage records **10 passed, 95 assertions**,
+421 assertions**. Focused LiveKit coverage records **11 passed, 99 assertions**,
 including enablement, legacy fallback, authorization, Admin denial,
 join boundaries, JWT claims, room reuse, disabled/failing provider safety,
 signed webhook verification, idempotency, and workflow non-mutation. Final
@@ -3645,7 +3645,8 @@ already connected LiveKit room follows its normal provider lifecycle.
   passed against a newly created disposable SQLite database. The configured
   MySQL database was not touched. A separate isolated `migrate:rollback
   --step=1` successfully reversed the LiveKit migration.
-- Focused LiveKit suite: 10 passed, 95 assertions.
+- Focused LiveKit suite: 11 passed, 99 assertions, including recovery from the
+  partial-table state left by a failed MySQL DDL migration.
 - Interview/application/privacy/notification/event regression set: 88 passed,
   607 assertions.
 - Complete Laravel suite: 1,091 passed, 2 expected opt-in skips, 2 failed,

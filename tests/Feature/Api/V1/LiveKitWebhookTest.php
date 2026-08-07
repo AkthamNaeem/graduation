@@ -8,7 +8,9 @@ use App\Models\InterviewVideoSession;
 use Carbon\CarbonImmutable;
 use Database\Seeders\ApplicationStatusSeeder;
 use Firebase\JWT\JWT;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Testing\TestResponse;
 use Tests\Feature\Api\V1\Concerns\CreatesInterviewScenarios;
 use Tests\TestCase;
@@ -86,6 +88,27 @@ class LiveKitWebhookTest extends TestCase
 
         $this->assertDatabaseCount('livekit_webhook_events', 0);
         $this->assertDatabaseMissing('audit_logs', ['action' => 'interview.livekit_room_started']);
+    }
+
+    public function test_migration_resumes_after_mysql_style_partial_table_creation(): void
+    {
+        Schema::table('livekit_webhook_events', function (Blueprint $table): void {
+            $table->dropIndex('lk_webhook_session_type_idx');
+        });
+        $this->assertFalse(Schema::hasIndex(
+            'livekit_webhook_events',
+            ['interview_video_session_id', 'event_type'],
+        ));
+
+        $migration = require database_path('migrations/2026_08_08_000001_create_interview_video_sessions_table.php');
+        $migration->up();
+
+        $this->assertTrue(Schema::hasTable('interview_video_sessions'));
+        $this->assertTrue(Schema::hasTable('livekit_webhook_events'));
+        $this->assertTrue(Schema::hasIndex(
+            'livekit_webhook_events',
+            ['interview_video_session_id', 'event_type'],
+        ));
     }
 
     private function postWebhook(string $body): TestResponse
