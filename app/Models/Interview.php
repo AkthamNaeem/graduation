@@ -101,4 +101,9 @@ class Interview extends Model
     {
         return $this->hasOne(InterviewEvaluation::class);
     }
+
+    public function videoSession(): HasOne
+    {
+        return $this->hasOne(InterviewVideoSession::class);
+    }
 }

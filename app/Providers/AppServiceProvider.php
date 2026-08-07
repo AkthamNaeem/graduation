@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Contracts\CV\CVTextParser;
 use App\Contracts\CVSummary\CVSummaryClient;
+use App\Contracts\InterviewVideoTokenProvider;
 use App\Contracts\Recommendation\RecommendationContextFingerprintContract;
 use App\Contracts\Recommendation\RecommendationEligibilityProviderContract;
 use App\Contracts\Recommendation\RecommendationMlClientFactoryContract;
@@ -37,6 +38,7 @@ use App\Services\CV\RuleBasedCVTextParser;
 use App\Services\CVSummary\GroqCVSummaryClient;
 use App\Services\CVSummary\OpenAICVSummaryClient;
 use App\Services\EducationLevelNormalizer;
+use App\Services\LiveKit\LiveKitTokenProvider;
 use App\Services\MatchingService;
 use App\Services\Recommendation\RecommendationContextFingerprint;
 use App\Services\Recommendation\RecommendationEligibilityProvider;
@@ -66,6 +68,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->bind(InterviewVideoTokenProvider::class, LiveKitTokenProvider::class);
+
         $this->app->bind(CVSummaryClient::class, function ($app): CVSummaryClient {
             return match (config('cv_summary.provider', 'openai')) {
                 'openai' => $app->make(OpenAICVSummaryClient::class),

@@ -43,6 +43,7 @@ class CreateInterviewRequest extends FormRequest
             'duration_minutes' => ['sometimes', 'nullable', 'integer', 'between:1,480'],
             'location_text' => ['sometimes', 'nullable', 'string', 'max:1000'],
             'meeting_link' => ['sometimes', 'nullable', 'url', 'max:2048'],
+            'video_provider' => ['sometimes', 'nullable', 'string', Rule::in(['livekit'])],
             'candidate_message' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'internal_note' => ['sometimes', 'nullable', 'string', 'max:5000'],
         ];

@@ -18,4 +18,6 @@ return [
     'terminal_application' => 'Interviews cannot be scheduled for a terminal application.',
     'active_exists' => 'An active interview of this type already exists for the application.',
     'invalid_schedule' => 'Interview times must be future, ordered, and no longer than eight hours.',
+    'video_session_issued' => 'Interview video session issued successfully.',
+    'livekit_webhook_received' => 'LiveKit webhook received successfully.',
 ];

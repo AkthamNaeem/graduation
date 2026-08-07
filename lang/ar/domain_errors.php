@@ -147,4 +147,13 @@ return [
     'APPLICATION_SNAPSHOT_SOURCE_INCOMPLETE' => 'لا يحتوي الطلب القديم على بيانات مصدر كافية لإنشاء لقطة.',
     'APPLICATION_SNAPSHOT_CV_COPY_FAILED' => 'تعذر نسخ السيرة الذاتية إلى التخزين الثابت للطلب.',
     'APPLICATION_CURRENT_CV_REQUIRED' => 'يجب استخدام السيرة الذاتية الحالية والمؤكدة لهذا الطلب.',
+    'INTERVIEW_VIDEO_ACCESS_DENIED' => 'لا يُسمح لك بالانضمام إلى جلسة فيديو هذه المقابلة.',
+    'INTERVIEW_VIDEO_NOT_AVAILABLE' => 'الفيديو المضمن متاح للمقابلات عبر الإنترنت فقط.',
+    'INTERVIEW_VIDEO_NOT_ENABLED' => 'الفيديو المضمن غير مفعّل لهذه المقابلة.',
+    'INTERVIEW_VIDEO_NOT_JOINABLE' => 'لا يمكن الانضمام إلى جلسة فيديو المقابلة في حالتها الحالية.',
+    'INTERVIEW_VIDEO_TOO_EARLY' => 'لم تبدأ نافذة الانضمام إلى فيديو المقابلة بعد.',
+    'INTERVIEW_VIDEO_WINDOW_CLOSED' => 'انتهت نافذة الانضمام إلى فيديو المقابلة.',
+    'LIVEKIT_NOT_CONFIGURED' => 'فيديو LiveKit غير متاح حالياً.',
+    'LIVEKIT_TOKEN_GENERATION_FAILED' => 'تعذر إصدار جلسة فيديو المقابلة.',
+    'LIVEKIT_WEBHOOK_INVALID' => 'توقيع إشعار LiveKit غير صالح.',
 ];

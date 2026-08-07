@@ -104,4 +104,13 @@ class InterviewPolicy
     {
         return $this->manageAttendance($user, $interview);
     }
+
+    public function joinVideo(User $user, Interview $interview): bool
+    {
+        if ($user->role === UserRole::JOB_SEEKER) {
+            return $this->confirm($user, $interview);
+        }
+
+        return $user->role === UserRole::EMPLOYER && $this->view($user, $interview);
+    }
 }

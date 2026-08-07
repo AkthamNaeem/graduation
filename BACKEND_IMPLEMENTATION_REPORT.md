@@ -3380,6 +3380,283 @@ Details, and Withdraw requests. No frontend, commit, or push is included.
 - Both modified Postman collection files parse as valid JSON.
 - `git diff --check`: passed. No commit or push was created.
 
+## LiveKit Embedded Interview Integration (2026-08-08)
+
+### Product decision and preserved source of truth
+
+LiveKit Cloud is an optional embedded audio/video transport for online
+interviews. The existing external `meeting_link` flow remains supported and is
+the fallback for clients or deployments that cannot use LiveKit. Omitting
+`video_provider` preserves the previous request and response behavior exactly.
+
+The Workey database remains authoritative for interview scheduling,
+confirmation, rescheduling, cancellation, attendance, no-show, completion,
+evaluation, and application workflow. `InterviewService` and
+`ApplicationWorkflowService` continue to perform every recruitment transition.
+LiveKit join/leave and room events never mutate `Interview.status`, attendance,
+an evaluation, or `JobApplication.status`.
+
+### Architecture
+
+- `InterviewVideoService` owns interview-specific enablement, authorization
+  defense-in-depth, join-window checks, participant identity, provider
+  configuration checks, safe error mapping, and the video-session response.
+- `InterviewVideoTokenProvider` is the testable token boundary.
+  `LiveKitTokenProvider` uses `agence104/livekit-server-sdk` 1.3.5, the PHP SDK
+  referenced by LiveKit documentation and compatible with PHP 8.2.
+- Each enabled interview has one `InterviewVideoSession` with a stable opaque
+  `workey-interview-{UUID}` room name. The value is generated once on the
+  backend, is never accepted from a client, and survives rescheduling.
+- No Room Service create call is made. LiveKit creates the room naturally when
+  the first authorized participant connects and closes it when empty.
+- Participant JWTs are generated only on the backend, are never persisted or
+  logged, expire after at most 900 seconds, and are scoped to exactly one room
+  with `roomJoin`, `canPublish`, and `canSubscribe`. No room-admin, room-create,
+  room-list, room-record, recording, or egress permission is granted.
+- Participant identity is the collision-safe `workey-user-{user_id}`. Display
+  name is the current Workey user name. Email, CV data, scores, evaluations,
+  and HR notes are not included in token metadata.
+
+### Persistence and migration
+
+Migration `2026_08_08_000001_create_interview_video_sessions_table.php` creates:
+
+| Table | Purpose and constraints |
+| --- | --- |
+| `interview_video_sessions` | One row per enabled interview; unique cascading `interview_id`, unique opaque `room_name`, provider, enabled flag, and only the operational timestamps that webhook processing updates |
+| `livekit_webhook_events` | Unique provider event ID, session FK, event type, and processed time for retry-safe idempotency; raw payloads, credentials, and participant data are not stored |
+
+No existing Interview row is changed or backfilled. Historical and manual-link
+interviews therefore remain non-LiveKit interviews. Rollback drops only these
+two additive tables.
+
+### API contract
+
+#### Create an optionally LiveKit-enabled interview
+
+`POST /api/v1/applications/{jobApplication}/interviews` remains the existing
+Employer endpoint. It accepts the optional additive field:
+
+```json
+{
+  "type": "technical",
+  "mode": "online",
+  "scheduled_start_at": "2026-08-10T10:00:00Z",
+  "scheduled_end_at": "2026-08-10T11:00:00Z",
+  "video_provider": "livekit",
+  "meeting_link": "https://meet.example.com/optional-fallback"
+}
+```
+
+`video_provider=livekit` is valid only with `mode=online`. A LiveKit interview
+may omit `meeting_link`; in that case the fallback is `null`. If
+`video_provider` is omitted, an online interview still requires and uses the
+existing external `meeting_link`. On-site plus LiveKit returns 422
+`INTERVIEW_VIDEO_NOT_AVAILABLE`. Creating the integration row and
+`interview.video_enabled` audit record are the only LiveKit-specific side
+effects; the existing scheduling history, workflow transition, audit, event,
+and notification behavior is unchanged.
+
+Safe fields added to ordinary Interview resources are `video_provider` and
+`embedded_video_available`. Room names, participant tokens, provider secrets,
+and diagnostics never appear in list/detail resources.
+
+#### Issue participant connection data
+
+`POST /api/v1/interviews/{interview}/video-session` is authenticated and rate
+limited. POST is deliberate because it creates a fresh credential and an audit
+record and must not be cached as a read. It accepts no participant or room
+input; `participant_identity`, `participant_name`, `room_name`, and `room` are
+explicitly prohibited.
+
+Candidate access requires ownership of the Interview's JobApplication.
+Employer access uses the existing same-company `VIEW_INTERVIEWS` permission and
+company recruitment availability rules. Administrator access is explicitly
+rejected despite the global policy bypass. Unrelated candidates and other-
+company employers receive 403 before a credential can be issued.
+
+Successful project-style response data:
+
+```json
+{
+  "provider": "livekit",
+  "server_url": "wss://project.livekit.cloud",
+  "participant_token": "short-lived-jwt",
+  "room": { "name": "workey-interview-opaque-uuid" },
+  "participant": {
+    "identity": "workey-user-123",
+    "display_name": "Safe display name",
+    "role": "candidate"
+  },
+  "expires_at": "2026-08-10T10:15:00Z",
+  "fallback_meeting_link": "https://meet.example.com/optional-fallback"
+}
+```
+
+Tokens are issued only for `scheduled`, `confirmed`, or `rescheduled`
+interviews, starting 15 minutes before `scheduled_at` and ending 30 minutes
+after `scheduled_end_at` by default. Rescheduling automatically applies the new
+times without changing the room. Cancelled, no-show, completed, and evaluated
+interviews cannot receive new tokens.
+
+Stable domain errors are:
+
+| Code | Meaning |
+| --- | --- |
+| `LIVEKIT_NOT_CONFIGURED` | Integration disabled, incomplete, or URL is not a secure WebSocket URL |
+| `INTERVIEW_VIDEO_NOT_ENABLED` | Interview uses the existing non-LiveKit flow |
+| `INTERVIEW_VIDEO_NOT_AVAILABLE` | Embedded video is incompatible with the Interview mode |
+| `INTERVIEW_VIDEO_NOT_JOINABLE` | Interview has a terminal/non-active workflow status |
+| `INTERVIEW_VIDEO_TOO_EARLY` | Early-join boundary has not been reached |
+| `INTERVIEW_VIDEO_WINDOW_CLOSED` | End grace period has elapsed |
+| `INTERVIEW_VIDEO_ACCESS_DENIED` | Authenticated actor is not a legitimate participant |
+| `LIVEKIT_TOKEN_GENERATION_FAILED` | SDK/provider credential generation failed; raw exception is hidden |
+| `LIVEKIT_WEBHOOK_INVALID` | Webhook JWT or raw-body hash validation failed |
+
+### Candidate and Employer client flows
+
+Flutter Candidate flow:
+
+`Interview Scheduled -> Interview Details -> POST video-session -> backend
+ownership/status/window checks -> short-lived JWT -> Flutter LiveKit SDK
+connects with server_url + participant_token -> video occurs inside Workey`.
+
+The Flutter client owns camera/microphone permission handling. It must not
+construct a room name or participant identity. If session acquisition fails and
+`meeting_link`/`fallback_meeting_link` is present, it may open the external
+fallback.
+
+React Employer flow:
+
+`Interview Scheduled -> Interview Details -> POST video-session -> backend
+company permission/status/window checks -> short-lived JWT -> React LiveKit SDK
+connects to the same room -> video occurs inside Workey`.
+
+The browser receives no API secret and supplies no participant identity. The
+React SDK connects using only `server_url` and `participant_token`.
+
+### Rescheduling, cancellation, completion, and evaluation boundaries
+
+`InterviewService::rescheduleInterview` remains canonical. Its existing
+schedule-change record, history, workflow, notification, and reconfirmation
+behavior is preserved; an embedded interview must remain online, keeps its room
+identifier, and uses the new schedule for future token-window calculations.
+
+Local cancellation is authoritative and immediately blocks new tokens because
+`cancelled` is not joinable. No synchronous remote room-close call is made, so
+a LiveKit outage cannot roll back or block cancellation. Completion, attendance,
+no-show, evaluation, and Final Review transitions remain explicit existing
+Employer/workflow actions. A room ending is never interpreted as completion or
+attendance evidence.
+
+The preserved recruitment sequence remains:
+
+`Scheduled -> Confirmed -> Completed -> Evaluated -> Final Review`.
+
+### Webhooks
+
+`POST /api/v1/webhooks/livekit` accepts LiveKit's
+`application/webhook+json` deliveries. `WebhookReceiver` verifies the
+Authorization JWT with the configured API key/secret and compares its signed
+SHA-256 claim against the exact raw request body before parsing.
+
+Observed events are `room_started`, `room_finished`, `participant_joined`, and
+`participant_left`. Unique LiveKit event IDs make retries idempotent. They may
+set `room_started_at`, `room_ended_at`, `first_joined_at`, or `last_left_at`.
+Only room start/finish produce bounded audit records. Unknown rooms and
+unobserved event types are safely acknowledged without persistence.
+
+Webhooks never update Interview status, attendance/no-show, evaluation,
+notifications, or application status and never accept/reject a candidate.
+
+### Configuration and LiveKit Cloud setup
+
+```dotenv
+LIVEKIT_ENABLED=false
+LIVEKIT_URL=
+LIVEKIT_API_KEY=
+LIVEKIT_API_SECRET=
+LIVEKIT_JOIN_EARLY_MINUTES=15
+LIVEKIT_JOIN_LATE_MINUTES=30
+LIVEKIT_TOKEN_TTL_SECONDS=900
+```
+
+Create or select a LiveKit Cloud project, copy its secure WebSocket project URL
+(`wss://...livekit.cloud`), create an API key/secret, and set the backend
+environment variables. Enable the integration only after all three credentials
+are present. If webhook observability is desired, configure the LiveKit Cloud
+webhook URL as `https://<workey-api>/api/v1/webhooks/livekit` using the same API
+key. Clear/rebuild Laravel's configuration cache after deployment. Never put the
+API secret in React, Flutter, Postman, logs, documentation, or source control.
+
+Missing or disabled configuration does not prevent Laravel from booting and
+does not affect existing Interview operations; only LiveKit-specific endpoints
+return `LIVEKIT_NOT_CONFIGURED`.
+
+### Security review
+
+- API secret remains in server configuration and is never serialized.
+- JWT issuance requires authenticated Interview authorization; identity and
+  room are derived from backend state.
+- Tokens are room-scoped, short lived, and grant no administration or recording.
+- Tokens are neither persisted nor logged; audit metadata contains no token,
+  secret, Authorization header, email, or private recruitment content.
+- Candidate-safe resources remain free of Employer notes, evaluation details,
+  internal actor IDs, and LiveKit credentials.
+- Same-company and candidate-ownership checks prevent cross-company,
+  cross-candidate, and cross-interview credential reuse.
+- Webhook signatures and raw-body hashes are verified before processing, and
+  event IDs prevent duplicate operational effects/audits.
+
+### Tests, Postman, and non-goals
+
+The pre-change Interview/privacy/notification/event baseline was **67 passed,
+421 assertions**. Focused LiveKit coverage records **10 passed, 95 assertions**,
+including enablement, legacy fallback, authorization, Admin denial,
+join boundaries, JWT claims, room reuse, disabled/failing provider safety,
+signed webhook verification, idempotency, and workflow non-mutation. Final
+targeted regression coverage records **88 passed, 607 assertions**.
+
+The repository still contains exactly two Postman collections. The Web
+Interview folder includes LiveKit-enabled creation, Employer session issuance,
+too-early error, and the unchanged external-link flow. The Mobile Interview
+folder includes Candidate details/session issuance, too-early and
+cancelled/not-joinable examples, and `meeting_link` fallback behavior. No real
+LiveKit credentials are present.
+
+No frontend UI, recording/Egress, transcription, bots, AI/video analysis,
+automatic attendance/scoring/evaluation, telephony, streaming, or alternative
+meeting provider was added. Remote participant eviction on cancellation is not
+implemented; local cancellation remains reliable and authoritative, while an
+already connected LiveKit room follows its normal provider lifecycle.
+
+### Verification results
+
+- `composer validate`: passed (`composer.json` is valid).
+- `composer audit --locked`: completed and reported 8 advisories in the
+  pre-existing locked `guzzlehttp/guzzle` and `league/commonmark` versions. The
+  Composer diff does not change either package. No advisory was reported for
+  `agence104/livekit-server-sdk` or its newly added dependencies. Unrelated
+  package upgrades were intentionally not performed.
+- `php artisan config:clear`: passed.
+- `php artisan route:list`: passed with 234 routes; the Interview list shows the
+  new POST video-session route and the webhook list shows one POST route.
+- `php artisan migrate:fresh --seed --force`: all migrations and the full seeder
+  passed against a newly created disposable SQLite database. The configured
+  MySQL database was not touched. A separate isolated `migrate:rollback
+  --step=1` successfully reversed the LiveKit migration.
+- Focused LiveKit suite: 10 passed, 95 assertions.
+- Interview/application/privacy/notification/event regression set: 88 passed,
+  607 assertions.
+- Complete Laravel suite: 1,091 passed, 2 expected opt-in skips, 2 failed,
+  21,113 assertions. Both failures are pre-existing protected-handover checks
+  that compare `.dockerignore` byte size (expected 133, Windows working-tree
+  size 145); `.dockerignore` is unchanged and absent from `git status`/diff.
+- Laravel Pint passed on every changed/new PHP file. `git diff --check` passed.
+- Both Postman collections parse as JSON, the Interview folders contain 19 Web
+  requests and 9 Mobile requests, and the repository still has exactly two
+  collection files.
+
 ## Optional image fields (2026-08-02)
 
 Implemented nullable image support for `users.avatar_path`,

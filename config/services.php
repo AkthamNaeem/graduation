@@ -35,4 +35,14 @@ return [
         ],
     ],
 
+    'livekit' => [
+        'enabled' => env('LIVEKIT_ENABLED', false),
+        'url' => env('LIVEKIT_URL'),
+        'api_key' => env('LIVEKIT_API_KEY'),
+        'api_secret' => env('LIVEKIT_API_SECRET'),
+        'join_early_minutes' => env('LIVEKIT_JOIN_EARLY_MINUTES', 15),
+        'join_late_minutes' => env('LIVEKIT_JOIN_LATE_MINUTES', 30),
+        'token_ttl_seconds' => env('LIVEKIT_TOKEN_TTL_SECONDS', 900),
+    ],
+
 ];

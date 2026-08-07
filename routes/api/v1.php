@@ -19,6 +19,7 @@ use App\Http\Controllers\Api\V1\Company\CompanyTeamController;
 use App\Http\Controllers\Api\V1\CV\CVController;
 use App\Http\Controllers\Api\V1\Home\HomeController;
 use App\Http\Controllers\Api\V1\Interview\InterviewController;
+use App\Http\Controllers\Api\V1\Interview\InterviewVideoController;
 use App\Http\Controllers\Api\V1\JobPosting\JobPostingController;
 use App\Http\Controllers\Api\V1\JobPosting\JobScreeningQuestionController;
 use App\Http\Controllers\Api\V1\Notification\NotificationController;
@@ -42,6 +43,7 @@ use App\Http\Controllers\Api\V1\Test\TestCatalogController;
 use App\Http\Controllers\Api\V1\Test\TestManualGradingController;
 use App\Http\Controllers\Api\V1\Test\TestQuestionController;
 use App\Http\Controllers\Api\V1\Test\TestRetakeController;
+use App\Http\Controllers\Api\V1\Webhook\LiveKitWebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('reference/cities', [CityController::class, 'index'])
@@ -49,6 +51,9 @@ Route::get('reference/cities', [CityController::class, 'index'])
 
 Route::get('reference/job-filters', [JobFilterController::class, 'index'])
     ->name('reference.job-filters.index');
+
+Route::post('webhooks/livekit', LiveKitWebhookController::class)
+    ->name('webhooks.livekit');
 
 Route::get('home', HomeController::class)
     ->middleware('auth.sanctum.optional')
@@ -93,6 +98,9 @@ Route::prefix('company-invitations')
 
 Route::middleware(['auth:sanctum', 'user.active'])->group(function (): void {
     Route::get('activity', [ActivityController::class, 'index'])->name('activity.index');
+    Route::post('interviews/{interview}/video-session', [InterviewVideoController::class, 'store'])
+        ->middleware('throttle:10,1')
+        ->name('interviews.video-session.store');
 
     Route::get('applications/{jobApplication}/internal-notes', [ApplicationInternalNoteController::class, 'index'])->name('applications.internal-notes.index');
     Route::post('applications/{jobApplication}/internal-notes', [ApplicationInternalNoteController::class, 'store'])->name('applications.internal-notes.store');

@@ -49,6 +49,7 @@ class InterviewService
         private readonly ApplicationWorkflowService $applicationWorkflowService,
         private readonly AuditLogService $auditLogService,
         private readonly CompanyRecruitmentAccessService $companyAccessService,
+        private readonly InterviewVideoService $interviewVideoService,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -62,7 +63,8 @@ class InterviewService
                 $this->fail(__('domain_errors.INTERVIEW_INVALID_STATUS_TRANSITION'), 'INTERVIEW_INVALID_STATUS_TRANSITION', 409);
             }
 
-            $schedule = $this->validatedSchedule($data, true);
+            $videoProvider = $data['video_provider'] ?? null;
+            $schedule = $this->validatedSchedule($data, true, $videoProvider === 'livekit');
             $type = InterviewType::from($data['type'])->value;
             $this->assertNoActiveInterviewForType($jobApplication->id, $type);
 
@@ -83,6 +85,9 @@ class InterviewService
                 'candidate_attendance_status' => InterviewAttendanceStatus::PENDING->value,
                 'interviewer_attendance_status' => InterviewAttendanceStatus::PENDING->value,
             ]);
+            if ($videoProvider === 'livekit') {
+                $this->interviewVideoService->enableLiveKit($actor, $interview);
+            }
             $history = $this->recordTransition($interview, null, InterviewStatus::SCHEDULED->value, $actor, null);
             $this->audit('interview.scheduled', $actor, $interview, null, $this->auditState($interview));
 
@@ -192,7 +197,11 @@ class InterviewService
             if (! in_array($locked->status, self::ACTIVE_STATUSES, true)) {
                 $this->fail(__('domain_errors.INTERVIEW_RESCHEDULE_NOT_ALLOWED'), 'INTERVIEW_RESCHEDULE_NOT_ALLOWED');
             }
-            $schedule = $this->validatedSchedule($data, true);
+            $hasEmbeddedVideo = $locked->videoSession()->where('enabled', true)->exists();
+            if ($hasEmbeddedVideo && $data['mode'] !== InterviewMode::ONLINE->value) {
+                $this->fail(__('domain_errors.INTERVIEW_VIDEO_NOT_AVAILABLE'), 'INTERVIEW_VIDEO_NOT_AVAILABLE', 422);
+            }
+            $schedule = $this->validatedSchedule($data, true, $hasEmbeddedVideo);
             $same = $locked->scheduled_at?->equalTo($schedule['start'])
                 && $locked->scheduled_end_at?->equalTo($schedule['end'])
                 && $locked->interview_mode === $schedule['mode']
@@ -399,7 +408,8 @@ class InterviewService
     /** @return array<int, string> */
     private function interviewRelations(bool $includeApplicationContext = false, bool $candidateSafe = false): array
     {
-        $relations = $candidateSafe ? [] : [
+        $relations = $candidateSafe ? ['videoSession'] : [
+            'videoSession',
             'scheduledBy', 'confirmedBy', 'completedBy', 'cancelledBy', 'attendanceRecordedBy',
             'evaluation.evaluatedBy', 'evaluation.items', 'statusHistory.changedBy', 'scheduleChanges.changedBy',
         ];
@@ -414,7 +424,7 @@ class InterviewService
     }
 
     /** @param array<string, mixed> $data @return array{start: CarbonImmutable, end: CarbonImmutable, mode: string, location: ?string, meeting_link: ?string} */
-    private function validatedSchedule(array $data, bool $future): array
+    private function validatedSchedule(array $data, bool $future, bool $allowOnlineWithoutMeetingLink = false): array
     {
         try {
             $start = CarbonImmutable::parse($data['scheduled_start_at'])->utc();
@@ -430,7 +440,7 @@ class InterviewService
         $location = isset($data['location_text']) ? trim((string) $data['location_text']) : null;
         $meetingLink = $meetingLink === '' ? null : $meetingLink;
         $location = $location === '' ? null : $location;
-        if (($mode === 'online' && $meetingLink === null) || ($mode === 'on_site' && $location === null)) {
+        if (($mode === 'online' && $meetingLink === null && ! $allowOnlineWithoutMeetingLink) || ($mode === 'on_site' && $location === null)) {
             $this->fail(__('domain_errors.INTERVIEW_MODE_CONFIGURATION_INVALID'), 'INTERVIEW_MODE_CONFIGURATION_INVALID', 422);
         }
 

@@ -36,6 +36,10 @@ class InterviewResource extends JsonResource
             'location_text' => $this->when($manager || $this->interview_mode === 'on_site', $this->location),
             'location' => $this->when($manager || $this->interview_mode === 'on_site', $this->location),
             'meeting_link' => $this->when($manager || $this->interview_mode === 'online', $this->meeting_link),
+            'video_provider' => $this->relationLoaded('videoSession') && $this->videoSession?->enabled
+                ? $this->videoSession->provider
+                : null,
+            'embedded_video_available' => (bool) ($this->relationLoaded('videoSession') && $this->videoSession?->enabled),
             'candidate_message' => $this->candidate_message,
             'candidate_confirmation_status' => LocalizedValue::make(
                 $this->confirmed_at !== null ? 'confirmed' : 'pending',

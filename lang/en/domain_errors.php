@@ -147,4 +147,13 @@ return [
     'APPLICATION_SNAPSHOT_SOURCE_INCOMPLETE' => 'The legacy application does not have enough source data to create a snapshot.',
     'APPLICATION_SNAPSHOT_CV_COPY_FAILED' => 'The submitted CV could not be copied into immutable application storage.',
     'APPLICATION_CURRENT_CV_REQUIRED' => 'The confirmed current CV must be used for this application.',
+    'INTERVIEW_VIDEO_ACCESS_DENIED' => 'You are not allowed to join this interview video session.',
+    'INTERVIEW_VIDEO_NOT_AVAILABLE' => 'Embedded video is available only for online interviews.',
+    'INTERVIEW_VIDEO_NOT_ENABLED' => 'Embedded video is not enabled for this interview.',
+    'INTERVIEW_VIDEO_NOT_JOINABLE' => 'This interview video session is not joinable in its current state.',
+    'INTERVIEW_VIDEO_TOO_EARLY' => 'The interview video join window has not opened yet.',
+    'INTERVIEW_VIDEO_WINDOW_CLOSED' => 'The interview video join window has closed.',
+    'LIVEKIT_NOT_CONFIGURED' => 'LiveKit video is currently unavailable.',
+    'LIVEKIT_TOKEN_GENERATION_FAILED' => 'The interview video session could not be issued.',
+    'LIVEKIT_WEBHOOK_INVALID' => 'The LiveKit webhook signature is invalid.',
 ];

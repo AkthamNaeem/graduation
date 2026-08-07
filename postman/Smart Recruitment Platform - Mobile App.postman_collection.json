@@ -2666,6 +2666,74 @@
                         "description": "Candidate-safe cancellation view exposes only cancellation_message, never the internal reason or actor.",
                         "url": "{{base_url}}/interviews/{{interview_id}}"
                     }
+                },
+                {
+                    "name": "Candidate - Request LiveKit Video Session",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "description": "The owning Candidate requests backend-derived LiveKit connection data. Flutter passes server_url and participant_token directly to the LiveKit client SDK and never constructs identity or room names.",
+                        "url": "{{base_url}}/interviews/{{interview_id}}/video-session"
+                    }
+                },
+                {
+                    "name": "Candidate Video Session - Too Early (Example)",
+                    "request": {
+                        "method": "POST",
+                        "description": "Representative 409 INTERVIEW_VIDEO_TOO_EARLY response before the configured early-join window.",
+                        "url": "{{base_url}}/interviews/{{interview_id}}/video-session"
+                    },
+                    "response": [
+                        {
+                            "name": "INTERVIEW_VIDEO_TOO_EARLY",
+                            "originalRequest": {
+                                "method": "POST",
+                                "url": "{{base_url}}/interviews/{{interview_id}}/video-session"
+                            },
+                            "status": "Conflict",
+                            "code": 409,
+                            "_postman_previewlanguage": "json",
+                            "header": [],
+                            "cookie": [],
+                            "body": "{\n  \"success\": false,\n  \"message\": \"The interview video join window has not opened yet.\",\n  \"errors\": [],\n  \"code\": \"INTERVIEW_VIDEO_TOO_EARLY\"\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Candidate Video Session - Cancelled / Not Joinable (Example)",
+                    "request": {
+                        "method": "POST",
+                        "description": "Representative 409 INTERVIEW_VIDEO_NOT_JOINABLE response. Cancellation immediately prevents new participant tokens.",
+                        "url": "{{base_url}}/interviews/{{interview_id}}/video-session"
+                    },
+                    "response": [
+                        {
+                            "name": "INTERVIEW_VIDEO_NOT_JOINABLE",
+                            "originalRequest": {
+                                "method": "POST",
+                                "url": "{{base_url}}/interviews/{{interview_id}}/video-session"
+                            },
+                            "status": "Conflict",
+                            "code": 409,
+                            "_postman_previewlanguage": "json",
+                            "header": [],
+                            "cookie": [],
+                            "body": "{\n  \"success\": false,\n  \"message\": \"This interview video session is not joinable in its current state.\",\n  \"errors\": [],\n  \"code\": \"INTERVIEW_VIDEO_NOT_JOINABLE\"\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "Interview Details - External meeting_link Fallback",
+                    "request": {
+                        "method": "GET",
+                        "description": "Candidate-safe details continue to expose meeting_link for online interviews. Flutter may open it when embedded video is unavailable; fallback_meeting_link may be null for LiveKit interviews created without an external fallback.",
+                        "url": "{{base_url}}/interviews/{{interview_id}}"
+                    }
                 }
             ]
         },

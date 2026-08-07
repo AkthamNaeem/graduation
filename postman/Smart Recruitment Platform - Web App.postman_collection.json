@@ -5471,6 +5471,129 @@
                             }
                         }
                     ]
+                },
+                {
+                    "name": "Schedule LiveKit-enabled Online Interview",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{employer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "description": "Creates an online interview with embedded LiveKit video. meeting_link is an optional external fallback and remains separate from LiveKit connection data.",
+                        "url": "{{base_url}}/applications/{{application_id}}/interviews",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"type\": \"technical\",\n  \"mode\": \"online\",\n  \"scheduled_start_at\": \"{{interview_start_at}}\",\n  \"scheduled_end_at\": \"{{interview_end_at}}\",\n  \"video_provider\": \"livekit\",\n  \"meeting_link\": \"https://meet.example.com/external-fallback\",\n  \"candidate_message\": \"Join inside Workey when the video window opens.\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
+                },
+                {
+                    "name": "Employer - Request LiveKit Video Session",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{employer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "description": "Returns server_url and a fresh short-lived participant_token for the authenticated owning-company Employer. The React client passes both values to the LiveKit SDK; no LiveKit secret is ever supplied by Postman or the browser.",
+                        "url": "{{base_url}}/interviews/{{interview_id}}/video-session"
+                    }
+                },
+                {
+                    "name": "Employer Video Session - Too Early (Example)",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{employer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "description": "Representative 409 INTERVIEW_VIDEO_TOO_EARLY response when called before the configured join window.",
+                        "url": "{{base_url}}/interviews/{{interview_id}}/video-session"
+                    },
+                    "response": [
+                        {
+                            "name": "INTERVIEW_VIDEO_TOO_EARLY",
+                            "originalRequest": {
+                                "method": "POST",
+                                "url": "{{base_url}}/interviews/{{interview_id}}/video-session"
+                            },
+                            "status": "Conflict",
+                            "code": 409,
+                            "_postman_previewlanguage": "json",
+                            "header": [],
+                            "cookie": [],
+                            "body": "{\n  \"success\": false,\n  \"message\": \"The interview video join window has not opened yet.\",\n  \"errors\": [],\n  \"code\": \"INTERVIEW_VIDEO_TOO_EARLY\"\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "External Meeting Link Interview (LiveKit Omitted)",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{employer_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "description": "Backward-compatible external-link flow. video_provider is deliberately omitted; the existing meeting_link remains the primary connection method.",
+                        "url": "{{base_url}}/applications/{{application_id}}/interviews",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"type\": \"hr\",\n  \"mode\": \"online\",\n  \"scheduled_start_at\": \"{{interview_start_at}}\",\n  \"scheduled_end_at\": \"{{interview_end_at}}\",\n  \"meeting_link\": \"https://meet.example.com/external-only\"\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        }
+                    }
                 }
             ]
         },
