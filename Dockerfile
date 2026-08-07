@@ -10,9 +10,27 @@ WORKDIR /var/www/html
 
 COPY . .
 
+RUN mkdir -p \
+    storage/framework/cache/data \
+    storage/framework/sessions \
+    storage/framework/views \
+    storage/app/private \
+    storage/app/public \
+    storage/logs \
+    bootstrap/cache
+
 RUN composer install --no-dev --optimize-autoloader
 
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+RUN if [ -e public/storage ] && [ ! -L public/storage ]; then \
+        echo "public/storage exists and is not a symbolic link" >&2; \
+        exit 1; \
+    fi \
+    && php artisan storage:link --force \
+    && test -L public/storage \
+    && test "$(readlink -f public/storage)" = "$(readlink -f storage/app/public)"
+
+RUN chown -R www-data:www-data storage bootstrap/cache \
+    && chmod -R ug+rwX storage bootstrap/cache
 
 RUN a2enmod rewrite
 
