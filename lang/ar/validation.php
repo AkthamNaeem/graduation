@@ -180,6 +180,10 @@ return [
     ],
     'custom_messages' => [
         'image_storage_failed' => 'تعذر تخزين الصورة. يرجى المحاولة مرة أخرى.',
+        'image_invalid' => 'الملف المرفوع ليس صورة صالحة قابلة للقراءة.',
+        'image_dimensions_exceeded' => 'أبعاد الصورة كبيرة جدًا بحيث لا يمكن معالجتها بأمان.',
+        'image_processing_failed' => 'تعذرت معالجة الصورة. يرجى تجربة صورة أخرى.',
+        'image_processing_unavailable' => 'معالجة الصور مع دعم WebP غير متاحة.',
         'requested_item_labels_unique' => 'يجب أن تكون عناوين العناصر المطلوبة فريدة دون اعتبار حالة الأحرف.',
         'name_taken' => 'الاسم مستخدم مسبقًا.',
         'plain_text_only' => 'يجب أن يحتوي النص على نص عادي فقط.',

@@ -26,6 +26,8 @@ Uploads accept real `jpg`, `jpeg`, `png`, and `webp` images only. SVG is not acc
 
 Invalid MIME data, disguised extensions, corrupt/empty non-images, and oversized files return the existing `422` API validation envelope with errors under `image`.
 
+Public avatar, company logo, company cover, and skill icon uploads are decoded and stored once as optimized WebP files at quality 82. They preserve aspect ratio and transparency, are never upscaled, and are limited respectively to `512x512`, `512x512`, `1600x1200`, and `256x256`. Each replacement uses a unique filename; image processing does not run while serving `/storage/*`. Test question images remain private and outside this public-image optimization path.
+
 ## Endpoints
 
 All endpoints require `Authorization: Bearer <token>`. Upload requests use `multipart/form-data` and the field name `image`. Both `POST` and `PATCH` are supported for upload/replacement.

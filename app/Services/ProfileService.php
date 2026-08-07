@@ -14,7 +14,6 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class ProfileService
@@ -24,6 +23,7 @@ class ProfileService
     public function __construct(
         private readonly AuditLogService $auditLogService,
         private readonly CompanyPermissionService $companyPermissionService,
+        private readonly PublicImageOptimizationService $publicImageOptimizer,
     ) {}
 
     public function getJobSeekerProfile(User $user): JobSeekerProfile
@@ -188,12 +188,13 @@ class ProfileService
         $newLogoPath = null;
 
         if ($logo instanceof UploadedFile) {
-            $newLogoPath = $logo->store("company-logos/{$company->id}", 'public');
-            if (! is_string($newLogoPath)) {
-                throw ValidationException::withMessages([
-                    'logo' => [__('companies.logo_storage_failed')],
-                ]);
-            }
+            $newLogoPath = $this->publicImageOptimizer->store(
+                $logo,
+                "company-logos/{$company->id}",
+                512,
+                512,
+                'logo',
+            );
             $data['logo_path'] = $newLogoPath;
         } elseif ($removeLogo) {
             $data['logo_path'] = null;

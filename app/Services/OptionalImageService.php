@@ -13,7 +13,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
@@ -23,6 +22,7 @@ class OptionalImageService
         private readonly AuditLogService $auditLogService,
         private readonly CompanyPermissionService $companyPermissionService,
         private readonly PrivateFileStorageService $privateStorage,
+        private readonly PublicImageOptimizationService $publicImageOptimizer,
         private readonly TestService $testService,
     ) {}
 
@@ -40,6 +40,8 @@ class OptionalImageService
             actor: $actor,
             event: 'user.avatar.updated',
             validationField: 'image',
+            maxWidth: 512,
+            maxHeight: 512,
         );
 
         return $actor->refresh();
@@ -65,6 +67,8 @@ class OptionalImageService
                 actor: $actor,
                 event: 'company.cover_image.updated',
                 validationField: 'image',
+                maxWidth: 1600,
+                maxHeight: 1200,
             );
         }
 
@@ -92,6 +96,8 @@ class OptionalImageService
                 actor: $actor,
                 event: 'job_category.icon.updated',
                 validationField: 'image',
+                maxWidth: 256,
+                maxHeight: 256,
             );
         }
 
@@ -221,13 +227,16 @@ class OptionalImageService
         User $actor,
         string $event,
         string $validationField,
+        int $maxWidth,
+        int $maxHeight,
     ): void {
-        $newPath = $image->store($prefix, 'public');
-        if (! is_string($newPath)) {
-            throw ValidationException::withMessages([
-                $validationField => [__('validation.custom_messages.image_storage_failed')],
-            ]);
-        }
+        $newPath = $this->publicImageOptimizer->store(
+            $image,
+            $prefix,
+            $maxWidth,
+            $maxHeight,
+            $validationField,
+        );
 
         $oldPath = $entity->getAttribute($field);
 
