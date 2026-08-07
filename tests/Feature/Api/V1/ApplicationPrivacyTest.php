@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api\V1;
 
 use App\Enums\UserRole;
+use App\Models\ApplicationSnapshot;
 use App\Models\ApplicationStatus;
 use App\Models\ApplicationTestAssignment;
 use App\Models\Company;
@@ -195,6 +196,36 @@ class ApplicationPrivacyTest extends TestCase
             'to_application_status_id' => $underReview->id,
             'changed_by_user_id' => $employer->id,
             'note' => 'Internal hiring assessment.',
+        ]);
+        ApplicationSnapshot::create([
+            'job_application_id' => $application->id,
+            'schema_version' => ApplicationSnapshot::SCHEMA_VERSION,
+            'profile_snapshot' => [
+                'identity' => [
+                    'name' => $candidate->name,
+                    'email' => $candidate->email,
+                    'phone' => null,
+                    'headline' => $candidate->jobSeekerProfile->headline,
+                    'summary' => null,
+                ],
+                'location' => ['location_text' => null, 'city' => null],
+                'professional_links' => [],
+                'experiences' => [],
+                'education' => [],
+                'skills' => [],
+            ],
+            'application_answers_snapshot' => [],
+            'source_cv_file_id' => $cv->id,
+            'cv_original_name' => $cv->original_name,
+            'cv_mime_type' => $cv->mime_type,
+            'cv_extension' => $cv->extension,
+            'cv_size_bytes' => strlen('private cv'),
+            'cv_checksum_sha256' => hash('sha256', 'private cv'),
+            'cv_disk' => $cv->disk,
+            'cv_stored_path' => $cv->stored_path,
+            'origin' => ApplicationSnapshot::ORIGIN_SUBMISSION,
+            'accuracy' => ApplicationSnapshot::ACCURACY_EXACT,
+            'captured_at' => now(),
         ]);
 
         return [$employer, $candidate, $application];

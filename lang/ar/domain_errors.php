@@ -57,6 +57,7 @@ return [
     'CV_CANNOT_CANCEL_CURRENT' => 'لا يمكن إلغاء السيرة الذاتية الحالية المؤكدة.',
     'CV_CONFIRMATION_CONFLICT' => 'توجد عملية تأكيد أخرى للسيرة الذاتية قيد التنفيذ.',
     'CV_FINAL_DRAFT_INVALID' => 'المسودة النهائية المراجعة للسيرة الذاتية غير صالحة.',
+    'CV_DOCUMENT_GENERATION_FAILED' => 'تعذر إنشاء مستند السيرة الذاتية.',
     'CV_NOT_PENDING' => 'هذه السيرة الذاتية ليست دورة التحديث المعلقة الفعالة.',
     'CV_PENDING_UPDATE_EXISTS' => 'لديك تحديث سيرة ذاتية قيد المراجعة.',
     'CV_PROFILE_CHANGED_SINCE_COMPARISON' => 'تم تعديل ملفك الشخصي بعد إنشاء مقارنة السيرة الذاتية.',

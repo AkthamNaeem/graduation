@@ -1,5 +1,7 @@
 # Application CV Summary API
 
+For applications with an `ApplicationSnapshot`, summary generation uses the immutable `profile_snapshot` captured at submission. It does not read the candidate's later live profile or the original uploaded parsing artifact. The older live/profile parsing source is retained only for legacy applications without a snapshot.
+
 Implements AI-06 / UC-EMP-08 as an employer-facing, job-specific summary of the selected CV and verified candidate profile.
 
 The LLM is an assistant only. The response never changes application status, recommends acceptance or rejection, assigns a match score, or replaces employer review.

@@ -41,6 +41,9 @@ class SingleCurrentCVContractTest extends TestCase
         $this->withToken($this->tokenFor($user))
             ->getJson('/api/v1/profile')
             ->assertOk()
+            ->assertJsonPath('data.cv.status.key', 'no_cv')
+            ->assertJsonPath('data.cv.is_ready', false)
+            ->assertJsonPath('data.cv.allowed_actions', ['upload_cv'])
             ->assertJsonPath('data.current_cv', null)
             ->assertJsonPath('data.pending_cv_update', null);
 
@@ -125,30 +128,30 @@ class SingleCurrentCVContractTest extends TestCase
         $cases = [
             'processing' => [
                 ['status' => 'processing'],
-                'processing', 'wait_for_processing', false, false,
+                'processing', 'wait_for_processing', false, false, 'processing',
             ],
             'failed' => [
                 ['status' => 'failed', 'error_message' => 'INTERNAL_SECRET'],
-                'failed', 'upload_cv', false, false,
+                'failed', 'upload_cv', false, false, 'failed',
             ],
             'first review' => [[
                 'status' => 'parsed',
                 'review_mode' => CVFile::REVIEW_MODE_INITIAL_IMPORT,
                 'review_status' => CVFile::REVIEW_STATUS_DRAFT,
-            ], 'first_review', 'review_extracted_cv', true, false],
+            ], 'first_review', 'review_extracted_cv', true, false, 'review_required'],
             'differences review' => [[
                 'status' => 'parsed',
                 'review_mode' => CVFile::REVIEW_MODE_PROFILE_SYNC,
                 'review_status' => CVFile::REVIEW_STATUS_DECISIONS_PENDING,
-            ], 'differences_review', 'review_cv_changes', true, false],
+            ], 'differences_review', 'review_cv_changes', true, false, 'suggestions_review_required'],
             'final confirmation' => [[
                 'status' => 'parsed',
                 'review_mode' => CVFile::REVIEW_MODE_PROFILE_SYNC,
                 'review_status' => CVFile::REVIEW_STATUS_READY_TO_APPLY,
-            ], 'final_confirmation', 'confirm_cv_review', true, true],
+            ], 'final_confirmation', 'confirm_cv_review', true, true, 'ready_for_confirmation'],
         ];
 
-        foreach ($cases as [$attributes, $stage, $nextAction, $hasParsingResult, $reviewCompleted]) {
+        foreach ($cases as [$attributes, $stage, $nextAction, $hasParsingResult, $reviewCompleted, $logicalStatus]) {
             [$user, $profile] = $this->profile();
             $pending = $this->cv($user, $attributes);
             $profile->update(['primary_cv_file_id' => $pending->id]);
@@ -162,6 +165,9 @@ class SingleCurrentCVContractTest extends TestCase
                 ->getJson('/api/v1/profile')
                 ->assertOk()
                 ->assertJsonPath('data.identity.id', $user->id)
+                ->assertJsonPath('data.cv.status.key', $logicalStatus)
+                ->assertJsonPath('data.cv.is_ready', false)
+                ->assertJsonPath('data.cv.allowed_actions', ['continue_cv_review'])
                 ->assertJsonPath('data.current_cv', null)
                 ->assertJsonPath('data.pending_cv_update.id', $pending->id)
                 ->assertJsonPath(
@@ -213,6 +219,9 @@ class SingleCurrentCVContractTest extends TestCase
             ->assertJsonPath('data.current_cv.can_use_for_application', true)
             ->assertJsonPath('data.pending_cv_update.id', $pending->id)
             ->assertJsonPath('data.pending_cv_update.operation.key', 'update')
+            ->assertJsonPath('data.cv.status.key', 'suggestions_review_required')
+            ->assertJsonPath('data.cv.is_ready', true)
+            ->assertJsonPath('data.cv.allowed_actions', ['preview_cv', 'download_cv', 'continue_cv_review'])
             ->assertJsonPath('data.pending_cv_update.operation.label', 'تحديث السيرة الذاتية')
             ->assertJsonPath('data.pending_cv_update.stage.key', 'differences_review')
             ->assertJsonPath('data.pending_cv_update.stage.label', 'مراجعة التغييرات')

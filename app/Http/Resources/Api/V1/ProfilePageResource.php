@@ -84,6 +84,7 @@ class ProfilePageResource extends JsonResource
             'pending_cv_update' => $this->pendingCVUpdate !== null
                 ? PendingCVUpdateResource::make($this->pendingCVUpdate)
                 : null,
+            'cv' => ProfileCVStateResource::make($this->cvState),
             'allowed_actions' => $this->allowedActions,
             'created_at' => $profile->created_at?->toISOString(),
             'updated_at' => $profile->updated_at?->toISOString(),

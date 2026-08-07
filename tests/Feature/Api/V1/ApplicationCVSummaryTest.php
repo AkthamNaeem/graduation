@@ -4,6 +4,7 @@ namespace Tests\Feature\Api\V1;
 
 use App\Enums\CompanyRole;
 use App\Enums\UserRole;
+use App\Models\ApplicationSnapshot;
 use App\Models\ApplicationStatus;
 use App\Models\AuditLog;
 use App\Models\Company;
@@ -101,6 +102,62 @@ class ApplicationCVSummaryTest extends TestCase
         $this->assertSame(64, strlen($audit->metadata['input_hash']));
         $this->assertIsInt($audit->metadata['summary_id']);
         $this->assertStringNotContainsString('Backend Developer. Laravel REST APIs.', json_encode($audit->toArray()));
+    }
+
+    public function test_summary_for_snapshotted_application_uses_immutable_submission_profile_not_live_profile_or_source_parse(): void
+    {
+        [, $employer, $candidate, $application] = $this->scenario();
+        ApplicationSnapshot::create([
+            'job_application_id' => $application->id,
+            'schema_version' => 1,
+            'profile_snapshot' => [
+                'identity' => [
+                    'name' => 'Private Snapshot Name',
+                    'email' => 'snapshot-private@example.com',
+                    'phone' => '+963999999',
+                    'headline' => 'Snapshot Backend Engineer',
+                    'summary' => 'Immutable submission summary marker',
+                ],
+                'experiences' => [['job_title' => 'Snapshot Experience Marker']],
+                'education' => [['institution' => 'Snapshot Education Marker']],
+                'skills' => [['name' => 'Snapshot Skill Marker']],
+            ],
+            'application_answers_snapshot' => [],
+            'source_cv_file_id' => $application->selected_cv_file_id,
+            'cv_original_name' => 'audit-source.pdf',
+            'cv_mime_type' => 'application/pdf',
+            'cv_extension' => 'pdf',
+            'cv_size_bytes' => 1,
+            'cv_checksum_sha256' => str_repeat('a', 64),
+            'cv_disk' => 'local',
+            'cv_stored_path' => 'application-snapshots/audit-source.pdf',
+            'origin' => ApplicationSnapshot::ORIGIN_SUBMISSION,
+            'accuracy' => ApplicationSnapshot::ACCURACY_EXACT,
+            'captured_at' => now(),
+        ]);
+        $candidate->jobSeekerProfile->update([
+            'headline' => 'Changed Live Headline',
+            'summary' => 'Changed live summary marker',
+        ]);
+        Http::fake(['api.openai.com/*' => Http::response($this->openAIResponse(), 200)]);
+
+        $this->withToken($this->tokenFor($employer))
+            ->postJson("/api/v1/applications/{$application->id}/cv-summary")
+            ->assertOk();
+
+        Http::assertSent(function (Request $request): bool {
+            $payload = json_encode($request->data(), JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+
+            $this->assertStringContainsString('Immutable submission summary marker', $payload);
+            $this->assertStringContainsString('Snapshot Experience Marker', $payload);
+            $this->assertStringContainsString('Snapshot Education Marker', $payload);
+            $this->assertStringContainsString('Snapshot Skill Marker', $payload);
+            $this->assertStringNotContainsString('Changed Live Headline', $payload);
+            $this->assertStringNotContainsString('Changed live summary marker', $payload);
+            $this->assertStringNotContainsString('Backend Developer. Laravel REST APIs.', $payload);
+
+            return true;
+        });
     }
 
     public function test_job_seeker_and_other_company_employer_cannot_access_cv_summary(): void

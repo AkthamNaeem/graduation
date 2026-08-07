@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api\V1\Application;
 
-use App\Exceptions\CVLifecycleException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\Application\ChangeApplicationStatusRequest;
 use App\Http\Requests\Api\V1\Application\IndexJobApplicationsForJobRequest;
@@ -15,17 +14,17 @@ use App\Models\JobApplication;
 use App\Models\JobPosting;
 use App\Services\ApplicationSnapshotCVAccessService;
 use App\Services\ApplicationWorkflowService;
-use App\Services\PrivateFileStorageService;
+use App\Services\CV\CVDocumentService;
 use App\Support\ApiResponse;
 use Illuminate\Http\JsonResponse;
-use Symfony\Component\HttpFoundation\StreamedResponse;
+use Illuminate\Http\Response;
 
 class JobApplicationController extends Controller
 {
     public function __construct(
         private readonly ApplicationWorkflowService $applicationWorkflowService,
-        private readonly PrivateFileStorageService $privateStorage,
         private readonly ApplicationSnapshotCVAccessService $snapshotCVAccess,
+        private readonly CVDocumentService $cvDocumentService,
     ) {}
 
     public function store(StoreJobApplicationRequest $request, JobPosting $jobPosting): JsonResponse
@@ -64,38 +63,19 @@ class JobApplicationController extends Controller
         );
     }
 
-    public function downloadCV(ShowJobApplicationRequest $request, JobApplication $jobApplication): StreamedResponse
+    public function downloadCV(ShowJobApplicationRequest $request, JobApplication $jobApplication): Response
     {
-        if ($jobApplication->snapshot()->exists()) {
-            $snapshot = $this->snapshotCVAccess->snapshotFor($jobApplication);
-            $this->snapshotCVAccess->assertDownloadable($snapshot);
-
-            return $this->privateStorage->downloadResponse(
-                $snapshot->cv_disk,
-                $snapshot->cv_stored_path,
-                $snapshot->cv_original_name,
-                $snapshot->cv_mime_type,
-            );
-        }
-
-        $cvFile = $jobApplication->selectedCvFile()->first();
-        if ($cvFile === null || ! $this->privateStorage->exists($cvFile->disk, $cvFile->stored_path)) {
-            throw new CVLifecycleException(__('domain_errors.CV_FILE_UNAVAILABLE'), 'CV_FILE_UNAVAILABLE', 404);
-        }
-
-        return $this->privateStorage->downloadResponse($cvFile->disk, $cvFile->stored_path, $cvFile->original_name, $cvFile->mime_type);
+        return $this->cvDocumentService->snapshotResponse(
+            $this->snapshotCVAccess->snapshotFor($jobApplication),
+            download: true,
+        );
     }
 
-    public function previewCV(ShowJobApplicationRequest $request, JobApplication $jobApplication): StreamedResponse
+    public function previewCV(ShowJobApplicationRequest $request, JobApplication $jobApplication): Response
     {
-        $snapshot = $this->snapshotCVAccess->snapshotFor($jobApplication);
-        $this->snapshotCVAccess->assertPreviewable($snapshot);
-
-        return $this->privateStorage->inlineResponse(
-            $snapshot->cv_disk,
-            $snapshot->cv_stored_path,
-            $snapshot->cv_original_name,
-            $snapshot->cv_mime_type,
+        return $this->cvDocumentService->snapshotResponse(
+            $this->snapshotCVAccess->snapshotFor($jobApplication),
+            download: false,
         );
     }
 

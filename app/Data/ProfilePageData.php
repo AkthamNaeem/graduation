@@ -13,6 +13,7 @@ final readonly class ProfilePageData
      * @param  list<array<string, mixed>>  $attentionItems
      * @param  array<string, mixed>|null  $currentCV
      * @param  array<string, mixed>|null  $pendingCVUpdate
+     * @param  array<string, mixed>  $cvState
      */
     public function __construct(
         public JobSeekerProfile $profile,
@@ -23,5 +24,6 @@ final readonly class ProfilePageData
         public array $attentionItems,
         public ?array $currentCV,
         public ?array $pendingCVUpdate,
+        public array $cvState,
     ) {}
 }

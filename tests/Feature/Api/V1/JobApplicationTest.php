@@ -56,6 +56,34 @@ class JobApplicationTest extends TestCase
         ]);
     }
 
+    public function test_job_seeker_can_apply_without_any_cv_selector_using_the_confirmed_current_cv(): void
+    {
+        $company = Company::create(['name' => 'No Selector Co.', 'approval_status' => 'approved']);
+        $jobSeeker = $this->jobSeeker('no-selector@example.com');
+        $jobPosting = $this->jobPostingFor($company, ['status' => 'open', 'published_at' => now()]);
+        $current = $this->cvFor($jobSeeker, modern: true);
+        $jobSeeker->jobSeekerProfile->update(['primary_cv_file_id' => $current->id]);
+
+        $response = $this->withToken($this->tokenFor($jobSeeker))
+            ->postJson("/api/v1/jobs/{$jobPosting->id}/applications", [
+                'cover_letter' => 'Application-specific content only.',
+                'consent_to_share_profile' => true,
+                'screening_answers' => [],
+            ])
+            ->assertCreated()
+            ->assertJsonPath('data.selected_cv_file_id', $current->id)
+            ->assertJsonPath('data.status.key', 'submitted');
+
+        $this->assertDatabaseHas('application_snapshots', [
+            'job_application_id' => $response->json('data.id'),
+            'source_cv_file_id' => $current->id,
+        ]);
+        $this->assertDatabaseHas('application_status_histories', [
+            'job_application_id' => $response->json('data.id'),
+            'changed_by_user_id' => $jobSeeker->id,
+        ]);
+    }
+
     public function test_apply_requires_primary_or_selected_cv_and_consent(): void
     {
         $company = Company::create(['name' => 'Acme Hiring Co.', 'approval_status' => 'approved']);
@@ -207,7 +235,7 @@ class JobApplicationTest extends TestCase
         ];
     }
 
-    private function cvFor(User $jobSeeker): CVFile
+    private function cvFor(User $jobSeeker, bool $modern = false): CVFile
     {
         $cvFile = CVFile::create([
             'user_id' => $jobSeeker->id,
@@ -218,6 +246,9 @@ class JobApplicationTest extends TestCase
             'extension' => 'pdf',
             'size_bytes' => 128000,
             'status' => 'parsed',
+            'review_mode' => $modern ? CVFile::REVIEW_MODE_INITIAL_IMPORT : null,
+            'review_status' => $modern ? CVFile::REVIEW_STATUS_APPLIED : null,
+            'confirmed_at' => $modern ? now() : null,
         ]);
         Storage::disk('local')->put($cvFile->stored_path, 'cv content');
 

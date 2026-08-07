@@ -35,7 +35,7 @@ class CVFileActionResolverTest extends TestCase
 
         $this->assertSame(['preview', 'download', 'update'], $resolver->current($pdf, false));
         $this->assertSame(['preview', 'download'], $resolver->current($pdf, true));
-        $this->assertSame(['download', 'update'], $resolver->current($docx, false));
+        $this->assertSame(['preview', 'download', 'update'], $resolver->current($docx, false));
     }
 
     #[DataProvider('pendingStages')]

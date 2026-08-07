@@ -14,15 +14,7 @@ class CVFileActionResolver
     /** @return list<string> */
     public function current(CVFile $cvFile, bool $hasPendingWorkflow): array
     {
-        $capabilities = $this->fileAccess->capabilities($cvFile);
-        $actions = [];
-
-        if ($capabilities['preview']) {
-            $actions[] = 'preview';
-        }
-        if ($capabilities['download']) {
-            $actions[] = 'download';
-        }
+        $actions = ['preview', 'download'];
         if (! $hasPendingWorkflow) {
             $actions[] = 'update';
         }

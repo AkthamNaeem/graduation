@@ -43,9 +43,7 @@ class JobApplicationResource extends JsonResource
                     'extension' => $snapshot->cv_extension,
                     'size_bytes' => $snapshot->cv_size_bytes,
                     'download_url' => route('v1.applications.cv.download', ['jobApplication' => $this->id]),
-                    'preview_url' => strtolower($snapshot->cv_extension) === 'pdf'
-                        ? route('v1.applications.cv.preview', ['jobApplication' => $this->id])
-                        : null,
+                    'preview_url' => route('v1.applications.cv.preview', ['jobApplication' => $this->id]),
                     'uploaded_at' => null,
                 ] : ($this->selectedCvFile === null ? null : [
                     'id' => $this->selectedCvFile->id,
@@ -66,6 +64,14 @@ class JobApplicationResource extends JsonResource
                 ),
             ),
             'submitted_cv_name' => $this->when($snapshotLoaded, $snapshot?->cv_original_name),
+            'submitted_cv' => $this->when($snapshot !== null, fn (): array => [
+                'source' => 'application_snapshot',
+                'mime_type' => 'application/pdf',
+                'preview_url' => route('v1.applications.cv.preview', ['jobApplication' => $this->id]),
+                'download_url' => route('v1.applications.cv.download', ['jobApplication' => $this->id]),
+                'allowed_actions' => ['preview', 'download'],
+                'captured_at' => $snapshot->captured_at?->toISOString(),
+            ]),
             'snapshot_captured_at' => $this->when($snapshotLoaded, $snapshot?->captured_at?->toISOString()),
             'submitted_snapshot' => $this->when(
                 $includeSubmittedSnapshot,

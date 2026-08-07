@@ -19,6 +19,7 @@ use App\Models\JobSeekerProfile;
 use App\Models\Skill;
 use App\Models\User;
 use App\Services\ApplicationScreeningAnswerService;
+use App\Services\CV\CVDocumentRenderer;
 use Database\Seeders\ApplicationStatusSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
@@ -36,6 +37,13 @@ class ApplicationSnapshotTest extends TestCase
         parent::setUp();
         Storage::fake('local');
         $this->seed(ApplicationStatusSeeder::class);
+        $this->app->bind(CVDocumentRenderer::class, static fn () => new class extends CVDocumentRenderer
+        {
+            public function render(array $data): string
+            {
+                return json_encode($data, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+            }
+        });
     }
 
     public function test_submission_captures_complete_profile_answers_and_an_independent_cv_copy(): void
@@ -83,6 +91,11 @@ class ApplicationSnapshotTest extends TestCase
 
         $candidate->jobSeekerProfile->update(['headline' => 'Changed later', 'phone' => '+999']);
         $candidate->update(['name' => 'Changed Candidate']);
+        $candidate->jobSeekerProfile->experiences()->update(['title' => 'Changed Experience']);
+        $candidate->jobSeekerProfile->education()->update(['institution' => 'Changed University']);
+        $candidate->jobSeekerProfile->skills()->detach();
+        $changedSkill = Skill::create(['name' => 'Changed Skill', 'slug' => 'changed-skill-'.Str::lower(Str::random(6))]);
+        $candidate->jobSeekerProfile->skills()->attach($changedSkill->id);
         Storage::disk('local')->put($cv->stored_path, '%PDF-replaced-live-file');
         $cv->update(['original_name' => 'changed.pdf', 'archived_at' => now()]);
         $cv->delete();
@@ -98,9 +111,19 @@ class ApplicationSnapshotTest extends TestCase
         $this->app['auth']->forgetGuards();
         $download = $this->withToken($this->tokenFor($candidate))
             ->get("/api/v1/applications/{$applicationId}/cv/download")
-            ->assertOk()
-            ->assertStreamedContent('%PDF-original');
+            ->assertOk();
         $this->assertStringContainsString('attachment;', (string) $download->headers->get('content-disposition'));
+        $this->assertStringContainsString('Original Candidate', $download->getContent());
+        $this->assertStringContainsString('Original headline', $download->getContent());
+        $this->assertStringContainsString('Backend Engineer', $download->getContent());
+        $this->assertStringContainsString('Damascus University', $download->getContent());
+        $this->assertStringContainsString('Laravel', $download->getContent());
+        $this->assertStringNotContainsString('Changed Candidate', $download->getContent());
+        $this->assertStringNotContainsString('Changed later', $download->getContent());
+        $this->assertStringNotContainsString('Changed Experience', $download->getContent());
+        $this->assertStringNotContainsString('Changed University', $download->getContent());
+        $this->assertStringNotContainsString('Changed Skill', $download->getContent());
+        $this->assertStringNotContainsString('%PDF-original', $download->getContent());
         $this->assertSame('%PDF-original', Storage::disk('local')->get($snapshot->cv_stored_path));
     }
 
@@ -114,8 +137,9 @@ class ApplicationSnapshotTest extends TestCase
             ->assertOk()
             ->assertHeader('content-type', 'application/pdf')
             ->assertHeader('x-content-type-options', 'nosniff')
-            ->assertHeader('accept-ranges', 'none')
-            ->assertStreamedContent('%PDF-original');
+            ->assertHeader('accept-ranges', 'none');
+        $this->assertStringContainsString('Original Candidate', $candidatePreview->getContent());
+        $this->assertStringNotContainsString('%PDF-original', $candidatePreview->getContent());
         $this->assertStringContainsString('inline;', (string) $candidatePreview->headers->get('content-disposition'));
         $this->assertStringContainsString('no-store', (string) $candidatePreview->headers->get('cache-control'));
 
@@ -131,7 +155,7 @@ class ApplicationSnapshotTest extends TestCase
         $this->withHeader('Authorization', '')->getJson($url)->assertUnauthorized();
     }
 
-    public function test_docx_snapshot_rejects_preview_but_remains_downloadable(): void
+    public function test_docx_source_snapshot_still_has_generated_pdf_preview_and_download(): void
     {
         [$candidate, , $job, $cv] = $this->scenario([
             'original_name' => 'resume.docx',
@@ -142,16 +166,17 @@ class ApplicationSnapshotTest extends TestCase
         $applicationId = $this->apply($candidate, $job, $cv)->assertCreated()->json('data.id');
         $token = $this->tokenFor($candidate);
 
-        $this->withToken($token)->getJson("/api/v1/applications/{$applicationId}/cv/preview")
-            ->assertStatus(415)
-            ->assertJsonPath('code', 'APPLICATION_SNAPSHOT_CV_PREVIEW_NOT_SUPPORTED')
-            ->assertJsonPath('errors.file.0', __('cv.preview_not_supported_hint'));
+        $preview = $this->withToken($token)->get("/api/v1/applications/{$applicationId}/cv/preview")
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
+        $this->assertStringContainsString('Original Candidate', $preview->getContent());
+        $this->assertStringNotContainsString('docx-original', $preview->getContent());
 
         $this->app['auth']->forgetGuards();
         $this->withToken($this->tokenFor($candidate))
             ->get("/api/v1/applications/{$applicationId}/cv/download")
             ->assertOk()
-            ->assertStreamedContent('docx-original');
+            ->assertHeader('content-type', 'application/pdf');
     }
 
     public function test_modern_submission_requires_the_confirmed_current_cv(): void
@@ -206,6 +231,12 @@ class ApplicationSnapshotTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.snapshot_status.key', 'not_available')
             ->assertJsonPath('data.submitted_snapshot', null);
+
+        $this->app['auth']->forgetGuards();
+        $this->withToken($this->tokenFor($candidate))
+            ->getJson("/api/v1/applications/{$application->id}/cv/preview")
+            ->assertNotFound()
+            ->assertJsonPath('code', 'APPLICATION_SNAPSHOT_NOT_AVAILABLE');
 
         $this->artisan('applications:backfill-snapshots', [
             '--dry-run' => true,

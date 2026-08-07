@@ -57,6 +57,7 @@ return [
     'CV_CANNOT_CANCEL_CURRENT' => 'The current confirmed CV cannot be cancelled.',
     'CV_CONFIRMATION_CONFLICT' => 'Another CV confirmation is already in progress.',
     'CV_FINAL_DRAFT_INVALID' => 'The final reviewed CV draft is invalid.',
+    'CV_DOCUMENT_GENERATION_FAILED' => 'The CV document could not be generated.',
     'CV_NOT_PENDING' => 'This CV is not the active pending workflow.',
     'CV_PENDING_UPDATE_EXISTS' => 'You already have a CV update under review.',
     'CV_PROFILE_CHANGED_SINCE_COMPARISON' => 'Your profile changed after the CV comparison was created.',

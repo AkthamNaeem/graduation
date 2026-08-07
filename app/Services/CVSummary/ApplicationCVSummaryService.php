@@ -67,15 +67,16 @@ class ApplicationCVSummaryService
         string $locale,
         bool $force = false,
     ): ApplicationCVSummary {
-        $application->loadMissing([
-            'jobPosting.company',
-            'jobPosting.skills',
-            'jobSeekerProfile.user',
-            'jobSeekerProfile.skills',
-            'jobSeekerProfile.experiences',
-            'jobSeekerProfile.education',
-            'selectedCvFile.parsingResult',
-        ]);
+        $application->loadMissing(['jobPosting.company', 'jobPosting.skills', 'snapshot']);
+        if ($application->snapshot === null) {
+            $application->loadMissing([
+                'jobSeekerProfile.user',
+                'jobSeekerProfile.skills',
+                'jobSeekerProfile.experiences',
+                'jobSeekerProfile.education',
+                'selectedCvFile.parsingResult',
+            ]);
+        }
 
         $source = $this->buildSource($application);
         $provider = $this->client->provider();
@@ -152,8 +153,58 @@ class ApplicationCVSummaryService
     /** @return array<string, mixed> */
     private function buildSource(JobApplication $application): array
     {
+        if ($application->snapshot !== null) {
+            return $this->buildSnapshotSource($application);
+        }
+
+        return $this->buildLegacySource($application);
+    }
+
+    /** @return array<string, mixed> */
+    private function buildSnapshotSource(JobApplication $application): array
+    {
+        $profileSnapshot = is_array($application->snapshot?->profile_snapshot)
+            ? $application->snapshot->profile_snapshot
+            : [];
+        $identity = is_array($profileSnapshot['identity'] ?? null) ? $profileSnapshot['identity'] : [];
+        $experiences = is_array($profileSnapshot['experiences'] ?? null) ? $profileSnapshot['experiences'] : [];
+        $education = is_array($profileSnapshot['education'] ?? null) ? $profileSnapshot['education'] : [];
+        $skills = is_array($profileSnapshot['skills'] ?? null) ? $profileSnapshot['skills'] : [];
+
+        $verifiedProfile = $this->removeSensitiveFields([
+            'headline' => $identity['headline'] ?? null,
+            'professional_summary' => $identity['summary'] ?? null,
+            'skills' => array_values(array_filter(array_map(
+                static fn ($skill): mixed => is_array($skill) ? ($skill['name'] ?? null) : $skill,
+                $skills,
+            ))),
+            'experience' => array_values(array_filter($experiences, 'is_array')),
+            'education' => array_values(array_filter($education, 'is_array')),
+        ]);
+
+        if (blank($verifiedProfile['headline'] ?? null)
+            && blank($verifiedProfile['professional_summary'] ?? null)
+            && ($verifiedProfile['skills'] ?? []) === []
+            && ($verifiedProfile['experience'] ?? []) === []
+            && ($verifiedProfile['education'] ?? []) === []) {
+            throw new CVSummaryGenerationException(
+                __('cv_summary.source_unavailable'),
+                'CV_SUMMARY_SOURCE_UNAVAILABLE',
+                422,
+            );
+        }
+
+        return $this->redactSource([
+            'job' => $this->jobSource($application),
+            'verified_profile' => $verifiedProfile,
+            'source' => 'immutable_application_snapshot',
+        ], $application);
+    }
+
+    /** @return array<string, mixed> */
+    private function buildLegacySource(JobApplication $application): array
+    {
         $profile = $application->jobSeekerProfile;
-        $job = $application->jobPosting;
         $cvResult = $application->selectedCvFile?->parsingResult;
 
         $cvData = $cvResult?->reviewed_json ?? $cvResult?->parsed_json;
@@ -180,19 +231,7 @@ class ApplicationCVSummaryService
         }
 
         return $this->redactSource([
-            'job' => [
-                'title' => $job->title,
-                'description' => $job->description,
-                'responsibilities' => $job->responsibilities,
-                'requirements' => $job->requirements,
-                'experience_level' => $job->experience_level,
-                'education_level' => $job->education_level,
-                'skills' => $job->skills->map(fn ($skill): array => [
-                    'name' => $skill->name,
-                    'requirement_type' => $this->scalar($skill->pivot?->requirement_type),
-                    'weight' => $skill->pivot?->weight,
-                ])->values()->all(),
-            ],
+            'job' => $this->jobSource($application),
             'verified_profile' => [
                 'headline' => $profile?->headline,
                 'professional_summary' => $profile?->summary,
@@ -216,6 +255,26 @@ class ApplicationCVSummaryService
             ],
             'selected_cv' => $cvData,
         ], $application);
+    }
+
+    /** @return array<string, mixed> */
+    private function jobSource(JobApplication $application): array
+    {
+        $job = $application->jobPosting;
+
+        return [
+            'title' => $job->title,
+            'description' => $job->description,
+            'responsibilities' => $job->responsibilities,
+            'requirements' => $job->requirements,
+            'experience_level' => $job->experience_level,
+            'education_level' => $job->education_level,
+            'skills' => $job->skills->map(fn ($skill): array => [
+                'name' => $skill->name,
+                'requirement_type' => $this->scalar($skill->pivot?->requirement_type),
+                'weight' => $skill->pivot?->weight,
+            ])->values()->all(),
+        ];
     }
 
     /** @param array<string|int, mixed> $data
@@ -272,11 +331,20 @@ class ApplicationCVSummaryService
             $text,
         ) ?? $text;
 
-        foreach (array_filter([
+        $snapshotProfile = $application->snapshot?->profile_snapshot;
+        $snapshotIdentity = is_array($snapshotProfile['identity'] ?? null)
+            ? $snapshotProfile['identity']
+            : [];
+        $identifiers = $application->snapshot !== null ? [
+            $snapshotIdentity['name'] ?? null,
+            $snapshotIdentity['email'] ?? null,
+            $snapshotIdentity['phone'] ?? null,
+        ] : [
             $application->jobSeekerProfile?->user?->name,
             $application->jobSeekerProfile?->user?->email,
             $application->jobSeekerProfile?->phone,
-        ], fn ($value): bool => is_string($value) && trim($value) !== '') as $identifier) {
+        ];
+        foreach (array_filter($identifiers, fn ($value): bool => is_string($value) && trim($value) !== '') as $identifier) {
             $text = preg_replace('/'.preg_quote($identifier, '/').'/iu', '[redacted-identifier]', $text) ?? $text;
         }
 

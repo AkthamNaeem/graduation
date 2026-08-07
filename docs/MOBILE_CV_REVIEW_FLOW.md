@@ -1,5 +1,7 @@
 # Mobile CV Review Flow
 
+> Mobile product contract: the user has one logical current CV. Uploaded files are pending parsing/review artifacts, not user-managed versions. After confirmation use `GET /api/v1/profile/cv/preview` and `GET /api/v1/profile/cv/download`, which generate a PDF from current structured profile data. See [CURRENT_CV_API.md](CURRENT_CV_API.md).
+
 The CV review API has two explicit modes. After upload, poll the CV resource or call `GET /api/v1/cv/{cvFile}/review` and route the UI using `review_mode`, `review_status`, and `next_action`.
 
 ## Shared state

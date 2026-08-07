@@ -166,6 +166,8 @@ Route::middleware(['auth:sanctum', 'user.active'])->group(function (): void {
 
     Route::get('profile', [ProfileController::class, 'show'])->name('profile.show');
     Route::put('profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::get('profile/cv/preview', [ProfileController::class, 'previewCV'])->name('profile.cv.preview');
+    Route::get('profile/cv/download', [ProfileController::class, 'downloadCV'])->name('profile.cv.download');
     Route::post('profile/avatar', [ProfileImageController::class, 'updateAvatar'])->name('profile.avatar.store');
     Route::patch('profile/avatar', [ProfileImageController::class, 'updateAvatar'])->name('profile.avatar.update');
     Route::delete('profile/avatar', [ProfileImageController::class, 'destroyAvatar'])->name('profile.avatar.destroy');

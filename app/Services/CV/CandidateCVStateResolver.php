@@ -18,7 +18,7 @@ class CandidateCVStateResolver
     ) {}
 
     /**
-     * @return array{current_cv: ?array<string, mixed>, pending_cv_update: ?array<string, mixed>}
+     * @return array{cv: array<string, mixed>, current_cv: ?array<string, mixed>, pending_cv_update: ?array<string, mixed>}
      */
     public function resolve(User $user, JobSeekerProfile $profile): array
     {
@@ -38,14 +38,56 @@ class CandidateCVStateResolver
 
         $hasPending = $pending instanceof CVFile;
 
+        $currentState = $current instanceof CVFile ? [
+            'cv' => $current,
+            'allowed_actions' => $this->actionResolver->current($current, $hasPending),
+        ] : null;
+        $pendingState = $pending instanceof CVFile
+            ? $this->pendingState($user, $profile, $pending)
+            : null;
+
         return [
-            'current_cv' => $current instanceof CVFile ? [
-                'cv' => $current,
-                'allowed_actions' => $this->actionResolver->current($current, $hasPending),
-            ] : null,
-            'pending_cv_update' => $pending instanceof CVFile
-                ? $this->pendingState($user, $profile, $pending)
-                : null,
+            'cv' => $this->logicalState($currentState, $pendingState),
+            'current_cv' => $currentState,
+            'pending_cv_update' => $pendingState,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $current
+     * @param  array<string, mixed>|null  $pending
+     * @return array<string, mixed>
+     */
+    private function logicalState(?array $current, ?array $pending): array
+    {
+        /** @var CandidateCVStage|null $pendingStage */
+        $pendingStage = $pending['stage'] ?? null;
+        $status = match ($pendingStage) {
+            CandidateCVStage::PROCESSING => 'processing',
+            CandidateCVStage::FIRST_REVIEW => 'review_required',
+            CandidateCVStage::DIFFERENCES_REVIEW => 'suggestions_review_required',
+            CandidateCVStage::FINAL_CONFIRMATION => 'ready_for_confirmation',
+            CandidateCVStage::FAILED => 'failed',
+            default => $current === null ? 'no_cv' : 'confirmed',
+        };
+
+        $actions = [];
+        if ($current !== null) {
+            $actions = ['preview_cv', 'download_cv'];
+        }
+        if ($pending !== null) {
+            $actions[] = 'continue_cv_review';
+        } elseif ($current !== null) {
+            $actions[] = 'update_cv';
+        } else {
+            $actions[] = 'upload_cv';
+        }
+
+        return [
+            'status' => $status,
+            'is_ready' => $current !== null,
+            'pending_update' => $pending,
+            'allowed_actions' => $actions,
         ];
     }
 

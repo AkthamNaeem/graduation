@@ -99,6 +99,7 @@ class ProfilePageService
             attentionItems: $this->profileAttentionResolver->resolve($profile, $profileCompleteness),
             currentCV: $cvState['current_cv'],
             pendingCVUpdate: $cvState['pending_cv_update'],
+            cvState: $cvState['cv'],
         );
     }
 

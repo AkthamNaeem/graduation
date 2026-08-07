@@ -111,6 +111,15 @@ return [
         ],
     ],
     'cv_contract' => [
+        'statuses' => [
+            'no_cv' => 'No CV is ready yet',
+            'processing' => 'Processing CV',
+            'review_required' => 'CV review required',
+            'suggestions_review_required' => 'Suggested changes require review',
+            'ready_for_confirmation' => 'CV is ready for confirmation',
+            'confirmed' => 'Your CV is ready',
+            'failed' => 'CV processing failed',
+        ],
         'stages' => [
             'processing' => 'Processing CV',
             'first_review' => 'Review extracted CV',
