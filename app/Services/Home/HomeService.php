@@ -194,7 +194,7 @@ class HomeService
             });
 
         return Company::query()
-            ->select(['id', 'name', 'industry', 'location'])
+            ->select(['id', 'name', 'industry', 'location', 'logo_path', 'cover_image_path'])
             ->where('approval_status', 'approved')
             ->whereHas('jobPostings', $openJobs)
             ->withCount(['jobPostings as open_jobs_count' => $openJobs])

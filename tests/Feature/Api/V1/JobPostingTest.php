@@ -11,6 +11,7 @@ use App\Models\Skill;
 use App\Models\User;
 use Database\Seeders\SampleUserSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -21,6 +22,10 @@ class JobPostingTest extends TestCase
     public function test_employer_can_create_view_update_and_delete_own_job_posting(): void
     {
         $user = $this->employer();
+        $user->employerProfile->company->update([
+            'logo_path' => 'company-logos/jobs.webp',
+            'cover_image_path' => 'company-covers/jobs.webp',
+        ]);
 
         $createResponse = $this->withToken($this->tokenFor($user))
             ->postJson('/api/v1/jobs', [
@@ -39,7 +44,9 @@ class JobPostingTest extends TestCase
             ->assertJsonPath('data.status.key', 'draft')
             ->assertJsonPath('data.employment_type.key', 'full_time')
             ->assertJsonPath('data.experience_level.key', 'mid_level')
-            ->assertJsonPath('data.company_id', $user->employerProfile->company_id);
+            ->assertJsonPath('data.company_id', $user->employerProfile->company_id)
+            ->assertJsonPath('data.company.logo_url', Storage::disk('public')->url('company-logos/jobs.webp'))
+            ->assertJsonPath('data.company.cover_image_url', Storage::disk('public')->url('company-covers/jobs.webp'));
 
         $jobId = $createResponse->json('data.id');
         $this->assertDatabaseHas('job_postings', [

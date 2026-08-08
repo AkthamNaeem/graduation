@@ -5,6 +5,7 @@ namespace App\Http\Resources\Api\V1\Home;
 use App\Enums\EmploymentType;
 use App\Http\Resources\Api\V1\CityResource;
 use App\Models\JobPosting;
+use App\Support\CompanyMedia;
 use App\Support\LocalizedValue;
 use App\Support\Recommendation\RecommendationReasonTranslator;
 use Illuminate\Http\Request;
@@ -27,7 +28,7 @@ class HomeJobResource extends JsonResource
             'company' => [
                 'id' => $job->company?->id,
                 'name' => $job->company?->name,
-                'logo_url' => null,
+                ...CompanyMedia::urls($job->company),
             ],
             'location' => $job->location,
             'city' => CityResource::make($job->relationLoaded('city') ? $job->city : null),

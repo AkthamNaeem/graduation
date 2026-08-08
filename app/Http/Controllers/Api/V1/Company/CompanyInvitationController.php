@@ -9,6 +9,7 @@ use App\Http\Resources\Api\V1\CompanyMemberResource;
 use App\Models\User;
 use App\Services\CompanyInvitationService;
 use App\Support\ApiResponse;
+use App\Support\CompanyMedia;
 use App\Support\LocalizedValue;
 use Illuminate\Http\JsonResponse;
 
@@ -27,6 +28,7 @@ class CompanyInvitationController extends Controller
                 'company' => [
                     'id' => $invitation->company_id,
                     'name' => $invitation->company->name,
+                    ...CompanyMedia::urls($invitation->company),
                 ],
                 'email' => $invitation->email,
                 'company_role' => LocalizedValue::make($invitation->company_role, 'company_roles'),

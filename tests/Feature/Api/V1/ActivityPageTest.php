@@ -22,6 +22,7 @@ use Database\Seeders\ApplicationStatusSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class ActivityPageTest extends TestCase
@@ -38,7 +39,12 @@ class ActivityPageTest extends TestCase
     {
         parent::setUp();
         $this->seed(ApplicationStatusSeeder::class);
-        $this->company = Company::create(['name' => 'Activity Tech', 'approval_status' => 'approved']);
+        $this->company = Company::create([
+            'name' => 'Activity Tech',
+            'approval_status' => 'approved',
+            'logo_path' => 'company-logos/activity.webp',
+            'cover_image_path' => 'company-covers/activity.webp',
+        ]);
         $this->candidate = $this->candidate('activity@example.com');
         $this->employer = User::factory()->create(['role' => UserRole::EMPLOYER, 'status' => UserStatus::ACTIVE]);
         EmployerProfile::create(['user_id' => $this->employer->id, 'company_id' => $this->company->id]);
@@ -120,7 +126,19 @@ class ActivityPageTest extends TestCase
 
         $actionKeys = collect($response->json('data.requires_action'))->pluck('activity_key');
         $interviewItem = collect($response->json('data.requires_action'))->firstWhere('activity_key', 'interview:'.$interview->id);
+        $expectedLogoUrl = Storage::disk('public')->url('company-logos/activity.webp');
+        $expectedCoverUrl = Storage::disk('public')->url('company-covers/activity.webp');
         $this->assertSame('confirm_interview', $interviewItem['action']['type']['key']);
+        foreach ($response->json('data.requires_action') as $item) {
+            $this->assertSame($expectedLogoUrl, $item['company']['logo_url']);
+            $this->assertSame($expectedCoverUrl, $item['company']['cover_image_url']);
+        }
+        foreach ($response->json('data.upcoming_schedule') as $item) {
+            $this->assertSame($expectedLogoUrl, $item['company']['logo_url']);
+            $this->assertSame($expectedCoverUrl, $item['company']['cover_image_url']);
+        }
+        $this->assertSame($expectedLogoUrl, $response->json('data.feed.data.0.company.logo_url'));
+        $this->assertSame($expectedCoverUrl, $response->json('data.feed.data.0.company.cover_image_url'));
         $this->assertTrue($actionKeys->contains('test_assignment:'.$assignment->id));
         $this->assertTrue($actionKeys->contains('information_request:'.$information->id));
         $this->assertCount($actionKeys->count(), $actionKeys->unique());
@@ -205,6 +223,7 @@ class ActivityPageTest extends TestCase
             'type' => 'legacy.notice',
             'title' => 'Legacy notice',
             'message' => 'A safe old notification.',
+            'data' => ['company_name' => 'Legacy Company'],
             'created_at' => now(),
         ]);
         app(NotificationService::class)->createForUser(
@@ -215,12 +234,17 @@ class ActivityPageTest extends TestCase
             ['application_id' => $application->id, 'information_request_id' => 99],
         );
 
-        $this->withToken($this->token($this->candidate))
+        $response = $this->withToken($this->token($this->candidate))
             ->getJson('/api/v1/activity')
             ->assertOk()
             ->assertJsonPath('data.feed.meta.total', 3)
             ->assertJsonFragment(['title' => 'Legacy notice'])
             ->assertJsonMissingPath('data.feed.data.0.changed_by_user_id');
+
+        $legacy = collect($response->json('data.feed.data'))->firstWhere('title', 'Legacy notice');
+        $this->assertSame('Legacy Company', $legacy['company']['name']);
+        $this->assertNull($legacy['company']['logo_url']);
+        $this->assertNull($legacy['company']['cover_image_url']);
 
         $this->app['auth']->forgetGuards();
         $this->flushHeaders()->withToken($this->token($this->candidate))

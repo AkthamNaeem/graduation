@@ -10,6 +10,7 @@ use App\Models\Interview;
 use App\Models\JobApplication;
 use App\Models\Notification;
 use App\Models\User;
+use App\Support\CompanyMedia;
 use App\Support\LocalizedValue;
 use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
@@ -17,7 +18,6 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Lang;
-use Illuminate\Support\Facades\Storage;
 
 class ActivityService
 {
@@ -285,7 +285,7 @@ class ActivityService
                 'company' => $company === null && ! isset($data['company_name']) ? null : [
                     'id' => $company?->id ?? $data['company_id'] ?? null,
                     'name' => $company?->name ?? $data['company_name'] ?? null,
-                    'logo_url' => $company?->logo_path === null ? null : Storage::disk('public')->url($company->logo_path),
+                    ...CompanyMedia::urls($company),
                 ],
             ], $dates);
         });

@@ -10,9 +10,9 @@ use App\Models\Interview;
 use App\Models\JobApplication;
 use App\Models\TestAttempt;
 use App\Services\CandidateActionResolver;
+use App\Support\CompanyMedia;
 use App\Support\LocalizedValue;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Storage;
 
 class ActivityActionResolver
 {
@@ -180,7 +180,7 @@ class ActivityActionResolver
             'company' => $company === null ? null : [
                 'id' => $company->id,
                 'name' => $company->name,
-                'logo_url' => $company->logo_path === null ? null : Storage::disk('public')->url($company->logo_path),
+                ...CompanyMedia::urls($company),
             ],
             'requires_action' => $requiresAction,
             'priority' => $priority,

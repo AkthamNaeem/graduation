@@ -13,6 +13,7 @@ use App\Models\CompanyInvitation;
 use App\Models\EmployerProfile;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -202,7 +203,11 @@ class CompanyManagementTest extends TestCase
 
     public function test_resend_rotates_token_and_invalidates_the_previous_token(): void
     {
-        [$owner] = $this->ownerAndCompany();
+        [$owner, $company] = $this->ownerAndCompany();
+        $company->update([
+            'logo_path' => 'company-logos/invited.webp',
+            'cover_image_path' => 'company-covers/invited.webp',
+        ]);
         Sanctum::actingAs($owner);
         $created = $this->postJson('/api/v1/company/invitations', [
             'email' => 'rotated@example.com',
@@ -220,7 +225,9 @@ class CompanyManagementTest extends TestCase
             ->assertJsonPath('code', 'COMPANY_INVITATION_NOT_FOUND');
         $this->getJson("/api/v1/company-invitations/{$newToken}")
             ->assertOk()
-            ->assertJsonPath('data.email', 'rotated@example.com');
+            ->assertJsonPath('data.email', 'rotated@example.com')
+            ->assertJsonPath('data.company.logo_url', Storage::disk('public')->url('company-logos/invited.webp'))
+            ->assertJsonPath('data.company.cover_image_url', Storage::disk('public')->url('company-covers/invited.webp'));
     }
 
     public function test_company_admin_cannot_assign_owner_and_recruiter_cannot_manage_team(): void

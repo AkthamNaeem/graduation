@@ -16,6 +16,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
 use Mockery;
 use RuntimeException;
 use Tests\TestCase;
@@ -39,6 +40,10 @@ class HomeApiTest extends TestCase
     public function test_guest_home_returns_only_public_sections_and_visible_jobs(): void
     {
         $approved = $this->company('approved', 'Approved');
+        $approved->update([
+            'logo_path' => 'company-logos/approved.webp',
+            'cover_image_path' => 'company-covers/approved.webp',
+        ]);
         $pending = $this->company('pending', 'Pending');
         $latest = $this->job($approved, ['title' => 'Latest', 'published_at' => now()]);
         $this->job($approved, ['status' => 'draft', 'title' => 'Draft']);
@@ -57,6 +62,10 @@ class HomeApiTest extends TestCase
             ->assertJsonPath('data.viewer.type', 'guest')
             ->assertJsonPath('data.viewer.is_authenticated', false)
             ->assertJsonPath('data.latest_jobs.0.id', $latest->id)
+            ->assertJsonPath('data.latest_jobs.0.company.logo_url', Storage::disk('public')->url('company-logos/approved.webp'))
+            ->assertJsonPath('data.latest_jobs.0.company.cover_image_url', Storage::disk('public')->url('company-covers/approved.webp'))
+            ->assertJsonPath('data.featured_companies.0.logo_url', Storage::disk('public')->url('company-logos/approved.webp'))
+            ->assertJsonPath('data.featured_companies.0.cover_image_url', Storage::disk('public')->url('company-covers/approved.webp'))
             ->assertJsonCount(1, 'data.latest_jobs')
             ->assertJsonCount(1, 'data.featured_companies')
             ->assertJsonCount(3, 'data.app_features')
@@ -86,7 +95,11 @@ class HomeApiTest extends TestCase
             ->assertOk()
             ->assertJsonPath('data.featured_companies.0.id', $two->id)
             ->assertJsonPath('data.featured_companies.0.open_jobs_count', 2)
-            ->assertJsonPath('data.featured_companies.1.id', $one->id);
+            ->assertJsonPath('data.featured_companies.0.logo_url', null)
+            ->assertJsonPath('data.featured_companies.0.cover_image_url', null)
+            ->assertJsonPath('data.featured_companies.1.id', $one->id)
+            ->assertJsonPath('data.featured_companies.1.logo_url', null)
+            ->assertJsonPath('data.featured_companies.1.cover_image_url', null);
     }
 
     public function test_valid_job_seeker_token_returns_personalized_home(): void
@@ -174,6 +187,10 @@ class HomeApiTest extends TestCase
     {
         $user = $this->jobSeeker();
         $company = $this->company();
+        $company->update([
+            'logo_path' => 'company-logos/recommended.webp',
+            'cover_image_path' => 'company-covers/recommended.webp',
+        ]);
         $visible = $this->job($company, ['title' => 'Visible']);
         $visible->load('company');
 
@@ -193,6 +210,8 @@ class HomeApiTest extends TestCase
             ->assertOk()
             ->assertJsonCount(1, 'data.recommended_jobs')
             ->assertJsonPath('data.recommended_jobs.0.id', $visible->id)
+            ->assertJsonPath('data.recommended_jobs.0.company.logo_url', Storage::disk('public')->url('company-logos/recommended.webp'))
+            ->assertJsonPath('data.recommended_jobs.0.company.cover_image_url', Storage::disk('public')->url('company-covers/recommended.webp'))
             ->assertJsonPath('data.recommended_jobs.0.match.score', 91)
             ->assertJsonPath(
                 'data.recommended_jobs.0.match.matched_skills.0',
